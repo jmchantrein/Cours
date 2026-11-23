@@ -5,9 +5,10 @@
 
 #import "charte.typ": *
 
-// Élément HTML : attributs en arguments nommés ; `data: (role: …)` donne `data-role="…"`.
-#let _el(balise, corps, data: (:), ..attrs) = html.elem(balise,
-  attrs: attrs.named() + data.pairs().map(((k, v)) => ("data-" + k, v)).to-dict(), corps)
+// Élément HTML : attributs en arguments nommés ; `data: (role: …)` donne `data-role="…"` ;
+// `attrs: ("aria-hidden": "true")` pour un nom d’attribut qui n’est pas un identifiant.
+#let _el(balise, corps, data: (:), attrs: (:), ..autres) = html.elem(balise,
+  attrs: autres.named() + attrs + data.pairs().map(((k, v)) => ("data-" + k, v)).to-dict(), corps)
 
 // ---------- Couleurs : une variable CSS par couleur de la charte, pour chaque variante ----------
 #let _variables(v) = {
@@ -36,11 +37,33 @@
   tritanopie: "Tritanopie", achromatopsie: "Achromatopsie", dyslexie: "Dyslexie",
 )
 
+// Variantes regroupées par palette identique : ("projection dyslexie", "projection"), ("deuteranopie protanopie", …)…
+// Un dessin (schéma, illustration) est embarqué une fois par palette ; tp.js montre celui de la variante choisie.
+#let _palettes-distinctes = {
+  let groupes = ()
+  for v in variantes {
+    let pal = repr(charte-de(v).pal)
+    let i = groupes.position(g => g.at(2) == pal)
+    if i == none { groupes.push((v, v, pal)) } else { groupes.at(i).at(0) += " " + v }
+  }
+  groupes.map(g => (g.at(0), g.at(1)))
+}
+#let _par-palette(dessin) = for (vs, v) in _palettes-distinctes {
+  _el("div", data: (pour: vs), html.frame(dessin(charte-de(v))))
+}
+// Illustration de couverture d’un cours ("vm", "couches"), décorative.
+#let _dessin-couverture(nom) = _el("div", class: "couverture-dessin", attrs: ("aria-hidden": "true"),
+  _par-palette(ch => illustration(nom, ch.c, 0.4385pt)))
+
 // ---------- Page ----------
 // racine : chemin relatif de la page vers la racine du dépôt (polices, accueil).
 // liens : paires (texte, adresse) affichées dans le bandeau.
+// illustration-couverture : "vm" ou "couches", l’illustration de couverture du cours.
+// sommaire : affiche le sommaire des titres `=` (en colonne à gauche sur un écran large).
+// atelier : page d’artefact, compacte, qui tient sur un écran de portable sans défilement.
+#let depot = "https://github.com/jmchantrein/Cours"
 #let page-web(titre: none, surtitre: none, sous-titre: none, auteur: none, date: none, racine: "../../../",
-  liens: (), sommaire: true, corps) = {
+  liens: (), sommaire: true, illustration-couverture: none, atelier: false, corps) = {
   let police(fichier, graisse, style) = (
     "@font-face{font-family:'IBM Plex " + (if "Mono" in fichier { "Mono" } else { "Sans" }) + "';src:url('"
     + racine + "commun/fonts/" + fichier + ".ttf');font-weight:" + graisse + ";font-style:" + style + ";font-display:swap}"
@@ -58,7 +81,7 @@
       #_el("title", titre)
       #_el("style", polices + _css-charte + read("tp.css"))
     ]
-    #_el("body")[
+    #_el("body", class: if atelier { "atelier" } else if sommaire { "avec-sommaire" } else { "simple" })[
       #_el("header", class: "bandeau")[
         #_el("a", class: "accueil", href: racine + "index.html")[Cours]
         #_el("nav", liens.map(((t, a)) => _el("a", href: a, t)).join())
@@ -67,15 +90,28 @@
           #_el("select", id: "variante", variantes.map(v => _el("option", value: v, _noms-variantes.at(v))).join())
         ]
       ]
-      #_el("main")[
-        #_el("div", class: "titre")[
+      // En-tête : la couverture des diapos (fond nuit, surtitre, titre, illustration du cours).
+      #_el("div", class: "couverture")[
+        #_el("div", class: "couverture-texte")[
           #if surtitre != none { _el("p", class: "surtitre", surtitre) }
           #_el("h1", titre)
           #if sous-titre != none { _el("p", class: "sous-titre", sous-titre) }
           #if auteur != none { _el("p", class: "auteur", [#auteur#if date != none [ · #date]]) }
         ]
+        #if illustration-couverture != none { _dessin-couverture(illustration-couverture) }
+      ]
+      #_el("div", class: "page")[
         #if sommaire { outline(title: [Sommaire], depth: 1) }
-        #corps
+        #_el("main", corps)
+      ]
+      #_el("footer", class: "pied")[
+        #_el("p")[
+          Une erreur, une idée ?
+          #_el("a", href: depot + "/issues")[Ouvrez une issue] ou proposez une pull request sur le
+          #_el("a", href: depot)[dépôt] : les propositions rédigées par une IA, ou avec son aide, sont acceptées
+          elles aussi.
+        ]
+        #_el("p")[Contenus sous licence #_el("a", href: "https://creativecommons.org/licenses/by-nc-sa/4.0/deed.fr")[CC BY-NC-SA 4.0].]
       ]
       #_el("script", read("tp.js"))
     ]
@@ -125,23 +161,11 @@
 // ---------- Schémas ----------
 // Un schéma se dessine en Typst et reçoit la charte d’une variante : `schema([légende], ch => …)`, avec
 // ch.c (couleurs) et ch.roles. La page embarque un dessin par palette distincte ; tp.js montre celui de la variante choisie.
-// Variantes regroupées par palette identique : ("projection dyslexie", "projection"), ("deuteranopie protanopie", …)…
-#let _palettes-distinctes = {
-  let groupes = ()
-  for v in variantes {
-    let pal = repr(charte-de(v).pal)
-    let i = groupes.position(g => g.at(2) == pal)
-    if i == none { groupes.push((v, v, pal)) } else { groupes.at(i).at(0) += " " + v }
-  }
-  groupes.map(g => (g.at(0), g.at(1)))
-}
 #let schema(legende, dessin) = _el("figure", class: "schema")[
-  #for (vs, v) in _palettes-distinctes {
-    _el("div", data: (pour: vs), html.frame({
-      set text(font: "IBM Plex Sans", size: 11pt, fill: encre)
-      dessin(charte-de(v))
-    }))
-  }
+  #_par-palette(ch => {
+    set text(font: "IBM Plex Sans", size: 11pt, fill: encre)
+    dessin(ch)
+  })
   #_el("figcaption", legende)
 ]
 // Briques de schéma : une boîte titrée (machine, réseau, conteneur) et une case (processus, volume).
@@ -151,12 +175,38 @@
 #let case(fond: white, texte: encre, largeur: auto, corps) = rect(width: largeur, fill: fond, radius: 3pt, inset: (x: 8pt, y: 6pt),
   stroke: 0.6pt + encre, align(center, text(size: 9.5pt, fill: texte, corps)))
 
+// ---------- Accueil : cartes et boutons ----------
+// Bouton-lien ; `principal: true` pour l’action première d’une carte.
+#let bouton(texte, adresse, principal: false) = _el("a", class: if principal { "bouton principal" } else { "bouton" }, href: adresse, texte)
+// Carte d’un cours : son illustration de couverture, son titre, puis ses supports.
+#let carte(titre, illustration: none, corps) = _el("section", class: "carte")[
+  #if illustration != none { _dessin-couverture(illustration) }
+  #_el("div", class: "carte-corps")[
+    #_el("h2", titre)
+    #corps
+  ]
+]
+#let cartes(..c) = _el("div", class: "cartes", c.pos().join())
+// Rangée de boutons.
+#let actions(..b) = _el("p", class: "actions", b.pos().join())
+
 // ---------- Artefacts ----------
-// Un artefact est un petit logiciel interactif, dans <cours>/artefacts/<nom>/ : une page `<nom>.typ` qui présente
-// le concept, et un script qui construit son interface dans l’élément `#artefact`.
-// `#artefact(read("<nom>.js"), style: read("<nom>.css"))` ; le style emploie les variables CSS de la charte.
-#let artefact(script, style: none) = {
+// Un artefact est un petit logiciel interactif, dans <cours>/artefacts/<nom>/ : une page `<nom>.typ`
+// (`page-web(atelier: true, …)`) et un script qui construit son interface dans l’élément `#artefact`.
+// `#artefact(read("<nom>.js"), style: read("<nom>.css"))[aide]` : l’aide (la règle, les expériences) s’affiche
+// à côté. Le style emploie les variables CSS de la charte.
+#let artefact(script, style: none, aide) = {
   if style != none { _el("style", style) }
-  _el("div", _el("p", [Cet artefact a besoin de JavaScript.]), id: "artefact")
+  _el("div", class: "plan-atelier")[
+    #_el("div", _el("p", [Cet artefact a besoin de JavaScript.]), id: "artefact")
+    #_el("aside", class: "aide", aide)
+  ]
   _el("script", script)
 }
+// Expériences guidées : `#experiences(([question], [réponse]), …)`. tp.js en montre une à la fois.
+#let experiences(..paires) = _el("div", class: "experiences", paires.pos().enumerate().map(((i, (question, reponse))) =>
+  _el("section", class: "experience")[
+    #_el("p", class: "experience-titre")[Expérience #(i + 1) sur #paires.pos().len()]
+    #question
+    #_el("details", class: "corrige")[#_el("summary")[Réponse]#_el("div", class: "repli", reponse)]
+  ]).join())

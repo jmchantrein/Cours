@@ -52,3 +52,4 @@
 - [x] 2026-11-23 — Travail fusionné dans `main` ; historique de la branche `corrections` rattaché à `main`
 - [x] 2026-11-23 — Publication du site par GitHub Pages depuis l’action de compilation (source « GitHub Actions »)
 - [x] 2026-11-23 — Fichiers générés sortis du dépôt : PDF et `index.html` ignorés par git, compilés puis publiés par la CI sans commit (fin des PDF recommités à l’identique)
+- [x] 2026-11-23 — Artefact « cache de build » tenu sur un écran de portable sans défilement (résultat du build sur chaque ligne du Dockerfile, expériences une à la fois) ; site : en-tête reprenant la couverture des diapos, cartes de cours à l’accueil, sommaire latéral qui suit la lecture, pied de page

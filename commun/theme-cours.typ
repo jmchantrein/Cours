@@ -296,22 +296,7 @@
 // ---------- Couverture ----------
 // Illustrations de couverture : « vm » (trois VM sur un hyperviseur, sur le matériel) ou
 // « couches » (les couches d’une image : trois en lecture seule, une en lecture/écriture au sommet).
-#let illustrations = (
-  vm: stack(spacing: px(16),
-    grid(columns: (px(176),) * 3, column-gutter: px(16),
-      ..range(3).map(_ => box(width: px(176), height: px(96), fill: c.invite-t, radius: px(12)))),
-    box(width: px(560), height: px(56), fill: c.hote-t, radius: px(12)),
-    box(width: px(560), height: px(56), fill: c.gris, radius: px(12)),
-  ),
-  // couches d'image en lecture seule : un dégradé de bleus, du plus sombre (base) au plus clair ;
-  // au sommet, la couche du conteneur en lecture/écriture, claire et bordée de tirets
-  couches: stack(spacing: px(14),
-    box(width: px(560), height: px(56), radius: px(12), fill: c.hote-t.transparentize(80%),
-      stroke: (paint: c.hote-t, thickness: px(3), dash: "dashed")),
-    ..(70%, 45%, 20%).map(p => box(width: px(560), height: px(56), radius: px(12),
-      fill: color.mix((c.hote-t, p), (c.nuit, 100% - p)))),
-  ),
-)
+#let illustrations = (vm: illustration("vm", c, px(1)), couches: illustration("couches", c, px(1)))
 
 #let page-titre(titre, sous-titre, auteur, date, surtitre: "Cours · LERIA", illustration: "vm") = touying-slide-wrapper(self => {
   self = utils.merge-dicts(self,

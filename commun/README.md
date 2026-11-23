@@ -74,8 +74,12 @@ Un énoncé s’écrit en Typst et se compile en une page HTML autonome (`--feat
 La page embarque toutes les variantes : le lecteur choisit la sienne dans le bandeau, son choix est mémorisé
 par son navigateur. Le nom du rôle et son pictogramme sont écrits dans chaque bloc.
 
-- Page : `#show: page-web.with(titre: […], surtitre: […], sous-titre: […], auteur: […], date: […], liens: (([texte], "adresse"), …))`.
-- Une étape = un titre `=` étiqueté (`= Étape 1 : … <etape-1>`) ; le sommaire en découle.
+- Page : `#show: page-web.with(titre: […], surtitre: […], sous-titre: […], auteur: […], date: […], liens: (([texte], "adresse"), …), illustration-couverture: "couches")`.
+  L’en-tête reprend la couverture des diapos : fond nuit, surtitre, titre, illustration du cours (`"vm"`, `"couches"`,
+  définies dans `charte.typ`). Le pied de page invite à signaler une erreur.
+- Une étape = un titre `=` étiqueté (`= Étape 1 : … <etape-1>`) ; le sommaire en découle : en colonne à gauche
+  sur un écran large, il marque l’étape en cours de lecture.
+- Accueil : `#cartes(carte([titre], illustration: "vm")[texte #actions(bouton(principal: true, [texte], "adresse"), …)], …)`.
 - Bloc : `#bloc(role: "question")[Consignes][- …]` ; remarque courte : `#note(role: "precaution")[…]`.
 - Terminal : `#terminal[```console … ```]` ; une ligne `$ ` est une commande, une ligne `# ` un commentaire.
   Le bouton « Copier » ne copie que les commandes.
@@ -89,8 +93,10 @@ par son navigateur. Le nom du rôle et son pictogramme sont écrits dans chaque 
 
 ## Pages web : artefacts
 Un artefact est un petit logiciel interactif qui fait manipuler un concept : `<cours>/artefacts/<nom>/`.
-- `<nom>.typ` : une page `page-web` qui énonce la règle (bloc `retenir`, renvoi `diapo(…)`), place l’artefact
-  par `#artefact(read("<nom>.js"), style: read("<nom>.css"))`, puis propose des expériences et leurs réponses.
+- `<nom>.typ` : une page `page-web(atelier: true, …)`, compacte, qui place l’artefact et son aide côte à côte :
+  `#artefact(read("<nom>.js"), style: read("<nom>.css"))[aide]`. L’aide énonce la règle (bloc `retenir`, renvoi
+  `diapo(…)`) et propose des expériences : `#experiences(([question], [réponse]), …)`, montrées une à la fois.
+- Un artefact tient sur un écran de portable sans défilement (1280 × 650 px utiles), toutes réponses ouvertes.
 - `<nom>.js` : construit l’interface dans l’élément `#artefact`, sans bibliothèque externe.
 - `<nom>.css` : n’emploie que les variables CSS de la charte (`--c-*`, `--<rôle>-entete`…), pour suivre la variante choisie.
 - Un état se lit dans le texte (« CACHED », « DONE ») ; la couleur ne fait que le doubler.

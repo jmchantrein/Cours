@@ -1,42 +1,70 @@
-/* tp.css — mise en forme des pages web (TP, accueil). Les couleurs viennent de charte.typ, en variables
-   CSS (--c-*, --<rôle>-entete|fond|texte|accent) écrites dans la page par theme-tp.typ. */
+/* tp.css — mise en forme des pages web (accueil, TP, artefacts). Les couleurs viennent de charte.typ, en
+   variables CSS (--c-*, --<rôle>-entete|fond|texte|accent) écrites dans la page par theme-tp.typ.
+   L’en-tête reprend la couverture des diapos : fond nuit, surtitre, grand titre, illustration du cours. */
 *, *::before, *::after { box-sizing: border-box; }
 html { font-family: "IBM Plex Sans", system-ui, sans-serif; font-size: 112.5%; line-height: 1.6;
   color: var(--c-encre); background: var(--c-fond); scroll-padding-top: 4rem; }
-body { margin: 0; }
-main { max-width: 52rem; margin: 0 auto; padding: 1.5rem 1rem 6rem; }
+body { margin: 0; min-height: 100vh; display: flex; flex-direction: column; }
 a { color: var(--c-bleu); text-underline-offset: .15em; }
-a:focus-visible, summary:focus-visible, button:focus-visible, select:focus-visible {
-  outline: 3px solid var(--c-bleu); outline-offset: 2px; }
+a:focus-visible, summary:focus-visible, button:focus-visible, select:focus-visible, input:focus-visible {
+  outline: 3px solid var(--c-prompt); outline-offset: 2px; }
 code, pre, kbd { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: .92em; }
 :not(pre) > code { background: var(--c-bleu-clair); padding: .1em .3em; border-radius: .25em; overflow-wrap: anywhere; }
+@media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } a, .bouton, button { transition: background-color .15s, color .15s, border-color .15s; } }
 
-/* Bandeau */
-.bandeau { position: sticky; top: 0; z-index: 2; display: flex; flex-wrap: wrap; align-items: center; gap: .5rem 1.25rem;
-  padding: .5rem 1rem; background: var(--c-nuit); color: var(--c-fond); font-size: .85rem; }
-.bandeau a { color: var(--c-fond); }
-.bandeau .accueil { font-weight: 700; text-decoration: none; }
+/* ---------- Bandeau ---------- */
+.bandeau { position: sticky; top: 0; z-index: 3; display: flex; flex-wrap: wrap; align-items: center; gap: .4rem 1.25rem;
+  padding: .5rem 1.5rem; background: var(--c-nuit); color: var(--c-fond); font-size: .85rem;
+  border-bottom: 1px solid var(--c-encart); }
+.bandeau a { color: var(--c-fond); text-decoration: none; padding: .15rem 0; border-bottom: 2px solid transparent; }
+.bandeau a:hover { border-bottom-color: var(--c-prompt); }
+.bandeau .accueil { font-weight: 700; letter-spacing: .04em; }
 .bandeau nav { display: flex; flex-wrap: wrap; gap: .25rem 1.25rem; flex: 1; }
-.bandeau select { font: inherit; padding: .15rem .3rem; border-radius: .3rem; border: 1px solid var(--c-filet);
-  background: var(--c-fond); color: var(--c-encre); margin-left: .4rem; }
+.bandeau select { font: inherit; padding: .15rem .3rem; border-radius: .3rem; border: 1px solid var(--c-encart);
+  background: var(--c-encart); color: var(--c-fond); margin-left: .4rem; }
+/* Avancement de la lecture (posé par tp.js sur les pages à sommaire). */
+.avancement { position: absolute; left: 0; bottom: -3px; height: 3px; width: 100%; background: var(--c-prompt);
+  transform-origin: left; transform: scaleX(0); }
 
-/* Titres */
-.titre { margin: 1.5rem 0 2rem; }
-.surtitre { margin: 0; color: var(--c-bleu); font-weight: 600; letter-spacing: .06em; text-transform: uppercase; font-size: .85rem; }
-h1 { margin: .2rem 0; font-size: 2.1rem; line-height: 1.2; }
-.sous-titre { margin: .2rem 0; font-size: 1.15rem; color: var(--c-ardoise); }
-.auteur { margin: .6rem 0 0; color: var(--c-gris); font-size: .9rem; }
-h2 { margin: 3rem 0 1rem; padding-top: .8rem; border-top: 2px solid var(--c-filet); font-size: 1.55rem; line-height: 1.25; }
+/* ---------- Couverture ---------- */
+.couverture { background: var(--c-nuit); color: var(--c-fond); padding: 3rem 1.5rem 3.2rem; display: flex;
+  justify-content: center; align-items: center; gap: 3rem; }
+.couverture-texte { flex: 0 1 46rem; min-width: 0; }
+.simple .couverture-texte { flex-basis: 53rem; }
+.couverture .surtitre { margin: 0 0 .6rem; color: var(--c-prompt); font-size: .8rem; font-weight: 600;
+  letter-spacing: .12em; text-transform: uppercase; }
+.couverture h1 { margin: 0; font-size: clamp(2rem, 5vw, 3.2rem); font-weight: 600; line-height: 1.1; }
+.couverture .sous-titre { margin: .7rem 0 0; font-size: 1.2rem; color: var(--c-texte-term); opacity: .85; }
+.couverture .auteur { margin: 1.4rem 0 0; font-size: .9rem; color: var(--c-commentaire); }
+.couverture-dessin { flex: 0 0 15rem; }
+.couverture-dessin svg { display: block; width: 100% !important; height: auto !important; }
+@media (max-width: 52rem) { .couverture { padding: 2rem 1rem; } .couverture > .couverture-dessin { display: none; } }
+
+/* ---------- Page ---------- */
+.page { flex: 1; width: 100%; max-width: 56rem; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
+main { min-width: 0; }
+main > :first-child { margin-top: 0; }
+h2 { margin: 3.2rem 0 1rem; padding-top: 1rem; border-top: 2px solid var(--c-filet); font-size: 1.6rem; line-height: 1.25; }
+main > h2:first-child { padding-top: 0; border-top: 0; }
 h3 { margin: 2rem 0 .6rem; font-size: 1.2rem; }
 h4 { margin: 1.4rem 0 .4rem; font-size: 1rem; }
 
-/* Sommaire */
-nav[role="doc-toc"] { margin: 0 0 2rem; padding: .8rem 1.1rem; background: var(--c-espace); border-radius: .5rem; }
-nav[role="doc-toc"] h2 { margin: 0 0 .3rem; padding: 0; border: 0; font-size: 1rem; }
+/* Sommaire : une boîte en tête de page, puis une colonne fixe à gauche sur un écran large. */
+nav[role="doc-toc"] { margin: 0 0 2rem; padding: .9rem 1.1rem; background: var(--c-espace); border-radius: .6rem; font-size: .9rem; }
+nav[role="doc-toc"] h2 { margin: 0 0 .4rem; padding: 0; border: 0; font-size: .75rem; color: var(--c-gris);
+  letter-spacing: .1em; text-transform: uppercase; }
 nav[role="doc-toc"] ol { margin: 0; padding: 0; }
-nav[role="doc-toc"] li { margin: .15rem 0; }
+nav[role="doc-toc"] a { display: block; padding: .25rem .7rem; border-left: 3px solid transparent; border-radius: 0 .3rem .3rem 0;
+  color: var(--c-ardoise); text-decoration: none; line-height: 1.35; }
+nav[role="doc-toc"] a:hover { color: var(--c-encre); background: var(--c-bleu-clair); }
+nav[role="doc-toc"] a[aria-current="true"] { border-left-color: var(--c-bleu); color: var(--c-encre); font-weight: 600; background: var(--c-bleu-clair); }
+@media (min-width: 72rem) {
+  .avec-sommaire .page { max-width: 76rem; display: grid; grid-template-columns: 15rem minmax(0, 52rem); gap: 3.5rem; align-items: start; }
+  .avec-sommaire nav[role="doc-toc"] { position: sticky; top: 4.2rem; max-height: calc(100vh - 5.5rem); overflow-y: auto;
+    margin: 0; padding: 0; background: none; }
+}
 
-/* Blocs et notes : le rôle donne la couleur ; son nom et son pictogramme la doublent. */
+/* ---------- Blocs et notes : le rôle donne la couleur ; son nom et son pictogramme la doublent. ---------- */
 .bloc, .note { --entete: var(--notion-entete); --fond-role: var(--notion-fond); --accent: var(--notion-accent);
   margin: 1.2rem 0; padding: .8rem 1.1rem; border-left: .4rem solid var(--entete);
   border-radius: 0 .5rem .5rem 0; background: var(--fond-role); }
@@ -60,17 +88,18 @@ nav[role="doc-toc"] li { margin: .15rem 0; }
   content: ""; width: 1.25em; height: 1.25em; background: currentColor;
   -webkit-mask: var(--picto) center / contain no-repeat; mask: var(--picto) center / contain no-repeat; }
 
-/* Indices et corrigés : repliés, ouverts à la demande. */
+/* ---------- Indices et corrigés : repliés, ouverts à la demande. ---------- */
 details { margin: 1rem 0; border: 1px solid var(--c-filet); border-radius: .5rem; background: #fff; }
-details > summary { padding: .55rem 1rem; cursor: pointer; font-weight: 600; }
-details[open] > summary { border-bottom: 1px solid var(--c-filet); }
+details > summary { padding: .55rem 1rem; cursor: pointer; font-weight: 600; border-radius: .5rem; }
+details > summary:hover { background: var(--c-espace); }
+details[open] > summary { border-bottom: 1px solid var(--c-filet); border-radius: .5rem .5rem 0 0; }
 .repli { padding: .7rem 1rem .9rem; }
 .repli > :first-child { margin-top: 0; }
 .repli > :last-child { margin-bottom: 0; }
 details.corrige { border-left: .4rem solid var(--reponse-entete); }
 details.indice { border-left: .4rem solid var(--question-entete); }
 
-/* Code */
+/* ---------- Code ---------- */
 pre { position: relative; margin: .8rem 0; padding: .8rem 1rem; overflow-x: auto; border-radius: .5rem;
   background: var(--c-espace); line-height: 1.45; tab-size: 4; }
 .terminal pre { background: var(--c-nuit); color: var(--c-texte-term); }
@@ -83,6 +112,7 @@ pre { position: relative; margin: .8rem 0; padding: .8rem 1rem; overflow-x: auto
 .fichier pre { margin-top: 0; border-top-left-radius: 0; }
 .copier { position: absolute; top: .4rem; right: .4rem; padding: .15rem .6rem; border: 1px solid var(--c-filet);
   border-radius: .3rem; background: var(--c-fond); color: var(--c-encre); font: inherit; font-size: .75rem; cursor: pointer; }
+.copier:hover { border-color: var(--c-bleu); }
 
 /* Liens vers les diapositives du cours */
 a.diapo::before { content: "▸ diapo : "; font-size: .85em; color: var(--c-gris); }
@@ -91,20 +121,82 @@ table { border-collapse: collapse; margin: 1rem 0; }
 td, th { padding: .35rem .7rem; border: 1px solid var(--c-filet); text-align: left; vertical-align: top; }
 th { background: var(--c-espace); }
 figure { margin: 1.2rem 0; }
-/* Schémas : un dessin par palette distincte ; tp.js n’affiche que celui de la variante choisie. */
-.schema svg { max-width: 100%; height: auto !important; }
-html:not(.js) .schema [data-pour]:not(:first-child) { display: none; }
+/* Schémas et illustrations : un dessin par palette distincte ; tp.js n’affiche que celui de la variante choisie. */
+.schema { padding: 1rem; background: #fff; border: 1px solid var(--c-filet); border-radius: .6rem; }
+.schema svg { display: block; margin: 0 auto; max-width: 100%; height: auto !important; }
+html:not(.js) [data-pour]:not(:first-child) { display: none; }
 figcaption { font-size: .9rem; color: var(--c-gris); }
+.schema figcaption { margin-top: .8rem; text-align: center; }
 
-/* Variante dyslexie : lettres, mots et lignes espacés ; ni capitales forcées ni italique. */
+/* ---------- Accueil : cartes et boutons ---------- */
+.cartes { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr)); gap: 1.5rem; margin: 0 0 2rem; }
+.carte { display: flex; flex-direction: column; overflow: hidden; background: #fff; border: 1px solid var(--c-filet);
+  border-radius: .8rem; box-shadow: 0 1px 2px rgb(15 30 51 / .06), 0 8px 24px rgb(15 30 51 / .06); }
+.carte > .couverture-dessin { flex: none; display: grid; place-items: center; height: 9.5rem; background: var(--c-nuit); }
+.carte > .couverture-dessin > div { width: 11rem; }
+.carte-corps { padding: 1.2rem 1.4rem 1.4rem; }
+.carte h2 { margin: 0 0 .6rem; padding: 0; border: 0; font-size: 1.3rem; }
+.carte p { margin: .5rem 0; }
+.carte .variantes { font-size: .85rem; color: var(--c-gris); }
+.actions { display: flex; flex-wrap: wrap; gap: .5rem; margin: .9rem 0; }
+.bouton { display: inline-flex; align-items: center; padding: .4rem .9rem; border: 1px solid var(--c-bleu); border-radius: .4rem;
+  color: var(--c-bleu); font-size: .9rem; font-weight: 600; text-decoration: none; }
+.bouton:hover { background: var(--c-bleu-clair); }
+.bouton.principal { background: var(--notion-entete); color: var(--notion-texte); }
+.bouton.principal:hover { background: var(--c-encre); border-color: var(--c-encre); }
+
+/* ---------- Pied de page ---------- */
+.pied { padding: 1.4rem 1.5rem 1.8rem; border-top: 1px solid var(--c-filet); background: var(--c-espace);
+  color: var(--c-ardoise); font-size: .82rem; text-align: center; }
+.pied p { max-width: 52rem; margin: .2rem auto; }
+
+/* ---------- Atelier : une page d’artefact, qui tient sur un écran de portable sans défilement ---------- */
+html:has(body.atelier) { font-size: 93.75%; }
+.atelier .couverture { padding: .7rem 1.5rem; justify-content: flex-start; }
+.atelier .couverture-texte { flex: 1; display: flex; flex-wrap: wrap; align-items: baseline; gap: .1rem 1.2rem; }
+.atelier .couverture .surtitre { flex-basis: 100%; margin: 0; font-size: .7rem; }
+.atelier .couverture h1 { font-size: 1.5rem; }
+.atelier .couverture .sous-titre { margin: 0; font-size: .95rem; }
+.atelier .page { max-width: none; padding: .8rem 1.5rem .6rem; }
+.atelier .pied { padding: .45rem 1.5rem; font-size: .72rem; }
+.atelier .pied p { display: inline; margin: 0 .4rem; }
+.plan-atelier { display: grid; grid-template-columns: minmax(0, 2.2fr) minmax(17rem, 1fr); gap: 1.5rem; align-items: start; }
+.aide { font-size: .87rem; line-height: 1.5; }
+.aide > :first-child { margin-top: 0; }
+.aide .bloc { margin: 0 0 .8rem; padding: .5rem .9rem; }
+.aide .bloc-titre { font-size: .95rem; }
+.aide .note { font-size: .8rem; padding: .4rem .8rem; }
+@media (max-width: 60rem) { .plan-atelier { grid-template-columns: minmax(0, 1fr); } }
+
+/* Expériences guidées : une à la fois (tp.js), ou toutes à la suite sans script. */
+.experience { margin: 0 0 .8rem; padding: .6rem .9rem; background: #fff; border: 1px solid var(--c-filet); border-radius: .5rem; }
+.pas-a-pas .experience-titre { display: none; }
+.pas-a-pas .experience { margin-bottom: 0; }
+.experience > p { margin: .3rem 0; }
+.experience-titre { color: var(--c-bleu); font-size: .75rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+.experience details { margin: .6rem 0 0; }
+.experiences-nav { display: flex; align-items: center; justify-content: space-between; gap: .5rem; margin-bottom: .4rem;
+  color: var(--c-bleu); font-size: .75rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+[data-variante="dyslexie"] .experiences-nav { text-transform: none; }
+.experiences-nav button { padding: .15rem .7rem; border: 1px solid var(--c-bleu); border-radius: .4rem; background: #fff;
+  color: var(--c-bleu); font: inherit; font-size: .85rem; font-weight: 600; cursor: pointer; }
+.experiences-nav button:hover:not(:disabled) { background: var(--c-bleu-clair); }
+.experiences-nav button:disabled { opacity: .35; cursor: default; }
+
+/* ---------- Variante dyslexie : lettres, mots et lignes espacés ; ni capitales forcées ni italique. ---------- */
 [data-variante="dyslexie"] { letter-spacing: .05em; word-spacing: .16em; line-height: 1.9; }
-[data-variante="dyslexie"] :is(.surtitre, .role) { text-transform: none; }
+[data-variante="dyslexie"] :is(.surtitre, .role, .experience-titre, nav[role="doc-toc"] h2) { text-transform: none; }
 [data-variante="dyslexie"] em { font-style: normal; font-weight: 600; }
-[data-variante="dyslexie"] p, [data-variante="dyslexie"] li { max-width: 38rem; }
+[data-variante="dyslexie"] main :is(p, li) { max-width: 38rem; }
+/* Dans un atelier, l’interligne reste large (1,6) mais laisse la page tenir à l’écran. */
+[data-variante="dyslexie"] .atelier :is(.aide, .couverture, .pied) { line-height: 1.6; }
 
-/* Impression : l’énoncé seul, sans indices ni corrigés. */
+/* ---------- Impression : l’énoncé seul, sans indices ni corrigés. ---------- */
 @media print {
-  .bandeau, .copier, details { display: none; }
+  .bandeau, .copier, details, .pied, nav[role="doc-toc"] { display: none; }
   html { font-size: 11pt; background: #fff; }
+  .couverture { background: none; color: var(--c-encre); padding: 0 0 1rem; }
+  .couverture-dessin { display: none; }
+  .page { display: block; padding: 0; }
   .bloc, .note, pre { break-inside: avoid; }
 }

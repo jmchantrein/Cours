@@ -17,7 +17,8 @@
   let { instructions, fichiers } = depart();
   const cache = new Set();   // les clés connues : chacune désigne une couche déjà construite
   const historique = [];     // un élément par build : { duree, executees, sansCache }
-  let dernier = null;        // les étapes du dernier build
+  let dernier = null;        // les étapes du dernier build, pour dire pourquoi une étape est rejouée
+  let affiche = false;       // le résultat du dernier build correspond-il encore au Dockerfile affiché ?
   let erreur = null;
 
   // Empreinte courte (FNV-1a, 32 bits) : elle tient lieu du hash que calcule BuildKit.
@@ -38,14 +39,13 @@
   const secondes = s => s.toFixed(1).replace(".", ",") + " s";
 
   function construire(sansCache) {
-    erreur = null;
+    erreur = null; affiche = false;
     if (mot(instructions[0]) !== "FROM") { erreur = "Un Dockerfile commence par une instruction FROM."; return dessiner(); }
     const cacheVide = cache.size === 0;
     const etapes = [];
     let parent = "";
     for (const [i, brute] of instructions.entries()) {
       const instruction = brute.trim();
-      if (!instruction) continue;
       let source = null, contenu = "";
       if (copie(instruction)) {
         source = instruction.split(/\s+/)[1];
@@ -56,7 +56,7 @@
         contenu = fichiers[source];
       }
       const cle = empreinte([parent, instruction, contenu].join("\n"));
-      const avant = dernier?.[etapes.length];
+      const avant = dernier?.[i];
       const executee = i > 0 && etape(instruction) && (sansCache || !cache.has(cle));
       let raison = "";
       if (executee) {
@@ -71,7 +71,7 @@
       cache.add(cle);
       parent = cle;
     }
-    dernier = etapes;
+    dernier = etapes; affiche = true;
     historique.push({
       duree: etapes.reduce((somme, e) => somme + e.duree, 0),
       executees: etapes.filter(e => e.executee).length,
@@ -90,59 +90,71 @@
     return e;
   };
   const bouton = (texte, action, attributs = {}) => el("button", { type: "button", onclick: action, ...attributs }, texte);
-  const echanger = (i, j) => { [instructions[i], instructions[j]] = [instructions[j], instructions[i]]; dessiner(); };
+  // Toute modification rend le dernier résultat caduc : il s’efface jusqu’au prochain build.
+  const modifier = action => { action(); affiche = false; erreur = null; dessiner(); };
+  // Pendant la saisie, le résultat s’efface sur place : redessiner retirerait le champ des mains du lecteur.
+  const PERIME = "Dockerfile, fichier ou cache modifié : reconstruisez.";
+  function perimer() {
+    if (!affiche && !erreur) return;
+    affiche = false; erreur = null;
+    for (const e of racine.querySelectorAll(".dockerfile .statut, .dockerfile .detail")) e.textContent = "";
+    for (const li of racine.querySelectorAll(".dockerfile li")) li.className = "";
+    const bilan = racine.querySelector(".bilan");
+    bilan.className = "bilan"; bilan.textContent = PERIME;
+  }
+  const echanger = (i, j) => modifier(() => { [instructions[i], instructions[j]] = [instructions[j], instructions[i]]; });
 
   function dessiner() {
-    const dockerfile = el("ol", { class: "dockerfile" }, ...instructions.map((instruction, i) => el("li", {},
-      el("input", {
-        type: "text", value: instruction, spellcheck: "false", "aria-label": `Instruction ${i + 1}`,
-        oninput: e => { instructions[i] = e.target.value; },
-      }),
-      bouton("↑", () => echanger(i, i - 1), { "aria-label": `Monter l’instruction ${i + 1}`, disabled: i < 2 && "" }),
-      bouton("↓", () => echanger(i, i + 1), { "aria-label": `Descendre l’instruction ${i + 1}`, disabled: (i === 0 || i === instructions.length - 1) && "" }),
-    )));
+    // Chaque ligne du Dockerfile porte, à droite, ce que le dernier build en a fait.
+    const total = instructions.filter(etape).length;
+    let k = 0;
+    const dockerfile = el("ol", { class: "dockerfile" }, ...instructions.map((instruction, i) => {
+      const e = affiche ? dernier[i] : null;
+      const numero = etape(instruction) ? `[${++k}/${total}]` : "";
+      const statut = !e ? "" : i === 0 ? "image de base" : !etape(instruction) ? "pas de couche"
+        : e.executee ? "DONE " + e.duree.toFixed(1) + "s" : "CACHED";
+      return el("li", { class: !e ? "" : e.executee ? "executee" : "reutilisee" },
+        el("span", { class: "numero" }, numero),
+        el("input", {
+          type: "text", value: instruction, spellcheck: "false", "aria-label": `Instruction ${i + 1}`,
+          oninput: ev => { instructions[i] = ev.target.value; perimer(); },
+        }),
+        bouton("↑", () => echanger(i, i - 1), { "aria-label": `Monter l’instruction ${i + 1}`, disabled: i < 2 && "" }),
+        bouton("↓", () => echanger(i, i + 1), { "aria-label": `Descendre l’instruction ${i + 1}`, disabled: (i === 0 || i === instructions.length - 1) && "" }),
+        el("span", { class: "statut" }, statut),
+        el("span", { class: "detail" }, !e ? "" : "clé " + e.cle + (e.raison ? " · rejouée : " + e.raison : "")),
+      );
+    }));
     const contexte = el("div", { class: "contexte" }, ...Object.keys(fichiers).map(nom => el("label", {},
       el("code", {}, nom),
-      el("input", { type: "text", value: fichiers[nom], spellcheck: "false", oninput: e => { fichiers[nom] = e.target.value; } }),
+      el("input", {
+        type: "text", value: fichiers[nom], spellcheck: "false",
+        oninput: ev => { fichiers[nom] = ev.target.value; perimer(); },
+      }),
     )));
     const commandes = el("div", { class: "commandes" },
       bouton("docker image build", () => construire(false), { class: "principal" }),
-      bouton("docker image build --no-cache", () => construire(true)),
-      bouton("docker builder prune (vider le cache)", () => { cache.clear(); dessiner(); }),
-      bouton("Tout remettre à zéro", () => {
-        ({ instructions, fichiers } = depart()); cache.clear(); historique.length = 0; dernier = null; erreur = null; dessiner();
-      }),
+      bouton("avec --no-cache", () => construire(true), { "aria-label": "docker image build --no-cache" }),
+      bouton("Vider le cache", () => modifier(() => cache.clear()), { title: "docker builder prune" }),
     );
-
-    const sortie = el("div", { class: "sortie", role: "status", "aria-live": "polite" });
-    if (erreur) sortie.append(el("p", { class: "erreur" }, "ERROR : " + erreur));
-    else if (!dernier) sortie.append(el("p", {}, "Lancez un premier build."));
-    else {
-      const total = dernier.filter(e => etape(e.instruction)).length;
-      let k = 0;
-      sortie.append(el("ol", { class: "etapes" }, ...dernier.map((e, i) => {
-        const numero = etape(e.instruction) ? `[${++k}/${total}] ` : "";
-        const statut = i === 0 ? "image de base"
-          : !etape(e.instruction) ? "pas de couche"
-          : e.executee ? "DONE " + e.duree.toFixed(1) + "s" : "CACHED";
-        return el("li", { class: e.executee ? "executee" : "reutilisee" },
-          el("code", { class: "instruction" }, numero + e.instruction),
-          el("span", { class: "statut" }, statut),
-          el("span", { class: "detail" }, "clé " + e.cle + (e.raison ? " · rejouée : " + e.raison : "")),
-        );
-      })));
-      const h = historique.at(-1);
-      sortie.append(el("p", { class: "bilan" },
-        `Build n° ${historique.length} : ${secondes(h.duree)}, ${h.executees} étape${h.executees > 1 ? "s" : ""} exécutée${h.executees > 1 ? "s" : ""}.`));
-    }
-    const builds = el("ol", { class: "historique" }, ...historique.map(h =>
-      el("li", {}, `${secondes(h.duree)}${h.sansCache ? " (--no-cache)" : ""}`)));
+    const zero = bouton("Remettre à zéro", () => {
+      ({ instructions, fichiers } = depart()); cache.clear(); historique.length = 0; dernier = null; affiche = false; erreur = null; dessiner();
+    }, { class: "zero" });
+    const h = historique.at(-1);
+    const bilan = el("p", { class: erreur ? "bilan erreur" : "bilan", role: "status", "aria-live": "polite" },
+      erreur ? "ERROR : " + erreur
+        : !h ? "Lancez un premier build."
+        : !affiche ? PERIME
+        : `Build n° ${historique.length} : ${secondes(h.duree)}, ${h.executees} étape${h.executees > 1 ? "s" : ""} exécutée${h.executees > 1 ? "s" : ""}.`);
+    const builds = el("ol", { class: "historique" }, ...historique.slice(-8).map((b, i) =>
+      el("li", { value: Math.max(0, historique.length - 8) + i + 1 }, `${secondes(b.duree)}${b.sansCache ? " (--no-cache)" : ""}`)));
 
     racine.replaceChildren(
-      el("section", {}, el("h3", {}, "Dockerfile"), dockerfile,
-        el("h3", {}, "Contexte de build : le contenu des fichiers"), contexte),
-      el("section", {}, el("h3", {}, "Construire"), commandes, sortie,
-        el("p", { class: "compteur" }, `Cache de build : ${cache.size} clé${cache.size > 1 ? "s" : ""}. Durée de chaque build :`), builds),
+      el("section", { class: "zone-dockerfile" }, el("h2", {}, "Dockerfile, et ce que le dernier build en a fait"), zero, dockerfile),
+      el("section", { class: "zone-contexte" }, el("h2", {}, "Contexte de build : le contenu des fichiers"), contexte,
+        el("p", { class: "mention" }, "Simulation : durées fictives, clés simplifiées. Les instructions se modifient librement ; les flèches les déplacent.")),
+      el("section", { class: "zone-build" }, el("h2", {}, "Construire"), commandes, bilan,
+        el("p", { class: "compteur" }, `Cache de build : ${cache.size} clé${cache.size > 1 ? "s" : ""}. Durée des builds :`), builds),
     );
   }
   dessiner();

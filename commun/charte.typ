@@ -96,3 +96,28 @@
 #let (pal, c, roles) = charte-de(variante)
 
 #let mono = "IBM Plex Mono"
+
+// ---------- Illustrations de couverture ----------
+// Partagées par les diapos et les pages web. c : les couleurs d’une variante ; u : l’unité de dessin
+// (pour les diapos, 1 px de la maquette).
+#let illustration(nom, c, u) = {
+  let px(n) = n * u
+  if nom == "vm" {
+    // trois VM (invité) sur un hyperviseur (hôte) et le matériel
+    stack(spacing: px(16),
+      grid(columns: (px(176),) * 3, column-gutter: px(16),
+        ..range(3).map(_ => box(width: px(176), height: px(96), fill: c.invite-t, radius: px(12)))),
+      box(width: px(560), height: px(56), fill: c.hote-t, radius: px(12)),
+      box(width: px(560), height: px(56), fill: c.gris, radius: px(12)),
+    )
+  } else if nom == "couches" {
+    // couches d’image en lecture seule : un dégradé de bleus, du plus sombre (base) au plus clair ;
+    // au sommet, la couche du conteneur en lecture/écriture, claire et bordée de tirets
+    stack(spacing: px(14),
+      box(width: px(560), height: px(56), radius: px(12), fill: c.hote-t.transparentize(80%),
+        stroke: (paint: c.hote-t, thickness: px(3), dash: "dashed")),
+      ..(70%, 45%, 20%).map(p => box(width: px(560), height: px(56), radius: px(12),
+        fill: color.mix((c.hote-t, p), (c.nuit, 100% - p)))),
+    )
+  } else { panic("illustration inconnue : " + nom) }
+}
