@@ -20,8 +20,6 @@ on:
 
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
 # Une publication à la fois ; celle qui est en cours va à son terme.
 concurrency:
@@ -29,11 +27,10 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  site:
+  # Deux tâches, comme le recommande GitHub : l'archive du site est déposée par la première, publiée par la
+  # seconde. Dans une seule tâche, la publication cherchait parfois l'archive avant qu'elle ne soit listée.
+  compilation:
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.publication.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
 
@@ -72,5 +69,15 @@ jobs:
         with:
           path: .
 
+  publication:
+    needs: compilation
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.publication.outputs.page_url }}
+    steps:
       - id: publication
         uses: actions/deploy-pages@v4
