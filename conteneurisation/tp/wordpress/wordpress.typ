@@ -474,7 +474,7 @@ proxy, comme dans le cours : #d("compose-echelle")[Compose : passer à l’éche
     `wp-config.php`) : sans volume commun, chaque instance aurait les siens.
   + Tout s’arrête : Compose ne gère qu’une machine. Répartir des conteneurs sur plusieurs machines et les
     relancer ailleurs en cas de panne est le rôle d’un orchestrateur, que le cours présente ensuite :
-    #d("orchestrateurs")[Au-delà d’une machine : les orchestrateurs].
+    #d("orchestrateurs")[La limite de Compose : une seule machine].
 ]
 
 = Pour finir <fin>

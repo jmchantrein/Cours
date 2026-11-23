@@ -21,7 +21,7 @@
 #anime(plan-anime(
   ([Introduction générale], [Rappel VM, conteneurisation, chroot, familles de conteneurs]),
   ([Bases], [Images, conteneurs, persistance, sécurité, réseau]),
-  ([Utilisation avancée], [Dockerfile, étude de cas sécurité, Compose]),
+  ([Utilisation avancée], [Dockerfile, étude de cas sécurité, Compose, orchestrateurs]),
   ([Annexes, puis pour rappel], [Conteneurs graphiques, Podman, travaux pratiques ; erreurs à éviter]),
 ))
 
@@ -2775,7 +2775,7 @@ PING qwant.com (…): 56 data bytes
       - Réseau en espace utilisateur (slirp4netns, pasta) : plus lent
       - Ports < 1024 : régler `net.ipv4.ip_unprivileged_port_start`
       - Limites de ressources : seulement en cgroup v2 + systemd
-      - Non pris en charge : AppArmor, _checkpoint/restore_ (figer un conteneur pour le reprendre), réseau de Swarm (orchestrateur, hors cadre)
+      - Non pris en charge : AppArmor, _checkpoint/restore_ (figer un conteneur pour le reprendre), réseau overlay de Swarm (orchestrateur sur plusieurs machines, présenté plus loin)
     ],
     bloc(role: "precaution", taille: px(25))[User namespace (userns-remap) : le démon reste root][
       - Root du conteneur = un UID de la plage `dockremap`, pas l'UID 0 de l'hôte
@@ -2940,6 +2940,239 @@ PING qwant.com (…): 56 data bytes
     ([`docker compose config`], [valider et afficher le fichier]),
   ),
   source-de: [#link("https://docs.docker.com/compose/releases/migrate/")[Docker, migrer vers Compose v2]],
+  note: _note,
+)
+
+= Utilisation avancée · Orchestration
+
+== La limite de Compose : une seule machine <orchestrateurs>
+#let _note = [Transition : la partie Compose s’est arrêtée à --scale, sur une machine. Clics 1 à 3 : la boutique en ligne de « Pourquoi Compose ? » ; les cinq copies de hello partagent le processeur, la mémoire et l’alimentation d’une seule machine. Clics 4 à 6 : Compose s’adresse à un seul démon Docker, celui du contexte courant. La politique de redémarrage (clé restart: du fichier Compose, option --restart de docker container run) est appliquée par ce démon, donc sur cette machine. docker compose up arrête puis recrée les conteneurs dont l’image ou la configuration a changé (page de référence de docker compose up). Dernier clic : la définition d’un orchestrateur et d’un cluster (grappe de machines), développée à la diapositive suivante. Limite énoncée et non rejouée : la démontrer demanderait d’éteindre la machine. Diapositive sans commande : rien à rejouer. À vérifier : les adresses des pages « docker compose up » et « Start containers automatically » de docs.docker.com, non ouvertes pendant la rédaction.]
+#anime(
+  rang(
+    bloc(role: "pratique")[La boutique en ligne, le jour des soldes][
+      - `docker compose up -d --scale hello=5` : cinq copies du frontal web, toutes sur *la même machine*
+      - Dix fois plus de clients : le processeur et la mémoire de cette machine fixent le plafond
+      - La machine tombe en panne : les cinq copies s'arrêtent avec elle, la boutique est fermée
+    ],
+    bloc(role: "precaution")[Ce que Compose ne fait pas][
+      - Compose pilote *un seul démon Docker* : il ne place aucun conteneur sur une autre machine
+      - `restart: always` dans le fichier : le démon relance un conteneur qui s'arrête… sur la même machine
+      - `docker compose up -d` après un changement d'image : les conteneurs sont arrêtés, puis recréés
+    ],
+  ),
+  note(role: "retenir")[Pour dépasser une machine, il faut un *orchestrateur* : un programme qui répartit des conteneurs sur un groupe de machines, le _cluster_, et les y maintient en marche.],
+  source-de: [#link("https://docs.docker.com/compose/")[Docker Compose] · #link("https://docs.docker.com/reference/cli/docker/compose/up/")[docker compose up] · #link("https://docs.docker.com/engine/containers/start-containers-automatically/")[politiques de redémarrage]],
+  note: _note,
+)
+
+== Un orchestrateur maintient l’état désiré du cluster
+#let _note = [Vocabulaire : état désiré (desired state) \= l’« état voulu » de la diapositive GitOps ; même idée, appliquée ici par l’orchestrateur lui-même. Clic 1 : le changement de posture, de l’impératif (lancer des conteneurs) au déclaratif (décrire le résultat). Clics 2 à 6 : les cinq services rendus, communs à Swarm et à Kubernetes ; ils reprennent les listes de fonctions des deux documentations (Swarm, « Feature highlights » : modèle déclaratif, passage à l’échelle, réconciliation de l’état désiré, réseau multi-hôte, découverte de services, répartition de charge, mises à jour progressives ; Kubernetes, « Overview » : découverte de services et répartition de charge, déploiements et retours arrière automatisés, placement selon les ressources, auto-réparation). Dernier clic : les orchestrateurs. Nomad (HashiCorp) orchestre des conteneurs et d’autres charges ; Amazon ECS (Elastic Container Service) est un service propriétaire d’AWS. OpenShift (Red Hat), k3s, et les offres managées GKE (Google), EKS (Amazon), AKS (Microsoft) ne sont pas d’autres orchestrateurs : ce sont des distributions ou des hébergements de Kubernetes. Diapositive sans commande : rien à rejouer. À vérifier : l’intitulé exact des listes de fonctions dans les deux documentations.]
+#anime(
+  note(role: "notion", taille: px(24))[On ne lance plus des conteneurs un à un : on déclare un *état désiré* (« cinq copies de `hello`, port 8080 publié »). L'orchestrateur compare en permanence l'état réel du cluster à cet état désiré, et corrige l'écart.],
+  lignes-anime(largeur: px(400), taille-cle: px(28), taille: px(26),
+    ([Placement], [choisir, pour chaque conteneur, une machine du cluster capable de l'accueillir]),
+    ([Reprise], [un conteneur ou une machine tombe : les copies manquantes sont relancées, sur une autre machine s'il le faut]),
+    ([Passage à l'échelle], [changer le nombre de copies d'un service : une commande, ou un chiffre dans un fichier]),
+    ([Réseau entre machines], [un service se joint par son nom, d'une machine à l'autre ; répartition de charge entre ses copies]),
+    ([Mise à jour progressive], [remplacer les copies par petits lots, sans arrêter le service ; retour à la version précédente possible]),
+  ),
+  note(role: "pratique")[Dans ce cours : *Docker Swarm*, intégré à Docker, puis *Kubernetes*. Il en existe d'autres, dont Nomad (HashiCorp) et des services propres à un fournisseur de cloud, comme Amazon ECS.],
+  source-de: [#link("https://docs.docker.com/engine/swarm/")[Docker, Swarm mode] · #link("https://kubernetes.io/docs/concepts/overview/")[Kubernetes, vue d'ensemble]],
+  note: _note,
+)
+
+== Docker Swarm : des nœuds, des services, des tâches
+#let _note = [Swarm \= le « mode Swarm » de Docker Engine (depuis Docker 1.12, 2016), à ne pas confondre avec l’ancien outil autonome du même nom. Bloc de gauche : les managers se mettent d’accord par l’algorithme de consensus Raft, qui exige une majorité ; N managers tolèrent la perte de (N-1)/2 d’entre eux, d’où 3 ou 5 (la documentation en déconseille plus de 7). Un manager exécute aussi des tâches par défaut ; docker node update --availability drain l’en dispense. Bloc de droite : un service est « répliqué » (N copies) ou « global » (une copie par nœud). Stack : le même mot que pour un projet Compose (diapositive « Où faire tourner Docker »), ici déployé sur le cluster. Réseau overlay : encapsulation VXLAN entre les nœuds. Ports à ouvrir entre les nœuds : 2377/tcp (gestion du cluster), 7946/tcp et udp (dialogue entre nœuds), 4789/udp (trafic overlay). Rappel : Docker rootless ne prend pas en charge le réseau overlay (diapositive « Rootless et user namespace »). Diapositive de vocabulaire, sans commande : rien à rejouer. À vérifier dans docs.docker.com/engine/swarm/ : le maximum conseillé de 7 managers et la liste des ports.]
+#anime(
+  rang(
+    bloc[Le cluster : des nœuds][
+      - *Swarm* : un mode de Docker Engine, sans rien installer de plus ; un *nœud* est une machine dont le démon Docker a rejoint le cluster
+      - `docker swarm init` crée le cluster, `docker swarm join` y ajoute une machine
+      - *Manager* : tient l'état du cluster et décide du placement ; trois managers tolèrent la perte d'un, cinq la perte de deux
+      - *Worker* : exécute les conteneurs qu'on lui confie ; par défaut, un manager en exécute aussi
+    ],
+    bloc[Ce qu'on y déploie][
+      - *Service* : l'état désiré — une image, un nombre de copies (_replicas_), des ports publiés
+      - *Tâche* (_task_) : une copie d'un service, c'est-à-dire un conteneur placé sur un nœud
+      - *Stack* : un ensemble de services, décrit par un fichier Compose
+      - *Réseau overlay* : un réseau virtuel étendu à tous les nœuds ; un port publié répond sur *chaque* nœud (_routing mesh_)
+    ],
+  ),
+  source-de: [#link("https://docs.docker.com/engine/swarm/key-concepts/")[Docker, Swarm : notions clés] · #link("https://docs.docker.com/engine/swarm/how-swarm-mode-works/nodes/")[nœuds] · #link("https://docs.docker.com/engine/swarm/ingress/")[routing mesh]],
+  note: _note,
+)
+
+== Swarm : le fichier Compose devient une stack
+#let _note = [Sorties réelles sur Docker Engine 29.10.0, cluster d’un seul nœud : à rejouer sur Debian 13 (docker.io 26.1.5) avec conteneurisation/cm/rejouer.sh. L’image hello:1.0 est celle du fil rouge, construite avec docker image build -t hello:1.0 . ; sur un seul nœud, l’image locale suffit ; avec plusieurs nœuds, la pousser dans un registre que tous peuvent lire (diapositive « Registres »). docker swarm init affiche aussi la commande docker swarm join et son jeton, à lancer sur chaque futur worker : le jeton est un secret, il n’est pas recopié ici. docker stack deploy affiche d’abord, sur la 29.10, « Since --detach\=false was not specified, tasks will be created in the background. » ; sur la 26.1.5, l’avis peut différer, et un avertissement « image hello:1.0 could not be accessed on a registry to record its digest » est possible pour une image locale. Lecture de docker service ls : boutique\_hello \= nom de la stack, puis du service ; replicated \= un nombre fixé de copies ; 3/3 \= tâches en marche sur tâches désirées ; \*:8080-\>80/tcp \= port 8080 publié sur tous les nœuds. Le réseau boutique\_default est un réseau overlay (docker network ls --filter driver\=overlay le liste, avec le réseau ingress du routing mesh). Répartition de charge : for i in 1 2 3 4; do curl -s localhost:8080; done doit répondre depuis plusieurs conteneurs, sans Traefik ; sortie à rejouer, la machine de préparation n’ayant pas IPVS dans son noyau (le routing mesh n’y fonctionne pas). À vérifier : que docker stack deploy ignore bien build: sur la 26.1.5 (message « Ignoring unsupported options: build »).]
+#anime(
+  rang(
+    bloc[`compose.yaml`][
+      #terminal(titre: none, taille: px(19))[```
+  services:
+    hello:
+      image: hello:1.0
+      ports:
+        - "8080:80"
+      deploy:
+        replicas: 3
+  ```]
+      - `image` : chaque nœud la tire d'un registre ; `build:` est ignoré
+      - `deploy:` : la partie lue par Swarm, ici trois copies
+      - Plus de Traefik : Swarm répartit lui-même la charge du port publié
+    ],
+    bloc(role: "pratique", poids: 1.5)[Terminal · un nœud, manager][
+      #terminal(taille: px(17))[```
+  $ docker swarm init
+  Swarm initialized: current node (rj299s6pik3w43cetpbhbj5w5) is now a manager.
+  # … (la commande « docker swarm join » pour un futur worker)
+  $ docker stack deploy -c compose.yaml boutique
+  # … (avis : les tâches sont créées en arrière-plan)
+  Creating network boutique_default
+  Creating service boutique_hello
+  $ docker service ls
+  ID             NAME             MODE         REPLICAS   IMAGE       PORTS
+  i4ttboqplw5w   boutique_hello   replicated   3/3        hello:1.0   *:8080->80/tcp
+  ```]
+    ],
+  ),
+  note(role: "notion")[`boutique_hello` : la stack, puis le service. `3/3` : trois tâches en marche sur trois désirées. `*:8080->80/tcp` : le port 8080 de chaque nœud mène au service.],
+  source-de: [#link("https://docs.docker.com/engine/swarm/stack-deploy/")[Docker, déployer une stack] · #link("https://docs.docker.com/engine/swarm/ingress/")[routing mesh]],
+  note: _note,
+)
+
+== Swarm : passer à l’échelle, reprendre après une panne
+#let _note = [Suite, sorties réelles sur Docker Engine 29.10.0, cluster d’un seul nœud (nommé « vm ») : à rejouer sur Debian 13 (docker.io 26.1.5) avec conteneurisation/cm/rejouer.sh. Clic 1 : docker service scale change l’état désiré ; dans un terminal, il affiche une barre de progression par tâche, puis « verify: Service boutique\_hello converged » (libellé à relever sur la 26.1.5). Clic 2 : la panne est simulée en tuant le conteneur de la tâche 2 ; docker container kill envoie SIGKILL et affiche l’identifiant du conteneur. Clic 3 : docker service ps, relevé une vingtaine de secondes plus tard. La ligne « \\\_ » est l’historique de l’emplacement 2 : l’ancienne tâche (Shutdown, Failed, code 137 \= 128 + 9, SIGKILL, déjà vu avec docker container stop) ; au-dessus, la tâche qui la remplace, créée par le manager sans aucune commande. Entre les deux relevés, docker service ls affichait 4/5. Avec plusieurs nœuds, la colonne NODE montrerait le placement, et l’arrêt d’un nœud ferait recréer ses tâches sur les autres : non rejoué ici (un seul nœud), à montrer en séance avec deux VM si le temps le permet. Limite à dire : un volume du pilote local reste sur son nœud ; une tâche recréée ailleurs ne retrouve pas ses données, et la mise en garde sur les bases de données (« La limite : deux PostgreSQL sur un même volume ») vaut aussi sous Swarm. Mise à jour progressive : docker service update --image hello:1.1 boutique\_hello remplace les tâches une par une (parallélisme 1 par défaut, relevé avec docker service inspect) ; docker service rollback revient en arrière. Nettoyage : docker stack rm boutique, puis docker swarm leave --force.]
+#anime(
+  terminal-etapes(taille: px(18),
+    [```
+    $ docker service scale boutique_hello=5
+    boutique_hello scaled to 5
+    # … (progression des 5 tâches)
+    verify: Service boutique_hello converged
+    ```],
+    [```
+    # panne simulée : tuer le conteneur de la tâche 2
+    $ docker container kill \
+        $(docker container ls -q --filter name=boutique_hello.2)
+    fe2990068f26
+    ```],
+    [```
+    $ docker service ps boutique_hello
+    ID             NAME                   IMAGE       NODE      DESIRED STATE   CURRENT STATE            ERROR                         PORTS
+    q1f94vuea29b   boutique_hello.1       hello:1.0   vm        Running         Running 53 seconds ago
+    v22v7zy3ybrc   boutique_hello.2       hello:1.0   vm        Running         Running 7 seconds ago
+    lx0bm1j7w9r0    \_ boutique_hello.2   hello:1.0   vm        Shutdown        Failed 18 seconds ago    "task: non-zero exit (137)"
+    udzwsfkqyjhe   boutique_hello.3       hello:1.0   vm        Running         Running 53 seconds ago
+    k1tavj7hru4c   boutique_hello.4       hello:1.0   vm        Running         Running 23 seconds ago
+    6418lj3cl66a   boutique_hello.5       hello:1.0   vm        Running         Running 23 seconds ago
+    ```],
+  ),
+  note(role: "notion")[Ligne `\_` : l'ancienne tâche 2, arrêtée sur le code 137 (SIGKILL). Au-dessus : la tâche qui la remplace. `NODE` : le nœud où tourne la tâche — ici un seul, `vm`.],
+  note(role: "retenir")[Personne n'a relancé la tâche 2 : le manager a constaté l'écart entre l'état désiré (5) et l'état réel (4), et l'a corrigé. Si un nœud entier tombe, ses tâches sont recréées sur les nœuds restants.],
+  source-de: [#link("https://docs.docker.com/engine/swarm/swarm-tutorial/scale-service/")[Docker, tutoriel Swarm : passer à l'échelle] · #link("https://docs.docker.com/engine/swarm/how-swarm-mode-works/services/")[services et tâches]],
+  note: _note,
+)
+
+== Kubernetes : un plan de contrôle, des nœuds
+#let _note = [Diapositive conceptuelle : aucun cluster Kubernetes n’a servi à la préparer, rien à rejouer. Kubernetes (« timonier » en grec, abrégé K8s) : publié par Google en 2014, confié à la CNCF (fondation déjà citée dans « Standards et architecture actuelle »). Schéma de droite : même présentation que la chaîne de Docker dans l’annexe Podman (client docker, dockerd, containerd, runc) ; sous Kubernetes, dockerd disparaît, containerd et runc restent. Sens des flèches : le chemin d’un ordre ; en pratique c’est le kubelet qui se connecte au serveur d’API et y surveille les pods affectés à son nœud. Composants du plan de contrôle : kube-apiserver (l’API), etcd (base clé-valeur répartie, qui s’appuie comme les managers de Swarm sur le consensus Raft), kube-scheduler (placement), kube-controller-manager (les boucles de contrôle). Sur chaque nœud : kubelet, un runtime de conteneurs conforme à la CRI (containerd ou CRI-O), et kube-proxy, qui installe les règles réseau des Services. CRI : l’interface par laquelle le kubelet pilote le runtime ; depuis Kubernetes 1.24, plus d’adaptateur vers Docker (dockershim, même diapositive). Une image construite avec docker image build est une image OCI : elle tourne telle quelle sous Kubernetes. À vérifier sur kubernetes.io/docs/concepts/overview/components/ et kubernetes.io/docs/concepts/architecture/cri/ : la liste des composants et l’adresse de la page CRI.]
+#anime(
+  rang(
+    bloc[Qui fait quoi][
+      - *Kubernetes* (abrégé K8s) : orchestrateur libre, issu de Google (2014), confié à la CNCF
+      - *Nœud* (_node_) : une machine qui exécute des *pods* ; un pod = un ou plusieurs conteneurs lancés ensemble, l'unité que Kubernetes place
+      - *Plan de contrôle* (_control plane_) : le serveur d'API, point d'entrée unique ; `etcd`, la base qui garde l'état du cluster ; l'ordonnanceur, qui choisit un nœud pour chaque pod ; les contrôleurs, qui ramènent l'état réel vers l'état désiré
+      - `kubelet` : l'agent de chaque nœud ; il fait lancer les conteneurs par `containerd`, à travers la *CRI* (_Container Runtime Interface_)
+    ],
+    bloc(poids: 0.8)[De la commande au conteneur][
+      #terminal(titre: none, taille: px(18))[```
+  kubectl          — client, poste d'administration
+    ↓  API REST (HTTPS)
+  kube-apiserver   — plan de contrôle
+    ↓                (état dans etcd)
+  kubelet          — agent de chaque nœud
+    ↓  CRI
+  containerd
+    ↓
+  runc (OCI)  →  conteneurs du pod
+  ```]
+    ],
+  ),
+  note(role: "retenir")[Pas de `dockerd` sous Kubernetes, mais le même `containerd`, le même `runc` et les mêmes images OCI que Docker (diapositive « Standards et architecture actuelle »).],
+  source-de: [#link("https://kubernetes.io/docs/concepts/overview/components/")[Kubernetes, composants] · #link("https://kubernetes.io/docs/concepts/architecture/cri/")[CRI]],
+  note: _note,
+)
+
+== Kubernetes : pod, Deployment, Service
+#let _note = [Diapositive conceptuelle : manifeste écrit d’après la documentation, non appliqué sur un cluster ; à rejouer avant le cours sur un Kubernetes de test (kind, minikube ou k3s) avec kubectl apply -f hello.yaml, puis kubectl get pods. Le manifeste est l’équivalent du compose.yaml de la stack Swarm : mêmes trois copies de hello. registre.example est un nom d’exemple (domaine réservé) : comme avec Swarm sur plusieurs nœuds, l’image doit être dans un registre que chaque nœud peut lire. Lecture : apiVersion et kind disent quel objet on décrit ; metadata.name le nomme ; spec est l’état désiré. Le Deployment retrouve ses pods par leur label (selector.matchLabels doit correspondre aux labels du modèle template), comme Traefik retrouvait ses conteneurs par leurs labels. Le Service sélectionne les mêmes pods par le même label ; de type ClusterIP par défaut, il n’est joignable que de l’intérieur du cluster ; l’exposer à l’extérieur (types NodePort, LoadBalancer, objet Ingress) sort du cadre du cours. Entre le Deployment et les pods se glisse un objet ReplicaSet, créé par le Deployment : inutile de le nommer en cours. kubectl : le client en ligne de commande, qui parle au serveur d’API. Kompose convertit un fichier Compose en manifestes Kubernetes. À vérifier sur kubernetes.io (pages Pods, Deployments, Service) : le manifeste, champ par champ.]
+#anime(
+  rang(
+    bloc(poids: 0.9)[`hello.yaml`][
+      #terminal(titre: none, taille: px(16))[```
+  apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    name: hello
+  spec:
+    replicas: 3          # état désiré : 3 pods
+    selector:
+      matchLabels:
+        app: hello       # ses pods : ce label
+    template:            # le modèle de pod
+      metadata:
+        labels:
+          app: hello
+      spec:
+        containers:
+          - name: hello
+            image: registre.example/hello:1.0
+  ---
+  apiVersion: v1
+  kind: Service
+  metadata:
+    name: hello
+  spec:
+    selector:
+      app: hello         # vers les pods de ce label
+    ports:
+      - port: 80
+  ```]
+    ],
+    bloc[Trois objets, décrits en YAML][
+      - *Pod* : la plus petite unité déployable ; ses conteneurs partagent une adresse IP et des volumes
+      - *Deployment* : l'état désiré d'un groupe de pods identiques — combien (`replicas`), sur quel modèle (`template`) ; il remplace les pods perdus et met à jour progressivement
+      - *Service* : un nom DNS et une adresse IP stables devant des pods qui naissent et meurent ; il répartit les connexions entre eux
+      - `kubectl apply -f hello.yaml` envoie le fichier au serveur d'API ; les contrôleurs créent les pods
+    ],
+  ),
+  source-de: [#link("https://kubernetes.io/docs/concepts/workloads/pods/")[Kubernetes, Pods] · #link("https://kubernetes.io/docs/concepts/workloads/controllers/deployment/")[Deployments] · #link("https://kubernetes.io/docs/concepts/services-networking/service/")[Service]],
+  note: _note,
+)
+
+== Compose, Swarm ou Kubernetes : lequel choisir ?
+#let _note = [Diapositive de synthèse, sans commande : rien à rejouer. Lecture ligne à ligne, les trois blocs se répondent : où ça tourne, ce qu’on écrit, ce qui se passe en cas de panne, pour quel usage. Compose : restart: relance le conteneur sur la même machine. Swarm : fonctionnel et maintenu dans Docker Engine, mais Kubernetes concentre l’essentiel des évolutions ; raisonnable pour un petit cluster, à condition d’accepter un écosystème réduit. Kubernetes : le standard de fait, proposé en service managé par les grands fournisseurs de cloud (GKE, EKS, AKS) et décliné en distributions (OpenShift, k3s) ; son coût est la complexité : plan de contrôle à exploiter ou à louer, nombreux objets, réseau et stockage à choisir. kubeadm est l’outil d’installation de référence du projet. Rappel de sécurité valable pour les trois : les conteneurs partagent le noyau de leur nœud ; toute la partie Sécurité du cours reste vraie sur un cluster. Travaux pratiques : seul le passage à l’échelle avec Compose est pratiqué ; Swarm et Kubernetes ne sont présentés qu’ici. À vérifier : la formulation « peu d’évolutions » pour Swarm, d’après les notes de version de Docker Engine.]
+#anime(
+  rang(
+    bloc[Compose][
+      - *Une machine*, un démon Docker
+      - Un fichier `compose.yaml`
+      - Panne : `restart:` relance sur place ; machine perdue, service perdu
+      - Pour : développer, tester, servir depuis un seul serveur
+    ],
+    bloc[Docker Swarm][
+      - *Un cluster* ; déjà dans Docker Engine
+      - Le même fichier Compose, clé `deploy:`
+      - Panne : tâches recréées sur un autre nœud
+      - Pour : un petit cluster, simplement ; maintenu, mais peu d'évolutions
+    ],
+    bloc[Kubernetes][
+      - *Un cluster* ; à installer (kubeadm, k3s) ou à louer (service managé)
+      - Ses propres manifestes YAML
+      - Panne : pods recréés sur un autre nœud
+      - Pour : la production à grande échelle ; standard de fait, mais complexe
+    ],
+  ),
+  note(role: "retenir")[Commencer par Compose. Passer à un orchestrateur quand une seule machine ne suffit plus, pour la charge ou pour la disponibilité : la complexité d'un cluster se paie en exploitation.],
+  source-de: [#link("https://docs.docker.com/compose/")[Docker Compose] · #link("https://docs.docker.com/engine/swarm/")[Docker, Swarm mode] · #link("https://kubernetes.io/docs/concepts/overview/")[Kubernetes, vue d'ensemble]],
   note: _note,
 )
 
@@ -3137,21 +3370,21 @@ PING qwant.com (…): 56 data bytes
 = Annexe · Travaux pratiques
 
 == Travaux pratiques : conteneuriser WordPress
-#let _note = [Compose : utiliser « docker compose » (v2) ; « docker-compose » (v1) n’est plus maintenu (fin de vie en 2023). Swarm reste fonctionnel, mais Kubernetes concentre l’essentiel des évolutions.]
+#let _note = [Compose : utiliser « docker compose » (v2) ; « docker-compose » (v1) n’est plus maintenu (fin de vie en 2023). Le TP ne comporte plus de partie Swarm : le troisième point pratique le passage à l’échelle sur une machine (docker compose up --scale) ; les orchestrateurs sur plusieurs machines sont présentés dans la partie « Orchestration ». Swarm reste fonctionnel, mais Kubernetes concentre l’essentiel des évolutions. Licence : CC BY-NC-SA 4.0, celle du fichier LICENSE.md à la racine du dépôt.]
 #anime(
   rang(
     bloc(role: "question")[Réaliser un service WordPress conteneurisé][
       + *Dockerfile*
       + *Docker Compose*
-      + *Docker Swarm* : hors du cadre du cours, voir #link("https://docs.docker.com/engine/swarm/")[docs.docker.com/engine/swarm]
+      + *Passage à l'échelle avec Compose* : `docker compose up --scale`
     ],
     bloc(role: "pratique")[Prérequis][
       - Paquets `docker.io` et `docker-compose` (Debian 13)
       - Être membre du groupe `docker`
-      - Le support du TP : `conteneurisation/travaux_pratiques.md`
+      - Le support du TP : `conteneurisation/tp/wordpress/`
     ],
   ),
-  source-de: [#link("https://github.com/jmchantrein/formation_docker")[github.com/jmchantrein/formation_docker] · licence CC BY-NC-SA 3.0],
+  source-de: [#link("https://github.com/jmchantrein/Cours")[github.com/jmchantrein/Cours] · licence CC BY-NC-SA 4.0],
   note: _note,
 )
 
