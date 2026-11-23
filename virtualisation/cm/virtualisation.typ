@@ -1,9 +1,9 @@
 // Cours « Fondements de la virtualisation de machines » — Typst + Touying.
-// Compilation (depuis la racine du dépôt) : typst compile --root . --font-path commun/fonts virtualisation/virtualisation.typ build/virtualisation.pdf
+// Compilation (depuis la racine du dépôt) : typst compile --root . --font-path commun/fonts virtualisation/cm/virtualisation.typ build/virtualisation.pdf
 // Une diapo = un titre `==` ; une section (surtitre bleu) = un titre `=`.
 // Structure : règles de .claude/skills/structurer-diapos-cours ; apparence : charte de commun/.
 
-#import "../commun/theme-cours.typ": *
+#import "../../commun/theme-cours.typ": *
 
 #show: cours-theme.with(
   auteur: [Jean-Mathieu Chantrein],
@@ -367,7 +367,7 @@
     h => bloc-anime(b-droite, 5, uncover, hauteur: h),
   )
   source[#link("https://www.kernel.org/doc/html/latest/virt/kvm/x86/running-nested-guests.html")[kernel.org, Running nested guests with KVM]]
-  utils.speaker-note(self: self)[Lecture des cadres : bleu à trait plein = terminal de l’hôte physique (niveau 0) ; violet à tirets = terminal de la VM lancée par la première commande qemu (niveau 1) ; rose à pointillés = terminal de la VM lancée depuis cette VM (niveau 2). -cpu host transmet les extensions vmx/svm à la VM, d’où la présence de /dev/kvm au niveau 1. Sur AMD : /sys/module/kvm\_amd/parameters/nested (affiche 1). Sorties types, à rejouer sur le poste de démonstration avec virtualisation/rejouer-tp.sh, qui note aussi les versions employées.]
+  utils.speaker-note(self: self)[Lecture des cadres : bleu à trait plein = terminal de l’hôte physique (niveau 0) ; violet à tirets = terminal de la VM lancée par la première commande qemu (niveau 1) ; rose à pointillés = terminal de la VM lancée depuis cette VM (niveau 2). -cpu host transmet les extensions vmx/svm à la VM, d’où la présence de /dev/kvm au niveau 1. Sur AMD : /sys/module/kvm\_amd/parameters/nested (affiche 1). Sorties types, à rejouer sur le poste de démonstration avec virtualisation/cm/rejouer-tp.sh, qui note aussi les versions employées.]
 })
 
 == Choisir l’image Debian à installer
@@ -510,7 +510,7 @@
     ],
   ),
   source-de: [#link("https://libvirt.org/docs.html")[libvirt.org] · #link("https://github.com/virt-manager/virt-manager/blob/main/man/virt-install.rst")[virt-install(1)]],
-  note: [L’ISO est celle téléchargée et vérifiée aux diapositives précédentes. grep -c compte une ligne par processeur logique : un nombre non nul indique que les extensions sont exposées. Commandes pour Debian/Ubuntu ; --osinfo existe depuis virt-install 4.0 ; detect=on identifie l’OS à partir de l’ISO ; --disk size=10 s’exprime en Gio. Par défaut virt-install choisit un affichage graphique (protocoles SPICE ou VNC) et lance virt-viewer (--autoconsole graphical) pour interagir avec l’installateur ; sans virt-viewer, aucune console ne s’ouvre et l’installation interactive est impossible. Alternative en mode texte : --graphics none avec une console série (virsh console). virsh list --all affiche une ligne par VM : identifiant, nom, état (en cours d’exécution, fermé). Proxmox VE, OpenStack et oVirt s’appuient aussi sur KVM. Sorties types, à rejouer avec virtualisation/rejouer-tp.sh.],
+  note: [L’ISO est celle téléchargée et vérifiée aux diapositives précédentes. grep -c compte une ligne par processeur logique : un nombre non nul indique que les extensions sont exposées. Commandes pour Debian/Ubuntu ; --osinfo existe depuis virt-install 4.0 ; detect=on identifie l’OS à partir de l’ISO ; --disk size=10 s’exprime en Gio. Par défaut virt-install choisit un affichage graphique (protocoles SPICE ou VNC) et lance virt-viewer (--autoconsole graphical) pour interagir avec l’installateur ; sans virt-viewer, aucune console ne s’ouvre et l’installation interactive est impossible. Alternative en mode texte : --graphics none avec une console série (virsh console). virsh list --all affiche une ligne par VM : identifiant, nom, état (en cours d’exécution, fermé). Proxmox VE, OpenStack et oVirt s’appuient aussi sur KVM. Sorties types, à rejouer avec virtualisation/cm/rejouer-tp.sh.],
 )
 
 == Mini TP : une VM, puis une VM dans la VM
@@ -562,7 +562,7 @@
       # → oui, pour les membres du groupe kvm
       ```
     ])))
-  utils.speaker-note(self: self)[Question 1 : un résultat 0 signifie extensions absentes ou désactivées dans l’UEFI ; lscpu affiche « Virtualization » ou « Virtualisation » selon la langue. Question 2 : /dev/kvm est un périphérique caractère (c), lisible et inscriptible par root et par le groupe kvm ; sur AMD, le module s’appelle kvm\_amd. Sorties types, à rejouer avec virtualisation/rejouer-tp.sh, qui note aussi les versions.]
+  utils.speaker-note(self: self)[Question 1 : un résultat 0 signifie extensions absentes ou désactivées dans l’UEFI ; lscpu affiche « Virtualization » ou « Virtualisation » selon la langue. Question 2 : /dev/kvm est un périphérique caractère (c), lisible et inscriptible par root et par le groupe kvm ; sur AMD, le module s’appelle kvm\_amd. Sorties types, à rejouer avec virtualisation/cm/rejouer-tp.sh, qui note aussi les versions.]
 })
 
 == Mini TP : corrigé (2/4)

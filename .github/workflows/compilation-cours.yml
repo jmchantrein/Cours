@@ -1,13 +1,13 @@
 name: Compilation des cours (Typst)
 
-# Chaque cours est un dossier <cours>/ contenant <cours>/<cours>.typ ;
-# un PDF par variante est publié à côté : <cours>/<cours>-<variante>.pdf
+# Chaque cours est un dossier <cours>/ ; ses diapos sont dans <cours>/cm/<cours>.typ ;
+# un PDF par variante est publié à côté : <cours>/cm/<cours>-<variante>.pdf
 # (projection, puis les rendus adaptés ; liste dans commun/theme-cours.typ).
 on:
   push:
     branches: [main]
     paths:
-      - "*/*.typ"
+      - "*/cm/*.typ"
       - "commun/**"
       - ".github/workflows/compilation-cours.yml"
   workflow_dispatch:
@@ -31,11 +31,11 @@ jobs:
 
       - name: Compilation
         run: |
-          for src in */*.typ; do
-            cours=$(dirname "$src")
-            [ "$src" = "$cours/$cours.typ" ] || continue
+          for src in */cm/*.typ; do
+            cours=${src%%/*}
+            [ "$src" = "$cours/cm/$cours.typ" ] || continue
             for variante in projection deuteranopie protanopie tritanopie achromatopsie dyslexie; do
-              pdf="$cours/$cours-$variante.pdf"
+              pdf="$cours/cm/$cours-$variante.pdf"
               echo "::group::$pdf"
               typst compile --root . --font-path commun/fonts --input variante="$variante" "$src" "$pdf"
               git add "$pdf"
