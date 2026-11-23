@@ -5,7 +5,7 @@
 
 #show: page-web.with(
   titre: [Cours],
-  sous-titre: [Supports de cours de Jean-Mathieu Chantrein : diapositives, travaux pratiques],
+  sous-titre: [Supports de cours de Jean-Mathieu Chantrein : diapositives, travaux pratiques, artefacts],
   racine: "",
   sommaire: false,
   liens: (([Sources], "https://github.com/jmchantrein/Cours"),),
@@ -20,6 +20,7 @@
 = Fondements de la conteneurisation
 - #diapos("conteneurisation")
 - Travaux pratiques : #link("conteneurisation/tp/wordpress/")[Conteneuriser WordPress]
+- Artefact : #link("conteneurisation/artefacts/cache-de-build/")[Le cache de build]
 
 = Fondements de la virtualisation de machines
 - #diapos("virtualisation")

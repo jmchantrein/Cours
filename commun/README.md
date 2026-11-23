@@ -87,5 +87,13 @@ par son navigateur. Le nom du rôle et son pictogramme sont écrits dans chaque 
 - Schéma : `#schema([légende], ch => …)` ; le dessin reçoit la charte d’une variante (`ch.c`, `ch.roles`) et
   s’écrit avec `boite(…)`, `case(…)` et les primitives de Typst. La page contient un dessin par palette.
 
+## Pages web : artefacts
+Un artefact est un petit logiciel interactif qui fait manipuler un concept : `<cours>/artefacts/<nom>/`.
+- `<nom>.typ` : une page `page-web` qui énonce la règle (bloc `retenir`, renvoi `diapo(…)`), place l’artefact
+  par `#artefact(read("<nom>.js"), style: read("<nom>.css"))`, puis propose des expériences et leurs réponses.
+- `<nom>.js` : construit l’interface dans l’élément `#artefact`, sans bibliothèque externe.
+- `<nom>.css` : n’emploie que les variables CSS de la charte (`--c-*`, `--<rôle>-entete`…), pour suivre la variante choisie.
+- Un état se lit dans le texte (« CACHED », « DONE ») ; la couleur ne fait que le doubler.
+
 Limite connue : l’export HTML de Typst est expérimental. La CI fixe la version de Typst ; à chaque montée de
 version, recompiler les pages et les relire dans un navigateur.

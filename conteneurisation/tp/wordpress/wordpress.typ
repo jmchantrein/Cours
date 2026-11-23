@@ -154,6 +154,9 @@ l’étape 2 reprendra ce fichier pour l’améliorer.
   - Vérifiez que le site fonctionne, puis comparez le nombre de couches et la taille avec l’étape 1.
 ]
 
+#note(role: "pratique")[Pour voir ce que le cache réutilise quand une instruction ou un fichier change, essayez
+  l’artefact #link("../../artefacts/cache-de-build/")[Le cache de build].]
+
 #indice(titre: [Indice : la liste des points à reprendre])[
   - `apt-get update` et `apt-get install` dans le même `RUN`, avec `--no-install-recommends`, puis la
     suppression de `/var/lib/apt/lists/*`.

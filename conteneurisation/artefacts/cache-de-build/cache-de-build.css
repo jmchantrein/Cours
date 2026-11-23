@@ -1,0 +1,35 @@
+/* cache-de-build.css — mise en forme de l’artefact ; les couleurs sont celles de la charte (variables CSS). */
+#artefact { display: grid; gap: 1.5rem; margin: 1.5rem 0; }
+#artefact h3 { margin: 0 0 .5rem; font-size: 1rem; }
+#artefact section > h3:not(:first-child) { margin-top: 1.4rem; }
+#artefact input[type="text"] { width: 100%; min-width: 0; padding: .35rem .5rem; border: 1px solid var(--c-filet); border-radius: .3rem;
+  background: #fff; color: var(--c-encre); font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: .8rem; }
+#artefact button { padding: .35rem .7rem; border: 1px solid var(--c-ardoise); border-radius: .3rem; background: #fff;
+  color: var(--c-encre); font: inherit; font-size: .85rem; cursor: pointer; }
+#artefact button:disabled { opacity: .35; cursor: default; }
+#artefact button.principal { background: var(--notion-entete); border-color: var(--notion-entete); color: var(--notion-texte); font-weight: 600; }
+
+.dockerfile { margin: 0; padding: 0; list-style: none; counter-reset: ligne; }
+.dockerfile li { display: flex; gap: .3rem; align-items: center; margin: .3rem 0; counter-increment: ligne; }
+.dockerfile li::before { content: counter(ligne); width: 1.2rem; color: var(--c-gris); font-size: .8rem; text-align: right; }
+.contexte label { display: grid; grid-template-columns: 6.5rem 1fr; gap: .5rem; align-items: center; margin: .3rem 0; }
+.contexte code { white-space: nowrap; }
+.commandes { display: flex; flex-wrap: wrap; gap: .4rem; margin-bottom: .8rem; }
+
+.sortie { padding: .8rem 1rem; border-radius: .5rem; background: var(--c-nuit); color: var(--c-texte-term); font-size: .85rem; }
+.sortie p { margin: 0; }
+.sortie code { padding: 0; background: none; color: inherit; }
+.sortie .erreur { font-weight: 600; }
+.etapes { margin: 0; padding: 0; list-style: none; }
+.etapes li { display: grid; grid-template-columns: 1fr auto; gap: .1rem .8rem; padding: .35rem 0; border-bottom: 1px solid var(--c-encart); }
+.etapes .instruction { overflow-wrap: anywhere; font-size: .78rem; }
+.etapes .statut { font-family: "IBM Plex Mono", ui-monospace, monospace; font-weight: 600; white-space: nowrap; }
+.etapes .detail { grid-column: 1 / -1; color: var(--c-commentaire); font-size: .75rem; }
+/* Rejouée ou réutilisée : dit par le texte (DONE, CACHED), doublé d’un trait à gauche. */
+.etapes .executee { border-left: .3rem solid var(--precaution-entete); padding-left: .6rem; }
+.etapes .reutilisee { border-left: .3rem solid transparent; padding-left: .6rem; }
+.sortie .bilan { margin-top: .7rem; font-weight: 600; }
+.compteur { margin: .8rem 0 .2rem; font-size: .9rem; }
+.historique { display: flex; flex-wrap: wrap; gap: .3rem .5rem; margin: 0; padding: 0; list-style: none; counter-reset: build; font-size: .85rem; }
+.historique li { counter-increment: build; padding: .1rem .5rem; border-radius: .3rem; background: var(--c-espace); }
+.historique li::before { content: "n° " counter(build) " : "; color: var(--c-gris); }

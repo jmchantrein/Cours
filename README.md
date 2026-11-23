@@ -4,7 +4,7 @@ Supports de cours de Jean-Mathieu Chantrein : un dossier par cours, une charte c
 
 | Cours | Diapos | Rendus adaptés | Sources |
 |---|---|---|---|
-| Fondements de la conteneurisation | [`conteneurisation-projection.pdf`](conteneurisation/cm/conteneurisation-projection.pdf) | [deutéranopie](conteneurisation/cm/conteneurisation-deuteranopie.pdf) · [protanopie](conteneurisation/cm/conteneurisation-protanopie.pdf) · [tritanopie](conteneurisation/cm/conteneurisation-tritanopie.pdf) · [achromatopsie](conteneurisation/cm/conteneurisation-achromatopsie.pdf) · [dyslexie](conteneurisation/cm/conteneurisation-dyslexie.pdf) | [`conteneurisation/`](conteneurisation/) · TP [Conteneuriser WordPress](conteneurisation/tp/wordpress/) |
+| Fondements de la conteneurisation | [`conteneurisation-projection.pdf`](conteneurisation/cm/conteneurisation-projection.pdf) | [deutéranopie](conteneurisation/cm/conteneurisation-deuteranopie.pdf) · [protanopie](conteneurisation/cm/conteneurisation-protanopie.pdf) · [tritanopie](conteneurisation/cm/conteneurisation-tritanopie.pdf) · [achromatopsie](conteneurisation/cm/conteneurisation-achromatopsie.pdf) · [dyslexie](conteneurisation/cm/conteneurisation-dyslexie.pdf) | [`conteneurisation/`](conteneurisation/) · TP [Conteneuriser WordPress](conteneurisation/tp/wordpress/) · artefact [Le cache de build](conteneurisation/artefacts/cache-de-build/) |
 | Fondements de la virtualisation de machines | [`virtualisation-projection.pdf`](virtualisation/cm/virtualisation-projection.pdf) | [deutéranopie](virtualisation/cm/virtualisation-deuteranopie.pdf) · [protanopie](virtualisation/cm/virtualisation-protanopie.pdf) · [tritanopie](virtualisation/cm/virtualisation-tritanopie.pdf) · [achromatopsie](virtualisation/cm/virtualisation-achromatopsie.pdf) · [dyslexie](virtualisation/cm/virtualisation-dyslexie.pdf) | [`virtualisation/`](virtualisation/) |
 
 ## Rendus adaptés
@@ -26,7 +26,8 @@ un pictogramme (voir [`commun/README.md`](commun/README.md)). Chaque variante s�
 qui relie ses couleurs à celles de la projection.
 
 ## Organisation
-Un dossier par cours, et dans chaque cours un dossier par nature de support :
+Un dossier par cours, et dans chaque cours un dossier par nature de support. Les pages web renvoient les unes
+aux autres : un TP vers la diapo qui porte la notion et vers l’artefact qui la fait manipuler.
 
 - `<cours>/cm/` : le cours magistral. `<cours>.typ` contient les diapos, en [Typst](https://typst.app) avec
   [Touying](https://github.com/touying-typ/touying) ; les PDF `<cours>-<variante>.pdf` sont compilés par la CI.
@@ -34,6 +35,8 @@ Un dossier par cours, et dans chaque cours un dossier par nature de support :
 - `<cours>/tp/<tp>/` : une séance de travaux pratiques. `<tp>.typ` contient l’énoncé, compilé par la CI en page
   web `index.html` ; `corrige/` contient les corrigés, fichiers réels que l’énoncé affiche à la demande ;
   `tester.sh` les construit et les vérifie.
+- `<cours>/artefacts/<nom>/` : un artefact, petit logiciel interactif qui fait manipuler un concept.
+  `<nom>.typ` le présente, `<nom>.js` et `<nom>.css` le font vivre ; la CI en tire une page web `index.html`.
 - `commun/` : la charte partagée (rôles, palettes, thème des diapos, thème des pages web) et les polices
   IBM Plex ; voir [`commun/README.md`](commun/README.md).
 - `index.typ` : la page d’accueil du site, compilée en `index.html`.
@@ -65,7 +68,7 @@ dans `corrige/` et, s’ils s’exécutent, un `tester.sh`.
 
 ## Site
 Le dépôt se publie tel quel avec GitHub Pages (branche `main`, racine ; `.nojekyll` désactive Jekyll) :
-`index.html` mène aux diapos et aux TP. Chaque page web embarque les variantes de rendu, que le lecteur
+`index.html` mène aux diapos, aux TP et aux artefacts. Chaque page web embarque les variantes de rendu, que le lecteur
 choisit dans la page.
 
 ## Licences

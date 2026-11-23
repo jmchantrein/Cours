@@ -14,11 +14,10 @@
 - [ ] Essayer le manifeste Kubernetes de la diapo « pod, Deployment, Service » sur un cluster (kind, minikube ou k3s)
 
 ### Travaux pratiques
-- [ ] Activer GitHub Pages sur le dépôt (branche `main`, racine) pour publier `index.html`, les diapos et les TP
 - [ ] Vérifier dans Firefox et Chromium que les renvois du TP ouvrent le PDF à la bonne diapo (`#nameddest=`)
-- [ ] Archiver la branche `corrections` par un tag puis la supprimer (ses corrigés sont remplacés par `conteneurisation/tp/wordpress/corrige/`)
+- [ ] Archiver la branche `corrections` par un tag puis la supprimer, depuis un poste autorisé à pousser tags et suppressions (accord donné le 2026-11-23 ; ses corrigés sont remplacés par `conteneurisation/tp/wordpress/corrige/`)
 - [ ] Vérifier les liens externes du TP WordPress (docs.docker.com, wordpress.org, iximiuz Labs : non testables depuis l’environnement de rédaction)
-- [ ] Premier artefact interactif (cache de build), dans `<cours>/artefacts/`, lié depuis le TP
+- [ ] Fusionner la branche de travail dans `main`, puis vérifier le site publié par GitHub Pages (accueil, TP, artefact, polices, renvois vers les diapos)
 
 ## Fait
 
@@ -47,3 +46,5 @@
 - [x] 2026-11-23 — Thème des TP en Typst vers HTML (`commun/theme-tp.typ`, `tp.css`, `tp.js`) : variantes choisies dans la page, indices et corrigés repliés, copie des seules commandes, schémas par palette, renvois vers les diapos ; page d’accueil `index.typ` ; CI étendue aux pages web
 - [x] 2026-11-23 — Cours Conteneurisation : section Orchestration (8 diapos : limite de Compose, état désiré, Swarm, Kubernetes, lequel choisir) ; étiquettes sur les diapos citées par le TP
 - [x] 2026-11-23 — TP « Conteneuriser WordPress » réécrit contre le cours : 9 étapes, sans setuid (root au démarrage seulement), réseau utilisateur à la place de `--link`, volumes nommés, Compose v2, passage à l’échelle avec Compose à la place de Swarm ; corrigés en fichiers réels sur `main`, harnais `tester.sh` et CI `test-corriges.yml`
+- [x] 2026-11-23 — CI de test des corrigés : les neuf étapes du TP WordPress construites et vérifiées sur GitHub Actions (69 vérifications réussies)
+- [x] 2026-11-23 — Premier artefact interactif, « Le cache de build » (`conteneurisation/artefacts/cache-de-build/`) : simulateur de la clé de chaque étape, cinq expériences avec réponses ; convention `<cours>/artefacts/<nom>/`, lié depuis l’étape 2 du TP et l’accueil

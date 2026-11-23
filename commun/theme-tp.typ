@@ -150,3 +150,13 @@
   stack(spacing: 6pt, text(size: 9pt, weight: 600, fill: trait, titre), corps))
 #let case(fond: white, texte: encre, largeur: auto, corps) = rect(width: largeur, fill: fond, radius: 3pt, inset: (x: 8pt, y: 6pt),
   stroke: 0.6pt + encre, align(center, text(size: 9.5pt, fill: texte, corps)))
+
+// ---------- Artefacts ----------
+// Un artefact est un petit logiciel interactif, dans <cours>/artefacts/<nom>/ : une page `<nom>.typ` qui présente
+// le concept, et un script qui construit son interface dans l’élément `#artefact`.
+// `#artefact(read("<nom>.js"), style: read("<nom>.css"))` ; le style emploie les variables CSS de la charte.
+#let artefact(script, style: none) = {
+  if style != none { _el("style", style) }
+  _el("div", _el("p", [Cet artefact a besoin de JavaScript.]), id: "artefact")
+  _el("script", script)
+}

@@ -4,13 +4,14 @@ name: Compilation des supports (Typst)
 # un PDF par variante est publié à côté : <cours>/cm/<cours>-<variante>.pdf
 # (projection, puis les rendus adaptés ; liste dans commun/charte.typ).
 # Chaque TP est un dossier <cours>/tp/<tp>/ contenant <tp>.typ, compilé en page web <cours>/tp/<tp>/index.html ;
-# index.typ donne la page d’accueil index.html. Les pages web embarquent toutes les variantes.
+# de même chaque artefact <cours>/artefacts/<nom>/<nom>.typ ; index.typ donne la page d’accueil index.html. Les pages web embarquent toutes les variantes.
 on:
   push:
     branches: [main]
     paths:
       - "*/cm/*.typ"
       - "*/tp/**"
+      - "*/artefacts/**"
       - "index.typ"
       - "commun/**"
       - ".github/workflows/compilation-cours.yml"
@@ -50,7 +51,8 @@ jobs:
       - name: Compilation des pages web
         run: |
           web() { typst compile --root . --font-path commun/fonts --features html --format html "$1" "$2" && git add "$2"; }
-          for src in */tp/*/*.typ; do
+          for src in */tp/*/*.typ */artefacts/*/*.typ; do
+            [ -f "$src" ] || continue
             dossier=$(dirname "$src")
             [ "$src" = "$dossier/$(basename "$dossier").typ" ] || continue
             echo "::group::$dossier/index.html"

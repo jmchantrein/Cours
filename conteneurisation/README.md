@@ -6,5 +6,7 @@
   de l’orateur, et relève les versions : `./rejouer.sh > sorties-conteneurisation.txt 2>&1`.
 - `tp/wordpress/` : le TP « Conteneuriser WordPress ». Énoncé dans `wordpress.typ`, compilé en `index.html` ;
   corrigés dans `corrige/`, vérifiés par `./tester.sh --up` (Docker, accès au réseau).
+- `artefacts/cache-de-build/` : l’artefact « Le cache de build », simulateur du cache de BuildKit lié depuis
+  l’étape 2 du TP.
 
 Compilation et charte : voir le [README racine](../README.md) et [`../commun/README.md`](../commun/README.md).
