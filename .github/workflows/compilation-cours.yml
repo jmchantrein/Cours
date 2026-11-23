@@ -5,6 +5,7 @@ name: Compilation des supports (Typst)
 # (projection, puis les rendus adaptés ; liste dans commun/charte.typ).
 # Chaque TP est un dossier <cours>/tp/<tp>/ contenant <tp>.typ, compilé en page web <cours>/tp/<tp>/index.html ;
 # de même chaque artefact <cours>/artefacts/<nom>/<nom>.typ ; index.typ donne la page d’accueil index.html. Les pages web embarquent toutes les variantes.
+# Le dépôt ainsi complété est ensuite publié par GitHub Pages (source « GitHub Actions »).
 on:
   push:
     branches: [main]
@@ -71,3 +72,26 @@ jobs:
             git commit -m "Compile les supports des cours"
             git push
           fi
+
+  # Publie le dépôt, avec les supports que la tâche précédente vient de commiter, sur GitHub Pages.
+  site:
+    needs: compile
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.publication.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+
+      - id: publication
+        uses: actions/deploy-pages@v4

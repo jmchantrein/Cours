@@ -59,7 +59,7 @@ la version de Typst est fixée dans la CI.
 `index.html` versionnés sont produits et commités par la CI, ce qui évite les conflits sur ces fichiers générés.
 
 Sur GitHub, l’action `.github/workflows/compilation-cours.yml` recompile les supports à chaque push sur `main`
-touchant les sources ou la charte, puis commite les PDF de chaque variante et les pages web.
+touchant les sources ou la charte, puis commite les PDF de chaque variante et les pages web, et publie le site.
 L’action `.github/workflows/test-corriges.yml` lance le `tester.sh` de chaque TP.
 
 Ajouter un cours : créer `<cours>/cm/<cours>.typ` qui importe `../../commun/theme-cours.typ`.
@@ -67,7 +67,8 @@ Ajouter un TP : créer `<cours>/tp/<tp>/<tp>.typ` qui importe `../../../commun/t
 dans `corrige/` et, s’ils s’exécutent, un `tester.sh`.
 
 ## Site
-Le dépôt se publie tel quel avec GitHub Pages (branche `main`, racine ; `.nojekyll` désactive Jekyll) :
+Le dépôt se publie tel quel avec GitHub Pages (source « GitHub Actions ») : après avoir commité les supports,
+l’action de compilation dépose le contenu de `main` sur <https://jmchantrein.github.io/Cours/>.
 `index.html` mène aux diapos, aux TP et aux artefacts. Chaque page web embarque les variantes de rendu, que le lecteur
 choisit dans la page.
 
