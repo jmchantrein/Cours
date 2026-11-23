@@ -1,0 +1,175 @@
+<!DOCTYPE html><html lang="fr" data-variante="projection"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Cours</title><style>@font-face{font-family:'IBM Plex Sans';src:url('commun/fonts/IBMPlexSans-Regular.ttf');font-weight:400;font-style:normal;font-display:swap}@font-face{font-family:'IBM Plex Sans';src:url('commun/fonts/IBMPlexSans-Italic.ttf');font-weight:400;font-style:italic;font-display:swap}@font-face{font-family:'IBM Plex Sans';src:url('commun/fonts/IBMPlexSans-SemiBold.ttf');font-weight:600;font-style:normal;font-display:swap}@font-face{font-family:'IBM Plex Sans';src:url('commun/fonts/IBMPlexSans-Bold.ttf');font-weight:700;font-style:normal;font-display:swap}@font-face{font-family:'IBM Plex Mono';src:url('commun/fonts/IBMPlexMono-Regular.ttf');font-weight:400;font-style:normal;font-display:swap}@font-face{font-family:'IBM Plex Mono';src:url('commun/fonts/IBMPlexMono-SemiBold.ttf');font-weight:600;font-style:normal;font-display:swap}:root{--c-nuit:#0f1e33;--c-encre:#14213d;--c-gris:#5b6680;--c-ardoise:#44506a;--c-fond:#f6f7f3;--c-espace:#edf0f3;--c-filet:#d5dae0;--c-prompt:#7db4ff;--c-commentaire:#9fb0c8;--c-texte-term:#e6edf7;--c-encart:#2a3954;--c-bleu:#1f63c9;--c-bleu-clair:#e8effa;--c-appli:#d3e4fb;--c-invite:#7b3fb0;--c-invite-clair:#ddc4f5;--c-hote-t:#7db4ff;--c-invite-t:#c9a7f5;--c-imbrique-t:#ff9ec4;--notion-entete:#1f63c9;--notion-fond:#e8effa;--notion-texte:#f6f7f3;--notion-accent:#1f63c9;--retenir-entete:#14213d;--retenir-fond:#e6e9f0;--retenir-texte:#f6f7f3;--retenir-accent:#14213d;--pratique-entete:#1e7a46;--pratique-fond:#e4f2e9;--pratique-texte:#f6f7f3;--pratique-accent:#1e7a46;--question-entete:#9bcca9;--question-fond:#f0f8f2;--question-texte:#14213d;--question-accent:#3e5244;--reponse-entete:#004d1d;--reponse-fond:#ddebe1;--reponse-texte:#f6f7f3;--reponse-accent:#004d1d;--precaution-entete:#f2c94c;--precaution-fond:#fff6d9;--precaution-texte:#14213d;--precaution-accent:#61501e;--avertissement-entete:#b4530f;--avertissement-fond:#fbe9da;--avertissement-texte:#f6f7f3;--avertissement-accent:#b4530f;--danger-entete:#b3123c;--danger-fond:#fbe3e8;--danger-texte:#f6f7f3;--danger-accent:#b3123c;--picto-question:url("data:image/svg+xml, %3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E   %3Cpath d='M11.007 5a2 2 0 1 0 4 0a2 2 0 1 0 -4 0' /%3E   %3Cpath d='M4 17l5 1l.75 -1.5' /%3E   %3Cpath d='M15 21v-4l-4 -3l1 -6' /%3E   %3Cpath d='M7 12v-3l5 -1l3 3l3 1' /%3E   %3Cpath stroke='none' fill='currentColor' d='M8 1.2c-.7 1 -1.2 1.7 -1.2 2.3a1.2 1.2 0 0 0 2.4 0c0 -.6 -.5 -1.3 -1.2 -2.3z' /%3E   %3Cpath stroke='none' fill='currentColor' d='M4.6 4.2c-.7 1 -1.2 1.7 -1.2 2.3a1.2 1.2 0 0 0 2.4 0c0 -.6 -.5 -1.3 -1.2 -2.3z' /%3E %3C/svg%3E ");--picto-retenir:url("data:image/svg+xml, %3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E   %3Cpath d='M15.5 13a3.5 3.5 0 0 0 -3.5 3.5v1a3.5 3.5 0 0 0 7 0v-1.8' /%3E   %3Cpath d='M8.5 13a3.5 3.5 0 0 1 3.5 3.5v1a3.5 3.5 0 0 1 -7 0v-1.8' /%3E   %3Cpath d='M17.5 16a3.5 3.5 0 0 0 0 -7h-.5' /%3E   %3Cpath d='M19 9.3v-2.8a3.5 3.5 0 0 0 -7 0' /%3E   %3Cpath d='M6.5 16a3.5 3.5 0 0 1 0 -7h.5' /%3E   %3Cpath d='M5 9.3v-2.8a3.5 3.5 0 0 1 7 0v10' /%3E %3C/svg%3E ");--picto-alerte:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill-rule='evenodd' d='M12 1 23.5 22h-23zm-1.4 7.5.5 7h1.8l.5-7zm1.4 8.4a1.4 1.4 0 1 0 0 2.8 1.4 1.4 0 0 0 0-2.8z'/%3E%3C/svg%3E")}[data-variante="deuteranopie"]{--c-nuit:#0f1e33;--c-encre:#14213d;--c-gris:#5b6680;--c-ardoise:#44506a;--c-fond:#f6f7f3;--c-espace:#edf0f3;--c-filet:#d5dae0;--c-prompt:#7db4ff;--c-commentaire:#9fb0c8;--c-texte-term:#e6edf7;--c-encart:#2a3954;--c-bleu:#1f63c9;--c-bleu-clair:#e8effa;--c-appli:#d3e4fb;--c-invite:#7a5a00;--c-invite-clair:#eedc9a;--c-hote-t:#7db4ff;--c-invite-t:#e8c95a;--c-imbrique-t:#e8e8e8;--notion-entete:#1f63c9;--notion-fond:#d8e3ef;--notion-texte:#f6f7f3;--notion-accent:#1f63c9;--retenir-entete:#14213d;--retenir-fond:#d2d6d8;--retenir-texte:#f6f7f3;--retenir-accent:#14213d;--pratique-entete:#006e7a;--pratique-fond:#d7e3e1;--pratique-texte:#f6f7f3;--pratique-accent:#006e7a;--question-entete:#9cc9d0;--question-fond:#e9f1ee;--question-texte:#14213d;--question-accent:#3e5053;--reponse-entete:#004955;--reponse-fond:#d4dddb;--reponse-texte:#f6f7f3;--reponse-accent:#004955;--precaution-entete:#f2c94c;--precaution-fond:#f6f1df;--precaution-texte:#14213d;--precaution-accent:#61501e;--avertissement-entete:#b4530f;--avertissement-fond:#efe0d5;--avertissement-texte:#f6f7f3;--avertissement-accent:#b4530f;--danger-entete:#7a0f2a;--danger-fond:#e7d7d4;--danger-texte:#f6f7f3;--danger-accent:#7a0f2a}[data-variante="protanopie"]{--c-nuit:#0f1e33;--c-encre:#14213d;--c-gris:#5b6680;--c-ardoise:#44506a;--c-fond:#f6f7f3;--c-espace:#edf0f3;--c-filet:#d5dae0;--c-prompt:#7db4ff;--c-commentaire:#9fb0c8;--c-texte-term:#e6edf7;--c-encart:#2a3954;--c-bleu:#1f63c9;--c-bleu-clair:#e8effa;--c-appli:#d3e4fb;--c-invite:#7a5a00;--c-invite-clair:#eedc9a;--c-hote-t:#7db4ff;--c-invite-t:#e8c95a;--c-imbrique-t:#e8e8e8;--notion-entete:#1f63c9;--notion-fond:#d8e3ef;--notion-texte:#f6f7f3;--notion-accent:#1f63c9;--retenir-entete:#14213d;--retenir-fond:#d2d6d8;--retenir-texte:#f6f7f3;--retenir-accent:#14213d;--pratique-entete:#006e7a;--pratique-fond:#d7e3e1;--pratique-texte:#f6f7f3;--pratique-accent:#006e7a;--question-entete:#9cc9d0;--question-fond:#e9f1ee;--question-texte:#14213d;--question-accent:#3e5053;--reponse-entete:#004955;--reponse-fond:#d4dddb;--reponse-texte:#f6f7f3;--reponse-accent:#004955;--precaution-entete:#f2c94c;--precaution-fond:#f6f1df;--precaution-texte:#14213d;--precaution-accent:#61501e;--avertissement-entete:#b4530f;--avertissement-fond:#efe0d5;--avertissement-texte:#f6f7f3;--avertissement-accent:#b4530f;--danger-entete:#7a0f2a;--danger-fond:#e7d7d4;--danger-texte:#f6f7f3;--danger-accent:#7a0f2a}[data-variante="tritanopie"]{--c-nuit:#0f1e33;--c-encre:#14213d;--c-gris:#5b6680;--c-ardoise:#44506a;--c-fond:#f6f7f3;--c-espace:#edf0f3;--c-filet:#d5dae0;--c-prompt:#7db4ff;--c-commentaire:#9fb0c8;--c-texte-term:#e6edf7;--c-encart:#2a3954;--c-bleu:#1f63c9;--c-bleu-clair:#e8effa;--c-appli:#d3e4fb;--c-invite:#8e2c8c;--c-invite-clair:#f4c6e6;--c-hote-t:#7db4ff;--c-invite-t:#f29acb;--c-imbrique-t:#e9e39a;--notion-entete:#1f63c9;--notion-fond:#d8e3ef;--notion-texte:#f6f7f3;--notion-accent:#1f63c9;--retenir-entete:#14213d;--retenir-fond:#d2d6d8;--retenir-texte:#f6f7f3;--retenir-accent:#14213d;--pratique-entete:#6b6b00;--pratique-fond:#e1e3d4;--pratique-texte:#f6f7f3;--pratique-accent:#6b6b00;--question-entete:#c9c389;--question-fond:#f0f0e4;--question-texte:#14213d;--question-accent:#504e37;--reponse-entete:#414300;--reponse-fond:#dadcd0;--reponse-texte:#f6f7f3;--reponse-accent:#414300;--precaution-entete:#f2c94c;--precaution-fond:#f6f1df;--precaution-texte:#14213d;--precaution-accent:#61501e;--avertissement-entete:#b4530f;--avertissement-fond:#efe0d5;--avertissement-texte:#f6f7f3;--avertissement-accent:#b4530f;--danger-entete:#c2002f;--danger-fond:#f4dbd6;--danger-texte:#f6f7f3;--danger-accent:#c2002f}[data-variante="achromatopsie"]{--c-nuit:#0f1e33;--c-encre:#14213d;--c-gris:#5b6680;--c-ardoise:#44506a;--c-fond:#f6f7f3;--c-espace:#edf0f3;--c-filet:#d5dae0;--c-prompt:#7db4ff;--c-commentaire:#9fb0c8;--c-texte-term:#e6edf7;--c-encart:#2a3954;--c-bleu:#1a4082;--c-bleu-clair:#e8effa;--c-appli:#e0ecfc;--c-invite:#714793;--c-invite-clair:#ccbadc;--c-hote-t:#6c8dbf;--c-invite-t:#cab1e8;--c-imbrique-t:#ffdaf4;--notion-entete:#1a4082;--notion-fond:#d5dce4;--notion-texte:#f6f7f3;--notion-accent:#1a4082;--retenir-entete:#10172a;--retenir-fond:#d1d4d4;--retenir-texte:#f6f7f3;--retenir-accent:#10172a;--pratique-entete:#2d6441;--pratique-fond:#d9e1d8;--pratique-texte:#f6f7f3;--pratique-accent:#2d6441;--question-entete:#90c19e;--question-fond:#e8efe7;--question-texte:#14213d;--question-accent:#3a4d3f;--reponse-entete:#729a7d;--reponse-fond:#e3eae2;--reponse-texte:#f6f7f3;--reponse-accent:#729a7d;--precaution-entete:#ffdf8a;--precaution-fond:#f7f4e5;--precaution-texte:#14213d;--precaution-accent:#665937;--avertissement-entete:#a76034;--avertissement-fond:#ece1d8;--avertissement-texte:#f6f7f3;--avertissement-accent:#a76034;--danger-entete:#620019;--danger-fond:#e3d4d1;--danger-texte:#f6f7f3;--danger-accent:#620019}/* tp.css — mise en forme des pages web (TP, accueil). Les couleurs viennent de charte.typ, en variables
+   CSS (--c-*, --<rôle>-entete|fond|texte|accent) écrites dans la page par theme-tp.typ. */
+*, *::before, *::after { box-sizing: border-box; }
+html { font-family: "IBM Plex Sans", system-ui, sans-serif; font-size: 112.5%; line-height: 1.6;
+  color: var(--c-encre); background: var(--c-fond); scroll-padding-top: 4rem; }
+body { margin: 0; }
+main { max-width: 52rem; margin: 0 auto; padding: 1.5rem 1rem 6rem; }
+a { color: var(--c-bleu); text-underline-offset: .15em; }
+a:focus-visible, summary:focus-visible, button:focus-visible, select:focus-visible {
+  outline: 3px solid var(--c-bleu); outline-offset: 2px; }
+code, pre, kbd { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: .92em; }
+:not(pre) > code { background: var(--c-bleu-clair); padding: .1em .3em; border-radius: .25em; overflow-wrap: anywhere; }
+
+/* Bandeau */
+.bandeau { position: sticky; top: 0; z-index: 2; display: flex; flex-wrap: wrap; align-items: center; gap: .5rem 1.25rem;
+  padding: .5rem 1rem; background: var(--c-nuit); color: var(--c-fond); font-size: .85rem; }
+.bandeau a { color: var(--c-fond); }
+.bandeau .accueil { font-weight: 700; text-decoration: none; }
+.bandeau nav { display: flex; flex-wrap: wrap; gap: .25rem 1.25rem; flex: 1; }
+.bandeau select { font: inherit; padding: .15rem .3rem; border-radius: .3rem; border: 1px solid var(--c-filet);
+  background: var(--c-fond); color: var(--c-encre); margin-left: .4rem; }
+
+/* Titres */
+.titre { margin: 1.5rem 0 2rem; }
+.surtitre { margin: 0; color: var(--c-bleu); font-weight: 600; letter-spacing: .06em; text-transform: uppercase; font-size: .85rem; }
+h1 { margin: .2rem 0; font-size: 2.1rem; line-height: 1.2; }
+.sous-titre { margin: .2rem 0; font-size: 1.15rem; color: var(--c-ardoise); }
+.auteur { margin: .6rem 0 0; color: var(--c-gris); font-size: .9rem; }
+h2 { margin: 3rem 0 1rem; padding-top: .8rem; border-top: 2px solid var(--c-filet); font-size: 1.55rem; line-height: 1.25; }
+h3 { margin: 2rem 0 .6rem; font-size: 1.2rem; }
+h4 { margin: 1.4rem 0 .4rem; font-size: 1rem; }
+
+/* Sommaire */
+nav[role="doc-toc"] { margin: 0 0 2rem; padding: .8rem 1.1rem; background: var(--c-espace); border-radius: .5rem; }
+nav[role="doc-toc"] h2 { margin: 0 0 .3rem; padding: 0; border: 0; font-size: 1rem; }
+nav[role="doc-toc"] ol { margin: 0; padding: 0; }
+nav[role="doc-toc"] li { margin: .15rem 0; }
+
+/* Blocs et notes : le rôle donne la couleur ; son nom et son pictogramme la doublent. */
+.bloc, .note { --entete: var(--notion-entete); --fond-role: var(--notion-fond); --accent: var(--notion-accent);
+  margin: 1.2rem 0; padding: .8rem 1.1rem; border-left: .4rem solid var(--entete);
+  border-radius: 0 .5rem .5rem 0; background: var(--fond-role); }
+.bloc > :last-child, .note > :last-child { margin-bottom: 0; }
+.bloc-titre { margin: 0 0 .4rem; font-weight: 700; font-size: 1.05rem; }
+.role { display: inline-flex; align-items: center; gap: .3em; margin-right: .6em; color: var(--accent);
+  font-size: .78rem; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; }
+.note { padding: .6rem 1rem; font-size: .95rem; }
+[data-role="pratique"] { --entete: var(--pratique-entete); --fond-role: var(--pratique-fond); --accent: var(--pratique-accent); }
+[data-role="question"] { --entete: var(--question-entete); --fond-role: var(--question-fond); --accent: var(--question-accent); }
+[data-role="reponse"] { --entete: var(--reponse-entete); --fond-role: var(--reponse-fond); --accent: var(--reponse-accent); }
+[data-role="retenir"] { --entete: var(--retenir-entete); --fond-role: var(--retenir-fond); --accent: var(--retenir-accent); }
+[data-role="precaution"] { --entete: var(--precaution-entete); --fond-role: var(--precaution-fond); --accent: var(--precaution-accent); }
+[data-role="avertissement"] { --entete: var(--avertissement-entete); --fond-role: var(--avertissement-fond); --accent: var(--avertissement-accent); }
+[data-role="danger"] { --entete: var(--danger-entete); --fond-role: var(--danger-fond); --accent: var(--danger-accent); }
+[data-role="question"] > .bloc-titre .role::before, [data-role="question"] > .role::before { --picto: var(--picto-question); }
+[data-role="retenir"] > .bloc-titre .role::before, [data-role="retenir"] > .role::before { --picto: var(--picto-retenir); }
+:is([data-role="precaution"], [data-role="avertissement"], [data-role="danger"]) > .bloc-titre .role::before,
+:is([data-role="precaution"], [data-role="avertissement"], [data-role="danger"]) > .role::before { --picto: var(--picto-alerte); }
+:is([data-role="question"], [data-role="retenir"], [data-role="precaution"], [data-role="avertissement"], [data-role="danger"]) .role::before {
+  content: ""; width: 1.25em; height: 1.25em; background: currentColor;
+  -webkit-mask: var(--picto) center / contain no-repeat; mask: var(--picto) center / contain no-repeat; }
+
+/* Indices et corrigés : repliés, ouverts à la demande. */
+details { margin: 1rem 0; border: 1px solid var(--c-filet); border-radius: .5rem; background: #fff; }
+details > summary { padding: .55rem 1rem; cursor: pointer; font-weight: 600; }
+details[open] > summary { border-bottom: 1px solid var(--c-filet); }
+.repli { padding: .7rem 1rem .9rem; }
+.repli > :first-child { margin-top: 0; }
+.repli > :last-child { margin-bottom: 0; }
+details.corrige { border-left: .4rem solid var(--reponse-entete); }
+details.indice { border-left: .4rem solid var(--question-entete); }
+
+/* Code */
+pre { position: relative; margin: .8rem 0; padding: .8rem 1rem; overflow-x: auto; border-radius: .5rem;
+  background: var(--c-espace); line-height: 1.45; tab-size: 4; }
+.terminal pre { background: var(--c-nuit); color: var(--c-texte-term); }
+.terminal .invite { color: var(--c-prompt); user-select: none; }
+.terminal .commentaire { color: var(--c-commentaire); }
+.fichier { margin: 1rem 0; }
+.fichier figcaption { display: inline-block; max-width: 100%; overflow-wrap: anywhere; padding: .2rem .8rem; border-radius: .5rem .5rem 0 0;
+  background: var(--c-encart); font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: .8rem; }
+.fichier figcaption a { color: var(--c-fond); }
+.fichier pre { margin-top: 0; border-top-left-radius: 0; }
+.copier { position: absolute; top: .4rem; right: .4rem; padding: .15rem .6rem; border: 1px solid var(--c-filet);
+  border-radius: .3rem; background: var(--c-fond); color: var(--c-encre); font: inherit; font-size: .75rem; cursor: pointer; }
+
+/* Liens vers les diapositives du cours */
+a.diapo::before { content: "▸ diapo : "; font-size: .85em; color: var(--c-gris); }
+
+table { border-collapse: collapse; margin: 1rem 0; }
+td, th { padding: .35rem .7rem; border: 1px solid var(--c-filet); text-align: left; vertical-align: top; }
+th { background: var(--c-espace); }
+figure { margin: 1.2rem 0; }
+/* Schémas : un dessin par palette distincte ; tp.js n’affiche que celui de la variante choisie. */
+.schema svg { max-width: 100%; height: auto !important; }
+html:not(.js) .schema [data-pour]:not(:first-child) { display: none; }
+figcaption { font-size: .9rem; color: var(--c-gris); }
+
+/* Variante dyslexie : lettres, mots et lignes espacés ; ni capitales forcées ni italique. */
+[data-variante="dyslexie"] { letter-spacing: .05em; word-spacing: .16em; line-height: 1.9; }
+[data-variante="dyslexie"] :is(.surtitre, .role) { text-transform: none; }
+[data-variante="dyslexie"] em { font-style: normal; font-weight: 600; }
+[data-variante="dyslexie"] p, [data-variante="dyslexie"] li { max-width: 38rem; }
+
+/* Impression : l’énoncé seul, sans indices ni corrigés. */
+@media print {
+  .bandeau, .copier, details { display: none; }
+  html { font-size: 11pt; background: #fff; }
+  .bloc, .note, pre { break-inside: avoid; }
+}
+</style></head><body><header class="bandeau"><a class="accueil" href="index.html">Cours</a><nav><a href="https://github.com/jmchantrein/Cours">Sources</a></nav><label class="variante">Affichage<span style="white-space: pre-wrap">&#x20;</span><select id="variante"><option value="projection">Couleurs standard</option><option value="dyslexie">Dyslexie</option><option value="deuteranopie">Deutéranopie</option><option value="protanopie">Protanopie</option><option value="tritanopie">Tritanopie</option><option value="achromatopsie">Achromatopsie</option></select></label></header><main><div class="titre"><h1>Cours</h1><p class="sous-titre">Supports de cours de Jean-Mathieu Chantrein : diapositives, travaux pratiques, artefacts</p></div><h2>Fondements de la conteneurisation</h2><ul><li><a href="conteneurisation/cm/conteneurisation-projection.pdf">Diapositives</a> (rendus adaptés : <a href="conteneurisation/cm/conteneurisation-dyslexie.pdf">dyslexie</a>, <a href="conteneurisation/cm/conteneurisation-deuteranopie.pdf">deuteranopie</a>, <a href="conteneurisation/cm/conteneurisation-protanopie.pdf">protanopie</a>, <a href="conteneurisation/cm/conteneurisation-tritanopie.pdf">tritanopie</a>, <a href="conteneurisation/cm/conteneurisation-achromatopsie.pdf">achromatopsie</a>)</li><li>Travaux pratiques : <a href="conteneurisation/tp/wordpress/">Conteneuriser WordPress</a></li><li>Artefact : <a href="conteneurisation/artefacts/cache-de-build/">Le cache de build</a></li></ul><h2>Fondements de la virtualisation de machines</h2><ul><li><a href="virtualisation/cm/virtualisation-projection.pdf">Diapositives</a> (rendus adaptés : <a href="virtualisation/cm/virtualisation-dyslexie.pdf">dyslexie</a>, <a href="virtualisation/cm/virtualisation-deuteranopie.pdf">deuteranopie</a>, <a href="virtualisation/cm/virtualisation-protanopie.pdf">protanopie</a>, <a href="virtualisation/cm/virtualisation-tritanopie.pdf">tritanopie</a>, <a href="virtualisation/cm/virtualisation-achromatopsie.pdf">achromatopsie</a>)</li></ul><aside class="note" data-role="precaution"><span class="role">Précaution</span> Ces supports peuvent contenir des erreurs. Signalez-les par une <a href="https://github.com/jmchantrein/Cours/issues">issue</a>, ou proposez une correction ou une amélioration par une pull request sur le <a href="https://github.com/jmchantrein/Cours">dépôt</a>. Les propositions rédigées par une IA, ou avec son aide, sont acceptées elles aussi.</aside><aside class="note" data-role="notion">Chaque page web propose, en haut à droite, les mêmes rendus adaptés que les diapositives : palettes pour les daltonismes et l’achromatopsie, mise en page pour la dyslexie.</aside></main><script>// tp.js — comportements des pages web : variante d’affichage, terminaux, copie des commandes.
+(() => {
+  document.documentElement.classList.add("js");
+  // Variante d’affichage : choisie par le lecteur, mémorisée dans son navigateur.
+  const choix = document.getElementById("variante");
+  const appliquer = v => {
+    document.documentElement.dataset.variante = v; choix.value = v;
+    // Schémas : un dessin par palette, on montre celui qui sert cette variante.
+    for (const dessin of document.querySelectorAll(".schema [data-pour]")) {
+      dessin.hidden = !dessin.dataset.pour.split(" ").includes(v);
+    }
+  };
+  try { appliquer(localStorage.getItem("variante") || "projection"); } catch { appliquer("projection"); }
+  choix.addEventListener("change", () => {
+    appliquer(choix.value);
+    try { localStorage.setItem("variante", choix.value); } catch { /* stockage indisponible : choix non mémorisé */ }
+  });
+
+  // Terminaux : l’invite `$ ` et les commentaires `# ` sont mis en évidence.
+  for (const code of document.querySelectorAll(".terminal pre code")) {
+    const lignes = code.textContent.split("\n");
+    code.dataset.commandes = commandes(lignes);
+    code.replaceChildren(...lignes.flatMap((ligne, i) => {
+      const fin = i < lignes.length - 1 ? "\n" : "";
+      if (ligne.startsWith("$ ")) return [span("invite", "$ "), ligne.slice(2) + fin];
+      if (ligne.startsWith("# ")) return [span("commentaire", ligne + fin)];
+      return [ligne + fin];
+    }));
+  }
+  function span(classe, texte) {
+    const s = document.createElement("span");
+    s.className = classe; s.textContent = texte;
+    return s;
+  }
+  // Les commandes d’un terminal : les lignes `$ …`, et leurs suites quand elles finissent par `\`.
+  function commandes(lignes) {
+    const sortie = [];
+    let suite = false;
+    for (const ligne of lignes) {
+      if (ligne.startsWith("$ ")) sortie.push(ligne.slice(2));
+      else if (suite) sortie.push(ligne);
+      else continue;
+      suite = ligne.endsWith("\\");
+    }
+    return sortie.join("\n");
+  }
+
+  // Bouton « Copier » : les commandes d’un terminal, ou le fichier entier.
+  if (navigator.clipboard) {
+    for (const pre of document.querySelectorAll("pre")) {
+      const code = pre.querySelector("code");
+      const texte = code.dataset.commandes || code.textContent;
+      if (!texte) continue;
+      const bouton = document.createElement("button");
+      bouton.type = "button"; bouton.className = "copier"; bouton.textContent = "Copier";
+      bouton.addEventListener("click", async () => {
+        await navigator.clipboard.writeText(texte);
+        bouton.textContent = "Copié";
+        setTimeout(() => { bouton.textContent = "Copier"; }, 1500);
+      });
+      pre.append(bouton);
+    }
+  }
+})();
+</script></body></html>
