@@ -1,11 +1,11 @@
-name: Compilation des supports (Typst)
+name: Compilation et publication des supports (Typst)
 
-# Chaque cours est un dossier <cours>/ ; ses diapos sont dans <cours>/cm/<cours>.typ ;
-# un PDF par variante est publié à côté : <cours>/cm/<cours>-<variante>.pdf
-# (projection, puis les rendus adaptés ; liste dans commun/charte.typ).
-# Chaque TP est un dossier <cours>/tp/<tp>/ contenant <tp>.typ, compilé en page web <cours>/tp/<tp>/index.html ;
-# de même chaque artefact <cours>/artefacts/<nom>/<nom>.typ ; index.typ donne la page d’accueil index.html. Les pages web embarquent toutes les variantes.
-# Le dépôt ainsi complété est ensuite publié par GitHub Pages (source « GitHub Actions »).
+# Compile les supports et publie le site GitHub Pages (source « GitHub Actions »).
+# Rien n'est commité : les PDF et les pages web sont générés ici, ignorés par git, et déposés sur le site.
+# - diapos : <cours>/cm/<cours>.typ donne un PDF par variante, <cours>/cm/<cours>-<variante>.pdf
+#   (projection, puis les rendus adaptés ; liste dans commun/charte.typ) ;
+# - pages web : <cours>/tp/<tp>/<tp>.typ, <cours>/artefacts/<nom>/<nom>.typ et index.typ donnent chacun
+#   un index.html à côté de leur source ; elles embarquent toutes les variantes.
 on:
   push:
     branches: [main]
@@ -19,15 +19,21 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
+  pages: write
+  id-token: write
 
+# Une publication à la fois ; celle qui est en cours va à son terme.
 concurrency:
-  group: compilation-cours
-  cancel-in-progress: true
+  group: pages
+  cancel-in-progress: false
 
 jobs:
-  compile:
+  site:
     runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.publication.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
 
@@ -35,7 +41,7 @@ jobs:
         with:
           typst-version: "0.15"
 
-      - name: Compilation
+      - name: Compilation des diapos
         run: |
           for src in */cm/*.typ; do
             cours=${src%%/*}
@@ -44,14 +50,13 @@ jobs:
               pdf="$cours/cm/$cours-$variante.pdf"
               echo "::group::$pdf"
               typst compile --root . --font-path commun/fonts --input variante="$variante" "$src" "$pdf"
-              git add "$pdf"
               echo "::endgroup::"
             done
           done
 
       - name: Compilation des pages web
         run: |
-          web() { typst compile --root . --font-path commun/fonts --features html --format html "$1" "$2" && git add "$2"; }
+          web() { typst compile --root . --font-path commun/fonts --features html --format html "$1" "$2"; }
           for src in */tp/*/*.typ */artefacts/*/*.typ; do
             [ -f "$src" ] || continue
             dossier=$(dirname "$src")
@@ -62,33 +67,7 @@ jobs:
           done
           web index.typ index.html
 
-      - name: Publication
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          if git diff --cached --quiet; then
-            echo "Supports inchangés, rien à publier."
-          else
-            git commit -m "Compile les supports des cours"
-            git push
-          fi
-
-  # Publie le dépôt, avec les supports que la tâche précédente vient de commiter, sur GitHub Pages.
-  site:
-    needs: compile
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      pages: write
-      id-token: write
-    environment:
-      name: github-pages
-      url: ${{ steps.publication.outputs.page_url }}
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: main
-
+      # Le site est le dépôt, complété des supports compilés ci-dessus.
       - uses: actions/upload-pages-artifact@v3
         with:
           path: .

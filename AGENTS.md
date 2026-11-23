@@ -12,8 +12,8 @@ l’organisation et la compilation dans [`README.md`](README.md).
 - Pour un besoin visuel nouveau, ajoute un rôle ou un composant à la charte, avec sa couleur dans chaque palette.
 - Après une modification de diapos, compile chaque variante dans `build/` et vérifie qu’elle a le nombre de pages
   de la projection, plus une (la légende).
-- Laisse la CI produire les fichiers versionnés : `<cours>/cm/<cours>-<variante>.pdf`, les `index.html` des TP,
-  des artefacts et de l’accueil.
+- Versionne les sources seulement : les PDF et les `index.html` sont compilés par la CI et publiés sur le site ;
+  git les ignore.
 - Pour créer ou réviser des diapos, applique les règles de structure de `structurer-diapos-cours`.
 - Écris un énoncé de TP en Typst avec `commun/theme-tp.typ` ; après une modification, compile la page en HTML
   dans `build/` et ouvre-la dans un navigateur.

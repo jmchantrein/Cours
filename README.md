@@ -1,11 +1,13 @@
 # Cours
 
 Supports de cours de Jean-Mathieu Chantrein : un dossier par cours, une charte commune.
+Le site : <https://jmchantrein.github.io/Cours/>. Ce dépôt contient les sources ; les PDF et les pages web sont
+compilés par la CI et publiés sur le site.
 
 | Cours | Diapos | Rendus adaptés | Sources |
 |---|---|---|---|
-| Fondements de la conteneurisation | [`conteneurisation-projection.pdf`](conteneurisation/cm/conteneurisation-projection.pdf) | [deutéranopie](conteneurisation/cm/conteneurisation-deuteranopie.pdf) · [protanopie](conteneurisation/cm/conteneurisation-protanopie.pdf) · [tritanopie](conteneurisation/cm/conteneurisation-tritanopie.pdf) · [achromatopsie](conteneurisation/cm/conteneurisation-achromatopsie.pdf) · [dyslexie](conteneurisation/cm/conteneurisation-dyslexie.pdf) | [`conteneurisation/`](conteneurisation/) · TP [Conteneuriser WordPress](conteneurisation/tp/wordpress/) · artefact [Le cache de build](conteneurisation/artefacts/cache-de-build/) |
-| Fondements de la virtualisation de machines | [`virtualisation-projection.pdf`](virtualisation/cm/virtualisation-projection.pdf) | [deutéranopie](virtualisation/cm/virtualisation-deuteranopie.pdf) · [protanopie](virtualisation/cm/virtualisation-protanopie.pdf) · [tritanopie](virtualisation/cm/virtualisation-tritanopie.pdf) · [achromatopsie](virtualisation/cm/virtualisation-achromatopsie.pdf) · [dyslexie](virtualisation/cm/virtualisation-dyslexie.pdf) | [`virtualisation/`](virtualisation/) |
+| Fondements de la conteneurisation | [`conteneurisation-projection.pdf`](https://jmchantrein.github.io/Cours/conteneurisation/cm/conteneurisation-projection.pdf) | [deutéranopie](https://jmchantrein.github.io/Cours/conteneurisation/cm/conteneurisation-deuteranopie.pdf) · [protanopie](https://jmchantrein.github.io/Cours/conteneurisation/cm/conteneurisation-protanopie.pdf) · [tritanopie](https://jmchantrein.github.io/Cours/conteneurisation/cm/conteneurisation-tritanopie.pdf) · [achromatopsie](https://jmchantrein.github.io/Cours/conteneurisation/cm/conteneurisation-achromatopsie.pdf) · [dyslexie](https://jmchantrein.github.io/Cours/conteneurisation/cm/conteneurisation-dyslexie.pdf) | [`conteneurisation/`](conteneurisation/) · TP [Conteneuriser WordPress](https://jmchantrein.github.io/Cours/conteneurisation/tp/wordpress/) · artefact [Le cache de build](https://jmchantrein.github.io/Cours/conteneurisation/artefacts/cache-de-build/) |
+| Fondements de la virtualisation de machines | [`virtualisation-projection.pdf`](https://jmchantrein.github.io/Cours/virtualisation/cm/virtualisation-projection.pdf) | [deutéranopie](https://jmchantrein.github.io/Cours/virtualisation/cm/virtualisation-deuteranopie.pdf) · [protanopie](https://jmchantrein.github.io/Cours/virtualisation/cm/virtualisation-protanopie.pdf) · [tritanopie](https://jmchantrein.github.io/Cours/virtualisation/cm/virtualisation-tritanopie.pdf) · [achromatopsie](https://jmchantrein.github.io/Cours/virtualisation/cm/virtualisation-achromatopsie.pdf) · [dyslexie](https://jmchantrein.github.io/Cours/virtualisation/cm/virtualisation-dyslexie.pdf) | [`virtualisation/`](virtualisation/) |
 
 ## Rendus adaptés
 Les diapos de chaque cours sont compilées en plusieurs rendus, à partir des mêmes sources ; la charte commune
@@ -55,11 +57,12 @@ la version de Typst est fixée dans la CI.
 
     typst compile --root . --font-path commun/fonts --features html --format html conteneurisation/tp/wordpress/wordpress.typ build/wordpress.html
 
-`--root .` autorise l’import de `commun/`. On compile dans `build/` (ignoré par git) : les PDF et les pages
-`index.html` versionnés sont produits et commités par la CI, ce qui évite les conflits sur ces fichiers générés.
+`--root .` autorise l’import de `commun/`. Les fichiers générés ne sont pas versionnés : git ignore `build/`,
+les PDF de `<cours>/cm/` et les `index.html`. Pour suivre les liens d’une page web à l’autre, compilez-la à sa
+place, à côté de sa source (`…/wordpress/index.html`).
 
 Sur GitHub, l’action `.github/workflows/compilation-cours.yml` recompile les supports à chaque push sur `main`
-touchant les sources ou la charte, puis commite les PDF de chaque variante et les pages web, et publie le site.
+touchant les sources ou la charte, et les publie sur le site, sans rien commiter.
 L’action `.github/workflows/test-corriges.yml` lance le `tester.sh` de chaque TP.
 
 Ajouter un cours : créer `<cours>/cm/<cours>.typ` qui importe `../../commun/theme-cours.typ`.
@@ -67,8 +70,8 @@ Ajouter un TP : créer `<cours>/tp/<tp>/<tp>.typ` qui importe `../../../commun/t
 dans `corrige/` et, s’ils s’exécutent, un `tester.sh`.
 
 ## Site
-Le dépôt se publie tel quel avec GitHub Pages (source « GitHub Actions ») : après avoir commité les supports,
-l’action de compilation dépose le contenu de `main` sur <https://jmchantrein.github.io/Cours/>.
+Le site est le dépôt, complété des supports compilés : l’action de compilation dépose l’ensemble sur
+<https://jmchantrein.github.io/Cours/> par GitHub Pages (source « GitHub Actions »).
 `index.html` mène aux diapos, aux TP et aux artefacts. Chaque page web embarque les variantes de rendu, que le lecteur
 choisit dans la page.
 

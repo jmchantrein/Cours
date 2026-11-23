@@ -1,2 +1,7 @@
-# Compilations locales : on compile dans build/ ; les PDF versionnés sont produits par la CI.
+# Compilations locales.
 /build/
+# Supports générés : compilés par la CI et publiés sur le site, jamais versionnés.
+/*/cm/*.pdf
+/*/tp/*/index.html
+/*/artefacts/*/index.html
+/index.html

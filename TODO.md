@@ -51,3 +51,4 @@
 - [x] 2026-11-23 — README et page d’accueil : appel à signaler les erreurs par une issue et à proposer des corrections par pull request, propositions d’IA comprises
 - [x] 2026-11-23 — Travail fusionné dans `main` ; historique de la branche `corrections` rattaché à `main`
 - [x] 2026-11-23 — Publication du site par GitHub Pages depuis l’action de compilation (source « GitHub Actions »)
+- [x] 2026-11-23 — Fichiers générés sortis du dépôt : PDF et `index.html` ignorés par git, compilés puis publiés par la CI sans commit (fin des PDF recommités à l’identique)
