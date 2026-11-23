@@ -20,8 +20,12 @@ code, pre, kbd { font-family: "IBM Plex Mono", ui-monospace, monospace; font-siz
 .bandeau a:hover { border-bottom-color: var(--c-prompt); }
 .bandeau .accueil { font-weight: 700; letter-spacing: .04em; }
 .bandeau nav { display: flex; flex-wrap: wrap; gap: .25rem 1.25rem; flex: 1; }
-.bandeau select { font: inherit; padding: .15rem .3rem; border-radius: .3rem; border: 1px solid var(--c-encart);
-  background: var(--c-encart); color: var(--c-fond); margin-left: .4rem; }
+/* Accessibilité : le pictogramme et le mot disent ce que le menu contient. */
+.bandeau .variante { display: inline-flex; align-items: center; gap: .45rem; min-width: 0; max-width: 100%; font-weight: 600; }
+.bandeau .variante::before { content: ""; width: 1.35em; height: 1.35em; background: var(--c-prompt);
+  -webkit-mask: var(--picto-acces) center / contain no-repeat; mask: var(--picto-acces) center / contain no-repeat; }
+.bandeau select { font: inherit; font-weight: 400; flex: 0 1 11rem; min-width: 0; max-width: 11rem; padding: .15rem .3rem; border-radius: .3rem; border: 1px solid var(--c-commentaire);
+  background: var(--c-encart); color: var(--c-fond); }
 /* Avancement de la lecture (posé par tp.js sur les pages à sommaire). */
 .avancement { position: absolute; left: 0; bottom: -3px; height: 3px; width: 100%; background: var(--c-prompt);
   transform-origin: left; transform: scaleX(0); }

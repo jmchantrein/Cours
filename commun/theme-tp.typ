@@ -25,17 +25,29 @@
   "url(\"data:image/svg+xml," + s.replace("%", "%25").replace("#", "%23").replace("<", "%3C").replace(">", "%3E") + "\")"
 }
 #let _triangle = "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path fill-rule='evenodd' d='M12 1 23.5 22h-23zm-1.4 7.5.5 7h1.8l.5-7zm1.4 8.4a1.4 1.4 0 1 0 0 2.8 1.4 1.4 0 0 0 0-2.8z'/></svg>"
+// Pictogramme d’accessibilité (dessin propre au dépôt).
+#let _pictos-acces = "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='12' r='10'/><circle cx='12' cy='7' r='1' fill='black'/><path d='M7 10.5l5 1 5-1M12 11.5v4M9.5 19l2.5-3.5 2.5 3.5'/></svg>"
 #let _css-charte = {
   ":root{" + _variables("projection")
   ";--picto-question:" + _masque(read("pictos/coureur.svg"))
   ";--picto-retenir:" + _masque(read("pictos/cerveau.svg"))
-  ";--picto-alerte:" + _masque(_triangle) + "}"
+  ";--picto-alerte:" + _masque(_triangle)
+  ";--picto-acces:" + _masque(_pictos-acces) + "}"
   palettes.keys().map(v => "[data-variante=\"" + v + "\"]{" + _variables(v) + "}").join()
 }
-#let _noms-variantes = (
-  projection: "Couleurs standard", deuteranopie: "Deutéranopie", protanopie: "Protanopie",
-  tritanopie: "Tritanopie", achromatopsie: "Achromatopsie", dyslexie: "Dyslexie",
+// Le sélecteur d’accessibilité : les variantes, nommées pour qui les cherche et groupées par besoin.
+#let _choix-variantes = (
+  (none, (("projection", "Rendu standard"),)),
+  ("Vision des couleurs", (
+    ("deuteranopie", "Daltonisme : deutéranopie (rouge-vert)"),
+    ("protanopie", "Daltonisme : protanopie (rouge-vert)"),
+    ("tritanopie", "Daltonisme : tritanopie (bleu-jaune)"),
+    ("achromatopsie", "Achromatopsie (sans couleur)"),
+  )),
+  ("Lecture", (("dyslexie", "Dyslexie (texte espacé)"),)),
 )
+#assert(_choix-variantes.map(g => g.at(1).map(o => o.at(0))).flatten().sorted() == variantes.sorted(),
+  message: "le sélecteur d’accessibilité doit proposer chaque variante de charte.typ")
 
 // Variantes regroupées par palette identique : ("projection dyslexie", "projection"), ("deuteranopie protanopie", …)…
 // Un dessin (schéma, illustration) est embarqué une fois par palette ; tp.js montre celui de la variante choisie.
@@ -86,8 +98,12 @@
         #_el("a", class: "accueil", href: racine + "index.html")[Cours]
         #_el("nav", liens.map(((t, a)) => _el("a", href: a, t)).join())
         #_el("label", class: "variante")[
-          Affichage
-          #_el("select", id: "variante", variantes.map(v => _el("option", value: v, _noms-variantes.at(v))).join())
+          #_el("span", class: "variante-nom")[Accessibilité]
+          #_el("select", id: "variante", title: "Rendus adaptés : daltonismes, achromatopsie, dyslexie",
+            _choix-variantes.map(((groupe, options)) => {
+              let o = options.map(((v, nom)) => _el("option", value: v, nom)).join()
+              if groupe == none { o } else { _el("optgroup", o, label: groupe) }
+            }).join())
         ]
       ]
       // En-tête : la couverture des diapos (fond nuit, surtitre, titre, illustration du cours).

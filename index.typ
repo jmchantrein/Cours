@@ -41,5 +41,6 @@
   ],
 )
 
-#note(role: "notion")[Chaque page propose, en haut à droite, les rendus adaptés des diapositives : palettes pour
-  les daltonismes et l’achromatopsie, mise en page pour la dyslexie. Votre choix est mémorisé.]
+#note(role: "notion")[Le menu *Accessibilité*, en haut de chaque page, propose les rendus adaptés des
+  diapositives : palettes pour les daltonismes et l’achromatopsie, mise en page pour la dyslexie. Votre choix
+  est mémorisé.]

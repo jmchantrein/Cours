@@ -1,46 +1,87 @@
 /* cache-de-build.css — mise en forme de l’artefact ; les couleurs sont celles de la charte (variables CSS).
-   Tout tient sur un écran de portable : le Dockerfile et son résultat en haut, le contexte et le build dessous. */
-#artefact { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); gap: 1rem 1.5rem; }
+   Tout tient sur un écran de portable : le Dockerfile et son résultat en haut ; dessous, le contexte,
+   le build et l’état du cache.
+   Deux couleurs portent le sens, toujours doublées d’un mot : ce que le cache épargne (--gain : CACHED,
+   réutilisée, build court) et ce qui est exécuté (--cout : DONE, créée, build long). */
+#artefact { --gain: var(--question-entete); --cout: var(--precaution-entete);
+  display: grid; grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr) minmax(0, 1.2fr); gap: .8rem 1.4rem; }
 #artefact section { min-width: 0; }
 #artefact .zone-dockerfile { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr auto; align-items: end; gap: 0 1rem; }
 #artefact .zone-dockerfile .dockerfile { grid-column: 1 / -1; }
-#artefact button.zero { margin-bottom: .3rem; padding: .1rem .6rem; font-size: .75rem; }
-.mention { margin: .5rem 0 0; color: var(--c-gris); font-size: .75rem; line-height: 1.35; }
-#artefact h2 { margin: 0 0 .4rem; padding: 0; border: 0; font-size: .78rem; color: var(--c-gris);
+#artefact h2 { margin: 0 0 .35rem; padding: 0; border: 0; font-size: .75rem; color: var(--c-gris);
   letter-spacing: .08em; text-transform: uppercase; }
 [data-variante="dyslexie"] #artefact h2 { text-transform: none; }
 #artefact input[type="text"] { width: 100%; min-width: 0; padding: .3rem .5rem; border: 1px solid var(--c-filet); border-radius: .3rem;
   background: #fff; color: var(--c-encre); font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: .82rem; }
+#artefact input:disabled { opacity: .75; }
 #artefact button { padding: .3rem .7rem; border: 1px solid var(--c-ardoise); border-radius: .3rem; background: #fff;
   color: var(--c-encre); font: inherit; font-size: .85rem; cursor: pointer; }
 #artefact button:hover:not(:disabled) { background: var(--c-bleu-clair); }
 #artefact button:disabled { opacity: .3; cursor: default; }
 #artefact button.principal { background: var(--notion-entete); border-color: var(--notion-entete); color: var(--notion-texte); font-weight: 600; }
 #artefact button.principal:hover { background: var(--c-encre); border-color: var(--c-encre); }
+#artefact button.zero { margin-bottom: .3rem; padding: .1rem .6rem; font-size: .75rem; }
+.mention { margin: .45rem 0 0; color: var(--c-gris); font-size: .72rem; line-height: 1.35; }
 
 /* Une ligne par instruction : numéro d’étape, instruction, flèches, statut ; dessous, la clé et la raison. */
-.dockerfile { margin: 0; padding: .5rem .7rem; list-style: none; border-radius: .6rem; background: var(--c-nuit); color: var(--c-texte-term); }
+.dockerfile { margin: 0; padding: .4rem .7rem; list-style: none; border-radius: .6rem; background: var(--c-nuit); color: var(--c-texte-term); }
 .dockerfile li { display: grid; grid-template-columns: 2.6rem minmax(0, 1fr) auto auto 7.5rem; gap: 0 .35rem; align-items: center;
-  padding: .2rem 0 .12rem .5rem; border-left: .3rem solid transparent; }
+  padding: .2rem 0 .1rem .5rem; border-left: .3rem solid transparent; }
 .dockerfile li + li { border-top: 1px solid var(--c-encart); }
 .dockerfile .numero { color: var(--c-commentaire); font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: .75rem; }
 .dockerfile .statut { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: .85rem; font-weight: 600; text-align: right; white-space: nowrap; }
-.dockerfile .detail { grid-column: 2 / -1; min-height: 1.15rem; color: var(--c-commentaire); font-size: .75rem; line-height: 1.15rem; }
-/* Rejouée ou réutilisée : dit par le texte (DONE, CACHED), doublé d’un trait à gauche. */
-.dockerfile .executee { border-left-color: var(--precaution-entete); }
+.dockerfile .detail { grid-column: 2 / -1; min-height: 1.1rem; color: var(--c-commentaire); font-size: .74rem; line-height: 1.1rem;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dockerfile .sans-couche { padding-bottom: .2rem; }
+.dockerfile .sans-couche .detail { display: none; }
+.dockerfile .reutilisee { border-left-color: var(--gain); }
+.dockerfile .reutilisee .statut { color: var(--gain); }
+.dockerfile :is(.executee, .encours) { border-left-color: var(--cout); }
+.dockerfile :is(.executee, .encours) .statut { color: var(--cout); }
+.dockerfile .encours { background: var(--c-encart); }
 #artefact .dockerfile button { padding: .15rem .5rem; border-color: var(--c-encart); background: var(--c-encart); color: var(--c-texte-term); }
 #artefact .dockerfile button:hover:not(:disabled) { background: var(--c-ardoise); }
 
-.contexte label { display: grid; grid-template-columns: 5.5rem 1fr; gap: .5rem; align-items: center; margin: .3rem 0; }
+.contexte label { display: grid; grid-template-columns: 5.2rem 1fr; gap: .4rem; align-items: center; margin: .25rem 0; }
 .contexte code { white-space: nowrap; }
-.commandes { display: flex; flex-wrap: wrap; gap: .4rem; }
-.bilan { margin: .6rem 0 0; font-weight: 600; }
+.commandes { display: flex; flex-wrap: wrap; align-items: center; gap: .35rem; }
+.sans-attente { display: inline-flex; align-items: center; gap: .3rem; font-size: .8rem; color: var(--c-ardoise); }
+.bilan { margin: .45rem 0 .35rem; font-size: .88rem; font-weight: 600; line-height: 1.35; }
 .bilan.erreur { color: var(--danger-accent); }
-.compteur { margin: .4rem 0 .2rem; font-size: .85rem; color: var(--c-ardoise); }
-.historique { display: flex; flex-wrap: wrap; gap: .3rem .4rem; margin: 0; padding: 0; list-style: none; font-size: .8rem; }
-.historique li { padding: .05rem .5rem; border-radius: .3rem; background: var(--c-espace); }
+
+/* Les derniers builds : la longueur de la barre dit la durée, sa couleur ce que le cache a épargné. */
+.historique { margin: 0; padding: 0; list-style: none; font-size: .76rem; }
+.historique li { display: grid; grid-template-columns: 2.4rem 1fr 3.4rem; gap: .4rem; align-items: center; line-height: 1.15rem; }
+.historique .rang { color: var(--c-gris); }
+.historique .piste { height: .55rem; border-radius: .3rem; background: var(--c-espace); }
+.historique .barre { display: block; height: 100%; border-radius: .3rem; background: var(--pratique-entete); }
+.historique .partiel .barre { background: var(--precaution-entete); }
+.historique .complet .barre { background: var(--avertissement-entete); }
+.historique .temps { text-align: right; font-family: "IBM Plex Mono", ui-monospace, monospace; }
+
+/* Le cache, clé par clé ; la liste défile dans son cadre quand elle grandit. */
+.cache { margin: 0; padding: .3rem .5rem; list-style: none; max-height: 8.6rem; overflow-y: auto; border: 1px solid var(--c-filet);
+  border-radius: .5rem; background: #fff; font-size: .74rem; }
+.cache li { display: grid; grid-template-columns: auto minmax(0, 1fr) 5.4rem; gap: .5rem; align-items: baseline; padding: .08rem 0 .08rem .4rem;
+  border-left: .25rem solid transparent; line-height: 1.25rem; }
+.cache .cle { padding: 0; background: none; font-size: .72rem; }
+.cache .quoi { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--c-ardoise); }
+.cache .etat { font-weight: 600; text-align: right; }
+.cache .etat::before { margin-right: .3em; }
+.cache .reutilisee { border-left-color: var(--pratique-entete); }
+.cache .reutilisee .etat { color: var(--pratique-accent); }
+.cache .reutilisee .etat::before { content: "●"; }
+.cache .creee { border-left-color: var(--avertissement-entete); }
+.cache .creee .etat { color: var(--avertissement-accent); }
+.cache .creee .etat::before { content: "+"; }
+.cache .reserve { color: var(--c-gris); }
+.cache .reserve .etat { font-weight: 400; }
+.cache .reserve .etat::before { content: "○"; }
+
+@media (max-width: 60rem) { #artefact { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } #artefact .zone-cache { grid-column: 1 / -1; } }
 @media (max-width: 44rem) {
   #artefact { grid-template-columns: minmax(0, 1fr); }
   .dockerfile li { grid-template-columns: 2.6rem minmax(0, 1fr) auto auto; }
   .dockerfile .statut { grid-column: 2 / -1; text-align: left; }
+  .dockerfile .detail { white-space: normal; }
 }
