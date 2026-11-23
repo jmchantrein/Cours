@@ -95,8 +95,12 @@ par son navigateur. Le nom du rôle et son pictogramme sont écrits dans chaque 
 Un artefact est un petit logiciel interactif qui fait manipuler un concept : `<cours>/artefacts/<nom>/`.
 - `<nom>.typ` : une page `page-web(atelier: true, …)`, compacte, qui place l’artefact et son aide côte à côte :
   `#artefact(read("<nom>.js"), style: read("<nom>.css"))[aide]`. L’aide énonce la règle (bloc `retenir`, renvoi
-  `diapo(…)`) et propose des expériences : `#experiences(([question], [réponse]), …)`, montrées une à la fois.
-- Un artefact tient sur un écran de portable sans défilement (1280 × 650 px utiles), toutes réponses ouvertes.
+  `diapo(…)`) et propose des expériences : `#experiences(([question], [réponse], "recette"), …)`, montrées une
+  à la fois. Le troisième élément, facultatif, nomme une recette que le script sait jouer : il affiche alors
+  ses étapes dans l’expérience, avec un bouton pour les dérouler.
+- Sur un écran d’ordinateur, la page d’atelier prend exactement la hauteur de la fenêtre : le texte grossit
+  avec elle, et ce qui peut grandir défile dans son cadre. Rien n’est rogné à 1280 × 650 px utiles, toutes
+  réponses ouvertes.
 - `<nom>.js` : construit l’interface dans l’élément `#artefact`, sans bibliothèque externe.
 - `<nom>.css` : n’emploie que les variables CSS de la charte (`--c-*`, `--<rôle>-entete`…), pour suivre la variante choisie.
 - Un état se lit dans le texte (« CACHED », « DONE ») ; la couleur ne fait que le doubler.

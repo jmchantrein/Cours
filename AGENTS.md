@@ -23,4 +23,6 @@ l’organisation et la compilation dans [`README.md`](README.md).
 - Écris un artefact sans dépendance externe : une page Typst, un script, un style qui emploie les variables CSS de la charte.
 - Fais reposer un artefact sur le modèle énoncé dans le cours, et relie-le à la diapo et au TP concernés.
 - Après une modification d’artefact, déroule ses expériences dans un navigateur et vérifie les résultats annoncés dans ses réponses.
-- Fais tenir un artefact sur un écran de portable sans défilement : vérifie à 1280 × 650 px, chaque réponse ouverte.
+- Fais tenir un artefact dans la fenêtre sans défilement de la page : vérifie de 1280 × 650 à 1920 × 950 px,
+  chaque réponse ouverte, que rien n’est rogné.
+- Donne à chaque expérience d’un artefact une recette jouable, et vérifie qu’elle aboutit au résultat de sa réponse.

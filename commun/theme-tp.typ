@@ -220,9 +220,10 @@
   _el("script", script)
 }
 // Expériences guidées : `#experiences(([question], [réponse]), …)`. tp.js en montre une à la fois.
-#let experiences(..paires) = _el("div", class: "experiences", paires.pos().enumerate().map(((i, (question, reponse))) =>
-  _el("section", class: "experience")[
+// Un troisième élément nomme une recette que le script de l’artefact sait jouer : `([question], [réponse], "nom")`.
+#let experiences(..paires) = _el("div", class: "experiences", paires.pos().enumerate().map(((i, e)) =>
+  _el("section", class: "experience", data: if e.len() > 2 { (recette: e.at(2)) } else { (:) })[
     #_el("p", class: "experience-titre")[Expérience #(i + 1) sur #paires.pos().len()]
-    #question
-    #_el("details", class: "corrige")[#_el("summary")[Réponse]#_el("div", class: "repli", reponse)]
+    #_el("div", class: "question", e.at(0))
+    #_el("details", class: "corrige")[#_el("summary")[Réponse]#_el("div", class: "repli", e.at(1))]
   ]).join())

@@ -26,25 +26,22 @@
   ]
 
   #experiences(
-    ([Construisez deux fois de suite. Que coûte le second build ?],
+    ([Deux builds de suite, sans rien changer : que coûte le second ?],
       [Rien : les trois clés sont dans le cache, tout est `CACHED`. Le cadre du cache marque ses couches
-        « réutilisée ».]),
-    ([Modifiez le contenu de `index.php`, puis reconstruisez. Pourquoi l’installation des paquets est-elle
-      rejouée ?],
+        « réutilisée ».], "deux-builds"),
+    ([Seul le contenu de `index.php` change. Pourquoi l’installation des paquets est-elle rejouée ?],
       [Le contenu du fichier entre dans la clé du `COPY` ; et la clé du parent entre dans celle de chaque étape
         suivante, dont les 38 secondes d’installation. Le cache reçoit trois couches « créée » ; les anciennes
-        passent « en réserve ».]),
-    ([Descendez `COPY index.php` sous le `RUN`, reconstruisez, puis modifiez de nouveau `index.php`. Que coûte
-      maintenant une modification du code ?],
+        passent « en réserve ».], "code-modifie"),
+    ([`COPY index.php` passe sous le `RUN`. Que coûte alors une modification du code ?],
       [Deux dixièmes de seconde, le temps des deux copies : la clé de l’installation ne dépend plus du code.
         C’est la règle « instructions stables d’abord » :
-        #diapo(pdf, "dockerfile-bonnes-pratiques")[Dockerfile : bonnes pratiques].]),
-    ([Remettez dans `index.php` un contenu déjà construit. Le build est-il rejoué ?],
+        #diapo(pdf, "dockerfile-bonnes-pratiques")[Dockerfile : bonnes pratiques].], "stables-dabord"),
+    ([`index.php` retrouve un contenu déjà construit. Le build est-il rejoué ?],
       [Non : le cache garde une couche par clé, pas seulement la dernière. Les couches « en réserve »
-        redeviennent « réutilisée ».]),
-    ([Les dépôts Debian ont reçu des mises à jour de sécurité depuis votre dernier build. Votre
-      `RUN apt-get update` est-il rejoué ?],
+        redeviennent « réutilisée ».], "contenu-deja-construit"),
+    ([Les dépôts Debian ont reçu des mises à jour de sécurité. Votre `RUN apt-get update` est-il rejoué ?],
       [Non : l’instruction n’a pas changé, sa clé non plus ; le cache ignore ce que la commande irait chercher
-        sur le réseau. Pour reconstruire sans le cache : `docker image build --no-cache --pull`.]),
+        sur le réseau. Pour reconstruire sans le cache : `docker image build --no-cache --pull`.], "depots-a-jour"),
   )
 ]

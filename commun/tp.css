@@ -154,7 +154,7 @@ figcaption { font-size: .9rem; color: var(--c-gris); }
   color: var(--c-ardoise); font-size: .82rem; text-align: center; }
 .pied p { max-width: 52rem; margin: .2rem auto; }
 
-/* ---------- Atelier : une page d’artefact, qui tient sur un écran de portable sans défilement ---------- */
+/* ---------- Atelier : une page d’artefact, qui occupe l’écran sans le faire défiler ---------- */
 html:has(body.atelier) { font-size: 93.75%; }
 .atelier .couverture { padding: .7rem 1.5rem; justify-content: flex-start; }
 .atelier .couverture-texte { flex: 1; display: flex; flex-wrap: wrap; align-items: baseline; gap: .1rem 1.2rem; }
@@ -164,21 +164,35 @@ html:has(body.atelier) { font-size: 93.75%; }
 .atelier .page { max-width: none; padding: .8rem 1.5rem .6rem; }
 .atelier .pied { padding: .45rem 1.5rem; font-size: .72rem; }
 .atelier .pied p { display: inline; margin: 0 .4rem; }
-.plan-atelier { display: grid; grid-template-columns: minmax(0, 2.2fr) minmax(17rem, 1fr); gap: 1.5rem; align-items: start; }
-.aide { font-size: .87rem; line-height: 1.5; }
+.plan-atelier { display: grid; grid-template-columns: minmax(0, 2.05fr) minmax(17rem, 1fr); gap: 1.2rem; align-items: start;
+  width: 100%; max-width: 112rem; margin: 0 auto; }
+.aide { font-size: .85rem; line-height: 1.45; }
 .aide > :first-child { margin-top: 0; }
-.aide .bloc { margin: 0 0 .8rem; padding: .5rem .9rem; }
+.aide .bloc { margin: 0 0 .6rem; padding: .45rem .9rem; }
 .aide .bloc-titre { font-size: .95rem; }
 .aide .note { font-size: .8rem; padding: .4rem .8rem; }
 @media (max-width: 60rem) { .plan-atelier { grid-template-columns: minmax(0, 1fr); } }
+/* Sur un écran d’ordinateur, la page prend exactement la hauteur de la fenêtre : le texte grossit avec elle,
+   et ce qui peut grandir (liste, panneau d’aide) défile dans son cadre plutôt que de faire défiler la page. */
+@media (min-width: 60rem) and (min-height: 36rem) {
+  html:has(body.atelier) { font-size: clamp(93.75%, 1.95vh, 137.5%); }
+  body.atelier { height: 100vh; min-height: 0; overflow: hidden; }
+  .atelier .page { flex: 1; min-height: 0; display: flex; }
+  .atelier main { flex: 1; min-height: 0; display: flex; }
+  .plan-atelier { flex: 1; min-height: 0; align-items: stretch; }
+  .plan-atelier > * { min-height: 0; }
+  .aide { overflow-y: auto; }
+}
 
 /* Expériences guidées : une à la fois (tp.js), ou toutes à la suite sans script. */
 .experience { margin: 0 0 .8rem; padding: .6rem .9rem; background: #fff; border: 1px solid var(--c-filet); border-radius: .5rem; }
 .pas-a-pas .experience-titre { display: none; }
 .pas-a-pas .experience { margin-bottom: 0; }
-.experience > p { margin: .3rem 0; }
+.experience > p, .experience .question > p { margin: .3rem 0; }
 .experience-titre { color: var(--c-bleu); font-size: .75rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
-.experience details { margin: .6rem 0 0; }
+.experience details { margin: .45rem 0 0; }
+.experience details > summary { padding: .35rem .9rem; }
+.experience .repli { padding: .5rem .9rem .6rem; }
 .experiences-nav { display: flex; align-items: center; justify-content: space-between; gap: .5rem; margin-bottom: .4rem;
   color: var(--c-bleu); font-size: .75rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
 [data-variante="dyslexie"] .experiences-nav { text-transform: none; }
