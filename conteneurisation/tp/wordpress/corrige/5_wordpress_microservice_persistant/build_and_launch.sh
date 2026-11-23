@@ -19,7 +19,7 @@ docker image build -t "${PREFIXE}image_db" db
 docker container rm -f "${PREFIXE}wordpress" "${PREFIXE}db" > /dev/null 2>&1 || true
 
 # Sur un réseau utilisateur, Docker résout les noms des conteneurs : wordpress
-# joint la base par son nom, « db ». L'option --link n'a plus lieu d'être.
+# joint la base par son nom, « db », sans option pour les relier un à un.
 docker network inspect "$reseau" > /dev/null 2>&1 || docker network create "$reseau"
 
 # Les deux images tournent sous un utilisateur sans privilège (USER) : aucune

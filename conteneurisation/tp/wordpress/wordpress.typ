@@ -100,28 +100,22 @@ l’étape 2 reprendra ce fichier pour l’améliorer.
   MySQL, et un serveur de base de données. Pour décompresser l’archive : `unzip`.
 ]
 #indice(titre: [Indice : `apt-get` dans un build])[
-  Un build n’a pas de terminal : `apt-get install -y` répond oui à votre place, et
-  `DEBIAN_FRONTEND=noninteractive`, placé devant la commande, fait taire les questions de configuration des
-  paquets. Placez cette variable dans le `RUN`, pas dans une instruction `ENV` : elle resterait définie dans
-  les conteneurs.
-  ```dockerfile
-  RUN DEBIAN_FRONTEND=noninteractive apt-get install -y paquet1 paquet2
-  ```
+  Un build n’a pas de terminal : `apt-get install -y` répond oui à votre place, et la variable
+  `DEBIAN_FRONTEND=noninteractive` fait taire les questions de configuration des paquets.
 ]
 #indice(titre: [Indice : créer la base pendant le build])[
   Chaque instruction `RUN` s’exécute dans un conteneur neuf : un serveur démarré par un `RUN` n’existe plus au
-  suivant. Démarrez donc MariaDB, attendez qu’il réponde et passez vos commandes SQL dans le même `RUN`.
+  suivant. Démarrez donc MariaDB (`service mariadb start`) et passez vos commandes SQL dans le même `RUN`.
   #terminal[```console
   $ mariadb --execute "CREATE DATABASE nom_base"
   $ mariadb --execute "CREATE USER 'nom'@'%' IDENTIFIED BY 'mot_de_passe'"
   $ mariadb --execute "GRANT ALL PRIVILEGES ON nom_base.* TO 'nom'@'%'"
   ```]
-  Le serveur a besoin du dossier `/run/mysqld`, propriété de l’utilisateur `mysql`.
 ]
 #indice(titre: [Indice : deux services, une seule commande par défaut])[
   Un conteneur vit tant que son premier processus (PID 1) vit : #d("conteneurs-qui-surprennent")[À vous : des
-  conteneurs qui surprennent]. Un script peut lancer MariaDB en arrière-plan, puis Apache au premier plan.
-  Apache se lance au premier plan avec `apache2ctl -D FOREGROUND`. La documentation de Docker décrit ce cas :
+  conteneurs qui surprennent]. La commande par défaut peut démarrer MariaDB, puis lancer Apache au premier plan :
+  `apache2ctl -D FOREGROUND`. La documentation de Docker décrit ce cas :
   #link("https://docs.docker.com/engine/containers/multi-service_container/")[Run multiple processes in a container].
 ]
 #indice(titre: [Indice : publier le port])[
@@ -129,6 +123,8 @@ l’étape 2 reprendra ce fichier pour l’améliorer.
 ]
 
 #corrige[
+  Ce premier corrigé extrait l’archive telle quelle : le site est sous
+  #link("http://localhost:8080/wordpress"). À partir de l’étape 2, il est à la racine.
   #f("1_wordpress_multiservice_dirty/Dockerfile")
 ]
 
@@ -140,8 +136,9 @@ l’étape 2 reprendra ce fichier pour l’améliorer.
   l’image ?
 
 #corrige(titre: [Réponses])[
-  + Environ dix secondes si le PID 1 est un script shell qui ne transmet pas le signal SIGTERM : Docker attend,
-    puis envoie SIGKILL. Voir #d("forme-exec")[Forme exec ou forme shell] et l’option `--init`.
+  + Environ dix secondes avec une commande par défaut en forme shell : le PID 1 est un shell, qui ne transmet
+    pas le signal SIGTERM ; Docker attend, puis envoie SIGKILL. Voir #d("forme-exec")[Forme exec ou shell :
+    l’arrêt]. Le corrigé de l’étape 2 s’arrête en moins d’une seconde.
   + La sortie standard et la sortie d’erreur du PID 1 et des processus qui en héritent. Un service qui écrit
     son journal dans un fichier n’y apparaît pas : c’est une des raisons de ne mettre qu’un service par conteneur.
   + Une couche par instruction qui modifie le système de fichiers. L’étape 2 les regroupe.
@@ -160,10 +157,12 @@ l’étape 2 reprendra ce fichier pour l’améliorer.
 #indice(titre: [Indice : la liste des points à reprendre])[
   - `apt-get update` et `apt-get install` dans le même `RUN`, avec `--no-install-recommends`, puis la
     suppression de `/var/lib/apt/lists/*`.
+  - `DEBIAN_FRONTEND=noninteractive` devant la commande `apt-get`, et non dans une instruction `ENV` : la
+    variable resterait définie dans les conteneurs.
   - Les instructions stables d’abord : le #d("cache-buildkit")[cache de build] réutilise tout ce qui précède
     la première instruction modifiée.
   - `WORKDIR` pour changer de répertoire, plutôt que `RUN cd …`.
-  - La commande par défaut en forme exec : #d("forme-exec")[Forme exec ou forme shell].
+  - La commande par défaut en forme exec : #d("forme-exec")[Forme exec ou shell : l’arrêt].
   - Un tag précis pour l’image de base : #d("tag-ou-digest")[Tag ou digest].
 ]
 
@@ -174,15 +173,18 @@ l’étape 2 reprendra ce fichier pour l’améliorer.
 == Questions
 
 + Le cours présente le #d("multi-stage")[build multi-stage]. Serait-il utile ici ?
-+ Avec `docker container top mon_conteneur_wordpress`, relevez l’utilisateur de chaque processus : le script
-  de lancement, Apache, MariaDB. Lequel pose un problème ?
++ Avec `docker container top mon_conteneur_wordpress`, relevez l’utilisateur de chaque processus d’Apache et
+  de MariaDB. Lesquels posent un problème ?
 
 #corrige(titre: [Réponses])[
   + Non : rien n’est compilé dans cette image. Le build multi-stage sert à laisser les outils de construction
     hors de l’image finale.
-  + Le script de lancement et le processus principal d’Apache tournent en root. Or, sans _user namespace_, le
-    root du conteneur est le root de l’hôte : #d("root-conteneur")[Root du conteneur = root de l’hôte].
-    L’étape 3 traite ce point.
+  + Le processus principal d’Apache (PID 1) et le lanceur de MariaDB, `mariadbd-safe`, tournent en root ; seuls
+    les processus qui servent les requêtes sont sous `www-data`, et `mariadbd` sous `mysql`. Or, sans _user
+    namespace_, le root du conteneur est le root de l’hôte : #d("root-conteneur")[Root du conteneur = root de
+    l’hôte]. L’étape 3 traite ce point.
+  #note(role: "precaution")[`docker container top` nomme les utilisateurs d’après l’hôte : un utilisateur du
+    conteneur que l’hôte ne connaît pas apparaît sous son numéro, ou sous le nom qu’a ce numéro sur l’hôte.]
 ]
 
 = Étape 3 : plus aucun processus root <etape-3>
@@ -220,6 +222,8 @@ l’étape 2 reprendra ce fichier pour l’améliorer.
   droits d’un autre utilisateur. Pourquoi est-ce une fausse bonne idée ?
 + Sur une machine classique, Apache démarre en root, puis confie les requêtes à des processus `www-data`.
   Faut-il interdire tout processus root dans un conteneur ?
++ Quelles capabilities votre script d’entrée exige-t-il ? Retirez-les une à une pour le vérifier.
++ Arrêtez le conteneur avec `docker container stop`, puis relancez-le. Comment MariaDB a-t-il vécu l’arrêt ?
 + Votre image ne sert que WordPress. Une image générique « Apache, PHP, MariaDB », dans laquelle on monterait
   le code du site, serait-elle préférable ?
 
@@ -231,6 +235,10 @@ l’étape 2 reprendra ce fichier pour l’améliorer.
   + Non. Ce qui compte est la durée et l’étendue des pouvoirs : root pour préparer le démarrage, puis plus
     jamais, avec les seules capabilities nécessaires. Un processus root qui reste en vie tout le long, lui,
     expose l’hôte.
+  + Trois : `CHOWN` pour donner les dossiers à leurs utilisateurs, `SETUID` et `SETGID` pour changer
+    d’utilisateur. Sans l’une d’elles, le script échoue.
+  + Mal : seul le PID 1, Apache, reçoit SIGTERM. MariaDB est tué sans avoir fermé ses fichiers, et les répare au
+    démarrage suivant. C’est une limite du conteneur à deux services, que l’étape 5 lève.
   + C’est une autre architecture, pas une meilleure : l’image contient alors moins, et le code vit sur l’hôte.
     Le choix dépend de ce que vous livrez : une application précise, ou un socle pour plusieurs sites.
 ]
@@ -247,7 +255,8 @@ l’étape 2 reprendra ce fichier pour l’améliorer.
 
 #indice[
   Un volume nommé se déclare au lancement : `-v nom_du_volume:/chemin/dans/le/conteneur`. Voir
-  #d("persistance")[Persistance : montage de dossier ou volume].
+  #d("persistance")[Persistance : montage de dossier ou volume]. Les corrigés nomment les deux volumes
+  `data_wordpress` et `source_code_wordpress`.
 ]
 
 #corrige[
@@ -268,13 +277,15 @@ l’étape 2 reprendra ce fichier pour l’améliorer.
 #corrige(titre: [Réponses])[
   + À son premier montage, un volume nommé vide reçoit le contenu que l’image possède à cet endroit.
   + Le dossier de l’hôte masque le contenu de l’image, sans copie : MariaDB ne trouve plus sa base et ne démarre
-    pas. C’est le premier des #d("montages-pieges")[deux pièges des montages]. Les images officielles contournent
+    pas. Le conteneur reste pourtant en vie, puisque son PID 1 est Apache : le site répond par une erreur de
+    connexion à la base. C’est le premier des #d("montages-pieges")[deux pièges des montages]. Les images officielles contournent
     ce piège par un script d’entrée qui initialise la base quand le dossier est vide : vous le verrez à l’étape 7.
   + Dans un volume anonyme, que `docker volume ls` désigne par une longue empreinte. Il survit au conteneur,
     sauf si celui-ci est lancé avec `--rm` ou supprimé avec `docker container rm -v`.
   + Par un export lancé depuis l’hôte, sans l’option `-t`, qui altérerait la sortie :
     #terminal[```console
-    $ docker container exec mon_conteneur_wordpress mariadb-dump --all-databases > "sauvegarde_$(date +%F).sql"
+    $ docker container exec mon_conteneur_wordpress \
+        mariadb-dump --user=admin --password=tempo wordpress > "sauvegarde_$(date +%F).sql"
     ```]
     Un export complète le volume, il ne le remplace pas.
 ]
@@ -294,8 +305,9 @@ l’étape 2 reprendra ce fichier pour l’améliorer.
   - Copiez `4_wordpress_multiservice_persistant` en `5_wordpress_microservice_persistant`.
   - Créez deux sous-dossiers, `wordpress` et `db`, avec un Dockerfile chacun : le premier pour Apache, PHP et
     les sources de WordPress, le second pour MariaDB.
+  - Chaque image fixe son utilisateur par l’instruction `USER` : `www-data` pour l’une, `mysql` pour l’autre.
   - Écrivez un script `build_and_launch.sh` qui crée un réseau, construit les deux images et lance les deux
-    conteneurs, nommés `wordpress` et `db`.
+    conteneurs, nommés `wordpress` et `db`, sans aucune capability.
   - Les deux conteneurs se joignent par leur nom ; la base n’est pas publiée sur l’hôte.
   - Les données de la base et le code persistent comme à l’étape 4.
   - Vérifiez le site. Dans l’assistant d’installation de WordPress, l’adresse de la base est `db`.
@@ -308,7 +320,7 @@ l’étape 2 reprendra ce fichier pour l’améliorer.
 #indice(titre: [Indice : MariaDB n’écoute que localement])[
   Par défaut, le MariaDB de Debian n’accepte que les connexions de la machine locale : c’est la ligne
   `bind-address` de `/etc/mysql/mariadb.conf.d/50-server.cnf`. Dans un conteneur à part, il doit écouter sur
-  toutes ses interfaces.
+  toutes ses interfaces : l’option `--bind-address` de `mariadbd` l’emporte sur le fichier.
 ]
 
 #corrige[
@@ -319,11 +331,15 @@ l’étape 2 reprendra ce fichier pour l’améliorer.
 
 == Questions
 
++ Pourquoi le script d’entrée de l’étape 3 n’est-il plus nécessaire ?
 + Depuis le conteneur `wordpress`, comment le nom `db` est-il résolu ?
 + D’anciens tutoriels relient deux conteneurs par l’option `--link`. Pourquoi ne pas l’employer ?
 + Votre application compte deux services. Que deviendrait `build_and_launch.sh` avec vingt-cinq services ?
 
 #corrige(titre: [Réponses])[
+  + Chaque conteneur n’a plus qu’un service : `USER` suffit à lui donner son utilisateur dès le premier
+    processus, et aucune capability n’est requise. Le service porte le PID 1 : il reçoit SIGTERM, donc MariaDB
+    s’arrête proprement, et `docker container logs` montre son journal.
   + Par le serveur de noms que Docker fournit sur les réseaux utilisateur, à l’adresse 127.0.0.11 dans chaque
     conteneur : `docker container exec wordpress cat /etc/resolv.conf`.
   + `--link` est un mécanisme hérité du réseau par défaut, que la documentation de Docker déconseille : les
@@ -388,9 +404,10 @@ l’étape 2 reprendra ce fichier pour l’améliorer.
 + Pourquoi le fichier fixe-t-il un tag pour chaque image ?
 
 #corrige(titre: [Réponses])[
-  + Dans les images. Leur script d’entrée crée la base et l’utilisateur au premier démarrage, d’après les
-    variables d’environnement, puis abandonne ses privilèges : ce que vous avez fait pendant le build et dans
-    `entrypoint.sh`.
+  + Dans les images. Le script d’entrée de `mariadb` crée la base et l’utilisateur au premier démarrage, d’après
+    les variables d’environnement, puis lance le serveur sans privilège : ce que vous avez fait pendant le build
+    et dans `entrypoint.sh`. Celui de `wordpress` copie les sources et écrit la configuration. Dans cette image,
+    le processus principal d’Apache reste root : `docker compose top` le montre.
   + Des volumes anonymes : chaque image en déclare pour ses données. `down` les laisse orphelins, et un nouveau
     `up` en crée d’autres : le site est à réinstaller. L’étape 8 nomme l’emplacement des données.
   + Sans tag, Docker prend `latest`, qui change avec le temps : deux lancements à six mois d’écart ne
@@ -401,8 +418,9 @@ l’étape 2 reprendra ce fichier pour l’améliorer.
 
 #bloc(role: "question")[Consignes][
   - Copiez `7_wordpress_official_stack` en `8_my_final_wordpress`.
-  - Faites persister la base dans `$HOME/data_wordpress` et le code de WordPress dans
-    `$HOME/source_code_wordpress`.
+  - Créez deux dossiers, `$HOME/data_wordpress` et `$HOME/source_code_wordpress`, et faites-y persister la base
+    et le code de WordPress.
+  - Fixez l’image de WordPress à une version qui n’est pas la dernière, par exemple `wordpress:7.0`.
   - Installez WordPress, puis mettez-le à jour depuis son interface d’administration.
   - Supprimez l’application avec `docker compose down`, relancez-la, et relevez la version de WordPress.
 ]
@@ -434,20 +452,23 @@ proxy, comme dans le cours : #d("compose-echelle")[Compose : passer à l’éche
 #schema([Étape 9 : le proxy répartit les requêtes entre les instances de `wordpress` ; la base reste unique.], ch => {
   let c = ch.c
   let conteneur(titre, corps) = boite(titre, fond: c.bleu-clair, trait: c.bleu, corps)
-  boite([Hôte · réseau du projet], largeur: 470pt, grid(columns: (auto, auto, auto, auto, auto), column-gutter: 10pt, align: horizon,
-    stack(spacing: 4pt, text(size: 9pt)[port 8080], text(size: 14pt)[→]),
+  let fleche = text(size: 14pt)[→]
+  boite([Hôte · réseau du projet], largeur: 480pt, grid(columns: 6, column-gutter: 10pt, align: horizon,
+    stack(spacing: 4pt, text(size: 9pt)[port 8080], fleche),
     conteneur([conteneur `proxy`], case(largeur: 70pt)[Traefik]),
-    text(size: 14pt)[→],
-    stack(spacing: 5pt, ..range(1, 4).map(i => conteneur([`wordpress-` #i], case(largeur: 110pt)[Apache + PHP]))),
-    stack(spacing: 4pt, text(size: 14pt)[→], v(4pt),
-      conteneur([conteneur `db`], case(largeur: 70pt)[MariaDB])),
+    fleche,
+    stack(spacing: 5pt, ..range(1, 4).map(i => conteneur([conteneur `wordpress-`#str(i)], case(largeur: 110pt)[Apache + PHP]))),
+    fleche,
+    conteneur([conteneur `db`], case(largeur: 70pt)[MariaDB]),
   ))
 })
 
 #bloc(role: "question")[Consignes][
   - Créez un dossier `9_wordpress_scale` : reprenez le fichier de l’étape 7, ajoutez un service `proxy`
     (Traefik) et retirez la publication de port du service `wordpress`.
-  - Lancez trois instances : `docker compose up -d --scale wordpress=3`.
+  - Faites partager aux instances le code de WordPress et sa configuration, par un volume nommé.
+  - Lancez l’application et installez WordPress, puis passez à trois instances :
+    `docker compose up -d --scale wordpress=3`.
   - Montrez que des requêtes successives sont servies par des conteneurs différents.
   - Passez à cinq instances sans rien arrêter.
 ]
@@ -455,6 +476,7 @@ proxy, comme dans le cours : #d("compose-echelle")[Compose : passer à l’éche
 #indice[
   Le service `wordpress` ne peut plus publier le port 8080 : trois conteneurs ne se partagent pas un port de
   l’hôte. Seul le proxy publie un port ; il trouve les instances par leurs _labels_.
+  `docker compose logs --follow wordpress` préfixe chaque ligne du nom de l’instance qui a répondu.
 ]
 
 #corrige[
@@ -470,8 +492,10 @@ proxy, comme dans le cours : #d("compose-echelle")[Compose : passer à l’éche
 #corrige(titre: [Réponses])[
   + Deux serveurs de base de données sur les mêmes fichiers les corrompent : #d("compose-limite")[La limite :
     deux PostgreSQL sur un même volume]. Une base passe à l’échelle par sa réplication.
-  + Elles partagent la base. Elles doivent aussi partager les fichiers que WordPress écrit (médias, extensions,
-    `wp-config.php`) : sans volume commun, chaque instance aurait les siens.
+  + Elles partagent la base. Elles doivent aussi partager les fichiers que WordPress écrit : médias, extensions,
+    et `wp-config.php`, qui contient les clés signant les cookies de connexion. Sans volume commun, chaque
+    instance aurait ses clés, et l’utilisateur serait déconnecté d’une requête à l’autre. Ce volume commun ne
+    vaut que sur une seule machine.
   + Tout s’arrête : Compose ne gère qu’une machine. Répartir des conteneurs sur plusieurs machines et les
     relancer ailleurs en cas de panne est le rôle d’un orchestrateur, que le cours présente ensuite :
     #d("orchestrateurs")[La limite de Compose : une seule machine].

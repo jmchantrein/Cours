@@ -7,9 +7,10 @@ set -eu
 # 1. Ce qui exige root : créer les dossiers d'exécution des deux services et
 #    les donner à leurs utilisateurs. Les chemins d'Apache sont définis dans
 #    /etc/apache2/envvars, que seul apache2ctl charge : on le charge ici, pour
-#    ce script et pour Apache.
-APACHE_CONFDIR=/etc/apache2
-. "$APACHE_CONFDIR/envvars"
+#    ce script et pour Apache. Ce fichier lit APACHE_CONFDIR : sans elle,
+#    « set -u » arrêterait le script.
+export APACHE_CONFDIR=/etc/apache2
+. /etc/apache2/envvars
 mkdir -p /run/mysqld "$APACHE_RUN_DIR" "$APACHE_LOCK_DIR"
 chown mysql: /run/mysqld
 chown www-data: "$APACHE_RUN_DIR" "$APACHE_LOCK_DIR"

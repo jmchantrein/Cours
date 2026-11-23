@@ -1,0 +1,64 @@
+name: Test des corrigés de TP
+
+# Chaque TP qui a des corrigés exécutables (<cours>/tp/<tp>/corrige/) fournit à
+# côté un harnais <cours>/tp/<tp>/tester.sh. Ce workflow rejoue tous les
+# harnais en mode --up : construire, démarrer, vérifier, nettoyer.
+on:
+  push:
+    paths:
+      - "*/tp/*/corrige/**"
+      - "*/tp/*/tester.sh"
+      - ".github/workflows/test-corriges.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Un nouveau push sur la même branche remplace le test en cours.
+concurrency:
+  group: test-corriges-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  corriges:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      # ubuntu-latest fournit Docker, Compose v2, curl et shellcheck.
+      - name: Versions
+        run: |
+          docker version --format 'Docker {{.Server.Version}}'
+          docker compose version
+          docker buildx version
+
+      - name: Un harnais par TP corrigé
+        run: |
+          manquants=0
+          for corrige in */tp/*/corrige; do
+            [ -d "$corrige" ] || continue
+            harnais="$(dirname "$corrige")/tester.sh"
+            if [ ! -x "$harnais" ]; then
+              echo "::error file=$corrige::$corrige n'a pas de harnais exécutable $harnais"
+              manquants=1
+            fi
+          done
+          exit "$manquants"
+
+      - name: Harnais (--up)
+        run: |
+          echecs=0
+          for harnais in */tp/*/tester.sh; do
+            [ -f "$harnais" ] || continue
+            echo "::group::$harnais --up"
+            if bash "$harnais" --up; then
+              resultat="réussi"
+            else
+              resultat="en échec"; echecs=1
+            fi
+            echo "::endgroup::"
+            echo "$harnais : $resultat"
+            [ "$resultat" = "réussi" ] || echo "::error file=$harnais::$harnais --up a échoué (détail dans le groupe ci-dessus)"
+          done
+          exit "$echecs"

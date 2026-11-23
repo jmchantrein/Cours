@@ -20,9 +20,8 @@ WORKDIR /var/www/html
 
 RUN wget -q https://wordpress.org/latest.zip && \
     unzip -q latest.zip && \
-    rm -f latest.zip index.html && \
-    mv wordpress/* . && \
-    rmdir wordpress && \
+    cp -a wordpress/. . && \
+    rm -rf latest.zip wordpress index.html && \
     chown -R www-data: .
 
 # Un seul service, donc un seul utilisateur : plus besoin de root au démarrage
