@@ -71,6 +71,11 @@ Le dépôt se publie tel quel avec GitHub Pages (branche `main`, racine ; `.noje
 `index.html` mène aux diapos, aux TP et aux artefacts. Chaque page web embarque les variantes de rendu, que le lecteur
 choisit dans la page.
 
+## Signaler une erreur, proposer une amélioration
+Ces supports peuvent contenir des erreurs. Signalez-les par une
+[issue](https://github.com/jmchantrein/Cours/issues), ou proposez directement une correction ou une amélioration
+par une pull request. Les propositions rédigées par une IA, ou avec son aide, sont acceptées elles aussi.
+
 ## Licences
 Contenus sous CC BY-NC-SA 4.0 (voir [`LICENSE.md`](LICENSE.md)). Les polices IBM Plex de `commun/fonts/`
 restent sous SIL Open Font License 1.1 (voir `commun/fonts/OFL-IBM-Plex.txt`).

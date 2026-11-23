@@ -25,5 +25,10 @@
 = Fondements de la virtualisation de machines
 - #diapos("virtualisation")
 
+#note(role: "precaution")[Ces supports peuvent contenir des erreurs. Signalez-les par une
+  #link("https://github.com/jmchantrein/Cours/issues")[issue], ou proposez une correction ou une amélioration par
+  une pull request sur le #link("https://github.com/jmchantrein/Cours")[dépôt]. Les propositions rédigées par une
+  IA, ou avec son aide, sont acceptées elles aussi.]
+
 #note(role: "notion")[Chaque page web propose, en haut à droite, les mêmes rendus adaptés que les diapositives :
   palettes pour les daltonismes et l’achromatopsie, mise en page pour la dyslexie.]

@@ -15,9 +15,9 @@
 
 ### Travaux pratiques
 - [ ] Vérifier dans Firefox et Chromium que les renvois du TP ouvrent le PDF à la bonne diapo (`#nameddest=`)
-- [ ] Archiver la branche `corrections` par un tag puis la supprimer, depuis un poste autorisé à pousser tags et suppressions (accord donné le 2026-11-23 ; ses corrigés sont remplacés par `conteneurisation/tp/wordpress/corrige/`)
+- [ ] Supprimer la branche `corrections` : son historique est rattaché à `main` par un commit de fusion sans changement de fichiers (`git show c83a3d5:wordpress_step_by_step/…` reste lisible)
 - [ ] Vérifier les liens externes du TP WordPress (docs.docker.com, wordpress.org, iximiuz Labs : non testables depuis l’environnement de rédaction)
-- [ ] Fusionner la branche de travail dans `main`, puis vérifier le site publié par GitHub Pages (accueil, TP, artefact, polices, renvois vers les diapos)
+- [ ] Vérifier le site publié par GitHub Pages (accueil, TP, artefact, polices, renvois vers les diapos)
 
 ## Fait
 
@@ -48,3 +48,5 @@
 - [x] 2026-11-23 — TP « Conteneuriser WordPress » réécrit contre le cours : 9 étapes, sans setuid (root au démarrage seulement), réseau utilisateur à la place de `--link`, volumes nommés, Compose v2, passage à l’échelle avec Compose à la place de Swarm ; corrigés en fichiers réels sur `main`, harnais `tester.sh` et CI `test-corriges.yml`
 - [x] 2026-11-23 — CI de test des corrigés : les neuf étapes du TP WordPress construites et vérifiées sur GitHub Actions (69 vérifications réussies)
 - [x] 2026-11-23 — Premier artefact interactif, « Le cache de build » (`conteneurisation/artefacts/cache-de-build/`) : simulateur de la clé de chaque étape, cinq expériences avec réponses ; convention `<cours>/artefacts/<nom>/`, lié depuis l’étape 2 du TP et l’accueil
+- [x] 2026-11-23 — README et page d’accueil : appel à signaler les erreurs par une issue et à proposer des corrections par pull request, propositions d’IA comprises
+- [x] 2026-11-23 — Travail fusionné dans `main` ; historique de la branche `corrections` rattaché à `main`
