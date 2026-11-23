@@ -1,0 +1,57 @@
+# Étape 9 — plusieurs instances de wordpress derrière un proxy, comme dans le
+# cours (« Compose : passer à l'échelle »).
+#   docker compose up -d --scale wordpress=3
+#   docker compose up -d --scale wordpress=5     (sans rien arrêter)
+# Site : http://localhost:8080/
+
+services:
+  wordpress:
+    image: wordpress:7.1
+    # Plus de clé ports : trois conteneurs ne se partagent pas un port de
+    # l'hôte. Le proxy trouve les instances par ce label, qui porte la règle
+    # de routage : toutes les requêtes vont au service wordpress.
+    labels:
+      - traefik.http.routers.wordpress.rule=PathPrefix(`/`)
+    environment:
+      WORDPRESS_DB_HOST: db
+      WORDPRESS_DB_NAME: wordpress
+      WORDPRESS_DB_USER: admin
+      # exemple d'école : en production,
+      # WORDPRESS_DB_PASSWORD_FILE + secrets:
+      WORDPRESS_DB_PASSWORD: tempo
+    volumes:
+      # Toutes les instances montent le même volume : elles partagent
+      # wp-config.php, les médias téléversés, les extensions et les thèmes.
+      - source_code_wordpress:/var/www/html
+    depends_on:
+      - db
+
+  # Une seule instance : une base ne passe pas à l'échelle par --scale.
+  db:
+    image: mariadb:11.8
+    # Traefik expose par défaut tous les conteneurs : pas la base.
+    labels:
+      - traefik.enable=false
+    environment:
+      MARIADB_DATABASE: wordpress
+      MARIADB_USER: admin
+      # exemple d'école : en production,
+      # MARIADB_PASSWORD_FILE + secrets:
+      MARIADB_PASSWORD: tempo
+      MARIADB_RANDOM_ROOT_PASSWORD: "1"
+    volumes:
+      - data_wordpress:/var/lib/mysql
+
+  proxy:
+    image: traefik:v3.7
+    command: --providers.docker
+    ports:
+      - "8080:80"
+    volumes:
+      # Le socket Docker est un accès root de fait, même en lecture seule :
+      # voir la diapositive « Le socket Docker : un accès root ».
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+
+volumes:
+  source_code_wordpress:
+  data_wordpress:

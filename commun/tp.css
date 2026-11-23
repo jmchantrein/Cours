@@ -77,7 +77,7 @@ pre { position: relative; margin: .8rem 0; padding: .8rem 1rem; overflow-x: auto
 .terminal .invite { color: var(--c-prompt); user-select: none; }
 .terminal .commentaire { color: var(--c-commentaire); }
 .fichier { margin: 1rem 0; }
-.fichier figcaption { display: inline-block; padding: .2rem .8rem; border-radius: .5rem .5rem 0 0;
+.fichier figcaption { display: inline-block; max-width: 100%; overflow-wrap: anywhere; padding: .2rem .8rem; border-radius: .5rem .5rem 0 0;
   background: var(--c-encart); font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: .8rem; }
 .fichier figcaption a { color: var(--c-fond); }
 .fichier pre { margin-top: 0; border-top-left-radius: 0; }
@@ -91,15 +91,9 @@ table { border-collapse: collapse; margin: 1rem 0; }
 td, th { padding: .35rem .7rem; border: 1px solid var(--c-filet); text-align: left; vertical-align: top; }
 th { background: var(--c-espace); }
 figure { margin: 1.2rem 0; }
-/* Schémas : un dessin par palette, seul celui de la variante choisie est affiché. */
-.schema { overflow-x: auto; }
-.schema svg { max-width: 100%; height: auto; }
-.schema [data-pour] { display: none; }
-:is([data-variante="projection"], [data-variante="dyslexie"]) .schema [data-pour="projection"],
-[data-variante="deuteranopie"] .schema [data-pour="deuteranopie"],
-[data-variante="protanopie"] .schema [data-pour="protanopie"],
-[data-variante="tritanopie"] .schema [data-pour="tritanopie"],
-[data-variante="achromatopsie"] .schema [data-pour="achromatopsie"] { display: block; }
+/* Schémas : un dessin par palette distincte ; tp.js n’affiche que celui de la variante choisie. */
+.schema svg { max-width: 100%; height: auto !important; }
+html:not(.js) .schema [data-pour]:not(:first-child) { display: none; }
 figcaption { font-size: .9rem; color: var(--c-gris); }
 
 /* Variante dyslexie : lettres, mots et lignes espacés ; ni capitales forcées ni italique. */

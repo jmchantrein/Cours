@@ -3,21 +3,22 @@
 ## À faire
 
 ### Cours Docker
-- [ ] Rejouer les sorties marquées « à rejouer » avec `conteneurisation/rejouer.sh` sur un Debian 13 (docker.io 26.1.5, AppArmor), puis les recopier dans les diapos
+- [ ] Rejouer les sorties marquées « à rejouer » avec `conteneurisation/cm/rejouer.sh` sur un Debian 13 (docker.io 26.1.5, AppArmor), puis les recopier dans les diapos
 
 ### Cours Virtualisation
-- [ ] Rejouer les sorties types (KVM, TP) avec `virtualisation/rejouer-tp.sh` sur une machine avec KVM, puis remplacer les sorties des diapos et les mentions « à rejouer » des notes
+- [ ] Rejouer les sorties types (KVM, TP) avec `virtualisation/cm/rejouer-tp.sh` sur une machine avec KVM, puis remplacer les sorties des diapos et les mentions « à rejouer » des notes
+
+### Cours Conteneurisation — Orchestration
+- [ ] Rejouer sur Debian 13 les sorties Swarm des diapos « le fichier Compose devient une stack » et « passage à l’échelle, reprise sur panne » (prises sur Docker 29.10, un nœud), et tester la répartition de charge du routing mesh (`curl`, non rejouable sans IPVS)
+- [ ] Vérifier les adresses des sources des diapos Orchestration (docs.docker.com, kubernetes.io : inaccessibles lors de la rédaction) et les faits marqués « à vérifier » dans les notes de l’orateur
+- [ ] Essayer le manifeste Kubernetes de la diapo « pod, Deployment, Service » sur un cluster (kind, minikube ou k3s)
 
 ### Travaux pratiques
-- [ ] Décider : arborescence `<cours>/cm`, `tp`, `artefacts` ; format des énoncés (Markdown + figures Typst en SVG, ou Typst) ; refonte de l'étape 3 ; sort de la partie Swarm et de l'étape 9
-- [ ] Rapatrier dans `conteneurisation/tp/` les corrigés testés du dépôt `site` (`site/src/solutions/tp-docker-wordpress/`) et le harnais `site/scripts/test-solutions.sh` (deux chemins à adapter, nettoyage des volumes à borner), avec une CI dédiée
-- [ ] Archiver la branche `corrections` par un tag puis la supprimer (rien n'y manque par rapport à `site`, hors commentaires en français et historique)
-- [ ] TP conteneurisation, écarts de fond avec le cours : étape 3 (setuid, contredit « aucun binaire setuid », gosu ou setpriv) ; étape 5 (`--link` → réseau utilisateur et DNS) ; étape 4 (instruction `VOLUME` → volume nommé) ; Swarm et étape 9 (hors cadre du cours, Play with Docker fermé)
-- [ ] TP conteneurisation, mises à jour mécaniques : `docker compose` et `compose.yaml` sans clé `version`, tags épinglés (`debian:13`, base de données maintenue), forme `docker container …`, `apt-get`, `WORKDIR`, liens docs.docker.com, vocabulaire du cours (service, persistance, publier, journal, entrypoint, couche)
-- [ ] TP conteneurisation, erreurs factuelles : `docker volume prune` (anonymes seulement depuis Docker 23, lapsus « conteneur »), volumes anonymes supprimés seulement avec `--rm` ou `rm -v`, pilotes de stockage (aufs et devicemapper retirés, sans rapport avec les volumes), bash « passé en arrière-plan » (il lit une fin de fichier et sort), `GRANT ALL ON *.*` contre la consigne, `mysqldump` en cron (`-it`, `$(date)`), `docker stack deploy` sans nom de stack, `deploy` et `overlay` dans Compose
-- [ ] TP conteneurisation : retirer les doublons avec les « À vous » des diapos (publier nginx, conteneurs qui surprennent) et y renvoyer
-- [ ] Corrigés à la demande dans les énoncés : `<details>` en deux temps (indice, puis corrigé)
-- [ ] Premier artefact interactif (cache de build) et publication GitHub Pages
+- [ ] Activer GitHub Pages sur le dépôt (branche `main`, racine) pour publier `index.html`, les diapos et les TP
+- [ ] Vérifier dans Firefox et Chromium que les renvois du TP ouvrent le PDF à la bonne diapo (`#nameddest=`)
+- [ ] Archiver la branche `corrections` par un tag puis la supprimer (ses corrigés sont remplacés par `conteneurisation/tp/wordpress/corrige/`)
+- [ ] Vérifier les liens externes du TP WordPress (docs.docker.com, wordpress.org, iximiuz Labs : non testables depuis l’environnement de rédaction)
+- [ ] Premier artefact interactif (cache de build), dans `<cours>/artefacts/`, lié depuis le TP
 
 ## Fait
 
@@ -42,3 +43,7 @@
 - [x] 2026-11-21 — Cours docker renommé conteneurisation ; variante « normal » renommée « projection », suffixe -projection sur le PDF
 - [x] 2026-11-21 — Titre « Fondements de la conteneurisation », Avantages en bleu, coureur réservé aux questions, page de clôture, couches de la couverture en dégradé
 - [x] 2026-11-23 — Audit du TP conteneurisation contre le cours et contre le dépôt `site` (énoncé, corrigés, harnais, artefacts) ; propositions d'organisation CM / TP / artefacts, de format et de corrigés à la demande
+- [x] 2026-11-23 — Séparation CM / TP : `<cours>/cm/` (diapos, PDF, scripts de rejeu) et `<cours>/tp/<tp>/` ; `commun/charte.typ` extrait (rôles, palettes), commun aux diapos et aux TP
+- [x] 2026-11-23 — Thème des TP en Typst vers HTML (`commun/theme-tp.typ`, `tp.css`, `tp.js`) : variantes choisies dans la page, indices et corrigés repliés, copie des seules commandes, schémas par palette, renvois vers les diapos ; page d’accueil `index.typ` ; CI étendue aux pages web
+- [x] 2026-11-23 — Cours Conteneurisation : section Orchestration (8 diapos : limite de Compose, état désiré, Swarm, Kubernetes, lequel choisir) ; étiquettes sur les diapos citées par le TP
+- [x] 2026-11-23 — TP « Conteneuriser WordPress » réécrit contre le cours : 9 étapes, sans setuid (root au démarrage seulement), réseau utilisateur à la place de `--link`, volumes nommés, Compose v2, passage à l’échelle avec Compose à la place de Swarm ; corrigés en fichiers réels sur `main`, harnais `tester.sh` et CI `test-corriges.yml`

@@ -1,0 +1,40 @@
+# Étape 8 — l'application de l'étape 7, avec ses données dans deux dossiers de
+# votre répertoire personnel (montages de dossiers de l'hôte).
+#   mkdir -p "$HOME/source_code_wordpress" "$HOME/data_wordpress"
+#   docker compose up -d
+# Site : http://localhost:8080/
+
+services:
+  wordpress:
+    # Une version qui n'est pas la dernière : le tableau de bord de WordPress
+    # proposera une mise à jour, à faire depuis l'interface d'administration.
+    image: wordpress:7.0
+    ports:
+      - "8080:80"
+    environment:
+      WORDPRESS_DB_HOST: db
+      WORDPRESS_DB_NAME: wordpress
+      WORDPRESS_DB_USER: admin
+      # exemple d'école : en production,
+      # WORDPRESS_DB_PASSWORD_FILE + secrets:
+      WORDPRESS_DB_PASSWORD: tempo
+    volumes:
+      # Un chemin avant le « : » : montage d'un dossier de l'hôte. Le dossier
+      # est vide au premier lancement ; le script d'entrée de l'image y copie
+      # les sources de WordPress.
+      - $HOME/source_code_wordpress:/var/www/html
+    depends_on:
+      - db
+
+  db:
+    image: mariadb:11.8
+    environment:
+      MARIADB_DATABASE: wordpress
+      MARIADB_USER: admin
+      # exemple d'école : en production,
+      # MARIADB_PASSWORD_FILE + secrets:
+      MARIADB_PASSWORD: tempo
+      MARIADB_RANDOM_ROOT_PASSWORD: "1"
+    volumes:
+      # Dossier vide au premier lancement : le script d'entrée y crée la base.
+      - $HOME/data_wordpress:/var/lib/mysql

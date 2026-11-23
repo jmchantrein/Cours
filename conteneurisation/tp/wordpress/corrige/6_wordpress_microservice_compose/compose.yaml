@@ -1,0 +1,41 @@
+# Étape 6 — la même application que build_and_launch.sh, décrite au lieu d'être
+# lancée pas à pas. Les deux Dockerfile sont ceux de l'étape 5.
+#   docker compose up -d      construire, créer et démarrer
+#   docker compose ps         état des services
+#   docker compose logs -f    suivre les journaux
+#   docker compose down       arrêter, supprimer conteneurs et réseau
+#                             (down -v supprime aussi les volumes)
+# Site : http://localhost:8080/ (adresse de la base : « db »).
+
+services:
+  wordpress:
+    # build construit l'image depuis le Dockerfile du dossier wordpress/
+    build: wordpress
+    ports:
+      - "8080:80"
+    volumes:
+      - source_code_wordpress:/var/www/html
+    # ordre de démarrage seulement : n'attend pas que la base réponde
+    depends_on:
+      - db
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+
+  # Le nom du service est aussi son nom sur le réseau : wordpress joint « db ».
+  # Pas de clé ports : la base n'est pas publiée sur l'hôte.
+  db:
+    build: db
+    volumes:
+      - data_wordpress:/var/lib/mysql
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+
+# Pas de clé networks : Compose crée un réseau utilisateur pour le projet et y
+# relie tous les services. Les volumes nommés, eux, se déclarent.
+volumes:
+  source_code_wordpress:
+  data_wordpress:

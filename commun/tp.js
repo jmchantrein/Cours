@@ -1,8 +1,15 @@
 // tp.js — comportements des pages web : variante d’affichage, terminaux, copie des commandes.
 (() => {
+  document.documentElement.classList.add("js");
   // Variante d’affichage : choisie par le lecteur, mémorisée dans son navigateur.
   const choix = document.getElementById("variante");
-  const appliquer = v => { document.documentElement.dataset.variante = v; choix.value = v; };
+  const appliquer = v => {
+    document.documentElement.dataset.variante = v; choix.value = v;
+    // Schémas : un dessin par palette, on montre celui qui sert cette variante.
+    for (const dessin of document.querySelectorAll(".schema [data-pour]")) {
+      dessin.hidden = !dessin.dataset.pour.split(" ").includes(v);
+    }
+  };
   try { appliquer(localStorage.getItem("variante") || "projection"); } catch { appliquer("projection"); }
   choix.addEventListener("change", () => {
     appliquer(choix.value);
@@ -42,7 +49,7 @@
   if (navigator.clipboard) {
     for (const pre of document.querySelectorAll("pre")) {
       const code = pre.querySelector("code");
-      const texte = code.dataset.commandes ?? code.textContent;
+      const texte = code.dataset.commandes || code.textContent;
       if (!texte) continue;
       const bouton = document.createElement("button");
       bouton.type = "button"; bouton.className = "copier"; bouton.textContent = "Copier";

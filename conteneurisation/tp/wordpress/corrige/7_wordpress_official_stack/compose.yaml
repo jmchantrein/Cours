@@ -1,0 +1,38 @@
+# Étape 7 — la même application, avec les images officielles.
+# Plus aucun Dockerfile : chaque image a son script d'entrée, qui lit ces
+# variables d'environnement. Au premier démarrage, celui de mariadb crée la
+# base et son utilisateur ; celui de wordpress écrit wp-config.php.
+#   docker compose up -d
+# Site : http://localhost:8080/ (WordPress connaît déjà sa base : l'assistant
+# ne demande que le titre du site et le compte d'administration).
+
+services:
+  wordpress:
+    # un tag précis : sans tag, « latest » changerait avec le temps
+    image: wordpress:7.1
+    ports:
+      - "8080:80"
+    environment:
+      WORDPRESS_DB_HOST: db
+      WORDPRESS_DB_NAME: wordpress
+      WORDPRESS_DB_USER: admin
+      # exemple d'école : en production,
+      # WORDPRESS_DB_PASSWORD_FILE + secrets:
+      WORDPRESS_DB_PASSWORD: tempo
+    depends_on:
+      - db
+
+  db:
+    image: mariadb:11.8
+    environment:
+      MARIADB_DATABASE: wordpress
+      MARIADB_USER: admin
+      # exemple d'école : en production,
+      # MARIADB_PASSWORD_FILE + secrets:
+      MARIADB_PASSWORD: tempo
+      # le compte root de la base reçoit un mot de passe aléatoire, affiché
+      # une seule fois dans les journaux du premier démarrage
+      MARIADB_RANDOM_ROOT_PASSWORD: "1"
+
+# Aucun volume n'est déclaré : chaque image crée un volume anonyme pour ses
+# données, que « docker compose down » laisse orphelin.

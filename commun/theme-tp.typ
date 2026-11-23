@@ -124,10 +124,20 @@
 
 // ---------- Schémas ----------
 // Un schéma se dessine en Typst et reçoit la charte d’une variante : `schema([légende], ch => …)`, avec
-// ch.c (couleurs) et ch.roles. La page embarque un dessin par palette ; tp.css montre celui de la variante choisie.
+// ch.c (couleurs) et ch.roles. La page embarque un dessin par palette distincte ; tp.js montre celui de la variante choisie.
+// Variantes regroupées par palette identique : ("projection dyslexie", "projection"), ("deuteranopie protanopie", …)…
+#let _palettes-distinctes = {
+  let groupes = ()
+  for v in variantes {
+    let pal = repr(charte-de(v).pal)
+    let i = groupes.position(g => g.at(2) == pal)
+    if i == none { groupes.push((v, v, pal)) } else { groupes.at(i).at(0) += " " + v }
+  }
+  groupes.map(g => (g.at(0), g.at(1)))
+}
 #let schema(legende, dessin) = _el("figure", class: "schema")[
-  #for v in ("projection",) + palettes.keys() {
-    _el("div", data: (pour: v), html.frame({
+  #for (vs, v) in _palettes-distinctes {
+    _el("div", data: (pour: vs), html.frame({
       set text(font: "IBM Plex Sans", size: 11pt, fill: encre)
       dessin(charte-de(v))
     }))

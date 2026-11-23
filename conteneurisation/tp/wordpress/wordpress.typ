@@ -104,9 +104,9 @@ l’étape 2 reprendra ce fichier pour l’améliorer.
   `DEBIAN_FRONTEND=noninteractive`, placé devant la commande, fait taire les questions de configuration des
   paquets. Placez cette variable dans le `RUN`, pas dans une instruction `ENV` : elle resterait définie dans
   les conteneurs.
-  #terminal[```console
+  ```dockerfile
   RUN DEBIAN_FRONTEND=noninteractive apt-get install -y paquet1 paquet2
-  ```]
+  ```
 ]
 #indice(titre: [Indice : créer la base pendant le build])[
   Chaque instruction `RUN` s’exécute dans un conteneur neuf : un serveur démarré par un `RUN` n’existe plus au
