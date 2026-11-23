@@ -97,7 +97,8 @@ Un artefact est un petit logiciel interactif qui fait manipuler un concept : `<c
   `#artefact(read("<nom>.js"), style: read("<nom>.css"))[aide]`. L’aide énonce la règle (bloc `retenir`, renvoi
   `diapo(…)`) et propose des expériences : `#experiences(([question], [réponse], "recette"), …)`, montrées une
   à la fois. Le troisième élément, facultatif, nomme une recette que le script sait jouer : il affiche alors
-  ses étapes dans l’expérience, avec un bouton pour les dérouler.
+  ses étapes dans l’expérience, avec un lecteur — étape précédente, lecture ou pause, étape suivante, quitter.
+  Pour revenir en arrière, le script mémorise l’état de la simulation après chaque étape.
 - Sur un écran d’ordinateur, la page d’atelier prend exactement la hauteur de la fenêtre : le texte grossit
   avec elle, et ce qui peut grandir défile dans son cadre. Rien n’est rogné à 1280 × 650 px utiles, toutes
   réponses ouvertes.

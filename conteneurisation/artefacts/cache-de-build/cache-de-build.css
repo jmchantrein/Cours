@@ -95,17 +95,25 @@
 .cache .reserve .etat { font-weight: 400; }
 .cache .reserve .etat::before { content: "○"; }
 
-/* Recettes : dans chaque expérience, ses étapes et le bouton qui les joue. */
+/* Recettes : dans chaque expérience, ses étapes et un lecteur (étape précédente, lecture ou pause, étape
+   suivante, quitter). */
 .recette { margin: .4rem 0 0; }
-.recette .jouer { padding: .25rem .8rem; border: 1px solid var(--notion-entete); border-radius: .4rem; background: var(--notion-entete);
-  color: var(--notion-texte); font: inherit; font-size: .85rem; font-weight: 600; cursor: pointer; }
-.recette .jouer:hover:not(:disabled) { background: var(--c-encre); border-color: var(--c-encre); }
-.recette .jouer:disabled { opacity: .35; cursor: default; }
+.lecteur { display: flex; flex-wrap: wrap; gap: .3rem; }
+.lecteur button { padding: .22rem .6rem; border: 1px solid var(--c-ardoise); border-radius: .4rem; background: #fff;
+  color: var(--c-encre); font: inherit; font-size: .8rem; font-weight: 600; cursor: pointer; white-space: nowrap; }
+.lecteur button:hover:not(:disabled) { background: var(--c-bleu-clair); }
+.lecteur button:disabled { opacity: .35; cursor: default; }
+.lecteur button.jouer { border-color: var(--notion-entete); background: var(--notion-entete); color: var(--notion-texte); }
+.lecteur button.jouer:hover:not(:disabled) { background: var(--c-encre); border-color: var(--c-encre); }
 .recette ol { margin: .35rem 0 0; padding-left: 1.5rem; color: var(--c-ardoise); font-size: .92em; line-height: 1.3; }
 .recette li { padding-left: .2rem; }
 .recette li.faite { color: var(--c-gris); }
 .recette li.faite::marker { content: "✓ "; }
+/* L’étape qui s’exécute, puis celle qui attend d’être jouée. */
 .recette li.courante { color: var(--c-encre); font-weight: 600; background: var(--precaution-fond); border-radius: .25rem; }
+.recette li.prochaine { color: var(--c-encre); font-weight: 600; }
+.recette li.prochaine::marker { content: "▸ "; }
+.etat-lecteur { margin: .25rem 0 0; min-height: 1.1em; color: var(--c-gris); font-size: .8em; }
 
 /* Écran d’ordinateur : l’artefact prend la hauteur disponible ; les trois cadres s’étirent. */
 @media (min-width: 60rem) and (min-height: 36rem) {
