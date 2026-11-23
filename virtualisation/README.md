@@ -1,5 +1,7 @@
 # Cours « Fondements de la virtualisation de machines »
 
-Les diapos du cours Virtualisation, avec les notes de l’orateur, dans `virtualisation.typ`.
-PDF compilé : [`virtualisation-projection.pdf`](virtualisation-projection.pdf). Compilation et charte : voir le [README racine](../README.md)
-et [`../commun/README.md`](../commun/README.md).
+- `cm/` : les diapos, avec les notes de l’orateur, dans `virtualisation.typ`. PDF compilé :
+  [`virtualisation-projection.pdf`](cm/virtualisation-projection.pdf). `cm/rejouer-tp.sh` rejoue les sorties
+  du mini TP sur une machine avec KVM.
+
+Compilation et charte : voir le [README racine](../README.md) et [`../commun/README.md`](../commun/README.md).

@@ -4,12 +4,12 @@ Supports de cours de Jean-Mathieu Chantrein : un dossier par cours, une charte c
 
 | Cours | Diapos | Rendus adaptés | Sources |
 |---|---|---|---|
-| Fondements de la conteneurisation | [`conteneurisation-projection.pdf`](conteneurisation/conteneurisation-projection.pdf) | [deutéranopie](conteneurisation/conteneurisation-deuteranopie.pdf) · [protanopie](conteneurisation/conteneurisation-protanopie.pdf) · [tritanopie](conteneurisation/conteneurisation-tritanopie.pdf) · [achromatopsie](conteneurisation/conteneurisation-achromatopsie.pdf) · [dyslexie](conteneurisation/conteneurisation-dyslexie.pdf) | [`conteneurisation/`](conteneurisation/) (Typst, travaux pratiques) |
-| Fondements de la virtualisation de machines | [`virtualisation-projection.pdf`](virtualisation/virtualisation-projection.pdf) | [deutéranopie](virtualisation/virtualisation-deuteranopie.pdf) · [protanopie](virtualisation/virtualisation-protanopie.pdf) · [tritanopie](virtualisation/virtualisation-tritanopie.pdf) · [achromatopsie](virtualisation/virtualisation-achromatopsie.pdf) · [dyslexie](virtualisation/virtualisation-dyslexie.pdf) | [`virtualisation/`](virtualisation/) (Typst) |
+| Fondements de la conteneurisation | [`conteneurisation-projection.pdf`](conteneurisation/cm/conteneurisation-projection.pdf) | [deutéranopie](conteneurisation/cm/conteneurisation-deuteranopie.pdf) · [protanopie](conteneurisation/cm/conteneurisation-protanopie.pdf) · [tritanopie](conteneurisation/cm/conteneurisation-tritanopie.pdf) · [achromatopsie](conteneurisation/cm/conteneurisation-achromatopsie.pdf) · [dyslexie](conteneurisation/cm/conteneurisation-dyslexie.pdf) | [`conteneurisation/`](conteneurisation/) · TP [Conteneuriser WordPress](conteneurisation/tp/wordpress/) |
+| Fondements de la virtualisation de machines | [`virtualisation-projection.pdf`](virtualisation/cm/virtualisation-projection.pdf) | [deutéranopie](virtualisation/cm/virtualisation-deuteranopie.pdf) · [protanopie](virtualisation/cm/virtualisation-protanopie.pdf) · [tritanopie](virtualisation/cm/virtualisation-tritanopie.pdf) · [achromatopsie](virtualisation/cm/virtualisation-achromatopsie.pdf) · [dyslexie](virtualisation/cm/virtualisation-dyslexie.pdf) | [`virtualisation/`](virtualisation/) |
 
 ## Rendus adaptés
-Chaque cours Typst est compilé en plusieurs rendus, à partir des mêmes sources ; la charte commune
-(`commun/theme-cours.typ`) applique la variante choisie à la compilation. Le rendu de projection sert en cours ;
+Les diapos de chaque cours sont compilées en plusieurs rendus, à partir des mêmes sources ; la charte commune
+(`commun/charte.typ`) applique la variante choisie à la compilation. Le rendu de projection sert en cours ;
 les autres se téléchargent, pour lire les diapos dans le rendu qui convient à sa vision ou à sa lecture.
 
 | Variante | Fichier | Pour qui, quoi |
@@ -26,24 +26,47 @@ un pictogramme (voir [`commun/README.md`](commun/README.md)). Chaque variante s�
 qui relie ses couleurs à celles de la projection.
 
 ## Organisation
-- `<cours>/<cours>.typ` : les diapos d’un cours, en [Typst](https://typst.app) avec [Touying](https://github.com/touying-typ/touying).
-- `commun/` : la charte partagée (`theme-cours.typ`) et les polices IBM Plex ; voir [`commun/README.md`](commun/README.md).
-- `<cours>/<cours>-<variante>.pdf` : les PDF publiés, compilés par la CI.
+Un dossier par cours, et dans chaque cours un dossier par nature de support :
+
+- `<cours>/cm/` : le cours magistral. `<cours>.typ` contient les diapos, en [Typst](https://typst.app) avec
+  [Touying](https://github.com/touying-typ/touying) ; les PDF `<cours>-<variante>.pdf` sont compilés par la CI.
+  Un exercice fait et corrigé en séance reste dans les diapos.
+- `<cours>/tp/<tp>/` : une séance de travaux pratiques. `<tp>.typ` contient l’énoncé, compilé par la CI en page
+  web `index.html` ; `corrige/` contient les corrigés, fichiers réels que l’énoncé affiche à la demande ;
+  `tester.sh` les construit et les vérifie.
+- `commun/` : la charte partagée (rôles, palettes, thème des diapos, thème des pages web) et les polices
+  IBM Plex ; voir [`commun/README.md`](commun/README.md).
+- `index.typ` : la page d’accueil du site, compilée en `index.html`.
 
 ## Compiler
-Typst 0.15 ou plus récent, depuis la racine du dépôt (Touying se télécharge seul à la première compilation) :
+Typst 0.15 ou plus récent, depuis la racine du dépôt (Touying se télécharge seul à la première compilation).
+Les diapos :
 
-    typst compile --root . --font-path commun/fonts virtualisation/virtualisation.typ build/virtualisation.pdf
-    typst watch   --root . --font-path commun/fonts virtualisation/virtualisation.typ build/virtualisation.pdf
+    typst compile --root . --font-path commun/fonts virtualisation/cm/virtualisation.typ build/virtualisation.pdf
+    typst watch   --root . --font-path commun/fonts virtualisation/cm/virtualisation.typ build/virtualisation.pdf
 
 Pour une variante : ajouter `--input variante=<variante>` (par exemple `--input variante=dyslexie`).
 
-`--root .` autorise l’import de `../commun/theme-cours.typ`. On compile dans `build/` (ignoré par git) :
-les PDF versionnés `<cours>/<cours>-<variante>.pdf` sont produits et commité par la CI, ce qui évite les conflits sur ce fichier binaire.
+Une page web (TP, accueil) : l’export HTML de Typst est encore expérimental, d’où `--features html` ;
+la version de Typst est fixée dans la CI.
 
-Sur GitHub, l’action `.github/workflows/compilation-cours.yml` recompile chaque cours `<cours>/<cours>.typ`
-à chaque push sur `main` touchant les sources ou la charte, et commite `<cours>/<cours>-<variante>.pdf` pour chaque variante.
-Ajouter un cours : créer `<cours>/<cours>.typ` qui importe `../commun/theme-cours.typ`, rien d’autre.
+    typst compile --root . --font-path commun/fonts --features html --format html conteneurisation/tp/wordpress/wordpress.typ build/wordpress.html
+
+`--root .` autorise l’import de `commun/`. On compile dans `build/` (ignoré par git) : les PDF et les pages
+`index.html` versionnés sont produits et commités par la CI, ce qui évite les conflits sur ces fichiers générés.
+
+Sur GitHub, l’action `.github/workflows/compilation-cours.yml` recompile les supports à chaque push sur `main`
+touchant les sources ou la charte, puis commite les PDF de chaque variante et les pages web.
+L’action `.github/workflows/test-corriges.yml` lance le `tester.sh` de chaque TP.
+
+Ajouter un cours : créer `<cours>/cm/<cours>.typ` qui importe `../../commun/theme-cours.typ`.
+Ajouter un TP : créer `<cours>/tp/<tp>/<tp>.typ` qui importe `../../../commun/theme-tp.typ`, avec ses corrigés
+dans `corrige/` et, s’ils s’exécutent, un `tester.sh`.
+
+## Site
+Le dépôt se publie tel quel avec GitHub Pages (branche `main`, racine ; `.nojekyll` désactive Jekyll) :
+`index.html` mène aux diapos et aux TP. Chaque page web embarque les variantes de rendu, que le lecteur
+choisit dans la page.
 
 ## Licences
 Contenus sous CC BY-NC-SA 4.0 (voir [`LICENSE.md`](LICENSE.md)). Les polices IBM Plex de `commun/fonts/`

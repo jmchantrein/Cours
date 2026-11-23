@@ -1,0 +1,116 @@
+/* tp.css — mise en forme des pages web (TP, accueil). Les couleurs viennent de charte.typ, en variables
+   CSS (--c-*, --<rôle>-entete|fond|texte|accent) écrites dans la page par theme-tp.typ. */
+*, *::before, *::after { box-sizing: border-box; }
+html { font-family: "IBM Plex Sans", system-ui, sans-serif; font-size: 112.5%; line-height: 1.6;
+  color: var(--c-encre); background: var(--c-fond); scroll-padding-top: 4rem; }
+body { margin: 0; }
+main { max-width: 52rem; margin: 0 auto; padding: 1.5rem 1rem 6rem; }
+a { color: var(--c-bleu); text-underline-offset: .15em; }
+a:focus-visible, summary:focus-visible, button:focus-visible, select:focus-visible {
+  outline: 3px solid var(--c-bleu); outline-offset: 2px; }
+code, pre, kbd { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: .92em; }
+:not(pre) > code { background: var(--c-bleu-clair); padding: .1em .3em; border-radius: .25em; overflow-wrap: anywhere; }
+
+/* Bandeau */
+.bandeau { position: sticky; top: 0; z-index: 2; display: flex; flex-wrap: wrap; align-items: center; gap: .5rem 1.25rem;
+  padding: .5rem 1rem; background: var(--c-nuit); color: var(--c-fond); font-size: .85rem; }
+.bandeau a { color: var(--c-fond); }
+.bandeau .accueil { font-weight: 700; text-decoration: none; }
+.bandeau nav { display: flex; flex-wrap: wrap; gap: .25rem 1.25rem; flex: 1; }
+.bandeau select { font: inherit; padding: .15rem .3rem; border-radius: .3rem; border: 1px solid var(--c-filet);
+  background: var(--c-fond); color: var(--c-encre); margin-left: .4rem; }
+
+/* Titres */
+.titre { margin: 1.5rem 0 2rem; }
+.surtitre { margin: 0; color: var(--c-bleu); font-weight: 600; letter-spacing: .06em; text-transform: uppercase; font-size: .85rem; }
+h1 { margin: .2rem 0; font-size: 2.1rem; line-height: 1.2; }
+.sous-titre { margin: .2rem 0; font-size: 1.15rem; color: var(--c-ardoise); }
+.auteur { margin: .6rem 0 0; color: var(--c-gris); font-size: .9rem; }
+h2 { margin: 3rem 0 1rem; padding-top: .8rem; border-top: 2px solid var(--c-filet); font-size: 1.55rem; line-height: 1.25; }
+h3 { margin: 2rem 0 .6rem; font-size: 1.2rem; }
+h4 { margin: 1.4rem 0 .4rem; font-size: 1rem; }
+
+/* Sommaire */
+nav[role="doc-toc"] { margin: 0 0 2rem; padding: .8rem 1.1rem; background: var(--c-espace); border-radius: .5rem; }
+nav[role="doc-toc"] h2 { margin: 0 0 .3rem; padding: 0; border: 0; font-size: 1rem; }
+nav[role="doc-toc"] ol { margin: 0; padding: 0; }
+nav[role="doc-toc"] li { margin: .15rem 0; }
+
+/* Blocs et notes : le rôle donne la couleur ; son nom et son pictogramme la doublent. */
+.bloc, .note { --entete: var(--notion-entete); --fond-role: var(--notion-fond); --accent: var(--notion-accent);
+  margin: 1.2rem 0; padding: .8rem 1.1rem; border-left: .4rem solid var(--entete);
+  border-radius: 0 .5rem .5rem 0; background: var(--fond-role); }
+.bloc > :last-child, .note > :last-child { margin-bottom: 0; }
+.bloc-titre { margin: 0 0 .4rem; font-weight: 700; font-size: 1.05rem; }
+.role { display: inline-flex; align-items: center; gap: .3em; margin-right: .6em; color: var(--accent);
+  font-size: .78rem; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; }
+.note { padding: .6rem 1rem; font-size: .95rem; }
+[data-role="pratique"] { --entete: var(--pratique-entete); --fond-role: var(--pratique-fond); --accent: var(--pratique-accent); }
+[data-role="question"] { --entete: var(--question-entete); --fond-role: var(--question-fond); --accent: var(--question-accent); }
+[data-role="reponse"] { --entete: var(--reponse-entete); --fond-role: var(--reponse-fond); --accent: var(--reponse-accent); }
+[data-role="retenir"] { --entete: var(--retenir-entete); --fond-role: var(--retenir-fond); --accent: var(--retenir-accent); }
+[data-role="precaution"] { --entete: var(--precaution-entete); --fond-role: var(--precaution-fond); --accent: var(--precaution-accent); }
+[data-role="avertissement"] { --entete: var(--avertissement-entete); --fond-role: var(--avertissement-fond); --accent: var(--avertissement-accent); }
+[data-role="danger"] { --entete: var(--danger-entete); --fond-role: var(--danger-fond); --accent: var(--danger-accent); }
+[data-role="question"] > .bloc-titre .role::before, [data-role="question"] > .role::before { --picto: var(--picto-question); }
+[data-role="retenir"] > .bloc-titre .role::before, [data-role="retenir"] > .role::before { --picto: var(--picto-retenir); }
+:is([data-role="precaution"], [data-role="avertissement"], [data-role="danger"]) > .bloc-titre .role::before,
+:is([data-role="precaution"], [data-role="avertissement"], [data-role="danger"]) > .role::before { --picto: var(--picto-alerte); }
+:is([data-role="question"], [data-role="retenir"], [data-role="precaution"], [data-role="avertissement"], [data-role="danger"]) .role::before {
+  content: ""; width: 1.25em; height: 1.25em; background: currentColor;
+  -webkit-mask: var(--picto) center / contain no-repeat; mask: var(--picto) center / contain no-repeat; }
+
+/* Indices et corrigés : repliés, ouverts à la demande. */
+details { margin: 1rem 0; border: 1px solid var(--c-filet); border-radius: .5rem; background: #fff; }
+details > summary { padding: .55rem 1rem; cursor: pointer; font-weight: 600; }
+details[open] > summary { border-bottom: 1px solid var(--c-filet); }
+.repli { padding: .7rem 1rem .9rem; }
+.repli > :first-child { margin-top: 0; }
+.repli > :last-child { margin-bottom: 0; }
+details.corrige { border-left: .4rem solid var(--reponse-entete); }
+details.indice { border-left: .4rem solid var(--question-entete); }
+
+/* Code */
+pre { position: relative; margin: .8rem 0; padding: .8rem 1rem; overflow-x: auto; border-radius: .5rem;
+  background: var(--c-espace); line-height: 1.45; tab-size: 4; }
+.terminal pre { background: var(--c-nuit); color: var(--c-texte-term); }
+.terminal .invite { color: var(--c-prompt); user-select: none; }
+.terminal .commentaire { color: var(--c-commentaire); }
+.fichier { margin: 1rem 0; }
+.fichier figcaption { display: inline-block; padding: .2rem .8rem; border-radius: .5rem .5rem 0 0;
+  background: var(--c-encart); font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: .8rem; }
+.fichier figcaption a { color: var(--c-fond); }
+.fichier pre { margin-top: 0; border-top-left-radius: 0; }
+.copier { position: absolute; top: .4rem; right: .4rem; padding: .15rem .6rem; border: 1px solid var(--c-filet);
+  border-radius: .3rem; background: var(--c-fond); color: var(--c-encre); font: inherit; font-size: .75rem; cursor: pointer; }
+
+/* Liens vers les diapositives du cours */
+a.diapo::before { content: "▸ diapo : "; font-size: .85em; color: var(--c-gris); }
+
+table { border-collapse: collapse; margin: 1rem 0; }
+td, th { padding: .35rem .7rem; border: 1px solid var(--c-filet); text-align: left; vertical-align: top; }
+th { background: var(--c-espace); }
+figure { margin: 1.2rem 0; }
+/* Schémas : un dessin par palette, seul celui de la variante choisie est affiché. */
+.schema { overflow-x: auto; }
+.schema svg { max-width: 100%; height: auto; }
+.schema [data-pour] { display: none; }
+:is([data-variante="projection"], [data-variante="dyslexie"]) .schema [data-pour="projection"],
+[data-variante="deuteranopie"] .schema [data-pour="deuteranopie"],
+[data-variante="protanopie"] .schema [data-pour="protanopie"],
+[data-variante="tritanopie"] .schema [data-pour="tritanopie"],
+[data-variante="achromatopsie"] .schema [data-pour="achromatopsie"] { display: block; }
+figcaption { font-size: .9rem; color: var(--c-gris); }
+
+/* Variante dyslexie : lettres, mots et lignes espacés ; ni capitales forcées ni italique. */
+[data-variante="dyslexie"] { letter-spacing: .05em; word-spacing: .16em; line-height: 1.9; }
+[data-variante="dyslexie"] :is(.surtitre, .role) { text-transform: none; }
+[data-variante="dyslexie"] em { font-style: normal; font-weight: 600; }
+[data-variante="dyslexie"] p, [data-variante="dyslexie"] li { max-width: 38rem; }
+
+/* Impression : l’énoncé seul, sans indices ni corrigés. */
+@media print {
+  .bandeau, .copier, details { display: none; }
+  html { font-size: 11pt; background: #fff; }
+  .bloc, .note, pre { break-inside: avoid; }
+}

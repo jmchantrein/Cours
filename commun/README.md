@@ -1,7 +1,10 @@
 # Charte commune des cours
 
-- `theme-cours.typ` : couleurs, polices, blocs, terminaux, schémas… pour Touying. Import depuis un cours :
-  `#import "../commun/theme-cours.typ": *`
+- `charte.typ` : ce que tous les supports partagent — rôles pédagogiques, palettes des variantes, couleurs.
+- `theme-cours.typ` : la charte appliquée aux diapos (Touying) : blocs, terminaux, schémas, animations.
+  Import depuis un cours : `#import "../../commun/theme-cours.typ": *`
+- `theme-tp.typ`, `tp.css`, `tp.js` : la charte appliquée aux pages web (énoncés de TP, accueil).
+  Import depuis un TP : `#import "../../../commun/theme-tp.typ": *`
 - `fonts/` : IBM Plex Sans et Mono (SIL Open Font License 1.1, voir `fonts/OFL-IBM-Plex.txt`).
 
 ## Principe : le cours dit le rôle, la charte décide de l’apparence
@@ -62,6 +65,27 @@ Les apparitions suivent la skill `structurer-diapos-cours` : bloc par bloc, puis
 La charte lit `--input variante=<nom>` (projection, deuteranopie, protanopie, tritanopie, achromatopsie, dyslexie)
 et adapte palette et espacements ; les cours n’ont rien à faire. Chaque variante commence par une page
 « Légende », hors numérotation, qui relie ses couleurs à celles de la projection (« le bloc orange » = avertissement). Les réglages et leur justification sont en tête
-de `theme-cours.typ`. Une nouvelle palette s’ajoute dans `palettes` ; penser à l’ajouter aussi à la liste des
+de `charte.typ`. Une nouvelle palette s’ajoute dans `palettes` ; penser à l’ajouter aussi à la liste des
 variantes de `.github/workflows/compilation-cours.yml`. Si une variante déborde, chercher d’abord une mise en page qui tienne ; le débordement n’est acceptable qu’en
 dernier recours.
+
+## Pages web : énoncés de TP
+Un énoncé s’écrit en Typst et se compile en une page HTML autonome (`--features html --format html`).
+La page embarque toutes les variantes : le lecteur choisit la sienne dans le bandeau, son choix est mémorisé
+par son navigateur. Le nom du rôle et son pictogramme sont écrits dans chaque bloc.
+
+- Page : `#show: page-web.with(titre: […], surtitre: […], sous-titre: […], auteur: […], date: […], liens: (([texte], "adresse"), …))`.
+- Une étape = un titre `=` étiqueté (`= Étape 1 : … <etape-1>`) ; le sommaire en découle.
+- Bloc : `#bloc(role: "question")[Consignes][- …]` ; remarque courte : `#note(role: "precaution")[…]`.
+- Terminal : `#terminal[```console … ```]` ; une ligne `$ ` est une commande, une ligne `# ` un commentaire.
+  Le bouton « Copier » ne copie que les commandes.
+- À la demande : `#indice[…]`, `#indice(titre: […])[…]`, puis `#corrige[…]`. Ils sont repliés, et omis à l’impression.
+- Fichier de corrigé : `#fichier("corrige/…/Dockerfile", read("corrige/…/Dockerfile"))` ; la page montre le
+  fichier que `tester.sh` vérifie.
+- Renvoi vers une diapo : poser une étiquette sur son titre dans le cours (`== Titre <ancre>`), puis
+  `#diapo("../../cm/<cours>-projection.pdf", "ancre")[texte]`.
+- Schéma : `#schema([légende], ch => …)` ; le dessin reçoit la charte d’une variante (`ch.c`, `ch.roles`) et
+  s’écrit avec `boite(…)`, `case(…)` et les primitives de Typst. La page contient un dessin par palette.
+
+Limite connue : l’export HTML de Typst est expérimental. La CI fixe la version de Typst ; à chaque montée de
+version, recompiler les pages et les relire dans un navigateur.

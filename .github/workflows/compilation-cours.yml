@@ -1,13 +1,17 @@
-name: Compilation des cours (Typst)
+name: Compilation des supports (Typst)
 
 # Chaque cours est un dossier <cours>/ ; ses diapos sont dans <cours>/cm/<cours>.typ ;
 # un PDF par variante est publié à côté : <cours>/cm/<cours>-<variante>.pdf
-# (projection, puis les rendus adaptés ; liste dans commun/theme-cours.typ).
+# (projection, puis les rendus adaptés ; liste dans commun/charte.typ).
+# Chaque TP est un dossier <cours>/tp/<tp>/ contenant <tp>.typ, compilé en page web <cours>/tp/<tp>/index.html ;
+# index.typ donne la page d’accueil index.html. Les pages web embarquent toutes les variantes.
 on:
   push:
     branches: [main]
     paths:
       - "*/cm/*.typ"
+      - "*/tp/**"
+      - "index.typ"
       - "commun/**"
       - ".github/workflows/compilation-cours.yml"
   workflow_dispatch:
@@ -43,13 +47,25 @@ jobs:
             done
           done
 
-      - name: Publication des PDF
+      - name: Compilation des pages web
+        run: |
+          web() { typst compile --root . --font-path commun/fonts --features html --format html "$1" "$2" && git add "$2"; }
+          for src in */tp/*/*.typ; do
+            dossier=$(dirname "$src")
+            [ "$src" = "$dossier/$(basename "$dossier").typ" ] || continue
+            echo "::group::$dossier/index.html"
+            web "$src" "$dossier/index.html"
+            echo "::endgroup::"
+          done
+          web index.typ index.html
+
+      - name: Publication
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           if git diff --cached --quiet; then
-            echo "PDF inchangés, rien à publier."
+            echo "Supports inchangés, rien à publier."
           else
-            git commit -m "Compile les PDF des cours"
+            git commit -m "Compile les supports des cours"
             git push
           fi
