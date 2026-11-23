@@ -49,6 +49,27 @@ run 'docker image build -q -t mon_image ping && docker container run --rm mon_im
 # Sécurité : no-new-privileges sur un binaire setuid
 run 'docker container run --rm --security-opt no-new-privileges debian:13 sh -c "cp /bin/id /tmp/id && chmod u+s /tmp/id && ls -l /tmp/id && /tmp/id -u"'
 
+# Orchestration : Swarm sur un seul nœud (sorties du cours relevées sur Docker Engine 29.10.0).
+# Prérequis : Swarm inactif (docker info --format "{{.Swarm.LocalNodeState}}" répond « inactive »), port 8080 libre.
+# Sur une machine à plusieurs adresses IP, docker swarm init demande --advertise-addr <adresse>.
+sed -i s/Salut/Bonjour/ hello.conf
+printf 'services:\n  hello:\n    image: hello:1.0\n    ports:\n      - "8080:80"\n    deploy:\n      replicas: 3\n' > compose.yaml
+run 'docker image build -q -t hello:1.0 .'
+# le jeton d'adhésion est un secret : il est masqué dans la sortie
+run 'docker swarm init | sed "s/SWMTKN-[A-Za-z0-9-]*/SWMTKN-(masqué)/"'
+run 'docker stack deploy -c compose.yaml boutique'
+run 'sleep 15; docker service ls; docker network ls --filter driver=overlay'
+# répartition de charge par le routing mesh (demande IPVS dans le noyau) : plusieurs conteneurs doivent répondre
+run 'for i in 1 2 3 4; do curl -s --max-time 5 localhost:8080; done'
+run 'docker service scale boutique_hello=5'
+run 'docker container kill $(docker container ls -q --filter name=boutique_hello.2)'
+run 'sleep 20; docker service ls; docker service ps boutique_hello'
+run 'docker service inspect --format "{{json .Spec.UpdateConfig}}" boutique_hello'
+# build: est-il ignoré par docker stack deploy ? (message attendu : « Ignoring unsupported options: build »)
+printf 'services:\n  hello:\n    build: .\n    image: hello:1.0\n' > compose-build.yaml
+run 'docker stack deploy -c compose-build.yaml essai; docker stack rm essai'
+run 'docker stack rm boutique; sleep 8; docker swarm leave --force; docker network rm docker_gwbridge'
+
 echo; echo '# Nettoyage'
-docker image rm -f hello hello-legacy variables forme-shell mon_image >/dev/null 2>&1
+docker image rm -f hello hello:1.0 hello-legacy variables forme-shell mon_image >/dev/null 2>&1
 rm -rf "$D"
