@@ -96,9 +96,14 @@ Un artefact est un petit logiciel interactif qui fait manipuler un concept : `<c
 - `<nom>.typ` : une page `page-web(atelier: true, …)`, compacte, qui place l’artefact et son aide côte à côte :
   `#artefact(read("<nom>.js"), style: read("<nom>.css"))[aide]`. L’aide énonce la règle (bloc `retenir`, renvoi
   `diapo(…)`) et propose des expériences : `#experiences(([question], [réponse], "recette"), …)`, montrées une
-  à la fois. Le troisième élément, facultatif, nomme une recette que le script sait jouer : il affiche alors
-  ses étapes dans l’expérience, avec un lecteur — étape précédente, lecture ou pause, étape suivante, quitter.
-  Pour revenir en arrière, le script mémorise l’état de la simulation après chaque étape.
+  à la fois. Le troisième élément, facultatif, nomme une recette que le script sait jouer, dans une carte à
+  part. Par défaut la recette s’arrête après chaque étape, explique ce qui vient de se passer et attend
+  « Continuer » ; une case l’enchaîne sans pause. « Revenir » rétablit l’état mémorisé après chaque étape.
+  À la fin, le lecteur reprend la main sans rien fermer, et ses propres builds sont expliqués.
+- Une explication se calcule à partir du résultat de la simulation ; elle ne s’écrit pas d’avance. Ce que le
+  simulateur ne sait pas simuler, il le dit (« Limitation du simulateur : … ») au lieu de répondre.
+- Un simulateur se vérifie contre l’outil réel : `cache-de-build/verifier-buildkit.js` rejoue des
+  manipulations tirées au hasard dans l’artefact et dans un vrai `docker build`, et compare les résultats.
 - Sur un écran d’ordinateur, la page d’atelier prend exactement la hauteur de la fenêtre : le texte grossit
   avec elle, et ce qui peut grandir défile dans son cadre. Rien n’est rogné à 1280 × 650 px utiles, toutes
   réponses ouvertes.

@@ -13,6 +13,9 @@
 - [ ] Vérifier les adresses des sources des diapos Orchestration (docs.docker.com, kubernetes.io : inaccessibles lors de la rédaction) et les faits marqués « à vérifier » dans les notes de l’orateur
 - [ ] Essayer le manifeste Kubernetes de la diapo « pod, Deployment, Service » sur un cluster (kind, minikube ou k3s)
 
+### Artefacts
+- [ ] Rejouer `conteneurisation/artefacts/cache-de-build/verifier-buildkit.js` sur Debian 13 (docker.io 26.1.5) : le modèle n’a été confronté qu’à BuildKit de Docker Engine 29.10
+
 ### Travaux pratiques
 - [ ] Vérifier dans Firefox et Chromium que les renvois du TP ouvrent le PDF à la bonne diapo (`#nameddest=`)
 - [ ] Supprimer la branche `corrections` : son historique est rattaché à `main` par un commit de fusion sans changement de fichiers (`git show c83a3d5:wordpress_step_by_step/…` reste lisible)
@@ -56,3 +59,4 @@
 - [x] 2026-11-23 — Sélecteur « Accessibilité » (pictogramme, options groupées par besoin) à la place de « Affichage » ; artefact « cache de build » : build qui se déroule dans le temps (attente dès la première étape sans cache, « passer l’attente », « sans attente »), durées colorées selon le gain, barres des derniers builds, cadre du cache clé par clé (réutilisée, créée, reconstruite, en réserve)
 - [x] 2026-11-23 — Artefact « cache de build » : zones encadrées (cache mis en avant), barre de progression du build et remplissage de la ligne en cours, recettes jouables dans chaque expérience (étapes affichées, arrêt possible) ; page d’atelier à la hauteur de la fenêtre, texte qui grossit sur grand écran
 - [x] 2026-11-23 — Artefact « cache de build » : lecteur de recette (étape précédente, lecture ou pause, étape suivante, quitter, rejouer) ; la pause fige le build en cours, le retour en arrière rétablit l’état mémorisé après chaque étape et annule une étape en cours
+- [x] 2026-11-24 — Artefact « cache de build » : modèle recalé sur BuildKit (CMD, ENTRYPOINT, LABEL, EXPOSE hors des clés ; casse, espaces et commentaires sans effet ; FROM fixe ; instructions non simulées signalées), vérifié par `verifier-buildkit.js` (140 builds, aucun écart) ; recettes en carte distincte, pause après chaque étape avec explication calculée et « Continuer », option sans pause, reprise en main à la fin sans quitter ; la règle passe dans le bandeau du titre

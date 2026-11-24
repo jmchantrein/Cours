@@ -26,5 +26,9 @@ l’organisation et la compilation dans [`README.md`](README.md).
 - Fais tenir un artefact dans la fenêtre sans défilement de la page : vérifie de 1280 × 650 à 1920 × 950 px,
   chaque réponse ouverte, que rien n’est rogné.
 - Donne à chaque expérience d’un artefact une recette jouable, et vérifie qu’elle aboutit au résultat de sa réponse.
-- Vérifie chaque commande du lecteur de recette : pause au milieu d’une étape, reprise, étape suivante, étape
-  précédente (y compris pendant une étape), quitter.
+- Vérifie chaque commande d’une recette : continuer, pause au milieu d’une étape, reprise, revenir (y compris
+  pendant une étape), enchaînement sans pause, reprise en main à la fin.
+- Calcule chaque explication d’un artefact à partir du résultat de la simulation ; pour un cas que le simulateur
+  ne sait pas traiter, affiche « Limitation du simulateur : … ».
+- Confronte un simulateur à l’outil réel avant de le publier, et après toute modification de son modèle
+  (`verifier-buildkit.js` pour le cache de build).

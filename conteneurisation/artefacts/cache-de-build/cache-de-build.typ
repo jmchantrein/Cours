@@ -9,7 +9,9 @@
 #show: page-web.with(
   titre: [Le cache de build],
   surtitre: [Fondements de la conteneurisation · artefact],
-  sous-titre: [Modifiez le Dockerfile ou un fichier, reconstruisez : le cache épargne-t-il l’attente ?],
+  // La règle que l’artefact fait manipuler, toujours sous les yeux.
+  sous-titre: [Clé d’une étape = clé de l’étape précédente + instruction + contenu des fichiers copiés. Clé connue
+    du cache : couche réutilisée (`CACHED`). #diapo(pdf, "cache-buildkit")[Le cache de BuildKit]],
   sommaire: false,
   atelier: true,
   liens: (
@@ -19,12 +21,6 @@
 )
 
 #artefact(read("cache-de-build.js"), style: read("cache-de-build.css"))[
-  #bloc(role: "retenir")[La règle][
-    *Clé* d’une étape = clé de l’étape précédente + instruction + contenu des fichiers copiés. Clé connue du
-    cache : couche réutilisée (`CACHED`). Sinon l’étape est rejouée, et toutes les suivantes avec elle.
-    #diapo(pdf, "cache-buildkit")[Le cache de BuildKit].
-  ]
-
   #experiences(
     ([Deux builds de suite, sans rien changer : que coûte le second ?],
       [Rien : les trois clés sont dans le cache, tout est `CACHED`. Le cadre du cache marque ses couches
