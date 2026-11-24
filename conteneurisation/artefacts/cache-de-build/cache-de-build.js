@@ -362,6 +362,7 @@
       let bloc = carte.querySelector(".recette");
       if (!bloc) { bloc = el("div", { class: "recette" }); carte.querySelector("details").before(bloc); }
       bloc.classList.toggle("ouverte", !!r);
+      bloc.dataset.etat = !r ? "fermee" : finie(r) ? "terminee" : "encours";
       const sansPause = el("label", { class: "sans-pause" },
         el("input", { type: "checkbox", checked: continu && "", onchange: ev => basculerContinu(ev.target.checked) }), "sans pause entre les étapes");
       if (!r) {
@@ -373,19 +374,21 @@
       }
       const fin = finie(r);
       const rang = r.occupe ? r.pas + 1 : r.pas;
-      const action = r.occupe ? `Étape ${rang} sur ${n} : ${etapes[r.pas][0]}`
-        : r.pas === 0 ? "Avant la première étape" : `Étape ${rang} sur ${n} : ${etapes[r.pas - 1][0]}`;
+      const action = rang === 0 ? "Avant la première étape" : `Étape ${rang} sur ${n}` + (fin ? " — terminée : à vous" : "");
+      // La recette reste sous les yeux : étapes faites, étape en cours ou qui vient d’être expliquée, étape suivante.
+      const etat = i => i === r.pas ? (r.occupe ? "courante" : "prochaine") : i > r.pas ? ""
+        : i === r.pas - 1 && !r.occupe && !r.libre ? "faite expliquee" : "faite";
       const explication = r.occupe ? [r.gel ? "En pause, au milieu de l’étape." : "En cours…"] : r.libre ?? r.explications[r.pas];
       const principal = r.occupe ? (r.gel ? "▶ Reprendre" : "❚❚ Pause") : fin ? "↻ Rejouer"
         : continu && r.lecture ? "❚❚ Pause" : r.pas === 0 ? "Commencer ▶" : "Continuer ▶";
       bloc.replaceChildren(
         el("div", { class: "recette-entete" }, el("span", { class: "recette-titre" }, "Recette"), el("span", { class: "recette-rang" }, action),
           bouton("✕", fermer, { class: "fermer", "aria-label": "Fermer la recette", title: "Fermer la recette" })),
+        el("ol", { class: "recette-etapes" }, ...etapes.map(([titre], i) =>
+          el("li", { class: etat(i), "aria-current": i === (r.occupe ? r.pas : r.pas - 1) ? "step" : false }, titre))),
         el("div", { class: "explication", role: "status", "aria-live": "polite" },
           el("p", { class: "explication-titre" }, r.occupe ? "Ce qui se passe" : r.libre ? "Votre build" : "Ce qui vient de se passer"),
           ...explication.map(phrase => el("p", {}, phrase))),
-        el("p", { class: "recette-suite" }, fin ? "Recette terminée. À vous : modifiez, déplacez, reconstruisez."
-          : r.occupe ? "" : `Ensuite : ${etapes[r.pas][0]}`),
         el("div", { class: "lecteur" },
           bouton("◀ Revenir", reculerRecette, { "aria-label": "Revenir à l’étape précédente", disabled: (r.pas === 0 && !r.occupe) && "" }),
           bouton(principal, avancerRecette, { class: "jouer" }), sansPause));
