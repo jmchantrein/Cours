@@ -253,7 +253,7 @@
 )
 
 == Trois familles de conteneurs
-#let _note = [Podman : sans démon et utilisable sans root (rootless), notions vues dans la partie Sécurité. Migration à chaud des conteneurs : le checkpoint/restore (CRIU) existe, mais reste expérimental et peu utilisé en pratique. Imbrication : un conteneur LXC peut héberger Docker, si l’imbrication est autorisée (Proxmox : option « nesting » du conteneur ; Incus/LXD : security.nesting\=true).]
+#let _note = [Podman : sans démon et utilisable sans root (rootless), notions vues dans la partie Sécurité. Migration à chaud des conteneurs : le checkpoint/restore (CRIU) existe, mais reste expérimental et peu utilisé en pratique. Vocabulaire : un conteneur système fait tourner un système complet avec son init, et s’administre comme une machine ; LXC (_Linux Containers_) est la technologie qui le réalise, Incus et Proxmox (commande pct) les outils qui la pilotent ; Incus est un fork de LXD. Imbrication : un conteneur système peut héberger Docker, si l’imbrication est autorisée (Proxmox : option « nesting » du conteneur ; Incus : security.nesting\=true).]
 #anime(
   rang(
     bloc[Applicatifs][
@@ -262,8 +262,8 @@
       - *Docker*, *Podman* (compatible avec Docker)
     ],
     bloc[Administration système][
-      - Remplacent les VM : avec état, persistance, instantanés, sauvegarde, migration
-      - *LXC* (LXD, son fork Incus, Proxmox `pct`), OpenVZ
+      - *Conteneurs système* : remplacent les VM, avec état, persistance, instantanés, sauvegarde, migration
+      - *Incus* et Proxmox (`pct`), qui pilotent la technologie *LXC* ; OpenVZ
     ],
     bloc[Calcul haute performance][
       - Environnements isolés et performants sur clusters de calcul
@@ -1400,7 +1400,7 @@ $ docker container inspect -f '{{.State.ExitCode}}' c5
   note: _note,
 )
 
-== Où faire tourner Docker : hôte ou VM ?
+== Où faire tourner Docker : hôte ou VM ? <hote-ou-vm>
 #let _note = [Stack \= un projet Compose (vu plus loin) : un ensemble de conteneurs qui forment une application. Escalade de privilèges : depuis le conteneur, obtenir les droits de l’hôte (on parle aussi d’« évasion » du conteneur). Idée de la diapositive : tous les pièges de la section (root partagé, groupe docker, socket, --privileged) ont pour enjeu « ce qu’atteint celui qui sort du conteneur ». La VM déplace cette frontière : la sortie d’un conteneur mène dans la VM, pas sur le serveur. Hôte physique dédié : sur le plan de l’isolation, équivaut à une VM unique, mais sans snapshot ni reconstruction rapide. Une VM pour toutes les stacks : protège l’hyperviseur et les autres VM, pas les stacks entre elles. Une VM par stack : le seul cas où l’on peut assouplir (root dans le conteneur, socket monté pour Traefik), au prix de N systèmes à mettre à jour ; c’est ce que font, en plus léger, les microVM (Kata Containers, Firecracker : cours Virtualisation). Limites : une évasion de VM existe mais reste rare ; la VM ne protège ni des images malveillantes ni des services exposés. Nuance sur « Réparer » : restaurer un snapshot ramène toute la VM à son état figé, y compris les données écrites depuis (volumes compris) ; dans la VM partagée, tous les services reculent ensemble, d’où l’intérêt d’une VM par service si l’on veut pouvoir en restaurer un seul. Un snapshot n’est donc pas une sauvegarde incrémentale : les données à conserver vivent sur un stockage à part (volume, base, sauvegarde) et ne sont pas remontées par un rollback. Diapositive de synthèse, sans commande : rien à rejouer.]
 #anime(
   rang(
