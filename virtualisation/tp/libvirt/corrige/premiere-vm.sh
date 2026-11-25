@@ -28,16 +28,18 @@ setfacl -m u:libvirt-qemu:x "$HOME" "$(dirname "$image_iso")"
 # --vcpus 2           deux processeurs virtuels
 # --disk size=10      un volume qcow2 de 10 Gio, créé dans le pool default
 #                     (/var/lib/libvirt/images/), sur le bus virtio
-# --osinfo detect=on  reconnaît Debian dans l'ISO et adapte le matériel virtuel
+# --osinfo debian13   adapte le matériel virtuel à Debian 13 (disque et carte virtio) ;
+#                     detect=on ne reconnaît pas l'ISO 13.x avec osinfo-db 0.20250606
+#                     (Debian 13, Ubuntu 24.04) et retombe sur generic (IDE, e1000)
 # --network ...       branche la VM sur le réseau libvirt default (NAT)
 # --cdrom ...         démarre l'installateur depuis l'image
 # Micrologiciel : BIOS, le choix par défaut de virt-install pour Debian ;
-# il permet les instantanés internes de l'étape 6 (l'UEFI les refuse).
+# il permet les instantanés internes de l'étape 7 (l'UEFI les refuse).
 virt-install \
   --name "$nom_vm" \
   --memory 2048 \
   --vcpus 2 \
   --disk size=10 \
-  --osinfo detect=on \
+  --osinfo debian13 \
   --network network=default \
   --cdrom "$image_iso"

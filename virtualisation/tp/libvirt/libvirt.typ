@@ -199,8 +199,8 @@ l’installateur, par une copie complète, puis par un disque en copie sur écri
   # une ligne : vnet0, l’adresse MAC de la VM, une adresse en 192.168.122.x/24
   $ ssh utilisateur@192.168.122.x
   ```]
-  Dans la VM, `nproc` affiche 2, `free -h` environ 2 Gio, `df -h /` un disque `/dev/vda` d’environ 10 Gio (le
-  `v` de virtio) et `systemd-detect-virt` répond `kvm` : ce ne sont pas les ressources de l’hôte.
+  Dans la VM, `nproc` affiche 2, `free -h` environ 2 Gio, `df -h /` une partition de `/dev/vda` (le `v` de virtio), un peu
+  moins de 10 Gio et `systemd-detect-virt` répond `kvm` : ce ne sont pas les ressources de l’hôte.
 ]
 
 = Étape 5 : un domaine est un XML <etape-5>
@@ -225,6 +225,7 @@ l’installateur, par une copie complète, puis par un disque en copie sur écri
   #f("deuxieme-vm.sh")
   #terminal[```console
   $ virsh shutdown ma-premiere-vm
+  # … attendre qu’elle soit « shut off » (virsh list --all)
   $ ./deuxieme-vm.sh ma-premiere-vm deuxieme-vm
   Allocating 'deuxieme-vm.qcow2'                              |    0 B  00:00 ...
 
@@ -283,6 +284,7 @@ l’installateur, par une copie complète, puis par un disque en copie sur écri
   $ virsh nodeinfo
   $ virsh shutdown deuxieme-vm
   Domain 'deuxieme-vm' is being shutdown
+  # … attendre « shut off » : relancée avant, « Domain is already active »
   $ virsh start deuxieme-vm
   Domain 'deuxieme-vm' started
   $ virsh destroy deuxieme-vm
@@ -325,8 +327,9 @@ l’installateur, par une copie complète, puis par un disque en copie sur écri
   ```]
   L’instantané est interne : il est rangé dans le fichier qcow2 de la VM, avec la mémoire de la VM en marche.
   Le retour rend le disque et la mémoire du moment de l’instantané ; tout ce qui a été fait depuis est perdu.
-  Une VM en UEFI refuserait : « internal snapshots of a VM with pflash based firmware are not supported » ; d’où
-  le BIOS de l’étape 3.
+  Une VM en UEFI refuserait : « internal snapshots of a VM with pflash based firmware are not supported » (libvirt
+  10.0) ; libvirt 11.3, celui de Debian 13, répond « … require QCOW2 nvram format », une NVRAM au format qcow2
+  qui n’est pas celle par défaut. D’où le BIOS de l’étape 3.
 ]
 
 = Étape 8 : une troisième VM en copie sur écriture <etape-8>
@@ -354,6 +357,7 @@ l’installateur, par une copie complète, puis par un disque en copie sur écri
   #f("troisieme-vm.sh")
   #terminal[```console
   $ virsh shutdown ma-premiere-vm
+  # … attendre qu’elle soit « shut off »
   $ ./troisieme-vm.sh ma-premiere-vm troisieme-vm
   Vol base-ma-premiere-vm.qcow2 cloned from ma-premiere-vm.qcow2
 
@@ -414,6 +418,11 @@ l’installateur, par une copie complète, puis par un disque en copie sur écri
   Network labo started
   $ virsh net-autostart labo
   Network labo marked as autostarted
+  # à chaud : les deux VM doivent tourner (éteintes aux étapes 6 et 8)
+  $ virsh start ma-premiere-vm
+  Domain 'ma-premiere-vm' started
+  $ virsh start deuxieme-vm
+  Domain 'deuxieme-vm' started
   $ virsh attach-interface ma-premiere-vm network labo --model virtio --live --config
   Interface attached successfully
   $ virsh attach-interface deuxieme-vm network labo --model virtio --live --config
