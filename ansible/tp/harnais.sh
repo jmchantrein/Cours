@@ -174,9 +174,10 @@ lint_refuse() { # $1 fichier, puis les règles attendues
 # --------------------------------------------------------------- vérifications
 
 # Joue un playbook ; la sortie va dans $travail/<journal>.log.
+# Son code de retour est gardé dans « rc », pour passage.
 jouer() { # $1 journal, puis les arguments d’ansible-playbook
   local journal="$1"; shift
-  ctl ansible-playbook "$@" > "$travail/$journal.log" 2>&1
+  rc=0; ctl ansible-playbook "$@" > "$travail/$journal.log" 2>&1 || rc=$?
 }
 journal() { cat "$travail/$1.log"; }
 
@@ -185,9 +186,9 @@ recap() { # $1 journal, $2 hôte
   sed -n "s/^$2 *: \(ok=[0-9]*\) *\(changed=[0-9]*\) *\(unreachable=[0-9]*\) *\(failed=[0-9]*\).*/\1 \2 \3 \4/p" "$travail/$1.log"
 }
 
-# Un passage : code de retour, puis pour chaque hôte « ok=… changed=… » attendus.
-passage() { # $1 libellé, $2 journal, $3 code de retour (0 si réussi), puis paires hôte=ok,changed
-  local libelle="$1" j="$2" rc="$3"; shift 3
+# Le dernier passage joué (code de retour « rc ») : pour chaque hôte, « ok=… changed=… » attendus.
+passage() { # $1 libellé, $2 journal, puis paires hôte=ok,changed
+  local libelle="$1" j="$2"; shift 2
   local h attendu obtenu tout=""
   for h in "$@"; do
     attendu="ok=${h#*=}"; attendu="${attendu/,/ changed=} unreachable=0 failed=0"
@@ -199,6 +200,9 @@ passage() { # $1 libellé, $2 journal, $3 code de retour (0 si réussi), puis pa
   done
   ok "$libelle :${tout%;}"
 }
+
+# Le même bilan sur les deux nœuds gérés.
+passages() { passage "$1" "$2" "managed-node-1=$3" "managed-node-2=$3"; }
 
 contient() { # $1 libellé, $2 journal, $3 texte attendu (fixe)
   if grep -qF -- "$3" "$travail/$2.log"; then ok "$1"; else ko "$1 : « $3 » absent de la sortie"; tail -n 25 "$travail/$2.log"; fi

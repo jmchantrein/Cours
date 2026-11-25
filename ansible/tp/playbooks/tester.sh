@@ -42,25 +42,23 @@ if [ "$mode" = "up" ]; then
   titre "Séance 2 : le labo"
   if ! { construire && monter_labo; }; then bilan; fi
   cabler || bilan
-  deux="managed-node-1 managed-node-2"
-  paires() { local h r=(); for h in $deux; do r+=("$h=$1"); done; printf '%s\n' "${r[@]}"; }
 
   # Étape 1
-  jouer h1 hello_world-1.yml; passage "étape 1 : hello_world-1.yml" h1 $? $(paires 3,0)
+  jouer h1 hello_world-1.yml; passages "étape 1 : hello_world-1.yml" h1 3,0
   verifier "étape 1 : deux fois « hello world »" test "$(grep -c '"msg": "hello world"' "$travail/h1.log")" -eq 2
 
   # Étape 2
-  jouer h2 hello_world-2.yml; passage "étape 2 : hello_world-2.yml" h2 $? $(paires 3,0)
+  jouer h2 hello_world-2.yml; passages "étape 2 : hello_world-2.yml" h2 3,0
   verifier "étape 2 : managed-node-1 affiche host_vars, managed-node-2 group_vars" \
     test "$(grep -A1 '^ok: \[managed-node-[12]\] =>' "$travail/h2.log" | sed -n 's/.*"msg": "\(.*\)"/\1/p' | sort | tr '\n' '|')" \
     = "Bonjour le monde from group_vars|Bonjour le monde from host_vars|"
   contient "étape 2 : managed-node-1 → from host_vars" h2 '"msg": "Bonjour le monde from host_vars"'
-  jouer h2e hello_world-2.yml -e 'welcome_msg="from -e"'; passage "étape 2 : -e" h2e $? $(paires 3,0)
+  jouer h2e hello_world-2.yml -e 'welcome_msg="from -e"'; passages "étape 2 : -e" h2e 3,0
   verifier "étape 2 : avec -e, les deux nœuds affichent « from -e »" \
     test "$(grep -c '"msg": "from -e"' "$travail/h2e.log")" -eq 2
 
   # Étape 3
-  jouer h3 hello_world.yml; passage "étape 3 : hello_world.yml" h3 $? $(paires 6,0)
+  jouer h3 hello_world.yml; passages "étape 3 : hello_world.yml" h3 6,0
   contient "étape 3 : le nom d’hôte, un fact" h3 '"msg": "managed-node-2"'
   verifier "étape 3 : la distribution, par setup et register : Debian ×2" \
     test "$(grep -c '"msg": "Debian"' "$travail/h3.log")" -eq 2
@@ -82,16 +80,16 @@ if [ "$mode" = "up" ]; then
   contient "étape 4 : le crochet nomme le fichier refusé" crochet "ansible-lint refuse write_hello_world_naif.yaml"
 
   # Étape 5
-  jouer apt1 install-common-software.yaml; passage "étape 5 : apt, premier passage" apt1 $? $(paires 2,1)
-  jouer apt2 install-common-software.yaml; passage "étape 5 : apt, second passage" apt2 $? $(paires 2,0)
+  jouer apt1 install-common-software.yaml; passages "étape 5 : apt, premier passage" apt1 2,1
+  jouer apt2 install-common-software.yaml; passages "étape 5 : apt, second passage" apt2 2,0
   verifier "étape 5 : htop, ncdu et vim installés sur managed-node-2" \
     silencieux_sauf_echec noeud managed-node-2 dpkg -s htop ncdu vim
 
   # Étape 6
   dates() { ctl ansible managed-node-1 -a "stat -c '%y %n' /hello /world /hello_world" 2> /dev/null | grep ' /'; }
-  jouer n1 "$naif"; passage "étape 6 : version naïve, premier passage" n1 $? $(paires 4,3)
+  jouer n1 "$naif"; passages "étape 6 : version naïve, premier passage" n1 4,3
   avant="$(dates)"
-  jouer n2 "$naif"; passage "étape 6 : version naïve, second passage (shell et command : changed)" n2 $? $(paires 4,2)
+  jouer n2 "$naif"; passages "étape 6 : version naïve, second passage (shell et command : changed)" n2 4,2
   apres="$(dates)"
   verifier "étape 6 : /hello et /world réécrits, /hello_world intact" \
     test "$(diff <(echo "$avant") <(echo "$apres") | sed -n 's/^> .* //p' | tr '\n' ' ')" = "/hello /world "
@@ -102,19 +100,19 @@ if [ "$mode" = "up" ]; then
   for f in /hello /world /hello_world; do
     ctl ansible all -m ansible.builtin.file -a "path=$f state=absent" > /dev/null 2>&1 || true
   done
-  jouer r1 write_hello_world.yaml; passage "étape 7 : version réparée, premier passage" r1 $? $(paires 5,3)
-  jouer r2 write_hello_world.yaml; passage "étape 7 : version réparée, second passage" r2 $? $(paires 4,0)
+  jouer r1 write_hello_world.yaml; passages "étape 7 : version réparée, premier passage" r1 5,3
+  jouer r2 write_hello_world.yaml; passages "étape 7 : version réparée, second passage" r2 4,0
   contient "étape 7 : command sautée au second passage" r2 "skipping: [managed-node-1]"
   verifier "étape 7 : /world contient « world »" test "$(noeud managed-node-2 cat /world)" = "world"
 
   # Étape 9
-  jouer m1 motd.yml; passage "étape 9 : motd, premier passage" m1 $? $(paires 2,1)
-  jouer m2 motd.yml; passage "étape 9 : motd, second passage" m2 $? $(paires 2,0)
+  jouer m1 motd.yml; passages "étape 9 : motd, premier passage" m1 2,1
+  jouer m2 motd.yml; passages "étape 9 : motd, second passage" m2 2,0
   verifier "étape 9 : /etc/motd de managed-node-1" test "$(noeud managed-node-1 head -2 /etc/motd)" = \
     "$(printf 'Bonjour le monde from host_vars\nMachine managed-node-1, sous Debian %s.' \
       "$(noeud managed-node-1 sh -c '. /etc/os-release; cat /etc/debian_version')")"
   jouer m3 motd.yml --check --diff -e 'welcome_msg="Maintenance ce soir"'
-  passage "étape 9 : --check --diff annonce le changement" m3 $? $(paires 2,1)
+  passages "étape 9 : --check --diff annonce le changement" m3 2,1
   contient "étape 9 : --diff montre la nouvelle ligne" m3 "+Maintenance ce soir"
   verifier "étape 9 : --check n’a rien modifié" test "$(noeud managed-node-2 head -1 /etc/motd)" = "Bonjour le monde from group_vars"
 fi

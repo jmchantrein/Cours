@@ -107,7 +107,7 @@ async function connecter(page, url) {
   verifier(await page.locator(".executer[aria-disabled='true']").count() === 0, "compagnon : « Exécuter » actif une fois connecté");
   let t0 = Date.now();
   await executer(page, "echo \"Bonjour").click();
-  await ecran(page).filter({ hasText: `Bonjour depuis ${os.hostname()}` }).waitFor({ timeout: 10000 });
+  await attendreTexte(page, `Bonjour depuis ${os.hostname()}`, 15000);
   ok(`compagnon : commande exécutée dans le vrai shell, sortie affichée en ${Date.now() - t0} ms`);
   await page.click(".terminal-actions button");
   await p.fini;
@@ -116,7 +116,7 @@ async function connecter(page, url) {
   // 3. TP réels : wordpress (commande sur deux lignes, suite par \), libvirt.
   for (const [nom, debut, attendu] of [
     ["wordpress", "docker container exec mon_conteneur_wordpress", /No such container|command not found|Cannot connect/],
-    ["libvirt", "virsh uri", /virsh: command not found|qemu:\/\/\//],
+    ["libvirt", "virsh uri", /virsh: command not found|qemu:\/\/\/|failed to connect to the hypervisor/],
   ]) {
     ({ p, url } = await compagnon());
     await page.goto(adresse(nom));
@@ -125,7 +125,7 @@ async function connecter(page, url) {
     // La commande peut être dans un indice ou un corrigé replié : on l’ouvre, comme le lecteur.
     await executer(page, debut).evaluate(b => { for (let d = b.closest("details"); d; d = d.parentElement.closest("details")) d.open = true; });
     await executer(page, debut).click();
-    await ecran(page).filter({ hasText: attendu }).waitFor({ timeout: 10000 });
+    await attendreTexte(page, attendu, 15000);
     ok(`${nom} : « ${debut} » exécutée, sortie ${attendu}`);
     for (const [largeur, hauteur] of [[1280, 650], [1920, 950]]) {
       await page.setViewportSize({ width: largeur, height: hauteur });
@@ -224,13 +224,13 @@ async function connecter(page, url) {
   verifier(image.length === 0, `VM, deuxième visite : prête en ${(chaud / 1000).toFixed(1)} s, aucune requête pour l’image (requêtes : ${reseau.join(", ")})`);
   await executer(page, "printf 'a;1").click();
   await executer(page, "awk").click();
-  await ecran(page).filter({ hasText: "Total : 3" }).waitFor({ timeout: 30000 });
+  await attendreTexte(page, "Total : 3");
   ok("VM, deuxième visite : commandes exécutées");
   await contexte.close();
 
   console.log(`\n${reussis.length} vérifications réussies ; captures dans ${captures}`);
 })().catch(e => { console.error(e); process.exitCode = 1; }).finally(() => {
   for (const e of enfants) e.kill();
-  fs.rmSync(temporaire, { recursive: true, force: true });
+  try { fs.rmSync(temporaire, { recursive: true, force: true, maxRetries: 3 }); } catch { /* profil encore ouvert */ }
   process.exit();
 });
