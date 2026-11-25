@@ -171,14 +171,15 @@
       - `:q` : quitter ; refusé si le fichier a changé depuis le dernier enregistrement
       - `:wq` : enregistrer et quitter
       - `:q!` : quitter *sans* enregistrer : les modifications sont perdues
-      - `u` : annuler (_undo_) ; #touche[Ctrl+r] : rétablir
+      - `u` : annuler (_undo_) ; #touche[Ctrl+r] : rétablir (_redo_), dans Vim (paquet `vim`)
+      - Dans le `vi` de Debian (`vim-tiny`, mode compatible) : un second `u` rétablit, #touche[Ctrl+r] ne le fait pas
     ],
   ),
   rang(bloc(role: "precaution", taille: px(24))[`:q` sur un fichier modifié][
     - Vim répond : `E37: Modifications non enregistrées (ajoutez ! pour passer outre)`. Il protège le travail : `:w` pour garder, `:q!` pour jeter
   ]),
   source-de: link("https://vimhelp.org/editing.txt.html#write-quit")[Vim, `:help write-quit`],
-  note: [La séquence de touches a été jouée dans Vim (vim -s, sans configuration) : le fichier contient « Hello World ! ». Message E37 en français (LANG=fr\_FR.UTF-8), Vim 9.1.1230 (paquet vim de Debian 13, rejouer.sh). ZZ (mode normal) équivaut à :x, qui n’enregistre que si le fichier a changé.],
+  note: [La séquence de touches a été jouée dans Vim (vim -s, sans configuration) : le fichier contient « Hello World ! ». Message E37 en français (LANG=fr\_FR.UTF-8), Vim 9.1.1230 (paquet vim de Debian 13, rejouer.sh). ZZ (mode normal) équivaut à :x, qui n’enregistre que si le fichier a changé. Annuler puis rétablir (dd, u, puis Ctrl+r ou u) : avec le paquet vim sans ~/.vimrc, lancé sous le nom vim, Ctrl+r rétablit ; lancé sous le nom vi (mode compatible, aussi celui de vim-tiny, le seul éditeur du paquet vim-tiny, 9.1.1230), Ctrl+r ne fait rien et le second u rétablit. Dès qu’un ~/.vimrc met nocompatible (ou avec -N), Ctrl+r rétablit aussi dans vim-tiny.],
 )
 
 == Se déplacer en mode normal <vim-deplacer>
@@ -301,7 +302,7 @@
       - En bloc : #touche[I] insère le même texte au début de chaque ligne
     ],
     bloc(role: "pratique", poids: 1.15, taille: px(24))[Mettre l’environnement de développement en commentaire][
-      Touches : `/developpement` #touche[Entrée] #touche[Ctrl+v] #touche[j] #touche[I] `# ` #touche[Échap]
+      Touches : `/developpement` #touche[Entrée] #touche[Ctrl+v] #touche[j] #touche[I] `#` #touche[Espace] #touche[Échap]
       #fichier([config.yaml, après], taille: px(20))[```
       ---
       application:
@@ -333,6 +334,7 @@
       filetype plugin indent on
       ```]
       - Lu à chaque démarrage de Vim : numéros de ligne, indentation automatique, tabulation de 4 colonnes, coloration syntaxique
+      - Suppose le paquet `vim` : avec `vim-tiny`, `syntax on` donne l’erreur E319 et les réglages YAML ne s’appliquent pas
     ],
     bloc(role: "pratique", taille: px(24))[Vérifier une option][
       #terminal(titre: none, taille: px(21))[
@@ -572,7 +574,7 @@
     ],
     bloc(taille: px(25))[Lire la commande][
       - `-f` (_from_) : format d’entrée ; `-t` (_to_) : format de sortie
-      - `-s` : document autonome, avec en-tête ; une page HTML exige un titre (`--metadata title=…`)
+      - `-s` : document autonome, avec en-tête ; sans titre (`--metadata title=…`), pandoc avertit et prend le nom du fichier comme titre
       - Le PDF passe par LaTeX : prérequis `texlive-latex-base`, `texlive-latex-recommended` et `lmodern`
     ],
   ),
@@ -589,17 +591,19 @@
     + Ajoutez un paragraphe qui explique à quoi sert la commande
     + Insérez un bloc de code qui montre comment utiliser `ls`
     + Ajoutez une liste à puces des options les plus courantes de `ls`
+    + Ajoutez, à la fin, un lien vers le manuel de `ls` et une liste numérotée des étapes pour lister un dossier
     + Convertissez `doc.md` en HTML avec pandoc
+    + Convertissez-le aussi en ODT, puis vérifiez que les deux fichiers existent
   ]),
-  note: [Exercice du cours d’origine (le premier des trois), fait en séance ; la conversion pandoc vient du troisième. Une question par clic. Le README.md d’un projet fictif (deuxième exercice d’origine) et les conversions en ODT et PDF peuvent aller en TP.],
+  note: [Exercice du cours d’origine, fait en séance : il réunit les trois exercices de l’auteur. Le premier (documenter ls) donne les questions 1 à 5 ; le deuxième (un README.md d’un projet fictif) y met le lien et la liste numérotée, ici appliqués à ls (question 6) ; le troisième (convertir avec pandoc) donne les questions 7 et 8 (l’original demandait HTML, LaTeX, ODT et PDF ; le PDF exige LaTeX, voir la diapositive précédente). Il n’y a pas de TP Markdown : tout se fait ici. Une question par clic ; laisser chercher avant le corrigé.],
 )
 
-== À vous : corrigé
+== À vous : corrigé (1/2)
 
-#slide(repeat: 3, self => {
-  let (uncover,) = utils.methods(self)
-  corrige(1, [Créez `doc.md` : titre, paragraphe, bloc de code, liste des options courantes],
-    uncover("2-", reponse(fichier([doc.md], taille: px(20))[````
+#corriges(
+  note: [Fichier créé réellement, puis converti (pandoc 3.1.11.1, rejouer.sh). Une ligne vide avant la liste est nécessaire après « Options courantes : » pour un rendu propre partout. La suite du fichier (lien, liste numérotée) est sur la diapositive suivante.],
+  (1, [Créez `doc.md` : titre, paragraphe, bloc de code, liste des options courantes],
+    reponse(fichier([doc.md], taille: px(20))[````
     # Documentation de la commande `ls`
 
     `ls` liste le contenu d’un répertoire : ses fichiers et ses sous-répertoires.
@@ -614,16 +618,38 @@
     - `-a` : affiche aussi les fichiers cachés (nom commençant par `.`)
     - `-h` : tailles lisibles (Kio, Mio), avec `-l`
     - `-t` : trie par date de modification
-    ````])))
-  v(px(8)); filet-corrige; v(px(8))
-  corrige(6, [Convertissez `doc.md` en HTML avec pandoc],
-    uncover("3-", reponse(terminal(titre: none, taille: px(20))[```
+    ````])),
+)
+
+== À vous : corrigé (2/2)
+
+#corriges(
+  note: [Fichier converti réellement (pandoc 3.1.11.1) : la conversion HTML contient un lien (a href) et une liste ordonnée (ol), relevés par grep (pandoc coupe ses lignes : le lien n’est pas sur la ligne de la balise a) ; ODT et HTML sont produits sans LaTeX, le format de sortie se déduisant de l’extension.],
+  (6, [Ajoutez, à la fin de `doc.md`, un lien vers le manuel de `ls` et une liste numérotée],
+    reponse(fichier([doc.md, suite], taille: px(20))[```
+    Voir le [manuel de `ls`](https://www.gnu.org/software/coreutils/manual/html_node/ls-invocation.html).
+
+    Pour lister un dossier :
+
+    1. Ouvrir un terminal
+    2. Aller dans le dossier avec `cd`
+    3. Lancer `ls -lh`
+    ```])),
+  (7, [Convertissez `doc.md` en HTML avec pandoc, et retrouvez le lien et la liste dans le résultat],
+    reponse(terminal(titre: none, taille: px(18))[```
     $ pandoc -f gfm -s --metadata title="ls" doc.md -o doc.html
-    $ ls doc.html
-    doc.html
-    ```])))
-  utils.speaker-note(self: self)[Fichier converti réellement (pandoc 3.1.11.1) : h1, paragraphe, bloc de code bash, liste de quatre éléments. Une ligne vide avant la liste est nécessaire après « Options courantes : » pour un rendu propre partout. On ouvre doc.html dans un navigateur pour voir le rendu.]
-})
+    $ grep -o 'href="https[^"]*"' doc.html
+    href="https://www.gnu.org/software/coreutils/manual/html_node/ls-invocation.html"
+    $ grep -o '<ol[^>]*>' doc.html
+    <ol type="1">
+    ```])),
+  (8, [Convertissez `doc.md` en ODT, puis vérifiez les deux fichiers],
+    reponse(terminal(titre: none, taille: px(18))[```
+    $ pandoc doc.md -o doc.odt
+    $ ls doc.html doc.odt
+    doc.html  doc.odt
+    ```])),
+)
 
 // ======================================================================
 = YAML et JSON · structurer des données
@@ -713,7 +739,7 @@
       ---                      # début de document
       # un commentaire
       application:             # clé: valeur (mapping)
-        nom: MonApplication    # 2 espaces = un niveau
+        nom: MonApplication    # convention du cours : 2 espaces
         version: 1.2.3
         environnements:
           production:
@@ -729,7 +755,7 @@
       - *Mapping* : `clé: valeur`, avec une espace après les deux-points
       - *Séquence* : un `- ` par élément
       - *Scalaire* : une valeur simple (chaîne, nombre, booléen, null)
-      - L’indentation porte la hiérarchie : des *espaces*, jamais de tabulation
+      - L’indentation porte la hiérarchie : des *espaces*, jamais de tabulation ; le nombre d’espaces par niveau n’est pas imposé, le cours en met 2
       - `#` : commentaire ; `---` : début d’un document (plusieurs par fichier possibles)
     ],
   ),
@@ -802,26 +828,33 @@
   rang(
     bloc(taille: px(24))[La réponse de la spécification][
       - YAML 1.2 a été révisé pour que JSON en soit un sous-ensemble : un document JSON est un document YAML 1.2
-      - Pas en YAML 1.1 : PyYAML, qui suit la 1.1, refuse la tabulation, permise en JSON
+      - Pas pour tous les analyseurs : l’analyseur Python de PyYAML refuse la tabulation, permise en JSON ; son chargeur C (celui de `yq`) et ruamel.yaml, même en 1.1, la lisent
       - Les clés en double : JSON les déconseille, YAML les interdit
-    ],
-    bloc(role: "pratique", poids: 1.3, taille: px(24))[Deux analyseurs, deux réponses][
       #terminal(titre: none, taille: px(18))[
         ```
-        $ printf '{\t"a": 1}\n' > tabulation.json
-        # PyYAML (YAML 1.1)
-        $ python3 -c 'import sys, yaml
-        > print(yaml.safe_load(sys.stdin))' < tabulation.json
-        # …
-        found character '\t' that cannot start any token
-        # ruamel.yaml (YAML 1.2), paquet python3-ruamel.yaml
-        $ python3 -c 'from ruamel.yaml import YAML; import sys
-        > print(YAML(typ="safe").load(sys.stdin))' < tabulation.json
-        {'a': 1}
         # une clé en double : jq garde la dernière
         $ printf '{"a": 1, "a": 2}\n' > doublon.json
         $ jq -c . doublon.json
         {"a":2}
+        ```
+      ]
+    ],
+    bloc(role: "pratique", poids: 1.3, taille: px(24))[Trois lecteurs, deux réponses][
+      #terminal(titre: none, taille: px(18))[
+        ```
+        $ printf '{\t"a": 1}\n' > tabulation.json
+        # PyYAML, analyseur Python (yaml.safe_load)
+        $ python3 -c 'import sys, yaml
+        > print(yaml.safe_load(sys.stdin))' < tabulation.json
+        # …
+        found character '\t' that cannot start any token
+        # chargeur C de PyYAML : celui de yq
+        $ yq -c . tabulation.json
+        {"a":1}
+        # ruamel.yaml (YAML 1.2), paquet python3-ruamel.yaml
+        $ python3 -c 'from ruamel.yaml import YAML; import sys
+        > print(YAML(typ="safe").load(sys.stdin))' < tabulation.json
+        {'a': 1}
         ```
       ]
     ],
@@ -830,7 +863,7 @@
     - Du JSON se colle dans un fichier YAML. L’inverse est faux : commentaires et ancres n’ont pas d’équivalent JSON
   ]),
   source-de: [#link("https://yaml.org/spec/1.2.2/#12-yaml-history")[YAML 1.2.2, § 1.2] · #link("https://www.rfc-editor.org/rfc/rfc8259#section-4")[RFC 8259, § 4]],
-  note: [ruamel.yaml 0.18.10 refuse ce fichier (DuplicateKeyError) ; PyYAML garde la dernière valeur sans rien dire. La trace de PyYAML est abrégée (« \# … ») : elle se termine par yaml.scanner.ScannerError, while scanning for the next token. Sorties réelles, conteneur Debian 13, PyYAML 6.0.2 et ruamel.yaml 0.18.10 (python3-yaml et python3-ruamel.yaml). Le cours d’origine renvoie à l’article JSON::XS « JSON and YAML » sur les cas limites ; le site disait « pas tout à fait » sans préciser : la réponse dépend de la version de YAML que suit l’analyseur.],
+  note: [ruamel.yaml 0.18.10 refuse ce fichier (DuplicateKeyError) ; PyYAML garde la dernière valeur sans rien dire. La trace de PyYAML est abrégée (« \# … ») : elle se termine par yaml.scanner.ScannerError, while scanning for the next token. Sorties réelles, conteneur Debian 13, PyYAML 6.0.2 et ruamel.yaml 0.18.10 (python3-yaml et python3-ruamel.yaml). Le cours d’origine renvoie à l’article JSON::XS « JSON and YAML » sur les cas limites ; le site disait « pas tout à fait » sans préciser : la réponse dépend de l’analyseur, pas seulement de la version de YAML. Relevés pour la tabulation : le chargeur Python pur de PyYAML (yaml.safe_load, yamllint) la refuse ; son chargeur C (CSafeLoader, celui de yq 3.4.3) la lit ; ruamel.yaml la lit, avec ou sans directive %YAML 1.1 (typ safe, pure ou non, aller-retour) ; le yq Go aussi. C’est donc une limite de l’analyseur Python de PyYAML, non un refus que la version 1.1 imposerait.],
 )
 
 == Le typage implicite des scalaires <yaml-typage>
@@ -845,11 +878,11 @@
     ([null], [`null`, `~`, valeur vide], [`null`, `~`, valeur vide]),
     ([entier], [`42`, `0644` (octal), `0x1F`, `22:22` (base 60)], [`42`, `0o644` (octal), `0x1F`]),
     ([flottant], [`3.14`, `1.10` (= 1.1), `.inf`], [`3.14`, `1.10` (= 1.1), `.inf`]),
-    ([date], [`2024-01-15`], [pas dans le schéma : ruamel.yaml et PyYAML en font une date]),
+    ([date], [`2024-01-15`], [pas dans le schéma de base ; ruamel.yaml en fait pourtant une date, hors schéma]),
     ([chaîne], [tout le reste : `web01`, `1.2.3`, `"1984"`], [tout le reste, dont `yes`, `NO`, `22:22`]),
   ))),
   source-de: [#link("https://yaml.org/type/bool.html")[YAML 1.1, types] · #link("https://yaml.org/spec/1.2.2/#1023-core-schema")[YAML 1.2.2, § 10.2.3 Core Schema]],
-  note: [Le tableau résume les relevés des deux diapositives suivantes. La spécification 1.1 inclut aussi y, Y, n, N parmi les booléens ; PyYAML ne les applique pas (y reste une chaîne, relevé). Le schéma de base 1.2 n’a pas de type date ; ruamel.yaml (typ safe, 1.2 par défaut) en reconnaît pourtant, comme PyYAML ; yq (Go) l’étiquette !!timestamp mais l’écrit en chaîne. Une directive %YAML 1.1 en tête de document fait lire ruamel.yaml en 1.1 avec YAML(typ="safe", pure=True) (relevé : False pour no), mais pas avec YAML(typ="safe") seul, qui garde la chaîne « no » (ruamel.yaml 0.18.10) ; PyYAML ignore %YAML 1.2 et reste en 1.1 (relevé). JSON a les mêmes types, sans date.],
+  note: [Le tableau résume les relevés des deux diapositives suivantes. La spécification 1.1 inclut aussi y, Y, n, N parmi les booléens ; PyYAML ne les applique pas (y reste une chaîne, relevé). Le schéma de base 1.2 n’a pas de type date ; ruamel.yaml (typ safe, 1.2 par défaut) en construit pourtant une, hors schéma (PyYAML, lui, la tient de la spécification 1.1) ; yq (Go) l’étiquette !!timestamp mais l’écrit en chaîne. Une directive %YAML 1.1 en tête de document fait lire ruamel.yaml en 1.1 avec YAML(typ="safe", pure=True) (relevé : False pour no), mais pas avec YAML(typ="safe") seul, qui garde la chaîne « no » (ruamel.yaml 0.18.10) ; PyYAML ignore %YAML 1.2 et reste en 1.1 (relevé). JSON a les mêmes types, sans date.],
 )
 
 == Le problème de la Norvège : `NO` vaut `false` <yaml-norvege>
@@ -894,8 +927,8 @@
 
 #anime(
   rang(
-    bloc(role: "pratique", poids: 0.75, taille: px(24))[typage.yaml][
-      #fichier([typage.yaml], taille: px(21))[```
+    bloc(role: "pratique", poids: 0.62, taille: px(24))[typage.yaml][
+      #fichier([typage.yaml], taille: px(20))[```
       ---
       mode: 0644
       mode_12: 0o644
@@ -906,24 +939,27 @@
       titre_chaine: "1984"
       ```]
     ],
-    bloc(role: "pratique", poids: 1.25, taille: px(24))[Valeurs lues][
-      #tableau((1fr, 1.1fr, 1.1fr, 1fr), taille: px(21),
-        ([Clé], [PyYAML (1.1)], [ruamel.yaml (1.2)], [yq Go (1.2)]),
-        ([`mode`], [`420`], [`644`], [`644`]),
-        ([`mode_12`], [`'0o644'`], [`420`], [`420`]),
-        ([`duree`], [`1342`], [`'22:22'`], [`"22:22"`]),
-        ([`version`], [`1.1`], [`1.1`], [`1.1`]),
-        ([`date`], [date Python], [date Python], [`"2024-01-15"`]),
-        ([`titre`], [`1984`], [`1984`], [`1984`]),
-        ([`titre_chaine`], [`'1984'`], [`'1984'`], [`"1984"`]),
+    bloc(role: "pratique", poids: 1.38, taille: px(24))[Valeurs lues][
+      #tableau((1fr, 1fr, 1fr, 1fr, 1fr), taille: px(19),
+        ([Clé], [PyYAML (1.1)], [ruamel.yaml (1.2)], [yq Go (1.2)], [yq Debian (3.4.3)]),
+        ([`mode`], [`420`], [`644`], [`644`], [`420`]),
+        ([`mode_12`], [`'0o644'`], [`420`], [`420`], [`420`]),
+        ([`duree`], [`1342`], [`'22:22'`], [`"22:22"`], [`"22:22"`]),
+        ([`version`], [`1.1`], [`1.1`], [`1.1`], [`1.1`]),
+        ([`date`], [date Python], [date Python], [`"2024-01-15"`], [`"2024-01-15"`]),
+        ([`titre`], [`1984`], [`1984`], [`1984`], [`1984`]),
+        ([`titre_chaine`], [`'1984'`], [`'1984'`], [`"1984"`], [`"1984"`]),
       )
     ],
   ),
-  rang(bloc(role: "avertissement", taille: px(23))[Les conséquences][
-    - Des droits `0644` lus en décimal ; un `22:22` (port de Compose) lu en base 60 ; une version `1.10` devenue `1.1` ; une date que `json.dumps` refuse (`TypeError: Object of type date is not JSON serializable`). Guillemets !
+  rang(bloc(role: "avertissement", taille: px(22))[Les conséquences][
+    - `0644` lu en décimal (644) : en YAML 1.2 ; en 1.1, c’est l’octal, soit 420
+    - `22:22` (port de Compose) lu en base 60 (1342) : en YAML 1.1 ; en 1.2, une chaîne
+    - `1.10` devenue `1.1` : en 1.1 comme en 1.2
+    - Une date que `json.dumps` refuse (`TypeError: Object of type date is not JSON serializable`) : en 1.1 (PyYAML), et en 1.2 avec ruamel.yaml. Guillemets !
   ]),
   source-de: [#link("https://yaml.org/type/int.html")[YAML 1.1, int] · #link("https://yaml.org/spec/1.2.2/#1023-core-schema")[YAML 1.2.2, Core Schema] · #link("https://docs.docker.com/reference/compose-file/services/#ports")[Compose, ports]],
-  note: [Relevés réels, conteneur Debian 13 : PyYAML 6.0.2 (yaml.safe\_load), ruamel.yaml 0.18.10 (YAML(typ="safe"), 1.2 par défaut), tous deux paquets Debian ; yq Go v4.44.3 (yq -o=json), binaire amont, absent de Debian (rejouer.sh). 0644 en 1.1 : octal, soit 420 ; en 1.2, l’octal s’écrit 0o644, et 0644 est un entier décimal. 22:22 en 1.1 : 22 × 60 + 22 = 1342 (entier sexagésimal) ; la documentation de Compose recommande de mettre les ports entre guillemets pour cette raison. 1.10 est un flottant dans les deux versions : une version s’écrit entre guillemets. La date : PyYAML rend un datetime.date, que le module json ne sait pas écrire. 1984 sans guillemets : un entier, d’où les guillemets du titre dans l’exercice.],
+  note: [Relevés réels, conteneur Debian 13 : PyYAML 6.0.2 (yaml.safe\_load), ruamel.yaml 0.18.10 (YAML(typ="safe"), 1.2 par défaut), tous deux paquets Debian ; yq Go v4.44.3 (yq -o=json), binaire amont, absent de Debian (rejouer.sh) ; yq Debian 3.4.3 (yq -c .), le yq du cours : il lit 0644 et 0o644 comme 420 (octal, comme PyYAML pour 0644), mais 22:22 et la date comme des chaînes. 0644 en 1.1 : octal, soit 420 ; en 1.2, l’octal s’écrit 0o644, et 0644 est un entier décimal. 22:22 en 1.1 : 22 × 60 + 22 = 1342 (entier sexagésimal) ; la documentation de Compose recommande de mettre les ports entre guillemets pour cette raison. 1.10 est un flottant dans les deux versions : une version s’écrit entre guillemets. La date : PyYAML rend un datetime.date, que le module json ne sait pas écrire. 1984 sans guillemets : un entier, d’où les guillemets du titre dans l’exercice.],
 )
 
 == Chaînes sur plusieurs lignes : `|` garde, `>` replie

@@ -46,11 +46,10 @@
       [Le rebasage rejoue B et C au-dessus de D : de nouveaux commits E et F, même changement, autre parent. B et C, sur
         aucune branche, passent en tirets : `git reflog` les retrouve (#diapo(pdf, "rebasage")[rebaser] ;
         #diapo(pdf, "reflog")[reflog]). `main` est alors un ancêtre de `faq` : avance rapide, historique en ligne.], "rebasage"),
-    ([Un commit B, défait par `reset` en `--soft`, `--mixed` puis `--hard`. Où est son fichier à chaque fois, et comment
+    ([Un commit B, défait par `reset --soft`, `--mixed` puis `--hard`. Où est son fichier à chaque fois ? Comment
       revient-on à B ?],
-      [`main` revient de B à A, B passe en tirets. `--soft` garde `b.txt` indexé (`A  b.txt`), `--mixed` le garde non
-        indexé (`?? b.txt`), `--hard` l’efface (`git status` vide). `reset --hard B`, trouvé par `git reflog`, ramène à
-        B (#diapo(pdf, "reset-modes")[trois modes] ; #diapo(pdf, "reflog")[reflog]). Rien n’est perdu : le fichier est
-        dans B. Une modification jamais enregistrée, `--hard` l’efface pour de bon.], "reset"),
+      [`--soft` garde `b.txt` indexé (`A  b.txt`), `--mixed` non indexé (`?? b.txt`), `--hard` l’efface. `reset --hard B`,
+        trouvé par `git reflog`, ramène à B (#diapo(pdf, "reset-modes")[modes] ; #diapo(pdf, "reflog")[reflog]). Rien
+        n’est perdu : le fichier est dans B. Une modification jamais enregistrée, `--hard` l’efface pour de bon.], "reset"),
   )
 ]
