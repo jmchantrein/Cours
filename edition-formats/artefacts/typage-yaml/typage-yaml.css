@@ -1,0 +1,120 @@
+/* typage-yaml.css — mise en forme de l’artefact ; les couleurs sont celles de la charte (variables CSS).
+   En haut : ce que l’étudiant écrit (un scalaire, ou un petit document) et ses commandes. Au milieu, deux cadres côte
+   à côte : YAML 1.1 (PyYAML) et YAML 1.2 (ruamel.yaml), chacun avec le type lu, sa valeur, la règle qui a décidé et le
+   JSON obtenu. En bas, l’explication calculée. Sur un écran d’ordinateur, l’ensemble occupe la hauteur de la fenêtre.
+   Un type se lit toujours dans son nom (« booléen », « chaîne »…) ; la couleur du cadre ne fait que le doubler. */
+#artefact { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: .6rem .8rem; align-content: start; }
+#artefact .zone-entree, #artefact .zone-explication { grid-column: 1 / -1; }
+#artefact h2 { margin: 0 0 .3rem; padding: 0; border: 0; font-size: .75rem; color: var(--c-gris);
+  letter-spacing: .08em; text-transform: uppercase; }
+#artefact .cadre { display: flex; flex-direction: column; padding: .5rem .7rem .55rem; background: #fff;
+  border: 1px solid var(--c-filet); border-radius: .6rem; box-shadow: 0 1px 2px rgb(15 30 51 / .05); }
+#artefact .cadre > h2 { flex: none; }
+#artefact code { padding: 0; border: 0; background: none; color: inherit; font-family: "IBM Plex Mono", ui-monospace, monospace; }
+#artefact table { margin: 0; }
+#artefact .vide { margin: 0; color: var(--c-gris); font-size: .8rem; }
+#artefact .mention { margin: .3rem 0 0; color: var(--c-gris); font-size: .7rem; line-height: 1.3; }
+#artefact button { padding: .25rem .7rem; border: 1px solid var(--c-ardoise); border-radius: .3rem; background: #fff;
+  color: var(--c-encre); font: inherit; font-size: .8rem; cursor: pointer; }
+/* Ce qu’une recette vient de modifier clignote brièvement. */
+@keyframes signal { from { box-shadow: 0 0 0 .25rem var(--precaution-entete); } to { box-shadow: 0 0 0 .25rem transparent; } }
+#artefact .signale { animation: signal 1.6s ease-out; border-color: var(--precaution-accent); }
+
+/* Ce que l’étudiant écrit : un terminal sombre à gauche, ses commandes à droite. */
+#artefact .zone-entree { display: grid; grid-template-columns: minmax(0, 1fr) 13rem; gap: .6rem; align-items: stretch; padding: .5rem .6rem; }
+.commandes { display: flex; flex-direction: column; gap: .3rem; }
+.commandes h2 { margin: 0; }
+#artefact .commandes button.zero { align-self: flex-start; padding: .1rem .6rem; font-size: .75rem; }
+.modes { display: flex; }
+#artefact .modes button { flex: 1; border-radius: 0; padding: .2rem .3rem; }
+#artefact .modes button:first-child { border-radius: .3rem 0 0 .3rem; }
+#artefact .modes button:last-child { border-radius: 0 .3rem .3rem 0; margin-left: -1px; }
+/* Le bouton enfoncé se lit à son « ✓ ». */
+#artefact .modes button[aria-pressed="true"] { background: var(--notion-entete); border-color: var(--notion-entete); color: var(--notion-texte); font-weight: 600; }
+#artefact .modes button[aria-pressed="true"]::before { content: "✓ "; }
+#artefact .modes button:disabled { opacity: .55; }
+#artefact[data-mode="scalaire"] [data-docs], #artefact[data-mode="document"] [data-exemples] { display: none; }
+.saisie { display: flex; min-width: 0; }
+.entree { display: none; flex: 1; min-width: 0; padding: .45rem .7rem; border-radius: .6rem; background: var(--c-nuit); color: var(--c-texte-term); }
+#artefact[data-mode="scalaire"] .entree-scalaire { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: .3rem .6rem; align-items: center; align-content: center; }
+#artefact[data-mode="document"] .entree-document { display: block; }
+.entree .cle { color: var(--c-prompt); font-size: .95rem; font-weight: 600; }
+#artefact .entree .mention { grid-column: 1 / -1; margin: 0; color: var(--c-texte-term); }
+#artefact select, #artefact input[type="text"], #artefact textarea { width: 100%; min-width: 0; padding: .25rem .4rem; border: 1px solid var(--c-ardoise);
+  border-radius: .3rem; background: var(--c-encart); color: var(--c-texte-term); font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: .9rem; }
+#artefact .commandes select { background: #fff; color: var(--c-encre); font-family: inherit; font-size: .8rem; }
+#artefact textarea { display: block; resize: none; line-height: 1.3; font-size: .82rem; }
+#artefact input::placeholder { color: var(--c-commentaire); opacity: 1; }
+#artefact select:disabled, #artefact input:disabled, #artefact textarea:disabled { opacity: .75; }
+.entree .apercu { color: var(--c-prompt); }
+
+/* Les deux lectures : le type lu à gauche, le JSON à droite quand le cadre est assez large. */
+.zone-v11 h2, .zone-v12 h2 { display: flex; align-items: baseline; gap: .5rem; flex-wrap: wrap; }
+.zone-v11 h2 span, .zone-v12 h2 span { color: var(--c-encre); font-size: .85rem; font-weight: 700; }
+.zone-v11 h2 small, .zone-v12 h2 small { font-size: .7rem; font-weight: 400; letter-spacing: 0; text-transform: none; }
+.corps { display: flex; flex-wrap: wrap; gap: .1rem .8rem; }
+.corps > .lu, .corps > .en-json { flex: 1 1 15rem; min-width: 0; }
+.lecture { display: flex; flex-direction: column; gap: .15rem; }
+.lecture .ligne { display: grid; grid-template-columns: 3.4rem minmax(0, 1fr); gap: 0 .4rem; align-items: baseline; margin: 0; font-size: .8rem; line-height: 1.3; }
+.champ { color: var(--c-ardoise); font-size: .68rem; }
+.titre-json { margin: .3rem 0 .1rem; }
+.corps > .en-json .titre-json { margin-top: 0; }
+.lecture .valeur { font-size: .95rem; font-weight: 600; overflow-wrap: anywhere; }
+.lecture .regle { font-size: .74rem; color: var(--c-gris); }
+.erreur { margin: 0; color: var(--danger-accent); font-weight: 600; font-size: .85rem; overflow-wrap: anywhere; }
+.limite { color: var(--avertissement-accent); }
+.json { display: block; margin: 0; padding: .25rem .5rem; border: 1px solid var(--c-filet); border-radius: .4rem; background: var(--c-espace);
+  font-size: .8rem; line-height: 1.3; white-space: pre-wrap; overflow-wrap: anywhere; }
+.json code { font-size: inherit; }
+
+/* Types : le nom, doublé d’une couleur. */
+.type { display: inline-block; padding: 0 .45rem; border: 2px solid var(--c-ardoise); border-radius: .4rem; font-size: .76rem; font-weight: 700; line-height: 1.35; background: #fff; }
+.type-str { border-color: var(--notion-entete); }
+.type-int, .type-float { border-color: var(--pratique-entete); }
+.type-bool { border-color: var(--precaution-entete); }
+.type-null { border-color: var(--c-ardoise); border-style: dashed; }
+.type-date, .type-datetime { border-color: var(--avertissement-entete); }
+
+/* Un document : une ligne par clé. */
+.paires { border-collapse: collapse; width: 100%; font-size: .76rem; }
+.paires th, .paires td { padding: 0 .3rem 0 0; text-align: left; font-weight: 400; vertical-align: baseline; }
+.paires th { width: 8rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 8rem; }
+.paires small { margin-left: .3rem; color: var(--c-ardoise); font-size: .65rem; }
+.item { display: inline-flex; align-items: baseline; gap: .25rem; padding: 0 .3rem; border: 2px solid var(--c-ardoise); border-radius: .35rem; margin: .06rem 0; line-height: 1.25; }
+.item.type-str { border-color: var(--notion-entete); }
+.item.type-int, .item.type-float { border-color: var(--pratique-entete); }
+.item.type-bool { border-color: var(--precaution-entete); }
+.item.type-null { border-style: dashed; }
+.item.type-date, .item.type-datetime { border-color: var(--avertissement-entete); }
+.item small { margin: 0; }
+.paires .liste { color: var(--c-ardoise); }
+
+/* L’explication calculée. */
+.explication-texte { font-size: .8rem; line-height: 1.38; }
+.explication-texte p { margin: .1rem 0; }
+.explication-texte .erreur { font-size: inherit; }
+.zone-explication, .zone-v11, .zone-v12 { overflow-y: auto; }
+
+/* Écran d’ordinateur : l’artefact prend la hauteur disponible ; les cadres du milieu s’étirent. */
+@media (min-width: 60rem) and (min-height: 36rem) {
+  #artefact { height: 100%; grid-template-rows: auto minmax(0, 1fr) auto; }
+  #artefact .cadre { min-height: 0; }
+  #artefact .zone-explication { max-height: 10rem; }
+}
+/* Fenêtre basse (petit portable) : tout se resserre pour qu'un document de six clés tienne encore. */
+@media (min-width: 60rem) and (max-height: 46rem) {
+  #artefact { gap: .4rem .6rem; }
+  #artefact .cadre { padding: .35rem .55rem .4rem; }
+  #artefact .zone-entree { padding: .35rem .5rem; gap: .5rem; }
+  .entree { padding: .3rem .6rem; }
+  #artefact textarea { font-size: .74rem; line-height: 1.2; padding: .15rem .35rem; }
+  .commandes { gap: .22rem; }
+  .paires { font-size: .72rem; }
+  .item { margin: .03rem 0; line-height: 1.15; }
+  .json { font-size: .74rem; line-height: 1.22; padding: .15rem .4rem; }
+  .lecture .ligne { font-size: .76rem; }
+  .explication-texte { font-size: .76rem; line-height: 1.3; }
+  #artefact h2 { margin-bottom: .2rem; }
+}
+@media (max-width: 44rem) { #artefact { grid-template-columns: minmax(0, 1fr); }
+  #artefact .zone-entree { grid-template-columns: minmax(0, 1fr); } }

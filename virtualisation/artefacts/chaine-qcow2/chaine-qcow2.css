@@ -1,0 +1,76 @@
+/* chaine-qcow2.css — mise en forme de l'artefact ; les couleurs sont celles de la charte (variables CSS).
+   En haut : les commandes (image, grappe, octet ; écrire, lire, adosser, commit, rebase). Dessous, une ligne par image :
+   ses 16 grappes, telles que cette image les lit. Dessous encore, l'explication calculée. Sur un écran d'ordinateur,
+   l'ensemble occupe la hauteur de la fenêtre ; ce qui déborde défile dans son cadre.
+   Chaque image a sa couleur (ses grappes et le nom de l'image qui les fournit), toujours doublée d'un texte : l'octet,
+   puis B ou son numéro ; ↓ marque une grappe lue dans une image plus basse ; un trait plein, une grappe propre. */
+#artefact { display: grid; grid-template-columns: minmax(0, 1fr); gap: .5rem; align-content: start; grid-template-rows: auto minmax(0, auto) minmax(0, 1fr); }
+#artefact h2 { margin: 0 0 .3rem; padding: 0; border: 0; font-size: .75rem; color: var(--c-gris); letter-spacing: .08em; text-transform: uppercase; }
+#artefact .cadre { display: flex; flex-direction: column; padding: .45rem .7rem .5rem; background: #fff;
+  border: 1px solid var(--c-filet); border-radius: .6rem; box-shadow: 0 1px 2px rgb(15 30 51 / .05); min-height: 0; }
+#artefact .cadre > h2 { flex: none; }
+#artefact code { padding: 0; border: 0; background: none; color: inherit; font-family: "IBM Plex Mono", ui-monospace, monospace; }
+.titre-zone { min-height: 1.5rem; display: flex; align-items: baseline; justify-content: space-between; gap: .5rem; }
+#artefact button.zero-bouton { margin-bottom: .2rem; padding: .1rem .6rem; font-size: .75rem; }
+#artefact button { padding: .25rem .6rem; border: 1px solid var(--c-ardoise); border-radius: .3rem; background: #fff;
+  color: var(--c-encre); font: inherit; font-size: .8rem; cursor: pointer; }
+#artefact select { min-width: 0; padding: .2rem .3rem; border: 1px solid var(--c-ardoise); border-radius: .3rem; background: var(--c-encart);
+  color: var(--c-texte-term); font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: .8rem; }
+#artefact select:disabled { opacity: .75; }
+
+/* Les commandes : un terminal sombre. */
+.commandes { display: flex; flex-direction: column; gap: .35rem; padding: .45rem .7rem; border-radius: .6rem; background: var(--c-nuit); color: var(--c-texte-term); }
+.commandes .rangee { display: flex; flex-wrap: wrap; align-items: center; gap: .3rem .5rem; }
+.commandes label { display: inline-flex; align-items: center; gap: .3rem; }
+.commandes .champ { color: var(--c-prompt); font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: .78rem; font-weight: 600; }
+.commandes button { border-color: var(--c-ardoise); background: var(--c-encart); color: var(--c-texte-term); font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: .78rem; }
+.commandes button:hover:not(:disabled) { background: var(--c-ardoise); }
+.commandes button:disabled { opacity: .35; }
+
+/* Les images. */
+.entete-images { display: grid; grid-template-columns: 9.5rem 4.6rem minmax(0, 1fr); align-items: end; gap: 0 .5rem; }
+.entete-images h2 { grid-column: 1 / 3; }
+.index { display: grid; grid-template-columns: repeat(16, minmax(0, 1fr)); gap: 2px; margin-bottom: .2rem; font-size: .62rem; color: var(--c-gris); text-align: center; font-family: "IBM Plex Mono", ui-monospace, monospace; }
+.index .choisie { color: var(--c-encre); font-weight: 700; }
+.images { display: flex; flex-direction: column; gap: .3rem; min-height: 0; overflow-y: auto; }
+.image { display: grid; grid-template-columns: 9.5rem 4.6rem minmax(0, 1fr); align-items: center; gap: 0 .5rem; padding: .15rem .25rem .15rem .15rem; border-radius: .4rem; border: 2px solid transparent; }
+.image.selectionnee { border-color: var(--c-ardoise); background: var(--c-espace); }
+#artefact .image .nom { display: flex; flex-direction: column; align-items: flex-start; padding: 0 .2rem; border: 0; background: none; text-align: left; line-height: 1.15; }
+.image .nom code { font-size: .78rem; font-weight: 700; white-space: nowrap; }
+.image .nom small { font-size: .62rem; color: var(--c-ardoise); white-space: nowrap; }
+.image .taille { margin: 0; font-size: .75rem; line-height: 1.15; font-family: "IBM Plex Mono", ui-monospace, monospace; text-align: right; }
+.image .taille b { display: block; white-space: nowrap; }
+.image .taille small { display: block; color: var(--c-ardoise); font-family: inherit; font-size: .62rem; white-space: nowrap; }
+.cases { display: grid; grid-template-columns: repeat(16, minmax(0, 1fr)); gap: 2px; }
+#artefact .case { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: .05rem 0; border: 1px dashed var(--entete); border-radius: .25rem;
+  background: var(--fond-role); color: var(--c-encre); line-height: 1.05; min-width: 0; cursor: pointer; font-family: "IBM Plex Mono", ui-monospace, monospace; }
+#artefact .case .octet { font-size: .74rem; font-weight: 700; }
+#artefact .case .tag { font-size: .56rem; color: var(--c-ardoise); }
+#artefact .case.propre { border: 2px solid var(--entete); }
+#artefact .case.propre .tag { color: var(--c-encre); font-weight: 700; }
+#artefact .case.zero { --entete: var(--c-filet); --fond-role: #fff; color: var(--c-gris); border-style: dotted; }
+#artefact .case.choisie { box-shadow: 0 0 0 2px var(--c-encre); }
+#artefact .case:disabled { opacity: 1; cursor: default; }
+.de-notion { --entete: var(--notion-entete); --fond-role: var(--notion-fond); }
+.de-pratique { --entete: var(--pratique-entete); --fond-role: var(--pratique-fond); }
+.de-avertissement { --entete: var(--avertissement-entete); --fond-role: var(--avertissement-fond); }
+.de-invite { --entete: var(--c-invite); --fond-role: var(--c-invite-clair); }
+.de-distant { --entete: var(--c-distant); --fond-role: var(--c-distant-clair); }
+/* Ce qu'une opération vient de modifier clignote brièvement. */
+@keyframes signal { from { box-shadow: 0 0 0 .22rem var(--precaution-entete); } to { box-shadow: 0 0 0 .22rem transparent; } }
+#artefact .case.signale { animation: signal 1.6s ease-out; }
+#artefact .case.choisie.signale { box-shadow: 0 0 0 2px var(--c-encre); }
+#artefact .mention { margin: .3rem 0 0; color: var(--c-gris); font-size: .66rem; line-height: 1.3; }
+
+/* L'explication calculée. */
+.zone-explication { overflow-y: auto; }
+.explication-texte { font-size: .8rem; line-height: 1.38; }
+.explication-texte p { margin: .1rem 0; }
+.explication-texte .danger { color: var(--danger-accent); font-weight: 600; }
+.explication-texte .limite { color: var(--avertissement-accent); }
+
+@media (max-width: 52rem) {
+  .entete-images, .image { grid-template-columns: 1fr; }
+  .image .taille { text-align: left; }
+  .entete-images .index { grid-column: 1; }
+}
