@@ -1,0 +1,83 @@
+name: Vérification des artefacts
+
+# Un artefact interactif simule un outil réel. Ce workflow confronte chaque simulateur à l'outil :
+# - heritage-des-profils : verifier-incus.js rejoue des manipulations tirées au hasard dans la page
+#   compilée (Node, Playwright, Chromium) et dans un vrai Incus, puis compare `incus config show --expanded`.
+# Pour ajouter un artefact : un appel de plus à `verifier`, dans la dernière étape.
+on:
+  push:
+    paths:
+      - "*/artefacts/**"
+      - ".github/workflows/verification-artefacts.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Un nouveau push sur la même branche remplace la vérification en cours.
+concurrency:
+  group: verification-artefacts-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verification:
+    # Runner épinglé, comme test-corriges.yml : la version d'Ubuntu décide de celle d'Incus.
+    runs-on: ubuntu-26.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Version d'Ubuntu
+        run: . /etc/os-release && echo "$PRETTY_NAME, noyau $(uname -r), $(nproc) processeurs"
+
+      - uses: typst-community/setup-typst@v4
+        with:
+          typst-version: "0.15"
+
+      # Des conteneurs vides, jamais démarrés : ni KVM, ni image, ni qemu. incus-base suffit s'il existe
+      # sur ce runner, sinon le paquet complet.
+      - name: Incus
+        run: |
+          sudo apt-get update
+          apt-cache policy incus-base incus | head -n 8
+          if apt-cache show incus-base > /dev/null 2>&1; then paquet=incus-base; else paquet=incus; fi
+          echo "Paquet installé : $paquet"
+          sudo apt-get install -y "$paquet"
+          sudo systemctl restart incus
+          sudo incus admin init --minimal
+          sudo usermod -aG incus-admin "$USER"
+          incus --version
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      # Pas de package.json dans le dépôt : Playwright s'installe hors du dépôt, et NODE_PATH le rend
+      # visible au script. Les navigateurs vont dans un dossier fixe, lisible par la session « sudo --user ».
+      - name: Playwright et Chromium
+        run: |
+          outils="$RUNNER_TEMP/outils"
+          mkdir -p "$outils"
+          cd "$outils"
+          npm install --no-save --no-package-lock playwright
+          export PLAYWRIGHT_BROWSERS_PATH="$outils/navigateurs"
+          npx playwright install --with-deps chromium
+          echo "NODE_PATH=$outils/node_modules" >> "$GITHUB_ENV"
+          echo "PLAYWRIGHT_BROWSERS_PATH=$PLAYWRIGHT_BROWSERS_PATH" >> "$GITHUB_ENV"
+
+      # verifier <dossier de l'artefact> <script> : compile la page en index.html à côté de sa source, puis
+      # lance le script. « sudo --user » ouvre une session neuve du même compte, qui a le groupe incus-admin
+      # que le shell de cette étape n'a pas encore ; on lui repasse PATH et l'environnement utile.
+      - name: Vérification des artefacts
+        run: |
+          echecs=0
+          verifier() {
+            dossier=$1; script=$2; nom=$(basename "$dossier")
+            echo "::group::$nom"
+            typst compile --root . --font-path commun/fonts --features html --format html "$dossier/$nom.typ" "$dossier/index.html" || { echecs=1; echo "::endgroup::"; return; }
+            sudo --user "$USER" env "PATH=$PATH" "NODE_PATH=$NODE_PATH" "PLAYWRIGHT_BROWSERS_PATH=$PLAYWRIGHT_BROWSERS_PATH" \
+              node "$dossier/$script" || { echecs=1; echo "::error file=$dossier/$script::$script a échoué (détail dans le groupe $nom)"; }
+            echo "::endgroup::"
+          }
+          verifier virtualisation/artefacts/heritage-des-profils verifier-incus.js
+          exit "$echecs"

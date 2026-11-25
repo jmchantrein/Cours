@@ -14,7 +14,9 @@
 // Ni KVM ni image : les instances sont des conteneurs vides, créés par `incus create --empty` et jamais démarrés
 // (la règle d’expansion est la même pour une VM : expandConfig, dans driver_common.go). Tout se passe dans un
 // projet à part, `verif-heritage-<pid>`, supprimé à la fin (`--garder` le laisse, pour l’examiner).
-// Variables : INCUS (la commande, « incus » par défaut), PAGE (le fichier de la page).
+// Il tourne en CI, par le workflow .github/workflows/verification-artefacts.yml (runner ubuntu-26.04).
+// Le client est lancé avec LC_ALL=C : les messages de refus comparés sont ceux, anglais, du code d’Incus.
+// Variables : INCUS (la commande, « incus » par défaut), PAGE (le fichier de la page, chemin absolu).
 // Code de retour : 0 sans écart, 1 au premier écart (tout ce qu’il faut pour le rejouer est affiché), 2 si
 // l’essai n’a pas pu se faire.
 const { chromium } = require("playwright");
