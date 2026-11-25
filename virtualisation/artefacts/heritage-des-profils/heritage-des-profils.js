@@ -1,23 +1,24 @@
-// heritage-des-profils.js — simulateur de l’héritage des profils d’Incus, selon le modèle du cours :
-// la configuration étendue d’une instance = chacun de ses profils, dans l’ordre de sa liste, puis l’instance.
-// - Clés de configuration : clé par clé, la dernière couche qui définit une clé l’emporte.
-// - Périphériques : indexés par leur nom ; à nom égal, le dernier remplace l’autre en entier, sans fusion de ses clés.
+// heritage-des-profils.js — simulateur de l’héritage des profils d’Incus, selon le modèle du cours (diapo
+// « Héritage des profils : deux régimes ») : la configuration étendue d’une instance s’obtient en appliquant
+// ses profils, dans l’ordre donné, puis l’instance.
+// - Clés de configuration : remplacement clé par clé ; le dernier qui définit la clé l’emporte.
+// - Périphériques : à nom égal, le dernier remplace le périphérique en entier ; leurs clés ne fusionnent pas.
 // Le résultat est ce qu’affiche `incus config show <instance> --expanded`.
 //
-// Ce que le simulateur affirme est lu dans le code d’Incus 6.0.4, et confronté à un vrai Incus par verifier-incus.js :
+// Ce que le simulateur affirme est lu dans le code d’Incus 6.0.4, et se confronte à un vrai Incus par verifier-incus.js :
 // - ExpandInstanceConfig, ExpandInstanceDevices (internal/server/db/cluster/profiles.go) : la règle ci-dessus ;
 // - cmd/incus/config_device.go : `device add` refuse un nom que la couche porte déjà ; `device override` copie dans
 //   l’instance le périphérique hérité, puis y pose les clés données ; `device set`, `unset` et `remove` refusent un
 //   périphérique que l’instance ne tient que d’un profil ;
 // - cmd/incus/profile.go : `profile add` ajoute en fin de liste, `profile assign` remplace la liste ;
 // - doProfileUpdate (cmd/incusd/profiles_utils.go) : modifier un profil met à jour aussitôt chaque instance qui l’utilise ;
-// - internal/server/device/none.go : un périphérique de type none ne crée rien, il remplace un périphérique hérité ;
+// - internal/server/device/none.go : un périphérique de type none ne crée rien ; il sert à remplacer un périphérique hérité ;
 // - une valeur vide supprime la clé (deviceConfig.NewDevices, ClusterTx.configUpdate) ;
-// - la sortie YAML est celle de gopkg.in/yaml.v2 : clés triées, chaînes mises entre guillemets si besoin.
+// - la sortie YAML est celle de gopkg.in/yaml.v2 : clés triées, chaînes entre guillemets quand il le faut.
 // Ce qu’il ne sait pas simuler (valider une clé ou un périphérique, dire quand une clé prend effet), il le dit au
 // lieu de répondre. Les explications sont calculées à partir du résultat, jamais écrites d’avance.
 //
-// Chaque manipulation s’écrit dans le journal en commandes `incus`. Des recettes rejouent, pas à pas, les
+// Chaque manipulation s’écrit au terminal en commandes `incus`. Des recettes rejouent, pas à pas, les
 // manipulations des expériences de la page : elles tapent la commande, puis l’appliquent.
 (() => {
   const racine = document.getElementById("artefact");
@@ -96,6 +97,7 @@
   const lireDevices = ent => new Map(ent.devices.filter(l => l.t).map(l => Object.values(lirePeripherique(l.t))));
 
   // L’ordre des clés dans la sortie d’Incus : celui de yaml.v2 (sorter.go), alphabétique, les nombres par leur valeur.
+  // (Cette comparaison n’est pas transitive pour des noms comme a.01, a.0x et a.1 : leur ordre peut alors différer.)
   function avant(a, b) {
     const ar = [...a], br = [...b], lettre = c => /\p{L}/u.test(c), chiffre = c => /\p{Nd}/u.test(c);
     for (let i = 0; i < ar.length && i < br.length; i++) {
@@ -191,7 +193,11 @@
   function poserCle(e, cible, id, texte) {
     const ent = entite(e, cible), ligne = ligneDe(ent, "config", id);
     if (!ligne) return {};
-    const a = lireConfig(ent), lu = texte.trim() ? lireCle(texte) : { cle: null };
+    const a = lireConfig(ent);
+    let lu = texte.trim() ? lireCle(texte) : { cle: null };
+    // Un seul mot, sans « = », après le nom d’une instance : `incus config set` y lit un réglage du serveur (cmdConfigSet.Run).
+    if (lu.echec?.genre === "erreur" && cible.genre === "instance" && texte.trim().split(/\s+/).length === 1)
+      lu = { echec: { genre: "limite", message: `sans « = », Incus lit « incus config set ${cible.nom} ${texte.trim()} » comme un réglage du serveur, de clé ${cible.nom} ; ce cas n’est pas simulé` } };
     if (lu.echec) {
       Object.assign(ligne, { b: texte, e: lu.echec });
       return { echec: lu.echec, tentative: [cible.genre === "profil" ? "profile" : "config", "set", cible.nom, ...texte.trim().split(/\s+/)] };
@@ -213,6 +219,9 @@
     const refus = echec => { Object.assign(ligne, { b: texte, e: echec }); return { echec, tentative: echec.genre === "erreur" ? echec.tentative : null }; };
     // La même erreur de saisie ne reçoit pas le même message de `device set` (périphérique gardé) et de `device add`.
     const garde = ancien && ancien.nom === mots[0] && ancien.cles.type === mots[1];
+    // Deux mots dont le premier est sans « = » : `device set` y lit la forme ancienne, « clé valeur » (getConfig).
+    if (lu.echec?.mot !== undefined && garde && mots.length === 4 && !mots[2].includes("="))
+      return refus({ genre: "limite", message: "la forme ancienne « incus config device set <instance> <périphérique> <clé> <valeur> » n’est pas simulée" });
     if (lu.echec?.mot !== undefined) return refus(garde
       ? { genre: "erreur", message: `Error: Invalid key=value configuration: ${lu.echec.mot}`, tentative: [...base, "set", cible.nom, ...mots.filter((m, i) => i !== 1)] }
       : { genre: "erreur", message: `Error: No value found in "${lu.echec.mot}"`, tentative: [...base, "add", cible.nom, ...mots] });
@@ -629,7 +638,7 @@
     // étendue ne retient pas est barrée et le dit ; une saisie refusée garde son refus sous elle.
     const editeur = cible => {
       const ent = entite(etat, cible), a = cible.genre === "profil" ? "au profil" : "à l’instance";
-      const ligneDe = (sorte, ligne, i) => {
+      const rangee = (sorte, ligne, i) => {
         const quoi = sorte === "config" ? "Clé" : "Périphérique";
         const texte = ligne.b ?? ligne.t, lu = !ligne.t ? null : sorte === "config" ? lireCle(ligne.t).cle : lirePeripherique(ligne.t).nom;
         const gagnante = lu === null ? null : ext[sorte].get(lu).source, recouverte = gagnante && !meme(gagnante, cible);
@@ -653,7 +662,7 @@
       const plus = (sorte, texte, quoi) => bouton(texte, () => agir(e => nouvelleLigne(e, cible, sorte)),
         { class: "plus", disabled: fige && "", "data-id": `plus/${cible.nom}/${sorte}`, "aria-label": `Ajouter ${quoi} ${a} ${cible.nom}` });
       return [
-        el("ul", { class: "lignes" }, ...ent.config.map((l, i) => ligneDe("config", l, i)), ...ent.devices.map((l, i) => ligneDe("devices", l, i))),
+        el("ul", { class: "lignes" }, ...ent.config.map((l, i) => rangee("config", l, i)), ...ent.devices.map((l, i) => rangee("devices", l, i))),
         el("div", { class: "ajouts" }, el("span", {}, "config"), plus("config", "+ clé", "une clé"), el("span", {}, "devices"), plus("devices", "+ périphérique", "un périphérique")),
       ];
     };
