@@ -7,7 +7,7 @@ $ cat coffre/secret.txt
 Le code du coffre est 1843.
 # 2. Sans x : on lit la liste des noms, mais on n'entre plus
 $ chmod u=rw coffre
-$ ls coffre
+$ \ls coffre
 secret.txt
 $ cat coffre/secret.txt
 cat: coffre/secret.txt: Permission denied

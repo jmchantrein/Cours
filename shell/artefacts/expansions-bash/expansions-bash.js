@@ -10,7 +10,7 @@
 //
 // Le simulateur (partie pure, sans DOM) suit Bash 5.2 exécutant un script (`bash -c`, pas un shell interactif), dans un
 // SOUS-ENSEMBLE DÉFINI de sa syntaxe : mots, guillemets simples, doubles et $'…' (\n \t \\ \' \"), antislash, $nom et
-// ${nom}, $(echo …), accolades {a,b} et {n..m}, tilde seul, * et ? sur la liste de fichiers (dossiers compris), IFS par défaut.
+// ${nom}, $(echo …), accolades {a,b} et {n..m}, tilde seul, * et ? sur la liste de fichiers (répertoires compris), IFS par défaut.
 // Tout le reste est DÉTECTÉ et déclaré (« Limitation du simulateur : … »), jamais simulé à peu près : l’analyseur refuse ce
 // qu’il ne reconnaît pas. Il est confronté au vrai Bash par verifier-bash.js ; Bash fait foi.
 // Les explications sont calculées à partir du résultat de la simulation, jamais écrites d’avance.
@@ -270,7 +270,7 @@
     if (K && raw[0] === "~") {
       const n = raw[1];
       if (n === undefined || n === "/") { valeurs("~", HOME, "t"); i = 1; notes.push({ genre: "tilde", valeur: HOME }); }
-      else if (/[A-Za-z0-9_.+-]/.test(n)) limite("~nom, ~+ ou ~- (le répertoire d’un autre utilisateur ou le dossier courant)");
+      else if (/[A-Za-z0-9_.+-]/.test(n)) limite("~nom, ~+ ou ~- (le répertoire d’un autre utilisateur ou le répertoire courant)");
       else if (n === ":") limite("« ~: » en début de mot (Bash traite alors le mot comme une liste de chemins séparés par « : »)");
     }
     if (K && /^[A-Za-z_][A-Za-z0-9_]*\+?=/.test(raw) && /(=|:)~/.test(raw.slice(raw.indexOf("=")))) limite("tilde dans un mot de la forme nom=valeur (Bash le développe aussi après = et :)");
@@ -335,7 +335,7 @@
   }
 
   // ---------- Étape 5 : chemins ----------
-  // Le répertoire courant : une liste de chemins ; un chemin terminé par « / » est un dossier (éventuellement vide).
+  // Le répertoire courant : une liste de chemins ; un chemin terminé par « / » est un répertoire (éventuellement vide).
   function arbreDe(entrees) {
     const racine = { dossier: true, enfants: new Map() };
     const avertissements = [];
@@ -350,8 +350,8 @@
         let e = n.enfants.get(s);
         const dernier = k === segments.length - 1;
         if (!e) { e = { dossier: !dernier || dossierSeul, enfants: new Map() }; n.enfants.set(s, e); }
-        else if (!e.dossier && !dernier) { e.dossier = true; avertissements.push(`« ${segments.slice(0, k + 1).join("/")} » est à la fois un fichier et un dossier : dossier retenu`); }
-        else if (dernier && !dossierSeul && e.dossier && e.enfants.size) { avertissements.push(`« ${brut} » est déjà un dossier : ignoré`); ok = false; }
+        else if (!e.dossier && !dernier) { e.dossier = true; avertissements.push(`« ${segments.slice(0, k + 1).join("/")} » est à la fois un fichier et un répertoire : répertoire retenu`); }
+        else if (dernier && !dossierSeul && e.dossier && e.enfants.size) { avertissements.push(`« ${brut} » est déjà un répertoire : ignoré`); ok = false; }
         n = e;
       });
       if (ok) vus.push(brut);
@@ -376,11 +376,11 @@
     if (contenu.some(c => c.x !== undefined && c.q === null && c.c === "\\")) limite("une barre oblique inverse hors guillemets dans une valeur développée, avec un motif * ou ?");
     const segments = [[]];
     for (const c of contenu) { if (c.c === "/") segments.push([]); else segments.at(-1).push(c); }
-    if (segments[0].length === 0 && segments.length > 1) limite("motif sur un chemin absolu (le simulateur ne connaît que le dossier courant)");
+    if (segments[0].length === 0 && segments.length > 1) limite("motif sur un chemin absolu (le simulateur ne connaît que le répertoire courant)");
     const dossierSeul = segments.length > 1 && segments.at(-1).length === 0;
     if (dossierSeul) segments.pop();
     if (segments.some(s => s.length === 0)) limite("motif avec « // » (barres obliques doublées)");
-    if (segments.some(s => s.map(c => c.c).join("") === "..")) limite("motif avec « .. » (le dossier parent)");
+    if (segments.some(s => s.map(c => c.c).join("") === "..")) limite("motif avec « .. » (le répertoire parent)");
     const resultat = [];
     const descendre = (noeud, k, prefixe) => {
       const seg = segments[k], dernier = k === segments.length - 1;
@@ -592,7 +592,7 @@
       if (!bref) p.push(`Étape 6 : ${quelles.join(", ")} retirés.`);
     }
     const n = res.argv.length;
-    p.push(`${code(res.commande)} reçoit ${n === 0 ? "aucun argument" : `${pl(n, "argument")} : ${res.argv.slice(0, 8).map(guill).join(" · ")}${n > 8 ? " · …" : ""}`}.`);
+    p.push(`${code(res.commande)} reçoit ${n === 0 ? "aucun argument" : `${pl(n, "argument")}${res.commande === "printf" ? " (le format compris)" : ""} : ${res.argv.slice(0, 8).map(guill).join(" · ")}${n > 8 ? " · …" : ""}`}.`);
     return p;
   }
 
@@ -621,7 +621,7 @@
     accolades: [["Écrire $fichierext et ${fichier}.${ext}, entre guillemets doubles.", P + `"$fichierext" "\${fichier}.\${ext}"`],
       ["Écrire $chemin_backup et ${chemin}_backup, entre guillemets doubles.", P + `"$chemin_backup" "\${chemin}_backup"`],
       ["Écrire ${p}{a,b}, sans guillemets.", P + "${p}{a,b}"], ["Entourer ${p} de guillemets doubles.", P + `"\${p}"{a,b}`]],
-    ligne: [["Écrire la ligne de la diapo, qui emploie les six étapes.", P + `~ {1..2} $p "$p" *.txt "*.txt" "$(echo ok)"`],
+    ligne: [["Écrire une ligne proche de celle de la diapo, qui emploie les six étapes.", P + `~ {1..2} $p "$p" *.txt "*.txt" "$(echo ok)"`],
       ["Écrire \"$(echo *.txt)\" (question 5 de l’exercice).", P + `"$(echo *.txt)"`], ["Retirer les guillemets autour de $(echo *.txt).", P + "$(echo *.txt)"]],
   };
   // Pour verifier-bash.js : chaque ligne des recettes et des exemples, avec les variables et les fichiers de départ.
@@ -737,7 +737,7 @@
       el("section", { class: "zone-chemin cadre" }),
       el("section", { class: "zone-donnees cadre" },
         zoneTexte("variables", "Variables (nom=valeur)", "Les variables du shell, une par ligne : nom=valeur"),
-        zoneTexte("fichiers", "Fichiers du dossier courant", "Les fichiers du dossier courant, un chemin par ligne ; un chemin terminé par / est un dossier")),
+        zoneTexte("fichiers", "Fichiers du répertoire courant", "Les fichiers du répertoire courant, un chemin par ligne ; un chemin terminé par / est un répertoire")),
       el("section", { class: "zone-explication cadre" }));
   }
   function appliquer() {

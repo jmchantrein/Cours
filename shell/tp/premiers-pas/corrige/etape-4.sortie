@@ -6,7 +6,7 @@ $ pwd
 $ cd ../projets/site
 $ pwd
 /home/ada/atelier/projets/site
-# 2. Absolu : ~ est remplacé par le chemin de votre dossier personnel
+# 2. Absolu : ~ est remplacé par le chemin de votre répertoire personnel
 $ echo ~
 /home/ada
 $ cd ~/atelier/projets/site
@@ -15,11 +15,11 @@ $ pwd
 # 3. Lister journaux sans quitter projets/site
 $ ls ../../journaux
 serveur-2025-novembre.log  serveur-2026-novembre.log
-# 4. notes/../projets/./site : le même dossier, par un détour
+# 4. notes/../projets/./site : le même répertoire, par un détour
 $ cd ~/atelier
 $ ls notes/../projets/./site
 index.html
-# 5. Un chemin absolu qui part de la racine, puis retour au dossier précédent
+# 5. Un chemin absolu qui part de la racine, puis retour au répertoire précédent
 $ cd /tmp
 $ pwd
 /tmp

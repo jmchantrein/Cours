@@ -190,6 +190,17 @@ drwxr-xr-x ada ada ./scripts
         if [ ! -e "$d/coffre/nouveau.txt" ] && [ "$(wc -l < "$d/coffre/secret.txt")" -eq 2 ]; then
           ok "étape 4 : sans w sur coffre, ni création ni suppression ; secret.txt modifié quand même"
         else ko "étape 4 : contenu de coffre inattendu"; ls -l "$d/coffre"; fi
+        # Ce que l'énoncé dit de l'alias « ls --color=auto » : sous Debian, dans un terminal (TERM réglé) avec le
+        # .bashrc par défaut, ls d'un dossier sans x ajoute une erreur ; la VM Alpine n'a pas l'alias.
+        chmod u=rw "$d/coffre"
+        alias_ls="$(su - ada -c "TERM=xterm script -qec 'bash -i -c \"ls fichiers/coffre\"' /dev/null" 2>&1 | tr -d '\r' || true)"
+        chmod 755 "$d/coffre"
+        if [ "$systeme" = "debian" ]; then
+          if [ "$alias_ls" = "ls: cannot access 'fichiers/coffre/secret.txt': Permission denied
+secret.txt" ]; then ok "étape 4 : sous Debian, ls (alias --color=auto) ajoute l'erreur « cannot access » avant secret.txt"
+          else ko "étape 4 : ls sans x sous Debian : $alias_ls"; fi
+        elif [ "$alias_ls" = "secret.txt" ]; then ok "étape 4 : sans l'alias, ls n'affiche que secret.txt"
+        else ko "étape 4 : ls sans x sans alias : $alias_ls"; fi
         ;;
       5)
         attendu_fichier="$(printf '%o' $((8#666 & ~8#$umask_ada)))"

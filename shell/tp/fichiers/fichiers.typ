@@ -33,13 +33,13 @@
 = Avant de commencer <avant>
 
 Ce TP suit #link("../premiers-pas/index.html")[Premiers pas dans le shell] : `cd`, `ls`, les chemins, `>` et `|`
-sont supposés connus. Il part d’un nouveau dossier d’exemples, `~/fichiers`.
+sont supposés connus. Il part d’un nouveau répertoire d’exemples, `~/fichiers`.
 
 #bloc(role: "pratique")[Prérequis][
   - Un terminal Bash, sous un *compte ordinaire* : root passe outre les droits de lecture et d’écriture, et les
     refus que ce TP fait constater ne se produiraient pas. L’invite doit finir par `$`.
   - De préférence un Debian ou un Ubuntu. Le terminal de cette page ouvre le compte ordinaire `ada` (groupes `ada`
-    et `etudiants`), mais ses fichiers sont en mémoire : la taille d’un dossier dans `ls -l` (`40` ou `80` au lieu
+    et `etudiants`), mais ses fichiers sont en mémoire : la taille d’un répertoire dans `ls -l` (`40` ou `80` au lieu
     de `4096`) et les numéros d’inode ne sont pas ceux d’un disque.
 ]
 
@@ -78,13 +78,13 @@ Pour y entrer : cd /home/ada/fichiers
 #indice(titre: [Indice : lire les droits])[
   Après le caractère de type viennent trois groupes de trois lettres : propriétaire (`u`, _user_), groupe (`g`),
   autres (`o`, _others_) ; `r` lire, `w` écrire, `x` exécuter, `-` droit absent :
-  #d("ls-l")[Décoder une ligne de ls -l]. `ls -ld` montre la ligne du dossier lui-même, pas son contenu.
+  #d("ls-l")[Décoder une ligne de ls -l]. `ls -ld` montre la ligne du répertoire lui-même, pas son contenu.
 ]
 
 #corrige[
   `id` donne le numéro et le nom du compte (`uid`), du groupe principal (`gid`) et la liste des groupes. Tous les
   fichiers sont `rw-r--r--` : le propriétaire lit et écrit, le groupe et les autres lisent seulement. Personne ne
-  peut exécuter `bonjour.sh`, faute de `x`. Les dossiers sont `rwxr-xr-x`.
+  peut exécuter `bonjour.sh`, faute de `x`. Les répertoires sont `rwxr-xr-x`.
   #sortie("etape-1.sortie")
   #f("etape-1.sh")
   Pour s’exercer, le décodage du cours : #d("exercice-ls-l")[À vous : décoder ls -l].
@@ -105,7 +105,7 @@ Pour y entrer : cd /home/ada/fichiers
 
 #indice(titre: [Indice : u+x])[
   La diapositive #d("script-executable")[Un script : shebang, droit x, ./] montre ce même script. `./` est
-  nécessaire : le dossier courant n’est pas dans la liste des dossiers où le shell cherche les commandes.
+  nécessaire : le répertoire courant n’est pas dans la liste des répertoires où le shell cherche les commandes.
 ]
 
 #corrige[
@@ -136,13 +136,13 @@ Chaque groupe de trois droits s’écrit aussi par un chiffre, somme de `r` = 4,
   #f("etape-3.sh")
 ]
 
-= Étape 4 : les droits d’un dossier <etape-4>
+= Étape 4 : les droits d’un répertoire <etape-4>
 
-Sur un dossier, les lettres changent de sens : `r` permet de lire la liste des noms, `w` d’y créer, renommer ou
+Sur un répertoire, les lettres changent de sens : `r` permet de lire la liste des noms, `w` d’y créer, renommer ou
 supprimer des noms, `x` de le traverser (y entrer, atteindre ce qu’il contient).
 
 #bloc(role: "question")[Consignes][
-  Sur le dossier `coffre`, qui contient `secret.txt` ; prédisez chaque résultat avant de lancer la commande :
+  Sur le répertoire `coffre`, qui contient `secret.txt` ; prédisez chaque résultat avant de lancer la commande :
   + Retirez-vous `r`. `ls coffre` ? `cat coffre/secret.txt` ?
   + Donnez-vous `rw` sans `x`. `ls coffre` ? `cat coffre/secret.txt` ? `cd coffre` ?
   + Donnez-vous `rx` sans `w`. Pouvez-vous créer `coffre/nouveau.txt` ? Supprimer `secret.txt` ? Lui ajouter une
@@ -151,13 +151,18 @@ supprimer des noms, `x` de le traverser (y entrer, atteindre ce qu’il contient
 ]
 
 #indice(titre: [Indice : supprimer un fichier])[
-  Supprimer un fichier, c’est retirer son nom du dossier : c’est le dossier qu’on modifie, pas le fichier.
+  Supprimer un fichier, c’est retirer son nom du répertoire : c’est le répertoire qu’on modifie, pas le fichier.
 ]
 
 #corrige[
   + Sans `r`, la liste est illisible, mais un nom connu s’atteint encore grâce à `x`.
-  + Sans `x`, la liste se lit, mais rien ne s’atteint à travers le dossier : ni `cat`, ni `cd`.
-  + Sans `w`, ni création ni suppression : le dossier ne change pas. Le contenu de `secret.txt`, lui, dépend des
+  + Sans `x`, la liste se lit, mais rien ne s’atteint à travers le répertoire : ni `cat`, ni `cd`. Le corrigé écrit
+    `\ls`, qui lance la commande sans l’alias. Sur Debian, dans un terminal, `ls` est l’alias `ls --color=auto` :
+    pour colorer le nom, il lit les attributs de `secret.txt`, ce que l’absence de `x` interdit, et il affiche
+    d’abord `ls: cannot access 'coffre/secret.txt': Permission denied`, puis le nom `secret.txt`. Sans `x`, on lit
+    donc les noms, mais pas leurs attributs. La VM du navigateur n’a pas cet alias : elle n’affiche que
+    `secret.txt`.
+  + Sans `w`, ni création ni suppression : le répertoire ne change pas. Le contenu de `secret.txt`, lui, dépend des
     droits du fichier, `rw-` : l’ajout réussit.
   #sortie("etape-4.sortie")
   #f("etape-4.sh")
@@ -165,14 +170,14 @@ supprimer des noms, `x` de le traverser (y entrer, atteindre ce qu’il contient
 
 = Étape 5 : le umask <etape-5>
 
-Un programme qui crée un fichier demande en général `rw-rw-rw-` (666), et `rwxrwxrwx` (777) pour un dossier.
-Le *umask* du shell retire ses bits de cette demande : avec un umask de `022`, un fichier naît `644`, un dossier
+Un programme qui crée un fichier demande en général `rw-rw-rw-` (666), et `rwxrwxrwx` (777) pour un répertoire.
+Le *umask* du shell retire ses bits de cette demande : avec un umask de `022`, un fichier naît `644`, un répertoire
 `755`.
 
 #bloc(role: "question")[Consignes][
   + Affichez votre umask, en octal puis en symbolique (`umask -S`). Prédisez les droits d’un fichier et d’un
-    dossier neufs. Créez `public.txt` et le dossier `public`, puis vérifiez.
-  + Réglez le umask à `077`. Prédisez, puis créez `prive.txt` et le dossier `prive`, et vérifiez.
+    répertoire neufs. Créez `public.txt` et le répertoire `public`, puis vérifiez.
+  + Réglez le umask à `077`. Prédisez, puis créez `prive.txt` et le répertoire `prive`, et vérifiez.
   + Ouvrez un nouveau terminal et affichez le umask : que s’est-il passé ?
 ]
 
@@ -183,7 +188,7 @@ Le *umask* du shell retire ses bits de cette demande : avec un umask de `022`, u
 ]
 
 #corrige[
-  + Avec `0002` : fichier `664` (`rw-rw-r--`), dossier `775`. Avec `0022` : `644` et `755`.
+  + Avec `0002` : fichier `664` (`rw-rw-r--`), répertoire `775`. Avec `0022` : `644` et `755`.
   + Avec `077` : `600` et `700`, rien pour le groupe ni pour les autres.
   + Le umask appartient au shell qui l’a réglé : un nouveau terminal repart de la valeur par défaut. Pour le
     garder, la commande `umask 077` s’écrit dans `~/.bashrc`.
@@ -218,7 +223,7 @@ Le *umask* du shell retire ses bits de cette demande : avec un umask de `022`, u
 
 = Étape 7 : liens physiques et symboliques <etape-7>
 
-Un fichier est un *inode* (son contenu et ses droits) ; un nom de dossier pointe vers lui. Un *lien physique*
+Un fichier est un *inode* (son contenu et ses droits) ; un nom de répertoire pointe vers lui. Un *lien physique*
 (`ln`) est un nom de plus pour le même inode : le nombre de liens de `ls -l` le compte. Un *lien symbolique*
 (`ln -s`) est un petit fichier, de type `l`, qui contient un chemin.
 
@@ -228,7 +233,7 @@ Un fichier est un *inode* (son contenu et ses droits) ; un nom de dossier pointe
   + Ajoutez une ligne par `rapport-dur.txt`, puis affichez `documents/rapport.txt`.
   + Renommez `documents/rapport.txt` en `documents/rapport-2026.txt`. Que deviennent les deux liens ?
   + Réparez le lien symbolique.
-  + Tentez un lien physique vers le dossier `documents`.
+  + Tentez un lien physique vers le répertoire `documents`.
 ]
 
 #indice(titre: [Indice : réparer])[
@@ -247,11 +252,11 @@ Un fichier est un *inode* (son contenu et ses droits) ; un nom de dossier pointe
 = Étape 8 : jokers et find <etape-8>
 
 Le joker `*` remplace n’importe quelle suite de caractères ; c’est le shell qui le remplace par les noms du
-dossier, avant de lancer la commande. `find` cherche dans toute une arborescence : `find point-de-départ critères`.
+répertoire, avant de lancer la commande. `find` cherche dans toute une arborescence : `find point-de-départ critères`.
 
 #bloc(role: "question")[Consignes][
-  + Listez les fichiers `.txt` du dossier courant, puis les comptes rendus de réunion de `documents/notes`.
-  + Avec `find`, depuis `~/fichiers` : tous les `.txt`, sous-dossiers compris ; tous les dossiers ; les fichiers
+  + Listez les fichiers `.txt` du répertoire courant, puis les comptes rendus de réunion de `documents/notes`.
+  + Avec `find`, depuis `~/fichiers` : tous les `.txt`, sous-répertoires compris ; tous les répertoires ; les fichiers
     de plus de 10 Kio ; ce qui est vide ; les liens symboliques ; les fichiers modifiés depuis moins d’un jour.
   + Rendez exécutables tous les scripts `.sh` de `scripts`, en une commande `find`.
   + Cherchez dans `/etc` les noms qui commencent par `host`, en écartant les messages d’erreur.
@@ -259,31 +264,31 @@ dossier, avant de lancer la commande. `find` cherche dans toute une arborescence
 
 #indice(titre: [Indice : les critères])[
   `-name '*.txt'` (entre guillemets, pour que le shell ne remplace pas le joker trop tôt), `-type f` (fichier),
-  `-type d` (dossier), `-type l` (lien), `-size +10k`, `-empty`, `-mtime -1`. `-exec commande {} +` lance la
+  `-type d` (répertoire), `-type l` (lien), `-size +10k`, `-empty`, `-mtime -1`. `-exec commande {} +` lance la
   commande sur les noms trouvés. `find` rend les noms dans l’ordre où le disque les range : `| sort` les trie.
 ]
 #indice(titre: [Indice : les erreurs])[
-  Un compte ordinaire ne peut pas lire certains dossiers de `/etc` : `find` le signale sur l’erreur standard,
+  Un compte ordinaire ne peut pas lire certains répertoires de `/etc` : `find` le signale sur l’erreur standard,
   qu’on redirige vers `/dev/null` (#d("redirections")[Rediriger vers un fichier]).
 ]
 
 #corrige[
-  `ls *.txt` ne regarde que le dossier courant ; `find` descend partout. `-mtime -1` trouve les fichiers créés
+  `ls *.txt` ne regarde que le répertoire courant ; `find` descend partout. `-mtime -1` trouve les fichiers créés
   ou modifiés pendant ce TP ; `chmod` ne change pas la date de modification d’un fichier. Sans guillemets,
-  `find . -name *.txt` recevrait les noms du dossier courant à la place du motif.
+  `find . -name *.txt` recevrait les noms du répertoire courant à la place du motif.
   #sortie("etape-8.sortie")
   #f("etape-8.sh")
 ]
 
 = Étape 9 : archiver et compresser <etape-9>
 
-`tar` regroupe un dossier en un seul fichier, l’*archive* : `-c` crée, `-t` liste, `-x` extrait, `-f` nomme
+`tar` regroupe un répertoire en un seul fichier, l’*archive* : `-c` crée, `-t` liste, `-x` extrait, `-f` nomme
 l’archive, `-z` compresse ou décompresse avec gzip. `.tar.gz` dit ce qui a été fait : archivé, puis compressé.
 
 #bloc(role: "question")[Consignes][
   + Archivez `journaux` dans `journaux.tar`, puis dans `journaux.tar.gz`. Comparez les tailles avec celle du
     journal. Listez le contenu de l’archive compressée sans l’extraire.
-  + Extrayez-la dans un dossier `restauration`, puis vérifiez avec `diff -r` qu’elle est identique à l’original.
+  + Extrayez-la dans un répertoire `restauration`, puis vérifiez avec `diff -r` qu’elle est identique à l’original.
   + Compressez `journaux/serveur.log` seul, en gardant l’original. Affichez sa dernière ligne sans le
     décompresser sur le disque.
   + Lancez le script de sauvegarde du cours, `scripts/sauvegarde.sh`, sur `documents`. Listez l’archive produite,
@@ -291,9 +296,9 @@ l’archive, `-z` compresse ou décompresse avec gzip. `.tar.gz` dit ce qui a é
 ]
 
 #indice(titre: [Indice : les options])[
-  `tar -tzf archive` liste ; `-C dossier` extrait ailleurs que dans le dossier courant. `gzip -k` garde
+  `tar -tzf archive` liste ; `-C répertoire` extrait ailleurs que dans le répertoire courant. `gzip -k` garde
   l’original ; `zcat` décompresse vers la sortie standard. Le script :
-  #d("sauvegarder-dossier")[Exemple : sauvegarder un dossier].
+  #d("sauvegarder-répertoire")[Exemple : sauvegarder un répertoire].
 ]
 
 #bloc(role: "danger")[Supprimer avant d’avoir vérifié l’archive][
@@ -304,7 +309,7 @@ l’archive, `-z` compresse ou décompresse avec gzip. `.tar.gz` dit ce qui a é
 #corrige[
   Le texte se compresse bien : l’archive compressée pèse moins d’un dixième du journal. L’archive non compressée
   est plus grosse que le journal : `tar` ajoute un en-tête par fichier et complète l’archive par blocs.
-  `diff -r` ne dit rien quand les dossiers sont identiques, et réussit : `&&` lance alors `echo`. À l’extraction,
+  `diff -r` ne dit rien quand les répertoires sont identiques, et réussit : `&&` lance alors `echo`. À l’extraction,
   un compte ordinaire reçoit des droits filtrés par son umask ; `tar -p` garde ceux de l’archive.
   #sortie("etape-9.sortie")
   #f("etape-9.sh")

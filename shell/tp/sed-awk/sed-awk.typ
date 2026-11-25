@@ -51,14 +51,16 @@ l’étape 11 durcit un fichier `sshd_config` avec sed, puis relit le résultat 
   Chaque étape propose des indices, puis un corrigé, repliés. Les corrigés sont des fichiers réels : à chaque
   modification, un harnais les rejoue dans un conteneur Debian 13 et compare leur sortie à celle montrée ici, sous
   `mawk` (l’`awk` par défaut de Debian, 1.3.4), sous `gawk` (5.2) et sous BusyBox. Les sorties sont les mêmes
-  partout, sauf l’ordre de `for (… in …)` (étape 9). Sous macOS, `sed -i` demande un argument de plus
+  partout, sauf l’ordre de `for (… in …)` (étape 9). Quel `awk` tourne où : `mawk` sur Debian 13, d’où viennent les
+  sorties montrées ; `gawk` dans la VM du navigateur (5.3, celui d’Alpine) ; celui de BusyBox, s’il est le vôtre.
+  Sous macOS, `sed -i` demande un argument de plus
   (#d("sed-in-place")[-i : modifier le fichier, avec une copie de secours]).
 ]
 
 = Étape 1 : préparer l’atelier <etape-1>
 
 #bloc(role: "question")[Consignes][
-  - Créez le dossier `~/tp-sed-awk` et placez-vous dedans : tout le TP s’y déroule.
+  - Créez le répertoire `~/tp-sed-awk` et placez-vous dedans : tout le TP s’y déroule.
   - Recréez-y `pionnieres.csv` (#d("fil-rouge")[Le fil rouge : pionnieres.csv]), `services.conf`, et un extrait de
     `sshd_config`, le fichier de configuration du serveur SSH, avec les commandes ci-dessous.
   - Vérifiez les nombres de lignes : 9, 15 et 28.

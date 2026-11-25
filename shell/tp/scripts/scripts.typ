@@ -56,7 +56,7 @@ même chose.
 = Étape 1 : préparer l’atelier <etape-1>
 
 #bloc(role: "question")[Consignes][
-  - Créez le dossier `~/tp-scripts/donnees/` et placez-vous dans `~/tp-scripts` : tout le TP s’y déroule.
+  - Créez le répertoire `~/tp-scripts/donnees/` et placez-vous dans `~/tp-scripts` : tout le TP s’y déroule.
   - Recréez-y les deux fichiers du cours, `donnees/pionnieres.csv` (#d("fil-rouge")[Le fil rouge]) et
     `donnees/services.conf`, avec les commandes ci-dessous.
   - Vérifiez : 9 lignes pour le premier, 15 pour le second.
@@ -208,7 +208,7 @@ corrigés : #link("corrige/donnees/pionnieres.csv")[`pionnieres.csv`],
   ainsi `mkdir -p` et `cp -r` : #d("exercice-scripts")[À vous : deux scripts].
 ]
 #indice(titre: [Indice : provoquer les codes 2 et 3])[
-  `mkdir` ne peut pas créer un dossier *dans un fichier* : essayez `donnees/pionnieres.csv/copie`. Et dans un
+  `mkdir` ne peut pas créer un répertoire *dans un fichier* : essayez `donnees/pionnieres.csv/copie`. Et dans un
   répertoire vide, que devient le motif `"$source"/*` ? Le cours le montre :
   #d("ordre-expansions")[Avant d’exécuter, Bash réécrit la ligne].
 ]
@@ -313,9 +313,10 @@ corrigés : #link("corrige/donnees/pionnieres.csv")[`pionnieres.csv`],
 = Étape 6 : ShellCheck relit les scripts <etape-6>
 
 #bloc(role: "question")[Consignes][
-  - Passez vos trois scripts à ShellCheck. Corrigez ce qu’il signale, jusqu’à un code de retour 0.
+  - Passez vos quatre scripts à ShellCheck : `pipelines.sh`, `liste_fichiers.bash`, `copie_fichiers.bash` et
+    `copie_fichiers_args.bash`. Corrigez ce qu’il signale, jusqu’à un code de retour 0.
   - Recréez `a-relire.sh`, le script de la diapositive #d("shellcheck")[ShellCheck relit le script avant
-    l’exécution], avec la commande ci-dessous. Lancez-le sur un dossier `mes documents` qui contient
+    l’exécution], avec la commande ci-dessous. Lancez-le sur un répertoire `mes documents` qui contient
     `rapport.txt` : trouve-t-il le fichier ?
   - Lisez le rapport de ShellCheck sur `a-relire.sh`, puis corrigez le script : il doit trouver `rapport.txt` et
     ShellCheck ne doit plus rien signaler.
@@ -344,7 +345,7 @@ $ shellcheck a-relire.sh
 
 #corrige[
   #terminal[```console
-  $ shellcheck liste_fichiers.bash copie_fichiers.bash copie_fichiers_args.bash
+  $ shellcheck pipelines.sh liste_fichiers.bash copie_fichiers.bash copie_fichiers_args.bash
   $ echo $?
   0
   $ ./a-relire.sh "mes documents"
@@ -393,7 +394,7 @@ $ shellcheck a-relire.sh
   - Écrivez `solutions.bats`, dans `~/tp-scripts`, avec au moins un test par code de sortie de
     `liste_fichiers.bash`, de `copie_fichiers.bash` et de `copie_fichiers_args.bash`, un test qui compare la
     sortie de `pipelines.sh` à la référence, et un test de `a-relire.sh` sur `mes documents`.
-  - Chaque test doit partir d’un dossier neuf : il ne doit dépendre ni de l’ordre des tests, ni des dossiers
+  - Chaque test doit partir d’un répertoire neuf : il ne doit dépendre ni de l’ordre des tests, ni des répertoires
     `copie*` laissés par les étapes précédentes.
   - Cassez exprès `liste_fichiers.bash` (`exit 1` devient `exit 0`) : quel test échoue ? Réparez-le.
 ]
@@ -410,10 +411,10 @@ $ ./pipelines.sh > attendu/pipelines.txt
   commande et range son code dans `$status`, sa sortie dans `$output` (et ligne par ligne dans `${lines[@]}`) ;
   `run --separate-stderr` range l’erreur standard à part, dans `$stderr`.
 ]
-#indice(titre: [Indice : un dossier neuf par test])[
-  Bats appelle la fonction `setup` avant chaque test, et donne à chacun un dossier temporaire,
-  `$BATS_TEST_TMPDIR`, qu’il efface ensuite. `$BATS_TEST_DIRNAME` est le dossier du fichier de tests : celui des
-  scripts et des données. Dans `setup`, placez-vous dans le dossier temporaire et copiez-y `donnees/`.
+#indice(titre: [Indice : un répertoire neuf par test])[
+  Bats appelle la fonction `setup` avant chaque test, et donne à chacun un répertoire temporaire,
+  `$BATS_TEST_TMPDIR`, qu’il efface ensuite. `$BATS_TEST_DIRNAME` est le répertoire du fichier de tests : celui des
+  scripts et des données. Dans `setup`, placez-vous dans le répertoire temporaire et copiez-y `donnees/`.
 ]
 
 #corrige[

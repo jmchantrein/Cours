@@ -1,6 +1,6 @@
 /* expansions-bash.css — mise en forme de l’artefact ; les couleurs sont celles de la charte (variables CSS).
    En haut : la ligne de commande que l’étudiant écrit. Au milieu : à gauche, le chemin en six étapes (les mots après chaque
-   étape, ce que l’étape a changé et ce que les guillemets ont protégé) ; à droite, les variables et les fichiers du dossier
+   étape, ce que l’étape a changé et ce que les guillemets ont protégé) ; à droite, les variables et les fichiers du répertoire
    courant, qu’il modifie. En bas, l’explication calculée. Sur un écran d’ordinateur, l’ensemble occupe la hauteur de la fenêtre.
    Chaque fait se lit dans le texte (marques de guillemets, « ∅ » pour un argument vide, « · » pour une espace) ; la teinte ne fait que le doubler. */
 #artefact { display: grid; grid-template-columns: minmax(0, 1fr) minmax(12rem, 18rem); gap: .6rem .8rem; align-content: start;

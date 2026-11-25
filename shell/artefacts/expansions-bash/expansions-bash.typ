@@ -25,13 +25,14 @@
 
 #artefact(read("expansions-bash.js"), style: read("expansions-bash.css"))[
   #experiences(
-    ([Avec `p="Ada Lovelace"`, combien d’arguments `printf '[%s]\n'` reçoit-il pour `$p`, puis `"$p"`, puis `'$p'` ?],
-      [Deux (`Ada`, `Lovelace`) : hors guillemets, l’étape 4 recoupe la valeur aux espaces. Un seul (`Ada Lovelace`) entre
+    ([Avec `p="Ada Lovelace"`, combien d’arguments `printf '[%s]\n'` reçoit-il après le format pour `$p`, puis `"$p"`, puis `'$p'` ?
+        (Le simulateur compte le format avec les autres : il écrit « 3 arguments (le format compris) » pour deux mots.)],
+      [Deux arguments après le format (`Ada`, `Lovelace`) : hors guillemets, l’étape 4 recoupe la valeur aux espaces. Un seul (`Ada Lovelace`, soit 2 affichés avec le format) entre
         guillemets doubles : la valeur est insérée, mais ni découpée ni cherchée sur le disque. Entre guillemets simples,
-        le dollar est un caractère ordinaire : l’argument est `$p`
+        le dollar est un caractère ordinaire : l’argument après le format est `$p`
         (#diapo(pdf, "exercice-expansions")[l’exercice : combien de mots ?]).], "guillemets"),
     ([`*.txt` et `$motif` (qui vaut `*.txt`) : que reçoit la commande sans guillemets, puis entre guillemets doubles ?],
-      [`*.txt` donne trois noms de fichiers, comme `$motif` : la valeur développée à l’étape 3 passe par l’étape 5.
+      [`*.txt` donne trois noms de fichiers (4 arguments avec le format), comme `$motif` : la valeur développée à l’étape 3 passe par l’étape 5.
         Entre guillemets, `"*.txt"` et `"$motif"` restent le texte `*.txt` ; si aucun fichier ne correspondait,
         Bash laisserait aussi le motif tel quel
         (#diapo(pdf, "guillemets")[le tableau des guillemets]).], "chemins"),
@@ -43,10 +44,11 @@
     ([`"$fichierext"` et `"${fichier}.${ext}"` : que valent-ils ? Et `${p}{a,b}`, puis `"${p}"{a,b}` ?],
       [`$fichierext` est la variable `fichierext`, qui n’existe pas : argument vide ; les accolades de `${fichier}` délimitent le nom
         (#diapo(pdf, "accolades")[les accolades délimitent le nom]). Les accolades `{a,b}` sont développées à l’étape 2, avant les
-        variables : `${p}{a,b}` donne quatre arguments (`Ada`, `Lovelacea`, `Ada`, `Lovelaceb`), `"${p}"{a,b}` deux.], "accolades"),
-    ([La ligne de la diapo : quelles étapes modifient chaque mot ? Et `"$(echo *.txt)"`, puis `$(echo *.txt)` ?],
+        variables : `${p}{a,b}` donne quatre arguments après le format (`Ada`, `Lovelacea`, `Ada`, `Lovelaceb` : 5 affichés avec lui), `"${p}"{a,b}` deux (3 affichés).], "accolades"),
+    ([Une ligne proche de celle de la diapo « Voir les mots produits » : quelles étapes modifient chaque mot ? Elle emploie `$p`
+        à la place de `$nom` et n’a pas `$((6 * 7))`, que le simulateur ne sait pas calculer. Et `"$(echo *.txt)"`, puis `$(echo *.txt)` ?],
       [`{1..2}` : étape 2 ; `~`, `$p`, `$(echo ok)` : étape 3 ; `$p` nu : étape 4 ; `*.txt` : étape 5 ; les guillemets partent à l’étape 6.
-        `"$(echo *.txt)"` donne un seul argument, `ada.txt grace.txt hedy.txt` (la substitution a cherché les fichiers dans son `echo`), sans
+        `"$(echo *.txt)"` donne un seul argument après le format, `ada.txt grace.txt hedy.txt` (la substitution a cherché les fichiers dans son `echo`), sans
         guillemets trois arguments
         (#diapo(pdf, "ordre-expansions")[l’ordre des expansions]).], "ligne"),
   )

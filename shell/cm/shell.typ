@@ -64,7 +64,7 @@
 
 == Lire une ligne de commande <ligne-de-commande>
 
-#let _note = [#versions Les droits et les dates dépendent de la machine. Le dossier de travail ~/atelier contient le fichier de données du cours (diapositive suivante) ; les TP le fournissent.]
+#let _note = [#versions Les droits et les dates dépendent de la machine. Le répertoire de travail ~/atelier contient le fichier de données du cours (diapositive suivante) ; les TP le fournissent.]
 #anime(
   rang(
     bloc(poids: 1.1)[Forme d’une commande][
@@ -625,7 +625,7 @@
 
 == Voir les mots produits : `printf '[%s]\n'`
 
-#let _note = [#versions printf réutilise son format pour chaque argument : une ligne entre crochets par mot reçu, ce qui rend visibles les espaces et les mots. Le dossier labo ne contient que ada.txt, grace.txt et hedy.txt.]
+#let _note = [#versions printf réutilise son format pour chaque argument : une ligne entre crochets par mot reçu, ce qui rend visibles les espaces et les mots. Le répertoire labo ne contient que ada.txt, grace.txt et hedy.txt.]
 #anime(
   rang(
     bloc(role: "pratique", poids: 1.25)[Une ligne, toutes les étapes][
@@ -691,7 +691,7 @@
 
 == Les guillemets : la preuve par printf
 
-#let _note = [#versions Une commande par expansion : la même écriture sans guillemets, entre doubles, entre simples. Le dossier labo ne contient que ada.txt et grace.txt.]
+#let _note = [#versions Une commande par expansion : la même écriture sans guillemets, entre doubles, entre simples. Le répertoire labo ne contient que ada.txt et grace.txt.]
 #anime(
   pas(1, (u, d) => u(str(d) + "-", rangee(
     h => terminal(titre: none, taille: px(19), hauteur: h)[```
@@ -876,12 +876,12 @@
       $ p="Ada Lovelace"
       ```]
   ]),
-  note: [À faire en direct : chacun écrit sa prévision, puis on exécute. Le dossier ne contient que les trois fichiers créés par touch.],
+  note: [À faire en direct : chacun écrit sa prévision, puis on exécute. Le répertoire ne contient que les trois fichiers créés par touch.],
 )
 
 == Combien de mots : corrigé (1/2)
 
-#corriges(note: [#versions Le dossier labo ne contient que ada.txt, grace.txt et hedy.txt.],
+#corriges(note: [#versions Le répertoire labo ne contient que ada.txt, grace.txt et hedy.txt.],
   (1, [`printf '[%s]\n' $p`],
     reponse(terminal(titre: none, taille: px(20))[```
       $ printf '[%s]\n' $p
@@ -1063,9 +1063,9 @@
   note: _note,
 )
 
-== Exemple : sauvegarder un dossier <sauvegarder-dossier>
+== Exemple : sauvegarder un répertoire <sauvegarder-dossier>
 
-#let _note = [#versions Script d’origine (« Script pour sauvegarder des fichiers »), avec deux changements : le dossier arrive en argument (l’original écrivait /chemin/vers/dossier), et les variables sont entre guillemets. date +%Y%m%d donne 20261125 le 25 novembre 2026 : le nom trie bien par ordre chronologique. tar -c crée, -z compresse (gzip), -f nomme l’archive ; -t liste son contenu.]
+#let _note = [#versions Script d’origine (« Script pour sauvegarder des fichiers »), avec deux changements : le répertoire arrive en argument (l’original écrivait /chemin/vers/dossier), et les variables sont entre guillemets. date +%Y%m%d donne 20261125 le 25 novembre 2026 : le nom trie bien par ordre chronologique. tar -c crée, -z compresse (gzip), -f nomme l’archive ; -t liste son contenu.]
 #anime(
   rang(
     bloc(role: "pratique", poids: 1.4)[Le script, puis son exécution][
@@ -1121,7 +1121,7 @@
 
 == set -e : s’arrêter à la première erreur <set-euo-pipefail>
 
-#let _note = [#versions Sans set -e, l’échec du cd ne change rien à la suite : le script continue dans le répertoire courant, avec le code 0 à la fin. Avec un vrai rm -f ./\*.tmp, il supprimerait les fichiers du mauvais répertoire. Autre parade, explicite : cd /tmp/chantier || exit 1.]
+#let _note = [#versions Sans set -e, l’échec du cd ne change rien à la suite : le script continue dans le répertoire courant, avec le code 0 à la fin. Avec un vrai rm -f ./\*.tmp, il supprimerait les fichiers du mauvais répertoire. Autre parade, explicite : cd /tmp/chantier || exit 1. Seule l’option -e sert ici ; -u et pipefail, que la formule set -euo pipefail ajoute, viennent à la diapositive suivante.]
 #anime(
   rang(
     bloc(role: "pratique")[Sans set -e][
@@ -1134,7 +1134,7 @@
         0
         ```]
     ],
-    bloc(role: "pratique")[Avec set -euo pipefail][
+    bloc(role: "pratique")[Avec set -e][
       #fichier-ex("nettoyage-e.sh", taille: px(17))
       #terminal(titre: none, taille: px(17))[```
         $ ./nettoyage-e.sh
@@ -1386,7 +1386,7 @@
     + Passez les deux scripts à ShellCheck
   ]),
   rang(bloc(role: "pratique", taille: px(25))[Prérequis][
-    - Paquets `shellcheck` et `bats` ; un dossier `donnees/` avec quelques fichiers
+    - Paquets `shellcheck` et `bats` ; un répertoire `donnees/` avec quelques fichiers
     - Messages d’erreur sur l’erreur standard : `echo "…" >&2`
   ]),
   note: [Exercices du cours d’origine. À faire en direct ; laisser chercher avant de passer au corrigé. Les tests Bats du premier script sont sur la diapositive précédente.],
@@ -1422,15 +1422,14 @@
   let (uncover,) = utils.methods(self)
   question(2, [`copie_fichiers.bash` : source et destination demandées, création de la destination, copie, confirmation ; codes 1, 2, 3])
   v(px(12))
-  uncover("2-", reponse(rangee(poids: (1.75, 1),
+  uncover("2-", reponse(rangee(poids: (1.7, 1),
     h => fichier-ex("copie_fichiers.bash", taille: px(14), hauteur: h),
     h => terminal(titre: none, taille: px(15), hauteur: h)[```
       $ printf '%s\n' donnees copie > reponses.txt
       $ ./copie_fichiers.bash < reponses.txt
       Entrez le répertoire source :
       Entrez le répertoire destination :
-      Le répertoire destination n’existe pas.
-        Création de copie.
+      Le répertoire destination n’existe pas. Création de copie.
       Les fichiers ont été copiés de donnees vers copie.
       $ echo $?
       0
@@ -1438,7 +1437,7 @@
       pionnieres.csv
       services.conf
       ```])))
-  utils.speaker-note(self: self)[#versions Corrigé d’origine (code/copie\_fichiers\_1.bash et \_2.bash, réunis). Motif commande || \{ echo "…" >&2; exit N; \} : l’échec est traité là où il survient, avec un code propre à chaque cas. Les deux réponses arrivent par un fichier sur l’entrée standard. La ligne « Création de copie. » est coupée pour tenir sur la diapositive (un seul message en réalité). ShellCheck ne signale rien.]
+  utils.speaker-note(self: self)[#versions Corrigé d’origine (code/copie\_fichiers\_1.bash et \_2.bash, réunis). Motif commande || \{ echo "…" >&2; exit N; \} : l’échec est traité là où il survient, avec un code propre à chaque cas. Les deux réponses arrivent par un fichier sur l’entrée standard. ShellCheck ne signale rien.]
 })
 
 // ======================================================================
@@ -1494,7 +1493,7 @@
 
 == Sous-shell : une copie de tout <sous-shell>
 
-#let _note = [#versions Les numéros de processus changent à chaque exécution. \$\$ donne le PID du shell principal, hérité tel quel par les sous-shells (POSIX) ; BASHPID donne celui du processus courant. On dit parfois que les variables sont « exportées implicitement » vers le sous-shell : c’est un abus de langage, le sous-shell est une copie (fork) du shell, export ou pas.]
+#let _note = [#versions Les numéros de processus changent à chaque exécution. \$\$ donne le PID du shell principal, hérité tel quel par les sous-shells (POSIX) ; BASHPID donne celui du processus courant. On dit parfois que les variables sont « exportées implicitement » vers le sous-shell : c’est un abus de langage, le sous-shell est une copie (fork, la duplication du processus) du shell, export ou pas.]
 #anime(
   rang(
     bloc(role: "pratique", poids: 1.15)[Le script][
@@ -1511,7 +1510,7 @@
           BASHPID=1836 : je vois « déclarée dans main »
         main relit : « déclarée dans main »
         ```]
-      - `( … )` : un *fork* du shell, qui copie tout (locales, constantes)
+      - `( … )` : un nouveau processus, copie du shell (_fork_ : la duplication d’un processus) qui garde tout (locales, constantes)
       - Les modifications restent dans la copie
       - `$$` : numéro de processus (PID) du shell principal ; `BASHPID` : celui du processus courant ; différents dans un sous-shell
       - Aussi : chaque `$( … )` et chaque maillon d’un tube
@@ -1706,6 +1705,7 @@
       - `i` (_insert_) : insérer *avant*
       - `a` (_append_) : ajouter *après*
       - Le nombre devant : l’adresse, ici un numéro de ligne
+      - `2i texte` sur une seule ligne : extension de GNU sed (POSIX : `i\` puis le texte à la ligne suivante)
     ],
   ),
   source-de: link("https://www.gnu.org/software/sed/manual/sed.html#Other-Commands")[GNU sed, Other Commands],
@@ -2171,9 +2171,9 @@
 
 == Mémo : guillemets et expansions <memo-guillemets>
 
-#let _note = [#versions Chaque ligne rejouée par shell/cm/rejouer.sh (session « Mémo »), dans un dossier qui ne contient que ada.txt, grace.txt et hedy.txt. Exemples originaux de l’article du site ; le tableau classique qui circule vient de Stack Overflow, sous une licence (CC BY-SA) incompatible avec celle de ce cours : il n’est pas repris.]
+#let _note = [#versions Chaque ligne rejouée par shell/cm/rejouer.sh (session « Mémo »), dans un répertoire qui ne contient que ada.txt, grace.txt et hedy.txt. Exemples originaux de l’article du site ; le tableau classique qui circule vient de Stack Overflow, sous une licence (CC BY-SA) incompatible avec celle de ce cours : il n’est pas repris.]
 #anime(
-  rang(bloc(taille: px(22))[`p="Ada Lovelace"`, le dossier contient ada.txt, grace.txt, hedy.txt][
+  rang(bloc(taille: px(22))[`p="Ada Lovelace"`, le répertoire contient ada.txt, grace.txt, hedy.txt][
     #tableau((1fr, 1.25fr, 2fr), inset: (x: px(10), y: px(5)),
       ([Écrit], [Arguments reçus], [Pourquoi]),
       [`"${p}"`], [`Ada Lovelace`], [variable développée, un seul mot],

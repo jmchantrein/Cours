@@ -1,8 +1,8 @@
 #!/usr/bin/env bats
 # Tests des corrigés du TP « Du pipeline au script robuste ».
-# Chaque test part d’un atelier neuf, dans le dossier temporaire que Bats lui donne : donnees/
+# Chaque test part d’un atelier neuf, dans le répertoire temporaire que Bats lui donne : donnees/
 # contient pionnieres.csv et services.conf. Les réponses « au clavier » arrivent par <<<.
-# Lancer : bats solutions.bats (depuis n’importe quel dossier).
+# Lancer : bats solutions.bats (depuis n’importe quel répertoire).
 # shellcheck disable=SC2154  # $stderr est rempli par run --separate-stderr
 
 # run --separate-stderr demande Bats 1.5 ou plus récent.

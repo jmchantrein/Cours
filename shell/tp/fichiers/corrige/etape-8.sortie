@@ -1,10 +1,10 @@
 $ cd ~/fichiers
-# 1. Le joker : le shell remplace *.txt par les noms du dossier courant
+# 1. Le joker : le shell remplace *.txt par les noms du répertoire courant
 $ ls *.txt
 prive.txt  public.txt  rapport-dur.txt  rapport-lien.txt
 $ ls documents/notes/reunion-*
 documents/notes/reunion-2026-11-18.txt  documents/notes/reunion-2026-11-25.txt
-# 2. find descend dans les sous-dossiers ; les guillemets protègent le motif du shell
+# 2. find descend dans les sous-répertoires ; les guillemets protègent le motif du shell
 $ find . -name '*.txt' | sort
 ./coffre/secret.txt
 ./documents/brouillons/vide.txt
@@ -49,7 +49,7 @@ $ ls -l scripts
 total 8
 -rwxr--r-- 1 ada ada 165 Sep  1 08:00 bonjour.sh
 -rwxr-x--- 1 ada ada 174 Sep  1 08:00 sauvegarde.sh
-# 5. Ailleurs que chez soi : les dossiers interdits donnent des erreurs, qu'on écarte
+# 5. Ailleurs que chez soi : les répertoires interdits donnent des erreurs, qu'on écarte
 $ find /etc -name 'host*' 2> /dev/null | sort
 /etc/host.conf
 /etc/hostname

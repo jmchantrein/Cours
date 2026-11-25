@@ -15,5 +15,5 @@ total 80K
 -rw-r--r-- 1 ada ada  71K Sep  1 08:00 serveur-2026-novembre.log
 $ type cd
 cd is a shell builtin
-$ type wc
-wc is /usr/bin/wc
+$ type sort
+sort is /usr/bin/sort

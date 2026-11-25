@@ -32,7 +32,7 @@
 
 = Avant de commencer <avant>
 
-Ce TP s’adresse à qui ouvre un terminal pour la première fois. Vous y tapez des commandes dans un dossier
+Ce TP s’adresse à qui ouvre un terminal pour la première fois. Vous y tapez des commandes dans un répertoire
 d’exemples créé pour l’occasion : vous pouvez tout y casser, un script le recrée. Chaque commande suit la forme
 présentée en cours : #d("ligne-de-commande")[Lire une ligne de commande].
 
@@ -45,7 +45,7 @@ présentée en cours : #d("ligne-de-commande")[Lire une ligne de commande].
   Chaque étape propose des indices, puis un corrigé, repliés. Chaque corrigé est un script de `corrige/` qui
   rejoue les commandes attendues ; il est exécuté automatiquement, à chaque modification, dans un Debian 13 neuf,
   et la sortie montrée est celle de cette exécution. Le compte s’y appelle `ada` : chez vous, votre nom de compte
-  et votre dossier personnel le remplacent.
+  et votre répertoire personnel le remplacent.
 ]
 
 #note(role: "precaution")[
@@ -53,16 +53,16 @@ présentée en cours : #d("ligne-de-commande")[Lire une ligne de commande].
   `C.UTF-8`) ; sur un système en français, `No such file or directory` devient « Aucun fichier ou dossier de ce
   nom » et `Sep  1` devient `sept.  1`. L’ordre de `ls` peut aussi changer : en français, il ignore le point
   initial des fichiers cachés. Dans le terminal de cette page, les fichiers sont en mémoire : la taille d’un
-  dossier dans `ls -l` (`80` au lieu de `4096`) et la ligne `total` diffèrent de celles montrées.
+  répertoire dans `ls -l` (`80` au lieu de `4096`) et la ligne `total` diffèrent de celles montrées.
 ]
 
-= Étape 1 : le dossier de travail <etape-1>
+= Étape 1 : le répertoire de travail <etape-1>
 
-Le script `preparer.sh` crée le dossier `~/atelier` (`~` désigne votre dossier personnel). Il refuse d’écraser un
-dossier existant.
+Le script `preparer.sh` crée le répertoire `~/atelier` (`~` désigne votre répertoire personnel). Il refuse d’écraser un
+répertoire existant.
 
 #bloc(role: "question")[Consignes][
-  - Téléchargez `preparer.sh` dans votre dossier personnel, puis lancez-le avec `bash`.
+  - Téléchargez `preparer.sh` dans votre répertoire personnel, puis lancez-le avec `bash`.
   - Lancez `whoami`, puis `echo Bonjour`.
   - Comparez `echo Bonjour     tout     le     monde` et la même commande entre guillemets doubles. Combien
     d’arguments `echo` reçoit-il dans chaque cas ?
@@ -98,24 +98,24 @@ Pour y entrer : cd /home/ada/atelier
 = Étape 2 : se repérer <etape-2>
 
 #bloc(role: "question")[Consignes][
-  - Entrez dans `~/atelier` avec `cd`, puis affichez le dossier courant avec `pwd`.
+  - Entrez dans `~/atelier` avec `cd`, puis affichez le répertoire courant avec `pwd`.
   - Listez son contenu avec `ls`, puis `ls -a`, puis `ls -l`. Quel fichier `ls` ne montrait-il pas ?
-  - Dans la sortie de `ls -l`, lesquels sont des dossiers ? Quelle est la taille de `pionnieres.csv` ?
-  - Listez le dossier `notes` sans y entrer ; puis le détail de `journaux`. Quel journal est le plus gros ?
+  - Dans la sortie de `ls -l`, lesquels sont des répertoires ? Quelle est la taille de `pionnieres.csv` ?
+  - Listez le répertoire `notes` sans y entrer ; puis le détail de `journaux`. Quel journal est le plus gros ?
 ]
 
 #indice(titre: [Indice : lire ls -l])[
-  Le premier caractère d’une ligne de `ls -l` donne le type : `d` pour un dossier, `-` pour un fichier ; la
+  Le premier caractère d’une ligne de `ls -l` donne le type : `d` pour un répertoire, `-` pour un fichier ; la
   taille, en octets, précède la date. Les colonnes sont décodées dans #d("ls-l")[Décoder une ligne de ls -l].
 ]
 #indice(titre: [Indice : les fichiers cachés])[
-  Un nom qui commence par un point est caché : `ls` le tait, `ls -a` (_all_) le montre. `.` est le dossier
+  Un nom qui commence par un point est caché : `ls` le tait, `ls -a` (_all_) le montre. `.` est le répertoire
   courant, `..` son parent.
 ]
 
 #corrige[
   `ls -a` montre en plus `.reglages`, fichier caché, ainsi que `.` et `..`. Les lignes qui commencent par `d`
-  sont les dossiers : `journaux`, `notes`, `projets` et `vieux`. `pionnieres.csv` fait 474 octets ; le journal de
+  sont les répertoires : `journaux`, `notes`, `projets` et `vieux`. `pionnieres.csv` fait 474 octets ; le journal de
   2026 fait 72 375 octets.
   #sortie("etape-2.sortie")
   #f("etape-2.sh")
@@ -152,16 +152,16 @@ des commandes déjà lancées.
 
 = Étape 4 : se déplacer <etape-4>
 
-Un chemin *absolu* part de la racine `/` : `/home/ada/atelier/notes`. Un chemin *relatif* part du dossier courant :
-`notes`, `../projets`. Dans un chemin, `..` désigne le dossier parent et `.` le dossier lui-même ; `~` est
-remplacé par le chemin absolu de votre dossier personnel.
+Un chemin *absolu* part de la racine `/` : `/home/ada/atelier/notes`. Un chemin *relatif* part du répertoire courant :
+`notes`, `../projets`. Dans un chemin, `..` désigne le répertoire parent et `.` le répertoire lui-même ; `~` est
+remplacé par le chemin absolu de votre répertoire personnel.
 
 #bloc(role: "question")[Consignes][
   + Entrez dans `~/atelier/notes`. Rejoignez `~/atelier/projets/site` par un chemin relatif ; vérifiez avec `pwd`.
-  + Rejoignez le même dossier par un chemin absolu.
-  + Depuis `projets/site`, listez `journaux` sans changer de dossier.
+  + Rejoignez le même répertoire par un chemin absolu.
+  + Depuis `projets/site`, listez `journaux` sans changer de répertoire.
   + Depuis `~/atelier`, que désigne `notes/../projets/./site` ? Vérifiez avec `ls`.
-  + Allez dans `/tmp`, puis revenez au dossier précédent avec `cd -`. Où vous mène `cd` sans argument ?
+  + Allez dans `/tmp`, puis revenez au répertoire précédent avec `cd -`. Où vous mène `cd` sans argument ?
 ]
 
 #indice(titre: [Indice : relatif])[
@@ -173,13 +173,13 @@ remplacé par le chemin absolu de votre dossier personnel.
   + `cd ../projets/site`.
   + `cd ~/atelier/projets/site` ; `~` étant remplacé par `/home/ada`, c’est un chemin absolu.
   + `ls ../../journaux` : deux crans plus haut, `atelier`, puis `journaux`.
-  + Le dossier `projets/site`, par un détour : on entre dans `notes`, on en ressort, on entre dans `projets`, on y
+  + Le répertoire `projets/site`, par un détour : on entre dans `notes`, on en ressort, on entre dans `projets`, on y
     reste (`.`), puis `site`.
-  + `cd -` affiche puis rejoint le dossier précédent ; `cd` seul ramène dans le dossier personnel.
+  + `cd -` affiche puis rejoint le répertoire précédent ; `cd` seul ramène dans le répertoire personnel.
   #sortie("etape-4.sortie")
   #f("etape-4.sh")
-  Le `cd` d’un script ne change pas le dossier du terminal qui le lance : le script tourne dans son propre
-  processus, qui a son propre dossier courant.
+  Le `cd` d’un script ne change pas le répertoire du terminal qui le lance : le script tourne dans son propre
+  processus, qui a son propre répertoire courant.
 ]
 
 = Étape 5 : lire l’aide <etape-5>
@@ -193,7 +193,7 @@ ligne de commande], bloc « Se documenter »).
   - Trouvez l’option qui trie par taille, celle qui inverse l’ordre, et celle qui écrit les tailles en Kio ou Mio.
     Essayez-les sur `journaux`.
   - Comparez avec l’aide courte, `ls --help`.
-  - `type cd`, puis `type wc` : lequel est une commande interne de Bash ? Ouvrez son aide avec `help cd`.
+  - `type cd`, puis `type sort` : lequel est une commande interne de Bash ? Ouvrez son aide avec `help cd`.
 ]
 
 #note(role: "precaution")[
@@ -209,7 +209,9 @@ ligne de commande], bloc « Se documenter »).
 #corrige[
   `-S` trie par taille, du plus gros au plus petit ; `-r` (_reverse_) inverse l’ordre ; `-h`
   (`--human-readable`), avec `-l`, écrit `71K` au lieu de `72375`. `cd` est une commande interne de Bash
-  (_builtin_), décrite par `help cd` et `man bash` ; `wc` est un programme, `/usr/bin/wc`, décrit par `man wc`.
+  (_builtin_), décrite par `help cd` et `man bash` ; `sort` est un programme, `/usr/bin/sort`, décrit par `man sort`. Avec une commande que vous avez déjà lancée,
+  comme `wc` à l’étape 3, `type` répond `wc is hashed (/usr/bin/wc)` : Bash garde dans une table de hachage le chemin
+  des programmes qu’il a déjà trouvés, pour ne plus les chercher dans `PATH`.
   #sortie("etape-5.sortie")
   #f("etape-5.sh")
 ]
@@ -243,30 +245,30 @@ Le fichier `pionnieres.csv` est le fil rouge du cours : #d("fil-rouge")[Le fil r
 = Étape 7 : créer, copier, déplacer, supprimer <etape-7>
 
 #bloc(role: "danger")[Pas de corbeille][
-  `rm` supprime pour de bon : rien ne permet de récupérer le fichier. `rm -r` supprime un dossier et tout ce qu’il
+  `rm` supprime pour de bon : rien ne permet de récupérer le fichier. `rm -r` supprime un répertoire et tout ce qu’il
   contient. Relisez la commande avant Entrée ; `rm -i` demande confirmation pour chaque fichier.
 ]
 
 #bloc(role: "question")[Consignes][
   Dans `~/atelier`, en une commande par point :
-  + Créez le dossier `archives`, et dedans le dossier `2025`, en une seule commande.
+  + Créez le répertoire `archives`, et dedans le répertoire `2025`, en une seule commande.
   + Copiez `pionnieres.csv` dans `archives`, sous le nom `pionnieres-copie.csv`.
   + Renommez cette copie `pionnieres-v1.csv`.
   + Déplacez le journal de 2025 dans `archives/2025`.
-  + Copiez le dossier `notes` entier dans `archives`, sous le nom `notes-sauvegarde`.
+  + Copiez le répertoire `notes` entier dans `archives`, sous le nom `notes-sauvegarde`.
   + Créez un fichier vide `notes/brouillon.txt`, vérifiez qu’il existe, puis supprimez-le.
-  + Supprimez le dossier `vieux`. Pourquoi `rmdir vieux` échoue-t-il ?
+  + Supprimez le répertoire `vieux`. Pourquoi `rmdir vieux` échoue-t-il ?
   Résultat attendu : `archives` contient `2025`, `notes-sauvegarde` et `pionnieres-v1.csv` ; `vieux` a disparu.
 ]
 
 #indice(titre: [Indice : les commandes])[
-  `mkdir` crée un dossier, et `-p` ses parents manquants. `cp source destination` copie ; `-r` (récursif) copie
-  un dossier. `mv` déplace et renomme : renommer, c’est déplacer vers un autre nom. `touch` crée un fichier vide.
-  `rm` supprime un fichier ; `rmdir` un dossier vide seulement.
+  `mkdir` crée un répertoire, et `-p` ses parents manquants. `cp source destination` copie ; `-r` (récursif) copie
+  un répertoire. `mv` déplace et renomme : renommer, c’est déplacer vers un autre nom. `touch` crée un fichier vide.
+  `rm` supprime un fichier ; `rmdir` un répertoire vide seulement.
 ]
 
 #corrige[
-  `rmdir` refuse un dossier qui contient encore des fichiers : `Directory not empty`. `rm -r` le supprime avec son
+  `rmdir` refuse un répertoire qui contient encore des fichiers : `Directory not empty`. `rm -r` le supprime avec son
   contenu. Si `archives/notes-sauvegarde` existait déjà, `cp -r notes archives/notes-sauvegarde` copierait `notes`
   à l’intérieur.
   #sortie("etape-7.sortie")
@@ -318,5 +320,5 @@ la suivante (#d("tubes")[Le tube branche une sortie sur une entrée]).
   #f("etape-8.sh")
   Pour aller plus loin, l’exercice du cours sur les tubes : #d("exercice-tubes")[À vous : deux pipelines sur
   pionnieres.csv]. Le TP suivant, #link("../fichiers/index.html")[Droits, liens, recherche et archives], part
-  d’un nouveau dossier.
+  d’un nouveau répertoire.
 ]

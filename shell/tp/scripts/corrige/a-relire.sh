@@ -1,5 +1,5 @@
 #!/bin/bash
-# a-relire.sh, relu par ShellCheck : cherche rapport.txt dans le dossier donné en argument.
+# a-relire.sh, relu par ShellCheck : cherche rapport.txt dans le répertoire donné en argument.
 dossier=$1
 # Un motif (glob) plutôt que $(ls …) : chaque chemin reste un seul mot, espaces compris (SC2045).
 for chemin in "$dossier"/*; do

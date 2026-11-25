@@ -9,7 +9,7 @@ ls coffre
 cat coffre/secret.txt
 # 2. Sans x : on lit la liste des noms, mais on n'entre plus
 chmod u=rw coffre
-ls coffre
+\ls coffre
 cat coffre/secret.txt
 cd coffre
 # 3. Sans w : on ne crée ni ne supprime plus de nom ; le fichier, lui, reste modifiable

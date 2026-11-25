@@ -9,4 +9,4 @@ ls -lS journaux
 ls -lSr journaux
 ls -lh journaux
 type cd
-type wc
+type sort

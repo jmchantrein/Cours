@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Étape 2 : se repérer dans le dossier de travail.
+# Étape 2 : se repérer dans le répertoire de travail.
 
 cd ~/atelier
 pwd
