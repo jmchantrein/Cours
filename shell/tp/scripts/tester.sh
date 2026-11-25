@@ -137,7 +137,7 @@ lire_tap() { # $1 fichier TAP  $2 contexte
 
 journal="$(mktemp "${TMPDIR:-/tmp}/tptest.XXXXXX")"
 conteneur="tptest-shell-scripts-$$"
-# shellcheck disable=SC2317  # appelée par trap, en sortie
+# shellcheck disable=SC2317,SC2329  # appelée par trap, en sortie
 en_sortie() {
   rm -f -- "$journal"
   if [ -z "$hote" ] && [ -z "$garder" ]; then docker container rm -f "$conteneur" > /dev/null 2>&1 || true; fi

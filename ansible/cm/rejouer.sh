@@ -65,6 +65,12 @@ ctl bash -c 'cd exercice && ansible-inventory -i parc.yaml --graph
 titre "Commandes ad hoc"
 ctl ansible all -m ansible.builtin.ping
 ctl ansible managed-node-1 -m ansible.builtin.setup -a "filter=ansible_distribution*"
+echo "-- setup sans filtre : lignes"
+ctl sh -c 'ansible managed-node-1 -m ansible.builtin.setup | wc -l'
+echo "-- modules ansible.builtin (ansible-doc -l)"
+ctl sh -c 'ansible-doc -l ansible.builtin 2>/dev/null | wc -l'
+echo "-- versions de l’image de contrôle"
+ctl sh -c 'tree --version; ansible --version | sed -n "3,6p"'
 
 titre "Le playbook, où déclarer une variable"
 ctl ansible-playbook hello_world.yml
@@ -116,6 +122,11 @@ printf 'nginx_hello_world_port: 80\n' > projet/group_vars/web_server.yaml
 ctl ansible-playbook site-web.yml --diff || true
 ctl curl -s http://managed-node-1/ || true
 rm -f projet/group_vars/web_server.yaml
+
+titre "Nginx sans systemd (note de la diapo handlers)"
+ctl ansible managed-node-1 -a "ls /etc/init.d/nginx"
+ctl ansible managed-node-1 -a "ps -p 1 -o comm="
+ctl ansible managed-node-1 -m ansible.builtin.service -a "name=nginx state=started" | grep -E '"(changed|state)"'
 
 titre "ansible-lint"
 ctl ansible-lint --offline preparer-naif.yml || true

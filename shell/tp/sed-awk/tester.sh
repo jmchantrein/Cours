@@ -119,7 +119,7 @@ done
 
 journal="$(mktemp "${TMPDIR:-/tmp}/tptest.XXXXXX")"
 conteneur="tptest-shell-sed-awk-$$"
-# shellcheck disable=SC2317  # appelée par trap, en sortie
+# shellcheck disable=SC2317,SC2329  # appelée par trap, en sortie
 en_sortie() {
   rm -f -- "$journal"
   if [ -z "$garder" ]; then docker container rm -f "$conteneur" > /dev/null 2>&1 || true; fi

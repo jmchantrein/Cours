@@ -133,7 +133,7 @@ docker compose version > /dev/null 2>&1 || { echo "Le plugin Compose v2 (docker 
 
 travail="$(mktemp -d "${TMPDIR:-/tmp}/tptest.XXXXXX")"
 compose() { docker compose -p "$projet" -f "$travail/labo/compose.yaml" "$@"; }
-# shellcheck disable=SC2317 # appelée par trap
+# shellcheck disable=SC2317,SC2329 # appelée par trap
 en_sortie() {
   if [ -z "$garder" ]; then
     compose down --volumes > /dev/null 2>&1 || true

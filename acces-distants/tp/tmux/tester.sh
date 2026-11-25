@@ -309,7 +309,7 @@ exiger docker docker.io
 docker info > /dev/null 2>&1 || { echo "Le démon Docker ne répond pas (docker info)." >&2; exit 1; }
 travail="$(mktemp -d "${TMPDIR:-/tmp}/tptest.XXXXXX")"
 nettoyer() { docker container rm -f "$conteneur" > /dev/null 2>&1 || true; }
-# shellcheck disable=SC2317 # appelée par trap
+# shellcheck disable=SC2317,SC2329 # appelée par trap
 en_sortie() {
   if [ -z "$garder" ]; then nettoyer; docker image rm "$image" > /dev/null 2>&1 || true
   else echo "--keep : conteneur et image $image conservés"; fi

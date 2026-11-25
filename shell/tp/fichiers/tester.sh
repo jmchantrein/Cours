@@ -316,7 +316,7 @@ if [ "$mode" = "lint" ]; then bilan "--lint"; fi
 docker rm -f "$conteneur" > /dev/null 2>&1 || true
 journal="$(mktemp "${TMPDIR:-/tmp}/tptest.XXXXXX")"
 sortie=""
-# shellcheck disable=SC2317  # appelée par trap
+# shellcheck disable=SC2317,SC2329  # appelée par trap
 en_sortie() {
   rm -f -- "$journal"
   [ -z "$sortie" ] || rm -rf -- "$sortie"

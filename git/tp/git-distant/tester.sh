@@ -190,7 +190,7 @@ if ! printf '%s\n' 2.28 "$version" | sort -V -c 2> /dev/null; then
   echo "git $version : il faut git ≥ 2.28, pour git init -b." >&2; exit 1
 fi
 preparer "$(mktemp -d "${TMPDIR:-/tmp}/tptest-git-distant.XXXXXX")"
-# shellcheck disable=SC2317 # appelée par trap
+# shellcheck disable=SC2317,SC2329 # appelée par trap
 en_sortie() {
   if [ -z "$garder" ]; then rm -rf -- "$travail"
   else echo "--keep : dossier conservé, $travail"; fi
