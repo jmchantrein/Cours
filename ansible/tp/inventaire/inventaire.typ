@@ -165,7 +165,8 @@ avec `ssh-copy-id` ou à l’installation de la machine ; ici, vous l’écrivez
   - Quelle est la version d’Ansible ? Quel fichier de configuration lit-il (ligne `config file`) ?
   - Écrivez le fichier `/etc/ansible/ansible.cfg` : le ou les fichiers d’inventaire se trouvent dans le
     dossier `/etc/ansible/inventory`. Ajoutez le réglage `interpreter_python = auto_silent`, qui évite un
-    avertissement à chaque commande : lancez un `ansible … -m ansible.builtin.ping` avant et après pour le voir.
+    avertissement à chaque commande : lancez `ansible all -i managed-node-1, -m ansible.builtin.ping` avant et après
+    pour le voir (l’inventaire n’existe pas encore : `-i` suivi d’un nom et d’une virgule en donne un d’un seul hôte).
   - Où Ansible cherche-t-il sa configuration, et dans quel ordre ?
 ]
 

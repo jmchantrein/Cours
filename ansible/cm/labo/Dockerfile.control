@@ -1,12 +1,14 @@
 # Nœud de contrôle du labo (cours et TP Ansible) : ansible-core et ansible-lint (pip, versions
 # figées), un client SSH, et les outils du TP (git, vim, shellcheck, tree, curl). Ansible n’a
-# besoin que de SSH pour agir.
+# besoin que de SSH pour agir. safe.directory : /etc/ansible est le dossier de l’étudiant, monté depuis
+# l’hôte et à son nom ; sans cette ligne, git (root dans le conteneur) refuse d’y travailler (« dubious ownership »).
 # Derrière un proxy HTTPS (facultatif) : voir proxy.sh, qui substitue la base debian:13-slim.
 FROM debian:13-slim
 RUN apt-get update \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
       python3-venv openssh-client curl ca-certificates tree git vim shellcheck \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    && git config --system --add safe.directory /etc/ansible
 RUN python3 -m venv /opt/ansible \
     && if [ -f /usr/local/share/ca-certificates/proxy.crt ]; then export PIP_CERT=/usr/local/share/ca-certificates/proxy.crt; fi \
     && /opt/ansible/bin/pip install -q "ansible-core==2.19.4" "ansible-lint==26.11.0"

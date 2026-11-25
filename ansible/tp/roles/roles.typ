@@ -162,7 +162,7 @@ et #link("../playbooks/index.html")[playbooks].
   └── vars
       └── main.yml
 
-  10 directories, 8 files
+  9 directories, 8 files
   $ rm -r roles/nginx_hello_world/tests roles/nginx_hello_world/vars roles/nginx_hello_world/README.md
   ```]
   `defaults/` porte les variables par défaut, de précédence la plus faible : faites pour être surchargées ;
@@ -368,7 +368,7 @@ et #link("../playbooks/index.html")[playbooks].
   ```]
   À chaque changement de port, la configuration change (`changed`) et le handler redémarre nginx : `changed=2`.
   Le port 8080 ne répond plus, puisque nginx a relu sa configuration. L’ordre est : `defaults/` du rôle (niveau 2) <
-  `group_vars` de l’inventaire (niveaux 3 à 10) < `-e` (niveau 22, il gagne toujours). Ce n’est pas une affaire de
+  `group_vars/web_server.yaml` (niveaux 3 à 10 ; ici, à côté du playbook : niveau 7) < `-e` (niveau 22, il gagne toujours). Ce n’est pas une affaire de
   « spécificité » : c’est un ordre fixe de sources, dans lequel `defaults/` est volontairement le plus faible, pour
   que tout le monde puisse surcharger un rôle sans l’éditer. Un `vars/main.yml` de rôle (niveau 15) bat au contraire
   `group_vars` : avec `nginx_hello_world_port: 9090` dedans, le playbook sert la page sur 9090 malgré `group_vars`

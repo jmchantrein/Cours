@@ -5,7 +5,7 @@
     - name: Écrire /hello avec le module shell
       ansible.builtin.shell: echo hello >> /hello
 
-    - name: Écrire /hello_world avec le module lineinfile
+    - name: Écrire /hello_world avec lineinfile
       ansible.builtin.lineinfile:
         path: /hello_world
         line: "Hello world !"

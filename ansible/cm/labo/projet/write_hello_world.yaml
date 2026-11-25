@@ -2,12 +2,12 @@
 - name: Écrire hello world
   hosts: all
   tasks:
-    - name: Écrire /hello avec le module shell, seulement s’il manque
+    - name: Écrire /hello, seulement s’il manque
       ansible.builtin.shell: echo hello > /hello
       args:
         creates: /hello
 
-    - name: Écrire /hello_world avec le module lineinfile
+    - name: Écrire /hello_world avec lineinfile
       ansible.builtin.lineinfile:
         path: /hello_world
         line: "Hello world !"
