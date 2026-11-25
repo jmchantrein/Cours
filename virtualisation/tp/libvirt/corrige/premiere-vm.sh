@@ -1,7 +1,7 @@
 #!/bin/bash
 # Première VM, en ligne de commande, sur la connexion qemu:///system.
-# Prérequis : verifier-hote.sh réussit ; l'image netinst de Debian est
-# téléchargée et vérifiée (signature, puis empreinte : voir les diapos).
+# Prérequis : verifier-hote.sh réussit ; le paquet acl (setfacl) ; l'image netinst de
+# Debian téléchargée et vérifiée (signature, puis empreinte : voir les diapos).
 # L'installateur s'ouvre dans virt-viewer : n'installez PAS d'environnement
 # de bureau, installez le serveur SSH.
 #
@@ -16,6 +16,13 @@ nom_vm="${1:-ma-premiere-vm}"
 image_iso="${2:-$HOME/iso-debian/debian-13.7.0-amd64-netinst.iso}"
 
 [ -f "$image_iso" ] || { echo "Image ISO introuvable : $image_iso" >&2; exit 1; }
+
+# Sur qemu:///system, QEMU ne tourne pas sous votre compte mais sous libvirt-qemu.
+# Or Debian 13 crée votre dossier personnel en mode 0700 : libvirt-qemu ne peut pas
+# le traverser, et l'installateur ne démarre pas (« Permission denied »).
+# Une ACL lui accorde le seul droit de traverser (x, sans lire ni lister) ; le fichier
+# lui-même est géré par libvirt. Le pool default, lui, est déjà lisible (/var/lib/libvirt/images).
+setfacl -m u:libvirt-qemu:x "$HOME" "$(dirname "$image_iso")"
 
 # --memory 2048       2 Gio de mémoire vive (en Mio)
 # --vcpus 2           deux processeurs virtuels

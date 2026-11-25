@@ -128,12 +128,6 @@ travail="$(mktemp -d "${TMPDIR:-/tmp}/tptest.XXXXXX")"
 chmod 755 "$travail"
 pool="tptest-pool"
 dossier_pool="$travail/pool"
-# AppArmor (Ubuntu) n'autorise QEMU que sur les emplacements usuels des images : le pool d'essai va
-# sous /var/lib/libvirt/images quand ce dossier existe (la CI y est refusée dans /tmp : « Permission denied »).
-if [ -d /var/lib/libvirt/images ] && [ -w /var/lib/libvirt/images ]; then
-  dossier_pool="$(mktemp -d /var/lib/libvirt/images/tptest-pool.XXXXXX)"
-  chmod 755 "$dossier_pool"
-fi
 domaines=(tptest-vm tptest-vm-2 tptest-vm-3)
 reseaux=(tptest-nat tptest-labo)
 
@@ -162,6 +156,40 @@ en_sortie() {
 trap en_sortie EXIT
 nettoyer # restes d'un test interrompu
 
+# Dès ici, une commande qui échoue ne doit pas arrêter le harnais en silence : chaque commande
+# virsh passe par essayer(), qui note l'échec comme une vérification en échec, avec le message
+# de la commande. Le bilan s'affiche donc toujours.
+set +e
+
+diagnostic() { # $1 domaine : ce qui explique un refus d'accès au disque (permissions, AppArmor, journal QEMU)
+  local d="$1" disque
+  disque="$(virsh domblklist "$d" 2> /dev/null | awk 'NR > 2 && $1 == "vda" { print $2 }')"
+  case "$disque" in /*) ;; *) disque="$(virsh vol-path --pool "$pool" "$disque" 2> /dev/null)" ;; esac
+  {
+    echo "  --- diagnostic de $d ---"
+    echo "  disque : ${disque:-inconnu}"
+    [ -n "$disque" ] && command -v namei > /dev/null && namei -l "$disque" 2>&1
+    echo "  compte de QEMU (qemu.conf) : $(grep -E '^[[:space:]]*(user|group|security_driver|dynamic_ownership)[[:space:]]*=' /etc/libvirt/qemu.conf 2> /dev/null | tr '\n' ' ')"
+    echo "  module de sécurité : $(cat /sys/module/apparmor/parameters/enabled 2> /dev/null || echo aucun)"
+    [ -r "/var/log/libvirt/qemu/$d.log" ] && { echo "  journal QEMU :"; tail -n 5 "/var/log/libvirt/qemu/$d.log"; }
+    command -v dmesg > /dev/null && dmesg 2> /dev/null | grep -iE 'apparmor.*(DENIED|denied)' | tail -n 5
+    command -v journalctl > /dev/null && journalctl -k --no-pager -n 400 2> /dev/null | grep -iE 'apparmor.*DENIED' | tail -n 5
+  } 2>&1 | sed 's/^/       /'
+}
+essayer() { # $1 libellé  $2… commande : OK si elle réussit, ÉCHEC avec son message sinon ; garde son code de sortie
+  local libelle="$1" journal code
+  shift
+  journal="$(mktemp "$travail/essai.XXXXXX")"
+  "$@" > /dev/null 2> "$journal"; code=$?
+  if [ "$code" -eq 0 ]; then rm -f "$journal"; return 0; fi
+  ko "$libelle : $(tr '\n' ' ' < "$journal")"
+  rm -f "$journal"
+  return "$code"
+}
+demarrer() { # $1 domaine  $2 contexte : virsh start ; un refus d'accès au disque est expliqué
+  essayer "$2 : virsh start $1" virsh start "$1" || diagnostic "$1"
+}
+
 etat() { virsh domstate "$1" 2> /dev/null | head -1; }
 attendre_etat() { # $1 domaine  $2 état attendu : quelques secondes au plus
   for _ in $(seq 1 20); do
@@ -183,7 +211,7 @@ attendu=0
 grep -qE 'vmx|svm' /proc/cpuinfo || attendu=1
 { [ -c /dev/kvm ] && [ -r /dev/kvm ] && [ -w /dev/kvm ]; } || attendu=1
 virsh --connect "$connexion" version > /dev/null 2>&1 || attendu=1
-set +e; "$corrige/verifier-hote.sh" > "$travail/verifier-hote.log" 2>&1; obtenu=$?; set -e
+"$corrige/verifier-hote.sh" > "$travail/verifier-hote.log" 2>&1; obtenu=$?
 sed 's/^/       /' "$travail/verifier-hote.log"
 if [ "$obtenu" -eq "$attendu" ]; then ok "verifier-hote.sh : code de sortie $obtenu, conforme à cet hôte"
 else ko "verifier-hote.sh : code de sortie $obtenu, $attendu attendu"; fi
@@ -216,9 +244,9 @@ else ok "tptest-labo : isolé, sans élément forward"; fi
 
 titre "Domaine : vm-exemple.xml"
 mkdir -p "$dossier_pool"; chmod 755 "$dossier_pool"
-virsh pool-define-as "$pool" dir --target "$dossier_pool" > /dev/null
-virsh pool-start "$pool" > /dev/null
-virsh vol-create-as "$pool" tptest-vm.qcow2 1G --format qcow2 > /dev/null
+essayer "pool-define-as $pool" virsh pool-define-as "$pool" dir --target "$dossier_pool"
+essayer "pool-start $pool" virsh pool-start "$pool"
+essayer "vol-create-as tptest-vm.qcow2" virsh vol-create-as "$pool" tptest-vm.qcow2 1G --format qcow2
 xml_vm="$travail/tptest-vm.xml"
 sed -e 's|<domain type="kvm">|<domain type="qemu">|' \
     -e 's|<name>vm-exemple</name>|<name>tptest-vm</name>|' \
@@ -249,13 +277,13 @@ if "$corrige/deuxieme-vm.sh" tptest-vm tptest-vm-2 > "$travail/deuxieme-vm.log" 
 else
   ko "deuxieme-vm.sh tptest-vm tptest-vm-2"; cat "$travail/deuxieme-vm.log"
 fi
-virsh start tptest-vm > /dev/null
+demarrer tptest-vm "démarrage avant le refus de clonage"
 if "$corrige/deuxieme-vm.sh" tptest-vm tptest-vm-refus > /dev/null 2>&1; then
   ko "deuxieme-vm.sh accepte une VM en marche"; silencieux virsh undefine tptest-vm-refus --remove-all-storage
 else
   ok "deuxieme-vm.sh refuse une VM en marche"
 fi
-virsh destroy tptest-vm > /dev/null
+essayer "destroy tptest-vm" virsh destroy tptest-vm
 
 # ------------------------------------------------------------ troisieme-vm.sh
 
@@ -275,10 +303,10 @@ if "$corrige/troisieme-vm.sh" tptest-vm tptest-vm-3 > "$travail/troisieme-vm.log
   else ko "le disque de la VM occupe $octets octets"; fi
   if grep -qF "$disque" <<< "$(virsh dumpxml tptest-vm-3)"; then ok "tptest-vm-3 est branchée sur ce disque"
   else ko "tptest-vm-3 n'est pas branchée sur tptest-vm-3.qcow2"; fi
-  virsh start tptest-vm-3 > /dev/null
+  demarrer tptest-vm-3 "start sur le disque adossé"
   verifier_etat tptest-vm-3 running "start sur le disque adossé"
-  virsh destroy tptest-vm-3 > /dev/null
-  virsh undefine tptest-vm-3 --remove-all-storage > /dev/null
+  essayer "destroy tptest-vm-3" virsh destroy tptest-vm-3
+  essayer "undefine tptest-vm-3 --remove-all-storage" virsh undefine tptest-vm-3 --remove-all-storage
   if volume_existe tptest-vm-3.qcow2; then ko "undefine --remove-all-storage a laissé tptest-vm-3.qcow2"
   else ok "undefine --remove-all-storage supprime le disque de la VM"; fi
   if volume_existe base-tptest-vm.qcow2; then ok "… et conserve l'image de base"
@@ -290,7 +318,7 @@ fi
 # ------------------------------------------------------------------ instantanés
 
 titre "Cycle de vie et instantanés"
-virsh start tptest-vm > /dev/null
+demarrer tptest-vm "start"
 verifier_etat tptest-vm running "start"
 if virsh snapshot-create-as tptest-vm avant-tp --description "état sain" > /dev/null; then
   ok "snapshot-create-as sur la VM en marche (BIOS : instantané interne)"
@@ -299,12 +327,12 @@ else
 fi
 if grep -qx avant-tp <<< "$(virsh snapshot-list --name tptest-vm)"; then ok "snapshot-list montre avant-tp"
 else ko "snapshot-list ne montre pas avant-tp"; fi
-virsh destroy tptest-vm > /dev/null
+essayer "destroy tptest-vm" virsh destroy tptest-vm
 verifier_etat tptest-vm "shut off" "destroy"
 if virsh snapshot-revert tptest-vm avant-tp > /dev/null; then ok "snapshot-revert"
 else ko "snapshot-revert"; fi
 verifier_etat tptest-vm running "snapshot-revert d'un instantané pris en marche"
-virsh destroy tptest-vm > /dev/null
+essayer "destroy tptest-vm (après revert)" virsh destroy tptest-vm
 if virsh undefine tptest-vm > "$travail/undefine.log" 2>&1; then
   ko "undefine accepte une VM qui a un instantané"
 elif grep -q 'snapshot' "$travail/undefine.log"; then

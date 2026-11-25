@@ -209,15 +209,15 @@ votre propre terminal, ou téléchargez les fichiers un à un depuis le lien « 
 ]
 
 #indice(titre: [Indice : le « \# » saute en retrait])[
-  Selon la version de Vim (celle d’Ubuntu 24.04, par exemple), le greffon d’indentation YAML replace la ligne en
+  Avec certaines versions de Vim (9.1.0016, celle d’Ubuntu 24.04), le greffon d’indentation YAML replace la ligne en
   retrait dès qu’on tape `#` en début de ligne : les quatre lignes du bloc se retrouvent décalées. Annulez (`u`) et
-  interdisez-lui ce réflexe avec `:set indentkeys-=0#` avant de commenter.
+  interdisez-lui ce réflexe avec `:set indentkeys-=0#` avant de commenter. Le Vim de Debian 13 (9.1.1230) ne le fait pas.
 ]
 
 #corrige[
   #f("corrige/5-commenter.touches", lang: "text")
   Pendant la frappe, `# ` n’apparaît que sur la première ligne du bloc ; Échap le recopie sur les trois autres.
-  La ligne `:set indentkeys-=0#` n’est utile qu’avec ces versions : ailleurs, elle ne change rien.
+  La ligne `:set indentkeys-=0#` n’est utile qu’avec le Vim d’Ubuntu 24.04 (9.1.0016) ; sur Debian 13 (9.1.1230), `0#` n’est plus dans `indentkeys` : elle ne change rien, et le corrigé réussit des deux côtés.
   Le fichier reste un YAML valide : yq n’y lit plus de clé `serveurs`.
 ]
 

@@ -37,7 +37,7 @@ l’installateur, par une copie complète, puis par un disque en copie sur écri
 #bloc(role: "pratique")[Prérequis][
   - Un PC sous Debian 13 dont le processeur expose VT-x ou AMD-V, avec 15 Gio de disque libre.
   - L’image netinst de Debian, téléchargée et vérifiée (signature, puis empreinte) :
-    #d("iso-verifier")[Télécharger l’ISO, puis la vérifier]. Le TP la suppose dans `~/iso-debian/`.
+    #d("iso-verifier")[Télécharger l’ISO, puis la vérifier]. Le TP la suppose dans `~/iso-debian/`, et le paquet `acl` (`setfacl`) doit être installé : `sudo apt install acl`.
   - Un dossier de travail pour les fichiers du TP (XML, scripts).
 ]
 
@@ -157,11 +157,19 @@ l’installateur, par une copie complète, puis par un disque en copie sur écri
   La diapositive #d("virt-install")[Créer une VM : virt-install, puis virsh] donne presque toute la commande.
   `--network network=default` passe par le réseau libvirt plutôt que de nommer son pont. Le disque :
   `virsh domblklist`, puis `virsh vol-list default`. Le micrologiciel : cherchez `loader` ou `firmware` dans
-  `virsh dumpxml`.
+  `virsh dumpxml`. Si l'installateur ne démarre pas (`Permission denied` sur l'image ISO) : QEMU ne tourne pas
+  sous votre compte, voyez le corrigé.
 ]
 
 #corrige[
   #f("premiere-vm.sh")
+  Avec `qemu:///system`, QEMU tourne sous le compte `libvirt-qemu`. libvirt lui donne le fichier de l'ISO, mais
+  pas les dossiers qui y mènent : sur Debian 13, votre dossier personnel est en mode `0700`, et `libvirt-qemu`
+  ne peut pas le traverser. Sans la ligne `setfacl` du script, qui lui accorde le seul droit de traverser
+  (`x`, ni lire ni lister), `virt-install` échoue en `Permission denied`. Le disque de la VM n'a pas ce
+  problème : il va dans le pool `default`, sous `/var/lib/libvirt/images`, que `libvirt-qemu` sait lire. Rangez
+  de même tout disque ou toute image que vous créez à la main dans un dossier que `libvirt-qemu` peut
+  traverser, jamais sous votre dossier personnel.
   Une VM de serveur s’administre à distance, en texte : un bureau consommerait mémoire et disque pour un écran
   que personne ne regarde. La console de virt-viewer reste le recours quand le réseau ne répond plus.
   Le disque est le volume `ma-premiere-vm.qcow2` du pool `default`, c’est-à-dire

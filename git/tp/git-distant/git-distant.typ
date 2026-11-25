@@ -3,7 +3,7 @@
 //   typst compile --root . --font-path commun/fonts --features html --format html \
 //     git/tp/git-distant/git-distant.typ build/git/git-distant.html
 // Les corrigés sont les fichiers de corrige/, exécutés et vérifiés par tester.sh --up : la page les affiche tels quels.
-// Sorties des terminaux : relevées par tester.sh --releve (Git 2.43.0, identités et dates fixées, messages en anglais).
+// Sorties des terminaux : relevées par tester.sh --releve dans debian:13-slim (Git 2.47.3, identités et dates fixées, messages en anglais).
 // Dans un terminal, les commandes « cd » sont écrites sans le « || exit 1 » des scripts : un cd raté ne ferme pas le shell.
 // Les lignes de progression de git push et git fetch (« Enumerating objects… ») sont abrégées en « # … (n lignes de progression) » ;
 // le dossier personnel du relevé est remplacé par /root, celui de la VM de la page.
@@ -68,7 +68,7 @@ Chaque étape reprend une notion du cours : #d("distants")[Un dépôt distant et
   Chaque étape propose des indices, puis un corrigé, repliés. Chaque corrigé est un script réel, que le harnais du
   TP exécute dans un dossier jetable, étape après étape, en vérifiant l’état du dépôt central et des deux clones
   (branches, historique, contenu des fichiers). Les étapes se suivent : chacune part de l’état où la précédente
-  s’est arrêtée. Les sorties montrées viennent de Git 2.43.0, en anglais.
+  s’est arrêtée. Les sorties montrées viennent de Git 2.47.3, en anglais.
 ]
 
 #note(role: "precaution")[

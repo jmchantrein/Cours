@@ -3,7 +3,7 @@
 //   typst compile --root . --font-path commun/fonts --features html --format html \
 //     git/tp/git-local/git-local.typ build/git/git-local.html
 // Les corrigés sont les fichiers de corrige/, exécutés et vérifiés par tester.sh --up : la page les affiche tels quels.
-// Sorties des terminaux : relevées par tester.sh --releve (Git 2.43.0, identité et dates fixées, messages en anglais).
+// Sorties des terminaux : relevées par tester.sh --releve dans debian:13-slim (Git 2.47.3, identité et dates fixées, messages en anglais ; dossier personnel remplacé par /root).
 // Dans un terminal, les commandes « cd » sont écrites sans le « || exit 1 » des scripts : un cd raté ne ferme pas le shell.
 
 #import "../../../commun/theme-tp.typ": *
@@ -47,7 +47,7 @@ défaites votre travail de toutes les façons que Git connaît. Chaque étape re
 #bloc[Indices et corrigés][
   Chaque étape propose des indices, puis un corrigé, repliés. Chaque corrigé est un script réel, que le harnais du
   TP exécute dans un dossier jetable, étape après étape, en vérifiant l’état du dépôt (`git status`,
-  `git log`, contenu des fichiers, branches). Les sorties montrées viennent de Git 2.43.0, en anglais.
+  `git log`, contenu des fichiers, branches). Les sorties montrées viennent de Git 2.47.3, en anglais.
 ]
 
 #note(role: "precaution")[
@@ -73,14 +73,14 @@ défaites votre travail de toutes les façons que Git connaît. Chaque étape re
 ]
 #indice(titre: [Indice : le dépôt])[
   `git init -b main` : #d("git-init")[Créer un dépôt : git init]. `ls -A` montre aussi les fichiers cachés ;
-  `git status` dit où en est le dépôt. Sans `-b main`, Git 2.43 crée une branche `master` et affiche des
+  `git status` dit où en est le dépôt. Sans `-b main`, Git 2.47 crée une branche `master` et affiche des
   conseils : #d("sans-b-main")[Sans -b main].
 ]
 
 #corrige[
   #terminal[```console
   $ git --version
-  git version 2.43.0
+  git version 2.47.3
   $ git config --global user.name "Ada Lovelace"
   $ git config --global user.email ada@example.org
   $ git config --global --list
@@ -90,7 +90,7 @@ défaites votre travail de toutes les façons que Git connaît. Chaque étape re
   $ mkdir mon_projet
   $ cd mon_projet
   $ git init -b main
-  Initialized empty Git repository in /tmp/tptest-git-local-releve/home/mon_projet/.git/
+  Initialized empty Git repository in /root/mon_projet/.git/
   $ ls -A
   .git
   $ git status

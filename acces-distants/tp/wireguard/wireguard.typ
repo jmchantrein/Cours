@@ -92,8 +92,9 @@ vous mettez `AllowedIPs` à l’épreuve, puis vous ajoutez un troisième pair.
   172.20.0.2
   $ ip link add essai type wireguard && ip link del essai
   ```]
-  Les adresses sont `172.20.0.2`, `.3` et `.4`. Si `ip link add` répond `Operation not supported`, votre noyau
-  n’a pas le module : `wg-quick` utilisera `wireguard-go`. Le labo :
+  Les adresses sont `172.20.0.2`, `.3` et `.4`. Si `ip link add` répond `Error: Unknown device type.`, votre noyau
+  n’a pas le module : `wg-quick` utilisera `wireguard-go`. (`Operation not permitted` signalerait plutôt une
+  capacité `NET_ADMIN` absente : le conteneur n’a pas été lancé par ce `compose.yaml`.) Le labo :
   #l("compose.yaml") #l("Dockerfile")
   `cap_add: [NET_ADMIN]` permet de créer l’interface, `/dev/net/tun` sert au repli en espace utilisateur, et
   `pair-a` relaiera des paquets à l’étape 7 (`ip_forward`).
