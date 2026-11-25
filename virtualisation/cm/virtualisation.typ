@@ -21,7 +21,7 @@
 #plan-cours(
   ([Introduction], [Machine physique, système d’exploitation, machine virtuelle]),
   ([Concepts], [Émulation et virtualisation, assistance matérielle, types d’hyperviseur, paravirtualisation, QEMU et KVM]),
-  ([Usages], [Bilan, migration à chaud, virtualisation imbriquée, image ISO et empreintes, libvirt, mini TP ; Incus, trois étages sur QEMU/KVM, TP ; autres outils de gestion, Qubes OS]),
+  ([Usages], [Bilan, migration à chaud, virtualisation imbriquée, image ISO et empreintes, libvirt, mini TP ; Incus, TP, trois étages sur QEMU/KVM ; autres outils de gestion, Qubes OS]),
   ([Pour aller plus loin], [MicroVM, VM et conteneurs ; pour rappel]),
 )
 
@@ -796,8 +796,8 @@
         # une instance en détail : état, ressources consommées
         $ incus info v1
         # une commande dans l’instance : installer le serveur web nginx
-        $ incus exec v1 -- apt update
-        $ incus exec v1 -- apt install -y nginx
+        $ incus exec v1 -- apt-get update
+        $ incus exec v1 -- apt-get install -y nginx
         # la console de la machine (pour la quitter : Ctrl+a, puis q)
         $ incus console v1
         # arrêter, puis supprimer le conteneur d’essai
@@ -837,7 +837,7 @@
     ]
   ],
   bloc(taille: px(25))[Ce qu’il faut comprendre][
-    - Un *instantané* (_snapshot_) fige le disque de l’instance à un instant donné ; `--stateful` y ajoute la mémoire d’une VM en marche
+    - Un *instantané* (_snapshot_) fige le disque de l’instance à un instant donné ; `--stateful` y ajoute la mémoire d’une VM en marche, si elle a été préparée pour (`migration.stateful=true`)
     - Restaurer ramène *tout* le disque à cet état : ce qui a été écrit depuis est perdu
     - Mêmes commandes pour une VM et pour un conteneur système
   ],
@@ -846,7 +846,7 @@
   ],
   poids: (1.1, 1),
   source-de: [Incus 6.0.4 : #doc-incus("howto/instances_backup.md")[sauvegarder une instance]],
-  note: [Usage type : un instantané avant une mise à jour ou une manipulation risquée. Sans nom, incus snapshot create numérote : snap0, snap1… Autres sous-commandes : rename, show. --stateful (create et restore) enregistre aussi l’état d’exécution d’une VM ; pour un conteneur, la documentation le dit incomplet (limites de CRIU). Coût d’un instantané : avec le pilote dir du pool default, une copie complète du disque ; avec ZFS ou Btrfs, seulement les blocs modifiés ensuite. Rappel du cours Conteneurisation (« Où faire tourner Docker : hôte ou VM ? ») : restaurer ramène tout le disque en arrière, données comprises. Avec QEMU seul : arrêter la VM, puis qemu-img snapshot -c propre debian.qcow2 ; avec libvirt : virsh snapshot-create-as. #_non-execute],
+  note: [Usage type : un instantané avant une mise à jour ou une manipulation risquée. Sans nom, incus snapshot create numérote : snap0, snap1… Autres sous-commandes : rename, show. --stateful (create et restore) enregistre aussi l’état d’exécution d’une VM, à trois conditions (driver\_qemu.go) : la VM tourne ; sa clé migration.stateful vaut true, posée VM arrêtée (la clé ne change pas à chaud) ; le size.state de son disque root est au moins égal à limits.memory. Par défaut, size.state vaut 500 Mio et la mémoire 1 Gio : sans réglage, Incus refuse (« Stateful snapshot requires migration.stateful to be set to true », puis « Stateful stop and snapshots require that the instance limits.memory is less than size.state on the root disk device »). Pour un conteneur, la documentation dit --stateful incomplet (limites de CRIU). Coût d’un instantané : avec le pilote dir du pool default, une copie complète du disque ; avec ZFS ou Btrfs, seulement les blocs modifiés ensuite. Rappel du cours Conteneurisation (« Où faire tourner Docker : hôte ou VM ? ») : restaurer ramène tout le disque en arrière, données comprises. Avec QEMU seul : arrêter la VM, puis qemu-img snapshot -c propre debian.qcow2 ; avec libvirt : virsh snapshot-create-as. #_non-execute],
 )
 
 == Limites : à chaud, ou au redémarrage <incus-limites>
@@ -881,7 +881,7 @@
   ],
   poids: (1.1, 1),
   source-de: [Incus 6.0.4 : #doc-incus("reference/instance_options.md")[options d’une instance] · #doc-incus("howto/instances_configure.md")[configurer une instance]],
-  note: [Unités d’Incus : GiB et MiB sont les Gio et Mio (puissances de 2) ; GB et MB, les puissances de 10. Valeurs par défaut d’une VM : limits.cpu 1, limits.memory 1GiB (documentation des options). incus config show v1 n’affiche que la configuration propre à l’instance ; --expanded y ajoute ce qui vient des profils (diapositive suivante). Conteneur système : les limites sont celles des groupes de contrôle (cgroups) du noyau de l’hôte, modifiables à tout moment ; nproc et free les reflètent dans le conteneur. VM, en 6.0.4 : limits.cpu se change à chaud quand c’est un nombre de processeurs (branchement à chaud ; selon le système invité, il faut parfois mettre les nouveaux processeurs en ligne ou redémarrer) ; limits.memory se réduit à chaud par le ballon mémoire (l’invité rend des pages, lentement et parfois incomplètement), mais ne peut pas dépasser la mémoire du démarrage tant que la VM tourne : incus config set répond « Cannot increase memory size beyond boot time size when VM is running », d’où l’arrêt dans la démonstration. Les versions 7.x d’Incus savent ajouter de la mémoire à chaud. Avec QEMU seul : -smp et -m se fixent au lancement ; les changer demande de relancer la commande. #_non-execute],
+  note: [Unités d’Incus : GiB et MiB sont les Gio et Mio (puissances de 2) ; GB et MB, les puissances de 10. Valeurs par défaut d’une VM : limits.cpu 1, limits.memory 1GiB (documentation des options). incus config show v1 n’affiche que la configuration propre à l’instance ; --expanded y ajoute ce qui vient des profils (diapositive suivante). Conteneur système : les limites sont celles des groupes de contrôle (cgroups) du noyau de l’hôte, modifiables à tout moment ; nproc et free les reflètent dans le conteneur. VM, en 6.0.4 : limits.cpu se change à chaud quand c’est un nombre de processeurs (branchement à chaud ; selon le système invité, il faut parfois mettre les nouveaux processeurs en ligne ou redémarrer) ; limits.memory se réduit à chaud par le ballon mémoire (l’invité rend des pages, lentement et parfois incomplètement), mais ne peut pas dépasser la mémoire du démarrage tant que la VM tourne : incus config set répond « Cannot increase memory size beyond boot time size when VM is running », d’où l’arrêt dans la démonstration. L’ajout de mémoire à chaud est venu après la LTS 6.0, avec Incus 6.12 (extension d’API memory\_hotplug) : la LTS 7.0 (7.0.2 dans trixie-backports) l’accepte, dans la limite d’un maximum fixé au démarrage (clé limits.memory.hotplug). Avec QEMU seul : -smp et -m se fixent au lancement ; les changer demande de relancer la commande. #_non-execute],
 )
 
 == Profils : une configuration réutilisable <incus-profils-commandes>
@@ -967,14 +967,14 @@
   bloc(taille: px(25))[Ce qu’il faut comprendre][
     - *cloud-init* : un programme de l’image qui, au *premier démarrage*, applique une description : paquets, utilisateurs, fichiers, commandes
     - Incus lui transmet la clé `cloud-init.user-data` ; portée par un profil, elle vaut pour toutes ses instances
-    - Avec `--vm`, le même profil donne une VM configurée de la même façon
+    - Avec `--vm`, le même profil configure une VM
   ],
-  bloc(role: "precaution", taille: px(25))[Une seule fois, et avec une image `/cloud`][
-    Modifier le profil ensuite ne réinstalle rien dans les instances déjà créées. Sans `/cloud`, l’image ne contient pas cloud-init : la clé est ignorée.
+  bloc(role: "precaution", taille: px(25))[Image `/cloud` ; clé modifiée, tout rejoue][
+    Rien tout de suite ; au prochain démarrage, cloud-init voit une nouvelle instance et rejoue paquets, fichiers, commandes. Sans `/cloud`, pas de cloud-init : clé ignorée.
   ],
   poids: (1.2, 1),
   source-de: [Incus 6.0.4 : #doc-incus("cloud-init.md")[cloud-init] · #link("https://cloudinit.readthedocs.io")[documentation de cloud-init]],
-  note: [cat affiche le fichier que la commande suivante utilise ; sa première ligne, \#cloud-config, est obligatoire : elle dit à cloud-init comment lire la suite. cloud-init vient du cloud public, où une même image sert à des milliers de machines : chacune se configure seule à son premier démarrage. Clés d’Incus : cloud-init.user-data, cloud-init.vendor-data, cloud-init.network-config. Autre écriture : incus profile edit web, qui ouvre le profil entier en YAML (la clé s’y écrit avec « | » pour garder les retours à la ligne). Le profil web ne définit aucun périphérique : c1 reçoit eth0 et root de default, la clé cloud-init de web, selon la règle de la diapositive précédente. cloud-init status --wait rend la main quand tout est appliqué (status: done). Pour une VM : incus launch images:debian/13/cloud v3 --vm --profile default --profile web ; les données passent par l’agent incus-agent. Debian 13 : cloud-init 25.1.4 dans l’image /cloud. Avec QEMU seul : préparer soi-même un disque de configuration (cloud-localds) ou installer à la main. #_non-execute],
+  note: [cat affiche le fichier que la commande suivante utilise ; sa première ligne, \#cloud-config, est obligatoire : elle dit à cloud-init comment lire la suite. cloud-init vient du cloud public, où une même image sert à des milliers de machines : chacune se configure seule à son premier démarrage. Clés d’Incus : cloud-init.user-data, cloud-init.vendor-data, cloud-init.network-config. Autre écriture : incus profile edit web, qui ouvre le profil entier en YAML (la clé s’y écrit avec « | » pour garder les retours à la ligne). Modifier une clé cloud-init.\* (dans le profil web ou sur l’instance) fait tirer à Incus un nouvel identifiant, volatile.cloud-init.instance-id (fonction needsNewInstanceID, appelée à chaque modification de l’instance ou de ses profils) : rien ne se passe tout de suite ; au prochain démarrage de chaque instance concernée, cloud-init croit à une nouvelle machine et rejoue ses modules (packages, write\_files, runcmd). Renommer l’instance ou le nom d’une de ses cartes réseau a le même effet. Le profil web ne définit aucun périphérique : c1 reçoit eth0 et root de default, la clé cloud-init de web, selon la règle de la diapositive précédente. cloud-init status --wait rend la main quand tout est appliqué (status: done). Pour une VM : incus launch images:debian/13/cloud v3 --vm --profile default --profile web ; les données passent par l’agent incus-agent. Debian 13 : cloud-init 25.1.4 dans l’image /cloud. Avec QEMU seul : préparer soi-même un disque de configuration (cloud-localds) ou installer à la main. #_non-execute],
 )
 
 == Réseau : un pont, des noms, un port publié <incus-reseau>
@@ -1005,7 +1005,7 @@
     - *VM* : rien où entrer, son réseau vit dans le noyau invité, derrière QEMU. Seul le paquet peut être traduit (NAT) vers l’adresse de la VM, qui doit alors être fixe
   ]),
   source-de: [Incus 6.0.4 : #doc-incus("reference/devices_proxy.md")[périphérique proxy] · #doc-incus("reference/network_bridge.md")[réseau en pont]],
-  note: [c1 est le conteneur de la diapositive précédente : nginx y écoute sur le port 80. Sigles : DHCP, attribution automatique des adresses ; DNS, résolution des noms ; NAT, traduction d’adresses. incusbr0 : pont créé par incus admin init, géré par Incus, qui y lance dnsmasq (DHCP et DNS) ; incus network show incusbr0 affiche son sous-réseau, incus network list-leases incusbr0 les adresses distribuées. Noms : dns.domain vaut incus et dns.mode vaut managed par défaut ; chaque instance du pont est enregistrée sous son nom. L’hôte n’interroge pas ce DNS par défaut : depuis l’hôte, on joint une instance par son adresse (colonne IPV4 de incus list). proxy sur un conteneur : le relais est un processus de l’hôte (forkproxy) qui garde une socket d’écoute côté hôte et entre dans l’espace de noms réseau du conteneur (sa vue isolée du réseau) pour la connexion ; listen=tcp:0.0.0.0:8080 écoute sur toutes les adresses de l’hôte, connect=tcp:127.0.0.1:80 est l’adresse vue de l’intérieur du conteneur. Sur une VM, Incus 6.0.4 refuse le périphérique sans nat=true (« Only NAT mode is supported for proxies on VM instances ») ; en mode NAT, il faut une adresse IPv4 fixe sur la carte de l’instance et une adresse d’écoute précise de l’hôte (le joker 0.0.0.0 est refusé). Suite déduite du code, non exécutée : incus config device override v1 eth0 ipv4.address=ADRESSE\_LIBRE\_DU\_PONT ; incus restart v1 ; incus config device add v1 web proxy nat=true listen=tcp:ADRESSE\_DE\_L\_HOTE:8080 connect=tcp:ADRESSE\_LIBRE\_DU\_PONT:80. Parallèle avec Docker (cours Conteneurisation, mode bridge) : -p 8080:80 publie un port de la même façon, par NAT. Avec QEMU seul : -nic user,hostfwd=tcp::8080-:80. #_non-execute],
+  note: [c1 est le conteneur de la diapositive précédente : nginx y écoute sur le port 80. Sigles : DHCP, attribution automatique des adresses ; DNS, résolution des noms ; NAT, traduction d’adresses. incusbr0 : pont créé par incus admin init, géré par Incus, qui y lance dnsmasq (DHCP et DNS) ; incus network show incusbr0 affiche son sous-réseau, incus network list-leases incusbr0 les adresses distribuées. Noms : dns.domain vaut incus et dns.mode vaut managed par défaut ; chaque instance du pont est enregistrée sous son nom. L’hôte n’interroge pas ce DNS par défaut : depuis l’hôte, on joint une instance par son adresse (colonne IPV4 de incus list). proxy sur un conteneur : le relais est un processus de l’hôte (forkproxy) qui garde une socket d’écoute côté hôte et entre dans l’espace de noms réseau du conteneur (sa vue isolée du réseau) pour la connexion ; listen=tcp:0.0.0.0:8080 écoute sur toutes les adresses de l’hôte, connect=tcp:127.0.0.1:80 est l’adresse vue de l’intérieur du conteneur. Sur une VM, Incus 6.0.4 refuse le périphérique sans nat=true (« Only NAT mode is supported for proxies on VM instances ») ; en mode NAT, il faut une adresse IPv4 fixe sur la carte de l’instance et une adresse d’écoute précise de l’hôte (le joker 0.0.0.0 est refusé). Méthode du corrigé du TP (étape 4, proxy-vm.sh) : figer l’adresse que v1 a déjà reçue, sans redémarrage, puisque ipv4.address se modifie à chaud (nic\_bridged.go) ; incus config device override v1 eth0 ipv4.address=ADRESSE\_DE\_V1 (colonne IPV4 de incus list v1), puis incus config device add v1 web proxy nat=true listen=tcp:ADRESSE\_DE\_L\_HOTE:8081 connect=tcp:ADRESSE\_DE\_V1:80 (le port 8080 de l’hôte est déjà pris par c1). Parallèle avec Docker (cours Conteneurisation, mode bridge) : -p 8080:80 publie un port de la même façon, par NAT. Avec QEMU seul : -nic user,hostfwd=tcp::8080-:80. #_non-execute],
 )
 
 == Volumes : les données hors de l’instance <incus-volumes>
@@ -1037,30 +1037,8 @@
   ],
   poids: (1.2, 1),
   source-de: [Incus 6.0.4 : #doc-incus("howto/storage_volumes.md")[volumes de stockage] · #doc-incus("explanation/storage.md")[pools et volumes]],
-  note: [Même idée que les volumes de Docker (cours Conteneurisation, « Persistance ») : séparer ce qui se reconstruit de ce qui se garde. Le pool default utilise le pilote dir : un dossier de l’hôte (/var/lib/incus/storage-pools/default). Autres pilotes : ZFS, Btrfs, LVM, Ceph, avec instantanés et copies sans recopie complète. incus storage volume list default montre aussi les volumes des instances (types container et virtual-machine) et des images ; le volume site est de type custom. La commande attach est un raccourci : elle ajoute à c1 un périphérique de type disk (pool=default source=site path=/var/www/html), visible dans incus config show c1. Pour retrouver la page : lancer un nouveau conteneur avec le profil web et lui attacher le même volume. Un volume de contenu « système de fichiers » peut être attaché à plusieurs instances ; sur une VM, la documentation 6.0.4 demande de l’attacher instance arrêtée. incus delete --force supprime une instance en marche. Avec QEMU seul : un second disque créé par qemu-img, ajouté par une option -drive, puis formaté et monté dans l’invité. #_non-execute],
+  note: [Même idée que les volumes de Docker (cours Conteneurisation, « Persistance ») : séparer ce qui se reconstruit de ce qui se garde. Le pool default utilise le pilote dir : un dossier de l’hôte (/var/lib/incus/storage-pools/default). Autres pilotes : ZFS, Btrfs, LVM, Ceph, avec instantanés et copies sans recopie complète. incus storage volume list default montre aussi les volumes des instances (types container et virtual-machine) et des images ; le volume site est de type custom. La commande attach est un raccourci : elle ajoute à c1 un périphérique de type disk (pool=default source=site path=/var/www/html), visible dans incus config show c1. Pour retrouver la page : lancer un nouveau conteneur avec le profil web et lui attacher le même volume. Un volume de contenu « système de fichiers » peut être attaché à plusieurs instances. Pour une VM, attacher le volume instance arrêtée : incus create, incus storage volume attach, puis incus start (ou incus stop avant d’attacher). La documentation 6.0.4 l’exige (« File system storage volumes can't be attached to virtual machines while they're running ») ; le code tente pourtant un ajout à chaud par virtiofs (deviceAttachPath, driver\_qemu.go), sur lequel ne pas compter. incus delete --force supprime une instance en marche. Avec QEMU seul : un second disque créé par qemu-img, ajouté par une option -drive, puis formaté et monté dans l’invité. #_non-execute],
 )
-
-== QEMU, libvirt, Incus : trois étages, un moteur <trois-etages>
-
-#slide(repeat: 8, self => {
-  let (uncover,) = utils.methods(self)
-  tableau-anime(self, (1.1fr, 1.05fr, 1.3fr, 1.35fr), debut: 1, taille: px(24), marge: px(9),
-    ([], [QEMU nu (mini TP)], [libvirt : `virsh`, virt-manager], [Incus]),
-    ([Mécanisme transparent], ("+", [chaque option est écrite]), ("−", [du XML ; libvirt lance QEMU]), ("−", [caché : le démon lance QEMU])),
-    ([Images prêtes], ("−", [une ISO à installer]), ("−", [une ISO à installer]), ("+", [serveur `images:`, une commande])),
-    ([Réseau et stockage gérés], ("−", [à la main : `-nic`, `qemu-img`]), ("+", [réseau `default`, pools]), ("+", [pont `incusbr0`, pool `default`])),
-    ([Conteneurs et VM ensemble], ("−", [des VM seulement]), ("−", [des VM]), ("+", [les deux : avec ou sans `--vm`])),
-    ([API et automatisation], ("−", [des scripts shell]), ("+", [une API, du XML]), ("+", [une API REST, profils, cloud-init])),
-    ([Poste de travail graphique], ("−", [la fenêtre de la VM]), ("+", [virt-manager]), ("−", [la ligne de commande d’abord])),
-    ([Sans démon root], ("+", [aucun ; groupe `kvm`]), ("−", [groupe `libvirt` = root]), ("−", [groupe `incus-admin` = root])),
-  )
-  v(px(6))
-  couche([Le même moteur sous les trois : QEMU fournit la machine, KVM exécute], hauteur: px(52), taille: px(26))
-  v(px(10))
-  uncover("8-", encadre(role: "retenir", libelle: [À retenir :])[plus l’étage est haut, plus l’outil fait à notre place, et moins le mécanisme se voit. Incus ne passe pas par libvirt : il lance QEMU lui-même. Savoir lire une commande QEMU reste ce qui permet de comprendre les deux autres, et de les dépanner.])
-  source[#link("https://www.qemu.org/docs/master/system/invocation.html")[qemu.org, options de qemu-system] · #link("https://libvirt.org/docs.html")[libvirt.org] · Incus 6.0.4 : #doc-incus("explanation/instances.md")[instances]]
-  utils.speaker-note(self: self)[Synthèse du fil suivi depuis le mini TP : la même VM Debian, créée de trois façons. Une ligne par clic, puis l’encadré ; « + » marque un atout, « − » une limite. Mécanisme : avec QEMU nu, la commande dit tout (mémoire, disque, réseau) ; libvirt garde une description XML par VM (virsh dumpxml) et lance QEMU ; Incus engendre la configuration de QEMU et le lance : ps sur l’hôte montre toujours un processus qemu-system-x86\_64. Images : virt-install et QEMU partent d’une ISO (ou d’une image cloud à préparer soi-même) ; Incus télécharge une image prête. Réseau et stockage : -nic user et qemu-img au mini TP ; libvirt gère un réseau default (pont virbr0, NAT) et des pools de stockage ; Incus, incusbr0 et le pool default, appliqués par le profil default. Conteneurs : libvirt possède un pilote de conteneurs distinct (lxc:\/\/\/), peu employé ; en pratique il gère des VM. Automatisation : l’API de libvirt est une bibliothèque (liaisons Python, Go…) pilotée localement ou à travers ssh ; celle d’Incus est une API REST, que la commande incus utilise elle-même. Graphique : incus console --type vga ouvre la console graphique d’une VM, mais Incus n’a pas d’équivalent de virt-manager sur le poste de travail. Droits : pour QEMU nu, le groupe kvm ne donne que /dev/kvm ; les groupes libvirt et incus-admin donnent le contrôle d’un démon root, donc de l’hôte. Versions de Debian 13 : qemu-system-x86 10.0, libvirt-daemon-system 11.3.0, virt-manager 5.0.0, incus 6.0.4. Les outils des diapositives suivantes montent encore d’un étage : Proxmox VE et oVirt ajoutent le cluster et l’interface web, toujours sur KVM.]
-})
 
 == Travaux pratiques : découvrir Incus <tp-incus>
 
@@ -1081,10 +1059,35 @@
       - Le support du TP : #link("../tp/incus/")[`virtualisation/tp/incus/`]
     ],
   ),
-  note(role: "question")[À chaque étape, la même question : avec QEMU seul, qu’auriez-vous dû faire ? La réponse d’ensemble est le tableau de la diapositive précédente.],
+  note(role: "question")[À chaque étape, la même question : avec QEMU seul, qu’auriez-vous dû faire ? Le TP se termine par un tableau des trois étages, corrigé au retour du TP.],
   source-de: [#link("https://github.com/jmchantrein/Cours")[github.com/jmchantrein/Cours] · licence CC BY-NC-SA 4.0],
-  note: [Une séance de 3 h, sur Debian 13 native, après le mini TP QEMU/KVM. WordPress (paquets wordpress et mariadb-server de Debian 13) sert de prétexte : chaque étape porte le nom d’une fonctionnalité d’Incus, dans l’ordre des diapositives précédentes. Étapes de l’énoncé : installation ; 1. instances et images ; 2. administrer comme une machine ; 3. instantanés et limites ; 4. conteneur système ; 5. profils et cloud-init ; 6. réseau et volumes (pour aller plus loin) ; 7. Docker dans une VM Incus (facultative), qui peut servir de poste au TP WordPress du cours Conteneurisation ; pour finir, le tableau des trois étages à remplir. Version : incus 6.0.4 de Debian 13, pas les backports. Licence : CC BY-NC-SA 4.0, celle du fichier LICENSE.md à la racine du dépôt.],
+  note: [Une séance de 3 h, sur Debian 13 native, après le mini TP QEMU/KVM. WordPress (paquets wordpress et mariadb-server de Debian 13) sert de prétexte : chaque étape porte le nom d’une fonctionnalité d’Incus, dans l’ordre des diapositives précédentes. Étapes de l’énoncé : installation ; 1. instances et images ; 2. administrer comme une machine ; 3. instantanés et limites ; 4. conteneur système ; 5. profils et cloud-init ; 6. réseau et volumes (pour aller plus loin) ; 7. Docker dans une VM Incus (facultative), qui peut servir de poste au TP WordPress du cours Conteneurisation ; pour finir, le tableau des trois étages à remplir, dont le corrigé est la diapositive suivante : ne la projeter qu’au retour du TP. Version : incus 6.0.4 de Debian 13, pas les backports. Licence : CC BY-NC-SA 4.0, celle du fichier LICENSE.md à la racine du dépôt.],
 )
+
+== QEMU, libvirt, Incus : trois étages, un moteur <trois-etages>
+
+#slide(repeat: 10, self => {
+  let (uncover,) = utils.methods(self)
+  question("TP", [Le tableau qui termine le TP : un « + » pour un atout, un « − » pour une limite])
+  v(px(8))
+  uncover("2-", reponse(tableau-anime(self, (1.05fr, 1.1fr, 1.4fr, 1.3fr), debut: 2, taille: px(22), marge: px(7),
+    ([], [QEMU nu (mini TP)], [libvirt : `virsh`, virt-manager], [Incus]),
+    ([Mécanisme transparent], ("+", [chaque option est écrite]), ("−", [du XML ; libvirt lance QEMU]), ("−", [caché : le démon lance QEMU])),
+    ([Images prêtes], ("−", [ISO, ou image à préparer]), ("+", [image cloud, `--cloud-init`]), ("+", [serveur `images:`, une commande])),
+    ([Réseau et stockage gérés], ("−", [à la main : `-nic`, `qemu-img`]), ("+", [réseau `default`, pools]), ("+", [pont `incusbr0`, pool `default`])),
+    ([Conteneurs et VM ensemble], ("−", [des VM seulement]), ("−", [des VM, en pratique]), ("+", [les deux : avec ou sans `--vm`])),
+    ([API et automatisation], ("+", [QMP : une API JSON]), ("+", [une API, du XML]), ("+", [une API REST, profils])),
+    ([Outils bâtis dessus], ("+", [libvirt, Incus, Proxmox VE…]), ("+", [OpenStack, oVirt, Cockpit, Boxes]), ("−", [surtout ses propres outils])),
+    ([Poste de travail graphique], ("−", [la fenêtre de la VM]), ("+", [virt-manager]), ("−", [la ligne de commande d’abord])),
+    ([Sans démon root], ("+", [aucun démon ; groupe `kvm`]), ("+", [possible : `qemu:///session`]), ("−", [groupe `incus-admin` = root])),
+  )))
+  v(px(6))
+  couche([Le même moteur sous les trois : QEMU fournit la machine, KVM exécute], hauteur: px(48), taille: px(26))
+  v(px(8))
+  uncover("10-", encadre(role: "retenir", libelle: [À retenir :])[plus l’étage est haut, plus l’outil fait à notre place, et moins le mécanisme se voit. Incus ne passe pas par libvirt : il lance QEMU lui-même. Savoir lire une commande QEMU reste ce qui permet de comprendre les deux autres, et de les dépanner.])
+  source[#link("https://www.qemu.org/docs/master/system/invocation.html")[qemu.org, options de qemu-system] · #link("https://www.qemu.org/docs/master/interop/qmp-spec.html")[QMP] · #link("https://libvirt.org/docs.html")[libvirt.org] · #link("https://github.com/virt-manager/virt-manager/blob/main/man/virt-install.rst")[virt-install(1)] · Incus 6.0.4 : #doc-incus("explanation/instances.md")[instances]]
+  utils.speaker-note(self: self)[Corrigé du tableau qui termine le TP Incus : à projeter au retour du TP, pas avant, puisqu’il donne les réponses. Synthèse du fil suivi depuis le mini TP : la même VM Debian, créée de trois façons. Clic 1, la question seule ; puis une ligne par clic, et l’encadré ; « + » marque un atout, « − » une limite. Mécanisme : avec QEMU nu, la commande dit tout (mémoire, disque, réseau) ; libvirt garde une description XML par VM (virsh dumpxml) et lance QEMU ; Incus engendre la configuration de QEMU et le lance : ps sur l’hôte montre toujours un processus qemu-system-x86\_64. Images : QEMU part d’une ISO, ou d’une image cloud à qui l’on prépare soi-même un disque de configuration (cloud-localds) ; virt-install 5.0 démarre sur une image cloud téléchargée (--import) et engendre lui-même ce disque cloud-init (--cloud-init) ; Incus télécharge l’image prête depuis son catalogue. Réseau et stockage : -nic user et qemu-img au mini TP ; libvirt gère un réseau default (pont virbr0, NAT) et des pools de stockage ; Incus, incusbr0 et le pool default, appliqués par le profil default. Conteneurs : libvirt possède un pilote de conteneurs distinct (lxc:\/\/\/), peu employé ; en pratique il gère des VM. Automatisation : QEMU a sa propre API, QMP (QEMU Machine Protocol), du JSON sur une socket, une par VM lancée : libvirt et Incus pilotent QEMU par elle ; l’API de libvirt est une bibliothèque (liaisons Python, Go…) pilotée localement ou à travers ssh ; celle d’Incus est une API REST, que la commande incus utilise elle-même. Outils : Proxmox VE pilote QEMU directement ; OpenStack (Nova), oVirt (VDSM), Cockpit (cockpit-machines) et GNOME Boxes passent par libvirt ; Incus a surtout ses propres clients (commande incus, interface web). Graphique : incus console --type vga ouvre la console graphique d’une VM, mais Incus n’a pas d’équivalent de virt-manager sur le poste de travail. Droits : pour QEMU nu, le groupe kvm ne donne que /dev/kvm ; libvirt a deux modes : qemu:\/\/\/system, un démon root dont le groupe libvirt donne le contrôle, donc celui de l’hôte, et qemu:\/\/\/session, un démon lancé sous l’utilisateur (celui de GNOME Boxes), avec ses droits seulement et un réseau plus limité ; le groupe incus-admin donne le contrôle d’un démon root. Versions de Debian 13 : qemu-system-x86 10.0, libvirt-daemon-system 11.3.0, virt-manager 5.0.0, incus 6.0.4. Les outils des diapositives suivantes montent encore d’un étage : Proxmox VE et oVirt livrent une interface web d’administration, toujours sur KVM ; le cluster de plusieurs hôtes, Incus le sait aussi (diapositive « Incus : conteneurs et VM, un seul outil »).]
+})
 
 // ======================================================================
 = Usages · Autres outils
