@@ -1,0 +1,461 @@
+#!/usr/bin/env bash
+# Rejoue les commandes montrées dans les diapos du cours « Shell » et relève les versions.
+# À lancer sur un Debian 13 (bash 5.2, GNU sed 4.9, mawk 1.3.4 : l’awk par défaut), sans être root :
+#   ./rejouer.sh > sorties-shell.txt 2>&1
+# Prérequis : paquets shellcheck et bats (sinon, les sessions qui les emploient le signalent).
+# Chaque session part d’une copie neuve de exemples/ dans ~/atelier, et se joue dans un vrai Bash
+# interactif : avant chaque commande, ce Bash affiche « $ » et la commande, puis l’exécute ; la
+# transcription est celle d’un terminal (seul `ls` diffère : hors terminal, un nom par ligne).
+# Les messages sont en anglais : locale C.UTF-8, comme dans un conteneur debian:13.
+set -u
+umask 022
+export LANG=C.UTF-8 LC_ALL=C.UTF-8
+EXEMPLES=$(cd "$(dirname "$0")/exemples" && pwd)
+ATELIER="$HOME/atelier"
+
+# Une commande commence par une ligne non indentée ; done, fi, else, elif, esac et } la continuent.
+# Chaque commande est précédée d’un printf qui la recopie, puis passée telle quelle au Bash interactif ;
+# le code de retour de la commande précédente est sauvé avant le printf, puis rétabli : `echo $?` reste juste.
+# shellcheck disable=SC2016  # $__code est développé par le Bash qui rejoue, pas ici
+recopier() {
+  local ligne bloc="" echo="__code=\$?"$'\n'
+  while IFS= read -r ligne; do
+    if [[ -n $bloc && ! $ligne =~ ^([[:space:]]|done|fi|else|elif|esac|\}) ]]; then
+      printf '%s(exit $__code)\n%s' "$echo" "$bloc"; bloc="" echo="__code=\$?"$'\n'
+    fi
+    local q=${ligne//\'/\'\\\'\'}
+    if [[ -z $bloc ]]; then echo+="builtin printf '%s\\n' '\$ $q'"$'\n'
+    else echo+="builtin printf '%s\\n' '$q'"$'\n'; fi
+    bloc+="$ligne"$'\n'
+  done
+  [[ -n $bloc ]] && printf '%s(exit $__code)\n%s' "$echo" "$bloc"
+}
+
+# Copie neuve des exemples, puis transcription des commandes lues sur l’entrée standard.
+session() {
+  printf '\n######## %s\n' "$1"
+  rm -rf "$ATELIER" "$HOME/demo" /tmp/chantier
+  mkdir -p "$ATELIER"
+  cp -p "$EXEMPLES"/* "$ATELIER"/
+  cd "$ATELIER" || exit 1
+  { printf "PS1=''; PS2=''\n"; recopier; } \
+    | bash --norc --noediting -i 2>&1 \
+    | sed -e '/cannot set terminal process group/d' -e '/no job control in this shell/d' \
+          -e 's/^bash-[0-9.]*\$ //' -e '/^exit$/d'
+}
+
+# shellcheck source=/dev/null
+echo "# $(date -I) · $(uname -srm) · $(. /etc/os-release && echo "$PRETTY_NAME")"
+session "Versions" <<'EOF'
+bash --version | head -1
+sed --version | head -1
+awk -W version 2>&1 | head -1
+readlink -f "$(command -v awk)"
+shellcheck --version | sed -n 2p
+bats --version
+EOF
+
+# ---------- Ouverture ----------
+session "Lire une commande" <<'EOF'
+wc -l pionnieres.csv
+ls -l --human-readable pionnieres.csv
+type cd
+type wc
+cat pionnieres.csv
+EOF
+
+session "Décoder ls -l" <<'EOF'
+mkdir -p ~/demo && cd ~/demo
+cp -p ~/atelier/pionnieres.csv ~/atelier/sauvegarde.sh .
+mkdir scripts
+chgrp etudiants sauvegarde.sh && chmod 750 sauvegarde.sh
+ls -l
+EOF
+
+# ---------- Flux, redirections, tubes ----------
+session "Deux flux de sortie" <<'EOF'
+ls pionnieres.csv absent.txt
+ls pionnieres.csv absent.txt > sortie.txt
+cat sortie.txt
+ls pionnieres.csv absent.txt 2> erreurs.txt
+cat erreurs.txt
+EOF
+
+session "Fusionner, ajouter, lire" <<'EOF'
+ls pionnieres.csv absent.txt > tout.txt 2>&1
+cat tout.txt
+date -I >> tout.txt
+wc -l tout.txt
+wc -l < pionnieres.csv
+EOF
+
+session "Ordre des redirections" <<'EOF'
+ls pionnieres.csv absent.txt > sortie.txt 2>&1
+ls pionnieres.csv absent.txt 2>&1 > sortie.txt
+cat sortie.txt
+EOF
+
+session "> tronque avant l’exécution" <<'EOF'
+cp pionnieres.csv copie.csv
+sort copie.csv > copie.csv
+wc -c copie.csv
+cp pionnieres.csv copie.csv
+sort -o copie.csv copie.csv
+wc -c copie.csv
+EOF
+
+session "Tubes" <<'EOF'
+cut -d';' -f3 pionnieres.csv
+cut -d';' -f3 pionnieres.csv | sort | uniq -c | sort -rn
+ls -l | grep csv > resultats.txt
+cat resultats.txt
+EOF
+
+session "Codes de retour, && et ||" <<'EOF'
+ls absent.txt
+echo $?
+grep -q Hopper pionnieres.csv
+echo $?
+grep -q Hopper pionnieres.csv && echo "trouvée"
+grep -q Turing pionnieres.csv || echo "absent du fichier"
+EOF
+
+session "Exercice pipeline" <<'EOF'
+cut -d';' -f3 pionnieres.csv | tail -n +2 | sort -u
+cut -d';' -f3 pionnieres.csv | tail -n +2 | sort -u | wc -l
+tail -n +2 pionnieres.csv | sort -t';' -k2 -rn | head -n 3
+EOF
+
+# ---------- Variables, tests, boucles ----------
+session "Variables" <<'EOF'
+nom='Ada'
+echo "Bonjour $nom"
+nom = Ada
+echo "$HOME $USER"
+echo "$PATH"
+EOF
+
+session "Tests" <<'EOF'
+bash exemple_tests.bash
+type [
+[ -f pionnieres.csv ] && echo "fichier ordinaire"
+[ -d pionnieres.csv ] || echo "pas un répertoire"
+annee=1843
+[ "$annee" -lt 1900 ] && echo "XIXe siècle"
+[ "$annee" -lt 1900 -a -f pionnieres.csv ] && echo "les deux"
+[[ $annee -lt 1900 && -f pionnieres.csv ]] && echo "les deux"
+[[ $annee =~ ^[0-9]+$ ]] && echo "un nombre"
+[-f pionnieres.csv]
+EOF
+
+session "Boucles" <<'EOF'
+for fichier in *.csv *.conf; do echo "Fichier : $fichier"; done
+mkdir rapports && cd rapports
+touch "mon rapport.txt" notes.txt
+for f in $(ls *.txt); do echo "[$f]"; done
+for f in *.txt; do echo "[$f]"; done
+cd ..
+compteur=1
+while [ "$compteur" -le 3 ]; do
+    echo "Itération $compteur"
+    compteur=$((compteur + 1))
+done
+echo {1..5}
+echo $((7 * 6)) $((7 / 2)) $((7 % 2))
+EOF
+
+session "Exercice boucles" <<'EOF'
+for i in {1..5}; do touch "sauvegarde-$i.txt"; done
+echo sauvegarde-*
+n=5; while [ "$n" -ge 1 ]; do echo "$n"; n=$((n - 1)); done
+for f in *.csv *.conf; do echo "$f : $(wc -l < "$f") lignes"; done
+EOF
+
+# ---------- Guillemets et expansions ----------
+session "Les étapes de l’expansion" <<'EOF'
+mkdir labo && cd labo
+touch ada.txt grace.txt hedy.txt
+nom="Grace     Hopper"
+printf '[%s]\n' ~ {1..2} $nom "$nom" *.txt "*.txt" $((6 * 7)) "$(echo ok)"
+EOF
+
+session "Découpage en mots et glob" <<'EOF'
+mkdir labo && cd labo
+hommage="Grace     Hopper"
+echo $hommage
+echo "$hommage"
+touch ada.txt grace.txt hedy.txt
+motif="*.txt"
+echo $motif
+echo "$motif"
+EOF
+
+session "Guillemets dans les erreurs classiques" <<'EOF'
+dossier="Mon dossier important"
+mkdir "$dossier"
+cd $dossier
+cd "$dossier" && pwd
+nom=
+[ $nom = "Etudiant" ] && echo "Bonjour, $nom"
+[ "$nom" = "Etudiant" ] || echo "test exécuté, réponse : non"
+EOF
+
+session "Simples, doubles, ANSI-C" <<'EOF'
+p="Ada Lovelace"
+echo "$p" '$p' "'$p'" '"$p"'
+echo "\$p vaut $p, prix : 100$"
+echo 'a\tb' "a\tb"
+echo $'a\tb'
+echo $'aujourd\'hui'
+echo "$(echo *.csv)" '$(echo *.csv)'
+EOF
+
+session "Guillemets : quelles expansions ont lieu" <<'EOF'
+mkdir labo && cd labo
+touch ada.txt grace.txt
+p="Ada Lovelace"
+printf '[%s]\n' ~ "~" '~'
+printf '[%s]\n' {a,b} "{a,b}" '{a,b}'
+printf '[%s]\n' $p "$p" '$p'
+printf '[%s]\n' $(echo un deux) "$(echo un deux)" '$(echo un deux)'
+printf '[%s]\n' $((6*7)) "$((6*7))" '$((6*7))'
+printf '[%s]\n' *.txt "*.txt" '*.txt'
+EOF
+
+session "Accolades autour du nom" <<'EOF'
+fichier="rapport"
+ext="txt"
+echo "$fichierext"
+echo "${fichier}.${ext}"
+chemin="/usr/local/bin"
+echo "$chemin_backup"
+echo "${chemin}_backup"
+EOF
+
+session "Exercice expansions" <<'EOF'
+mkdir labo && cd labo
+touch ada.txt grace.txt hedy.txt
+p="Ada Lovelace"
+printf '[%s]\n' $p
+printf '[%s]\n' "$p"
+printf '[%s]\n' '$p'
+printf '[%s]\n' *.txt "*.txt"
+printf '[%s]\n' "$(echo *.txt)"
+printf '[%s]\n' {ada,hedy}.txt
+EOF
+
+# ---------- Scripts ----------
+session "Un script exécutable" <<'EOF'
+chmod -x bonjour.sh
+./bonjour.sh
+chmod u+x bonjour.sh
+./bonjour.sh
+echo $?
+./retour.sh
+echo $?
+EOF
+
+session "Arguments" <<'EOF'
+./exemple_argument.bash arg1 arg2
+./tous_les_arguments.bash "Grace Hopper" Ada
+EOF
+
+session "Saisie" <<'EOF'
+./exemple_saisie.bash <<< "Ada"
+EOF
+
+session "Sauvegarde" <<'EOF'
+mkdir donnees && cp pionnieres.csv donnees/
+./sauvegarde.sh donnees
+ls sauvegarde_*
+tar -tzf sauvegarde_*.tar.gz
+EOF
+
+session "set -e" <<'EOF'
+./nettoyage.sh
+echo $?
+./nettoyage-e.sh
+echo $?
+EOF
+
+session "set -u et pipefail" <<'EOF'
+./faute-de-frappe.sh
+echo $?
+false | true
+echo $?
+set -o pipefail
+false | true
+echo $?
+EOF
+
+session "Les limites de set -e" <<'EOF'
+bash -c 'set -e; false && true; echo "toujours là"'
+bash -c 'set -e; if false; then :; fi; echo "toujours là"'
+bash -c 'set -e; false; echo "jamais affiché"'
+echo $?
+EOF
+
+session "bash -x" <<'EOF'
+bash -x ./exemple_argument.bash "Grace Hopper"
+EOF
+
+session "ShellCheck" <<'EOF'
+shellcheck a-relire.sh
+EOF
+
+session "Fonctions et main" <<'EOF'
+./exemple_main_function.bash
+EOF
+
+session "source ou ./" <<'EOF'
+./bibliotheque.sh
+saluer Ada
+source bibliotheque.sh
+saluer Ada
+type saluer
+EOF
+
+session "Bats" <<'EOF'
+bats exemple_test_unit.bats
+mkdir donnees && cp pionnieres.csv donnees/
+bats liste_fichiers.bats
+EOF
+
+session "Exercice scripts" <<'EOF'
+mkdir donnees && cp pionnieres.csv services.conf donnees/
+./liste_fichiers.bash <<< donnees
+echo $?
+./liste_fichiers.bash <<< /nulle/part
+echo $?
+printf '%s\n' donnees copie > reponses.txt
+./copie_fichiers.bash < reponses.txt
+echo $?
+ls copie
+EOF
+
+# ---------- Portée de local ----------
+session "Portée dynamique" <<'EOF'
+./portee-locale.bash
+./portee-readonly.bash
+EOF
+
+session "Sous-shell et nouveau processus" <<'EOF'
+./portee-sous-shell.bash
+./export-processus.bash
+EOF
+
+session "Exercice local" <<'EOF'
+./devinette.bash
+sed 's/local total=10/total=10/' devinette.bash > devinette-globale.bash
+bash devinette-globale.bash
+EOF
+
+# ---------- sed ----------
+session "sed : le cycle" <<'EOF'
+sed '' lignes.txt
+sed -n '2p' lignes.txt
+sed 'p' lignes.txt
+EOF
+
+session "sed : substitution" <<'EOF'
+sed 's/Alan Turing/Ada Lovelace/g' turing.txt
+cat turing.txt
+echo "Alan Turing et Alan Kay" | sed 's/Alan/Ada/'
+echo "Alan Turing et Alan Kay" | sed 's/Alan/Ada/g'
+echo "/usr/local/bin" | sed 's/\/usr\/local/\/opt/'
+echo "/usr/local/bin" | sed 's,/usr/local,/opt,'
+EOF
+
+session "sed : supprimer, insérer, adresser" <<'EOF'
+sed '2d' lignes.txt
+sed '2i Nouveau texte ajouté avant la ligne 2' lignes.txt
+sed '1a Texte ajouté après la ligne 1' lignes.txt
+sed '1d' pionnieres.csv | head -n 2
+sed '/langages/d' pionnieres.csv
+sed -n '2,3p' pionnieres.csv
+EOF
+
+session "sed -i" <<'EOF'
+sed -i.bak 's/autostart = yes/autostart = no/' services.conf
+grep autostart services.conf
+echo services.conf*
+diff services.conf.bak services.conf
+EOF
+
+session "sed : expressions régulières" <<'EOF'
+sed -E 's/[0-9]{3}/###/g' identifiants.txt
+sed 's/[0-9]\{3\}/###/g' identifiants.txt
+sed 's/[0-9]{3}/###/g' identifiants.txt
+EOF
+
+session "sed : groupes de capture" <<'EOF'
+cat autrices.txt
+sed 's/Nom : \(.*\) \(.*\)/Prénom : \2, Nom : \1/g' autrices.txt
+sed -E 's/^([^ ;]+) ([^;]+);/\2 \1;/' pionnieres.csv | head -n 3
+EOF
+
+session "Exercice sed" <<'EOF'
+sed 's/materiel/matériel/; s/reseau/réseau/' pionnieres.csv | tail -n 3
+sed '1d' pionnieres.csv | wc -l
+cp services.conf services.copie
+sed -i 's/^port = 0$/port = disabled/' services.copie
+grep -n port services.copie
+printf '#PasswordAuthentication yes\n' > sshd_config.copie
+cat sshd_config.copie
+sed -E 's,^#?(PasswordAuthentication) .*,\1 no,' sshd_config.copie
+EOF
+
+# ---------- awk ----------
+session "awk : champs" <<'EOF'
+cat personnes.txt
+awk '{ print $1, $2 }' personnes.txt
+awk '{ print NR ": " $0 " (" NF " champs)" }' personnes.txt
+awk -F';' 'NR > 1 { print $1, $2 }' pionnieres.csv | head -n 3
+EOF
+
+session "awk : nombre ou chaîne" <<'EOF'
+awk '$2 < "30" { print $1, $2 }' personnes.txt
+echo "Dan 100 M" >> personnes.txt
+awk '$2 < "30" { print $1, $2 }' personnes.txt
+awk '$2 < 30 { print $1, $2 }' personnes.txt
+EOF
+
+session "awk : calculs et END" <<'EOF'
+cat produits.txt
+awk '{ print $1, $2 * $3 }' produits.txt
+awk '{ somme += $2 } END { print "Total : ", somme }' produits.txt
+awk '{ somme += $2 } END { print "Total :", somme }' produits.txt
+awk -F';' 'BEGIN { print "Avant la première ligne" } END { print NR " lignes lues" }' pionnieres.csv
+EOF
+
+session "awk : tableaux associatifs" <<'EOF'
+awk -F';' 'NR > 1 { n[$3]++ } END { for (d in n) print d, n[d] }' pionnieres.csv
+awk -F';' 'NR > 1 { n[$3]++ } END { for (d in n) print d, n[d] }' pionnieres.csv | sort
+EOF
+
+session "awk : expressions régulières" <<'EOF'
+awk '$0 ~ /@example.fr/ { print $0 }' emails.txt
+awk '$1 ~ /@example\.fr$/ { print $2 }' emails.txt
+awk -F';' '$4 ~ /premier/ { print $1 }' pionnieres.csv
+EOF
+
+session "Exercice awk" <<'EOF'
+awk -F';' 'NR > 1 && $2 < 1970 { print $1, $2 }' pionnieres.csv
+awk -F';' 'NR > 1 { somme += $2 } END { print "Total :", somme }' pionnieres.csv
+awk -F';' 'NR > 1 { if ($2 > max) { max = $2; nom = $1 } } END { print nom, max }' pionnieres.csv
+awk -F';' -v OFS='\t' 'NR > 1 { print $1, $3 }' pionnieres.csv | head -n 3
+awk -F';' '$4 ~ /premier/ { n++ } END { print n }' pionnieres.csv
+EOF
+
+# ---------- Annexe : mémo des guillemets ----------
+session "Mémo" <<'EOF'
+mkdir labo && cd labo
+touch ada.txt grace.txt hedy.txt
+p="Ada Lovelace"
+printf '[%s]\n' "${p}" '${p}' "'${p}'" '"${p}"'
+printf '[%s]\n' ${p}
+printf '[%s]\n' *.txt
+printf '[%s]\n' "*.txt" "\${p}" "100$" '\n' "\n"
+printf '%s' $'\n\t' | od -c | head -1
+printf '[%s]\n' $'\'' "$(echo hi)" '$(echo hi)'
+EOF

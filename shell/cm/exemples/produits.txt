@@ -1,0 +1,3 @@
+Produit1 10 2
+Produit2 15 4
+Produit3 20 1

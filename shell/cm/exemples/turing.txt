@@ -1,0 +1,2 @@
+Bonjour Alan Turing.
+Alan Turing aime coder en Bash.
