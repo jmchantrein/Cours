@@ -51,6 +51,6 @@
         (#diapo(pdf, "ordre-expansions")[l’ordre des expansions]).], "ligne"),
   )
   #note(role: "precaution")[Le simulateur suit le sous-ensemble de Bash vu en cours (mots, guillemets, `$nom`, `${nom}`, `$(echo …)`,
-    accolades, tilde, `*` et `?`). Tout le reste (arithmétique, `${x:-…}`, `$@`, tubes, `[…]`…) est signalé « Limitation du simulateur ».
+    accolades, tilde, `*` et `?`). Tout le reste (arithmétique, `${x:-…}`, `$@`, tubes, `[…]`…) est signalé « Limitation du simulateur ». Les noms de fichiers sont triés dans l’ordre des octets (locale `C.UTF-8`, celle des sorties du cours).
     Dans le chemin, un fond teinté marque le résultat d’une expansion, un trait ce que des guillemets protègent, `·` une espace, `∅` un argument vide.]
 ]

@@ -27,34 +27,30 @@
 
 #artefact(read("graphe-git.js"), style: read("graphe-git.css"))[
   #experiences(
-    ([Un commit sur `main`, puis la branche `contact` : placez-vous dessus et faites-y un commit. Revenez sur `main` et
-      faites-y un commit aussi. Que désignent `main`, `contact` et `HEAD` ? Quels commits ont le même parent ?],
-      [`main` désigne D, `contact` désigne C, et `HEAD` désigne `main`. Chaque commit n’a fait avancer que la branche sur
-        laquelle `HEAD` se trouvait (#diapo(pdf, "pointeurs")[un commit avance la branche courante, et elle seule]) ;
-        `switch` n’a déplacé que `HEAD`. C et D ont le même parent, B : l’histoire se sépare
-        (#diapo(pdf, "graphe")[deux commits peuvent avoir le même parent]).], "pointeurs"),
-    ([`contact` a un commit de plus que `main`, qui n’a pas bougé depuis. Placez-vous sur `main` et fusionnez `contact`.
-      Quelle sorte de fusion, et le graphe gagne-t-il un commit ?],
-      [Avance rapide : `main` (B) est un ancêtre de `contact` (C), il n’y a rien à combiner. `main` avance jusqu’à C, et
-        le graphe ne gagne aucun commit (#diapo(pdf, "fusion")[avance rapide ou commit de fusion]). Le pointeur
-        avance, rien d’autre.], "avance-rapide"),
-    ([Chaque branche reçoit un commit depuis leur ancêtre commun. Fusionnez `style` dans `main`, puis relancez la même
-      fusion. Combien de parents a le commit de fusion ? Que dit la seconde commande ?],
-      [Les deux lignes ont divergé depuis B : le commit de fusion E a deux parents, D (`main`) puis C (`style`), et
-        `style` n’a pas bougé (#diapo(pdf, "fusion")[le commit de fusion]). La même fusion relancée affiche
-        « Already up to date » : C est déjà un ancêtre de `main`, il n’y a rien à fusionner, rien ne bouge.], "fusion"),
-    ([`faq` a deux commits depuis A ; `main` en a un. Rebasez `faq` sur `main`, puis fusionnez `faq` dans `main`. Que
+    ([Un commit sur `main`, la branche `contact` avec un commit, puis un commit de plus sur `main`. Que désignent `main`,
+      `contact` et `HEAD` ? Quels commits ont le même parent ?],
+      [`main` désigne D, `contact` C, et `HEAD` désigne `main` : chaque commit n’a avancé que la branche courante
+        (#diapo(pdf, "pointeurs")[un commit avance la branche courante]), `switch` n’a déplacé que `HEAD`. C et D ont
+        le même parent, B : l’histoire se sépare (#diapo(pdf, "graphe")[le graphe]).], "pointeurs"),
+    ([`main` n’a pas bougé depuis la création de `contact`, qui a un commit de plus. Fusionnez `contact` dans `main` :
+      quelle fusion, et le graphe gagne-t-il un commit ?],
+      [Avance rapide : `main` (B) est un ancêtre de `contact` (C), rien à combiner. `main` avance jusqu’à C, sans
+        nouveau commit : seul le pointeur bouge (#diapo(pdf, "fusion")[avance rapide ou commit de fusion]).], "avance-rapide"),
+    ([Un commit de plus sur chacune des branches `main` et `style`. Fusionnez `style` dans `main`, puis recommencez :
+      combien de parents a le commit de fusion ? Que dit la seconde fusion ?],
+      [Les lignes ont divergé depuis B : le commit de fusion E a deux parents, D (`main`) puis C (`style`) ; `style` n’a
+        pas bougé (#diapo(pdf, "fusion")[le commit de fusion]). Recommencée, la fusion affiche « Already up to date » :
+        C est déjà un ancêtre de `main`, rien ne bouge.], "fusion"),
+    ([`faq` a deux commits depuis A, `main` un. Rebasez `faq` sur `main`, puis fusionnez `faq` dans `main`. Que
       deviennent les commits de `faq` ? Quelle fusion obtient-on ?],
-      [Le rebasage rejoue B et C au-dessus de D : de nouveaux commits E et F, même changement, autre parent. B et C ne
-        sont plus sur aucune branche : en tirets, `git reflog` les retrouve
-        (#diapo(pdf, "rebasage")[rebaser : rejouer ses commits ailleurs] ; #diapo(pdf, "reflog")[reflog]). Ensuite
-        `main` est un ancêtre de `faq` : la fusion est une avance rapide, et l’historique reste une ligne.], "rebasage"),
-    ([Un commit B, défait trois fois par `reset` : `--soft`, `--mixed` puis `--hard`. Où est passé son fichier à chaque
-      fois, et comment revient-on à B ?],
-      [Les trois modes déplacent `main` de B à A ; B passe en tirets. `--soft` laisse `b.txt` dans l’index (`A  b.txt`),
-        `--mixed` le laisse dans le répertoire sans l’indexer (`?? b.txt`), `--hard` l’efface du répertoire : plus rien
-        dans `git status`. On revient à B par `reset --hard B`, que `git reflog` désigne
-        (#diapo(pdf, "reset-modes")[trois modes] ; #diapo(pdf, "reflog")[reflog]). Ici rien n’est perdu : le
-        fichier vivait dans un commit. Une modification jamais enregistrée, `--hard` l’efface pour de bon.], "reset"),
+      [Le rebasage rejoue B et C au-dessus de D : de nouveaux commits E et F, même changement, autre parent. B et C, sur
+        aucune branche, passent en tirets : `git reflog` les retrouve (#diapo(pdf, "rebasage")[rebaser] ;
+        #diapo(pdf, "reflog")[reflog]). `main` est alors un ancêtre de `faq` : avance rapide, historique en ligne.], "rebasage"),
+    ([Un commit B, défait par `reset` en `--soft`, `--mixed` puis `--hard`. Où est son fichier à chaque fois, et comment
+      revient-on à B ?],
+      [`main` revient de B à A, B passe en tirets. `--soft` garde `b.txt` indexé (`A  b.txt`), `--mixed` le garde non
+        indexé (`?? b.txt`), `--hard` l’efface (`git status` vide). `reset --hard B`, trouvé par `git reflog`, ramène à
+        B (#diapo(pdf, "reset-modes")[trois modes] ; #diapo(pdf, "reflog")[reflog]). Rien n’est perdu : le fichier est
+        dans B. Une modification jamais enregistrée, `--hard` l’efface pour de bon.], "reset"),
   )
 ]

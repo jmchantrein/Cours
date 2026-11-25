@@ -283,7 +283,7 @@
   const SCENARIOS = {
     "pointeurs": [
       ["Faire un commit sur main.", [c]],
-      ["Créer la branche contact, puis s'y placer.", [br("contact"), sw("contact")]],
+      ["Créer la branche contact et s'y placer.", [br("contact"), sw("contact")]],
       ["Faire un commit sur contact.", [c]],
       ["Revenir sur main et y faire un commit.", [sw("main"), c]],
     ],
@@ -303,7 +303,7 @@
       ["Relancer la même fusion.", [mg("style")]],
     ],
     "rebasage": [
-      ["Créer la branche faq, s'y placer et y faire deux commits.", [br("faq"), sw("faq"), c, c]],
+      ["Créer faq, s'y placer et y faire deux commits.", [br("faq"), sw("faq"), c, c]],
       ["Revenir sur main et y faire un commit.", [sw("main"), c]],
       ["Se placer sur faq et la rebaser sur main.", [sw("faq"), rb("main")]],
       ["Revenir sur main et fusionner faq.", [sw("main"), mg("faq")]],
@@ -311,9 +311,9 @@
     "reset": [
       ["Faire un commit « Brouillon » sur main.", [c]],
       ["reset --soft HEAD~1.", [rs("soft", "A")]],
-      ["Revenir au commit défait par reset --hard (retrouvé par git reflog).", [rs("hard", "B")]],
+      ["Revenir à B par reset --hard (git reflog).", [rs("hard", "B")]],
       ["reset --mixed HEAD~1.", [rs("mixed", "A")]],
-      ["Revenir de nouveau au commit défait par reset --hard.", [rs("hard", "B")]],
+      ["Revenir à B par reset --hard.", [rs("hard", "B")]],
       ["reset --hard HEAD~1.", [rs("hard", "A")]],
     ],
   };
