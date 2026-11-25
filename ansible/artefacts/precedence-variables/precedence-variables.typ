@@ -10,9 +10,9 @@
   titre: [Quelle valeur gagne ?],
   surtitre: [Ansible : automatiser les configurations · artefact],
   // La règle que l’artefact fait manipuler, toujours sous les yeux.
-  sous-titre: [Une variable déclarée à plusieurs endroits : d’abord la source, selon un ordre fixe. Dans l’inventaire,
-    un groupe enfant bat son parent ; à profondeur égale, la plus grande `ansible_group_priority`, puis l’ordre
-    alphabétique ; l’hôte bat ses groupes. Un `vars:` de play bat `host_vars`, et `-e` bat tout.
+  sous-titre: [Une variable déclarée à plusieurs endroits : d’abord la source, selon un ordre fixe. Entre groupes
+    d’une même source (ici, des fichiers `group_vars/`), un enfant bat son parent ; à profondeur égale, la plus grande
+    `ansible_group_priority`, puis l’ordre alphabétique ; l’hôte bat ses groupes. Un `vars:` de play bat `host_vars`, et `-e` bat tout.
     #diapo(pdf, "precedence-variables")[Précédence : un ordre fixe de sources]],
   sommaire: false,
   atelier: true,
@@ -30,8 +30,8 @@
         (#diapo(pdf, "precedence-variables")[l’ordre des 22 niveaux]).], "defaults"),
     ([`host_vars/srv1` vise un seul hôte, `vars:` du play les vise tous. Lequel l’emporte ? Et si on ajoute `-e` ?],
       [Le `vars:` du play : il est plus loin dans l’ordre fixe (niveau 12 contre l’inventaire, 3 à 10), bien qu’il soit moins
-        spécifique que `host_vars`. `-e` (niveau 22) bat tout. « Le plus spécifique gagne » n’est vrai qu’à l’intérieur de
-        l’inventaire (#diapo(pdf, "precedence-demo")[un `vars:` de play bat `host_vars`]).], "specifique"),
+        spécifique que `host_vars`. `-e` (niveau 22) bat tout. « Le plus spécifique gagne » n’est vrai qu’entre groupes d’une
+        même source, et pour l’hôte face à ses groupes (#diapo(pdf, "precedence-demo")[un `vars:` de play bat `host_vars`]).], "specifique"),
     ([`srv1` est dans deux groupes frères, `prod` et `nouveaux`, qui ont chacun un `group_vars`. Qui gagne ? Et avec `ansible_group_priority: 10` sur `nouveaux`, puis sur les deux ?],
       [`prod` : même profondeur, même priorité, l’ordre alphabétique décide et le dernier chargé gagne. Avec 10 sur
         `nouveaux`, c’est `nouveaux` : la priorité passe avant l’alphabet. Avec 10 sur les deux, l’égalité renvoie à

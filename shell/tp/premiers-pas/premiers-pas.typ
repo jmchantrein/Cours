@@ -84,7 +84,8 @@ Pour y entrer : cd /home/ada/atelier
 
 #indice(titre: [Indice : les arguments])[
   Le shell découpe la ligne en mots aux espaces, avant de lancer la commande ; les guillemets font d’un texte un
-  seul mot. Le cours y revient : #d("ordre-expansions")[Avant d’exécuter, Bash réécrit la ligne].
+  seul mot. Le cours y revient : #d("ordre-expansions")[Avant d’exécuter, Bash réécrit la ligne]. L’artefact
+  #link("../../artefacts/expansions-bash/")[Avant d’exécuter, Bash réécrit la ligne] montre les arguments que la commande reçoit.
 ]
 
 #corrige[

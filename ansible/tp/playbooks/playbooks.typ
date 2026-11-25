@@ -46,7 +46,7 @@ vous constatez l’idempotence, vous la cassez exprès, et vous la réparez
   $ cd ~/Cours/ansible/cm/labo
   $ export ANSIBLE_PROJET="$HOME/tp-ansible"
   $ docker compose up --detach --build
-  $ ./cabler-ssh.sh   # votre script de la séance 1, à côté de vos autres fichiers
+  $ ./cabler-ssh.sh   # votre script de la séance 1, rangé dans ce dossier, à côté de compose.yaml
   $ docker compose exec control-node bash
   ```]
   Dans `control-node`, le dossier de départ est `/etc/ansible` : c’est `~/tp-ansible` de votre machine. Toutes

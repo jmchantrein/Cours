@@ -120,7 +120,8 @@ Ansible n’a besoin que de SSH : ce câblage est le seul réglage des nœuds g�
 avec `ssh-copy-id` ou à l’installation de la machine ; ici, vous l’écrivez en script.
 
 #bloc(role: "question")[Consignes][
-  - Écrivez un script `cabler-ssh.sh`, à lancer depuis l’hôte, qui :
+  - Écrivez un script `cabler-ssh.sh`, à ranger dans le dossier du labo, à côté de `compose.yaml`, et à lancer
+    depuis là, sur l’hôte (`./cabler-ssh.sh`) ; il :
     + génère sur `control-node` une paire de clés ed25519, sans phrase secrète, s’il n’en a pas déjà une ;
     + dépose la clé publique dans le fichier des clés autorisées de `root`, sur chaque nœud géré, avec les
       droits qu’exige `sshd` ;
@@ -149,7 +150,8 @@ avec `ssh-copy-id` ou à l’installation de la machine ; ici, vous l’écrivez
   #f("cabler-ssh.sh")
   #terminal[```console
   $ cd ~/Cours/ansible/cm/labo
-  $ ../../tp/inventaire/corrige/cabler-ssh.sh
+  $ cp ../../tp/inventaire/corrige/cabler-ssh.sh .
+  $ ./cabler-ssh.sh
   managed-node-1
   managed-node-2
   ```]

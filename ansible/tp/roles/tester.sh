@@ -5,7 +5,7 @@
 #   --lint  (défaut) validations, sans démarrer le labo : docker compose config et
 #           docker build --check du labo, puis, dans l’image du nœud de contrôle (construite
 #           pour l’occasion) : ansible-playbook --syntax-check de chaque playbook, ansible-lint
-#           du projet (rôle compris), ansible-galaxy role init et l’arborescence du rôle.
+#           de site-web.yml (rôle compris), ansible-galaxy role init et l’arborescence du rôle.
 #   --up    --lint, puis le labo démarré (projet Compose tptest-ansible-roles), avec l’inventaire
 #           et ansible.cfg de la séance 1 : le rôle joué deux fois (le handler au premier
 #           passage seulement, la page servie sur le port 8080), le port surchargé par
@@ -45,10 +45,14 @@ titre "Séance 3 : validations"
 lint_scripts "$ici/tester.sh"
 copier "$ici/../inventaire/corrige" ansible.cfg inventory
 copier "$ici/corrige" roles site-web.yml site-local.yml
+# Les contre-exemples que la séance 2 laisse dans le dossier de l’étudiant : ansible-lint, sans argument, les refuserait.
+copier "$ici/../playbooks/corrige" write_hello_world_naif.yaml install-common-software-latest.yaml
 construire control-node || bilan
 syntaxe site-web.yml site-local.yml
-# shellcheck disable=SC2119 # sans contre-exemple à exclure
-lint_projet
+lint_playbook site-web.yml
+refuse() { ! "$@" > /dev/null 2>&1; }
+verifier "ansible-lint sans argument refuse les contre-exemples de la séance 2 (d’où « site-web.yml » à l’étape 5)" \
+  refuse dans_controle ansible-lint --offline
 verifier "signature de ansible_managed lue dans group_vars/all.yaml" test -n "$signature"
 verifier "ansible-galaxy role init : defaults files handlers meta tasks templates tests vars, README.md" \
   test "$(dans_controle sh -c 'cd /tmp && ansible-galaxy role init --init-path /tmp/essai nginx_hello_world > /dev/null \

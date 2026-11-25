@@ -372,7 +372,7 @@
         ```
       ]
       - `hosts` : un motif ; `tasks` : dans l’ordre
-      - Une tâche : un `name`, un module, ses paramètres
+      - Une tâche : un `name`, un module, ses paramètres ; `{{ welcome_msg }}` est une variable, introduite plus loin
     ],
     bloc(role: "pratique", poids: 1.1)[Terminal][
       #terminal(titre: none, taille: px(18))[
@@ -669,7 +669,7 @@
 )
 
 == Précédence : un ordre fixe de sources <precedence-variables>
-#let _note = [Modèle énoncé ici, repris par l’artefact « précédence » : la liste de la documentation, « Understanding variable precedence », 22 entrées du plus faible au plus fort (la première, -u et autres options de connexion, n’est pas une variable). Regroupées ici : 3 à 10 \= l’inventaire, dans l’ordre groupes du fichier, group\_vars/all de l’inventaire puis du playbook, group\_vars/\* de l’inventaire puis du playbook, hôtes du fichier, host\_vars/\* de l’inventaire puis du playbook ; 11 \= facts et set\_fact mis en cache ; 12 à 14 \= vars, vars\_prompt, vars\_files du play ; 16 \= vars d’un bloc ; 18 à 21 \= include\_vars, register et set\_fact, paramètres de rôle, paramètres d’include. La documentation résume : priorité à ce qui est défini plus récemment, plus activement, avec une portée plus explicite. « Le plus spécifique gagne », dit souvent, n’est vrai qu’à l’intérieur de l’inventaire (all < parent < enfant < hôte). Faux en général : un vars: de play vise tous les hôtes et bat pourtant host\_vars ; les defaults/ d’un rôle, propres à ce rôle, perdent contre tout. Dans un même niveau, la dernière définition chargée gagne. Comportement par défaut hash\_behaviour \= replace : un dictionnaire est remplacé en entier, pas fusionné. Démonstration : diapositive suivante.]
+#let _note = [Modèle énoncé ici, repris par l’artefact « précédence » : la liste de la documentation, « Understanding variable precedence », 22 entrées du plus faible au plus fort (la première, -u et autres options de connexion, n’est pas une variable). Regroupées ici : 3 à 10 \= l’inventaire, dans l’ordre groupes du fichier, group\_vars/all de l’inventaire puis du playbook, group\_vars/\* de l’inventaire puis du playbook, hôtes du fichier, host\_vars/\* de l’inventaire puis du playbook ; 11 \= facts et set\_fact mis en cache ; 12 à 14 \= vars, vars\_prompt, vars\_files du play ; 16 \= vars d’un bloc ; 18 à 21 \= include\_vars, register et set\_fact, paramètres de rôle, paramètres d’include. La documentation résume : priorité à ce qui est défini plus récemment, plus activement, avec une portée plus explicite. « Le plus spécifique gagne », dit souvent, n’est vrai qu’entre groupes d’une même source (all < parent < enfant), et pour l’hôte face à ses groupes. Faux entre sources : une variable de groupe écrite dans le fichier d’inventaire (niveau 3) perd contre un group\_vars/ de n’importe quel groupe, même all (niveaux 4 à 7) ; rejoué dans le labo : enfant dans le fichier contre parent dans group\_vars/parent.yaml, c’est le parent qui gagne. Faux aussi : un vars: de play vise tous les hôtes et bat pourtant host\_vars ; les defaults/ d’un rôle, propres à ce rôle, perdent contre tout. Dans un même niveau, la dernière définition chargée gagne. Comportement par défaut hash\_behaviour \= replace : un dictionnaire est remplacé en entier, pas fusionné. Démonstration : diapositive suivante.]
 #slide(repeat: 4, self => {
   let (uncover,) = utils.methods(self)
   let niveaux = (
@@ -695,12 +695,12 @@
     stack(spacing: px(20),
       bloc-anime(bloc(role: "retenir", taille: px(24))[La règle exacte][
         - D’abord la *source* : un ordre fixe de 22 niveaux
-        - Dans l’inventaire : `all` < groupe parent < groupe enfant < hôte
+        - Entre groupes d’une même source : `all` < parent < enfant ; l’hôte bat tous ses groupes
         - À même niveau : la dernière définition chargée gagne
       ], 1, uncover),
     ),
   )
-  uncover("4-", place(bottom + right, dy: px(-8), block(width: px(764), note(role: "precaution", taille: px(22))[« Le plus spécifique gagne » : vrai dans l’inventaire seulement. Un `vars:` de play, commun à tous les hôtes, bat `host_vars`.])))
+  uncover("4-", place(bottom + right, dy: px(-8), block(width: px(764), note(role: "precaution", taille: px(22))[« Le plus spécifique gagne » : vrai entre groupes d’une même source seulement : `group_vars/` bat les variables de groupe du fichier d’inventaire, et un `vars:` de play bat `host_vars`.])))
   source[#link("https://docs.ansible.com/ansible/latest/playbook_guide/playbooks_variables.html#understanding-variable-precedence")[docs.ansible.com, Understanding variable precedence]]
   utils.speaker-note(self: self, _note)
 })
@@ -753,7 +753,7 @@
 )
 
 == Entre groupes : profondeur, puis priorité, puis alphabet <precedence-groupes>
-#let _note = [Règles de la page « How variables are merged » (guide de l’inventaire), rejouées avec ansible-inventory --host, sans connexion. Fichiers : group\_vars/mon\_groupe.yaml (welcome\_msg: "from mon\_groupe") et group\_vars/web\_server.yaml (welcome\_msg: "from web\_server") ; managed-node-1 est dans les deux groupes. Cas 1 : deux groupes de même niveau, fusionnés par ordre alphabétique, le dernier chargé gagne : web\_server. Cas 2 : ansible\_group\_priority (1 par défaut ; plus grand \= chargé plus tard) remplace l’ordre alphabétique. Il ne se règle que dans la source d’inventaire : écrit dans group\_vars/mon\_groupe.yaml, il est ignoré (rejoué : web\_server gagne encore). Cas 3 : un groupe enfant bat son parent, quel que soit son nom. Plusieurs sources d’inventaire : fusionnées dans l’ordre des -i, ou par ordre alphabétique des fichiers d’un répertoire.]
+#let _note = [Règles de la page « How variables are merged » (guide de l’inventaire), rejouées avec ansible-inventory --host, sans connexion. Fichiers : group\_vars/mon\_groupe.yaml (welcome\_msg: "from mon\_groupe") et group\_vars/web\_server.yaml (welcome\_msg: "from web\_server") ; managed-node-1 est dans les deux groupes. Cas 1 : deux groupes de même niveau, fusionnés par ordre alphabétique, le dernier chargé gagne : web\_server. Cas 2 : ansible\_group\_priority (1 par défaut ; plus grand \= chargé plus tard) remplace l’ordre alphabétique. Il ne se règle que dans la source d’inventaire : écrit dans group\_vars/mon\_groupe.yaml, il est ignoré (rejoué : web\_server gagne encore). Cas 3 : un groupe enfant bat son parent, quel que soit son nom. Ces règles valent entre groupes d’une même source (ici, les group\_vars/) ; entre sources, l’ordre fixe l’emporte : une variable de groupe écrite dans le fichier d’inventaire perd contre le group\_vars/ de n’importe quel groupe, même all (rejoué dans le labo : enfant dans le fichier contre parent dans group\_vars/parent.yaml, ou contre group\_vars/all.yaml, la valeur de group\_vars/ gagne ; entre groupes d’une même source, all < parent < enfant se vérifie dans le fichier comme dans group\_vars/). Plusieurs sources d’inventaire : fusionnées dans l’ordre des -i, ou par ordre alphabétique des fichiers d’un répertoire.]
 #anime(
   rang(
     bloc(role: "pratique", poids: 1.25)[Terminal · managed-node-1 dans deux groupes][
@@ -777,7 +777,7 @@
         ```
       ]
     ],
-    bloc(role: "retenir", taille: px(25))[Dans l’inventaire][
+    bloc(role: "retenir", taille: px(25))[Entre groupes d’une même source][
       - Un groupe enfant bat son parent
       - À même profondeur : la plus grande `ansible_group_priority`
       - À priorité égale : ordre alphabétique, le dernier gagne
@@ -838,7 +838,7 @@
 )
 
 == Gabarits Jinja2 : un fichier à trous <gabarits>
-#let _note = [Fichiers du rôle du TP (roles/nginx\_hello\_world/templates/). Le module template lit le gabarit sur le nœud de contrôle, remplace les expressions Jinja2 par les valeurs des variables de l’hôte (variables, facts), et dépose le résultat sur le nœud, s’il diffère du fichier en place : idempotent comme copy. ansible\_managed vaut « Ansible managed » par défaut ; on la personnalise comme toute variable (le TP le fait dans group\_vars/all.yaml) ; la clé ansible\_managed de ansible.cfg est dépréciée depuis ansible-core 2.19. Le gabarit n’a pas de ligne listen \[::\] : le noyau de la machine de démonstration n’a pas d’IPv6, et nginx refuserait alors de démarrer (TP, séance 3, étape 3). Jinja2 offre aussi des filtres (\{\{ nom | upper \}\}), des conditions et des boucles : au-delà de ce cours. Sortie réelle : la commande ad hoc lit le fichier déployé (module command, d’où CHANGED).]
+#let _note = [Fichiers du rôle du TP (roles/nginx\_hello\_world/templates/). Le module template lit le gabarit sur le nœud de contrôle, remplace les expressions Jinja2 par les valeurs des variables de l’hôte (variables, facts), et dépose le résultat sur le nœud, s’il diffère du fichier en place : idempotent comme copy. ansible\_managed vaut « Ansible managed » par défaut ; on la personnalise comme toute variable (le TP le fait dans group\_vars/all.yaml) ; la clé ansible\_managed de ansible.cfg est dépréciée depuis ansible-core 2.19. Le gabarit n’a pas de ligne listen \[::\] : il n’écoute qu’en IPv4, pour fonctionner aussi sur un hôte sans IPv6, où nginx refuserait de démarrer (TP, séance 3, étape 3). Jinja2 offre aussi des filtres (\{\{ nom | upper \}\}), des conditions et des boucles : au-delà de ce cours. Sortie réelle : la commande ad hoc lit le fichier déployé (module command, d’où CHANGED).]
 #anime(
   rang(
     bloc(role: "pratique")[`etc_nginx_sites_available_default.j2`][
@@ -850,7 +850,9 @@
                 listen {{ nginx_hello_world_port }} default_server;
 
                 root /var/www/html;
+
                 index index.html index.htm index.nginx-debian.html;
+
                 server_name _;
 
                 location / {
@@ -985,8 +987,25 @@
 #let _note = [Sortie réelle d’ansible-lint 26.11.0 (option --offline : sans téléchargement), sur un playbook qui reprend deux erreurs du cours ; une ligne vide et le texte d’aide sont retirés. package-latest : state: latest met à jour à chaque passage, le résultat dépend du jour (profil safety, étiquette idempotency) ; préférer present, et des versions épinglées mises à jour délibérément. no-changed-when : command ou shell sans garde. Une dérogation s’écrit et se versionne : skip\_list dans .ansible-lint, ou un commentaire « \# noqa: package-latest » sur la ligne. Ansible Vault (ansible-vault encrypt, puis --ask-vault-pass) chiffre un fichier de variables secrètes dans le dépôt. ansible-playbook --check --diff simule et montre les écarts sans rien modifier (un module qui ne prend pas en charge ce mode est sauté). Molecule teste un rôle dans des instances jetables : hors du cadre de ce cours (le TP y renvoie, « Pour aller plus loin »). Sources : la page « Tips and tricks » de la documentation, et la liste des règles d’ansible-lint.]
 #anime(
   rang(
+    bloc(role: "pratique", poids: 0.95)[`preparer-naif.yml`][
+      #terminal(titre: none, taille: px(17))[
+        ```
+        ---
+        - name: Préparer les nœuds
+          hosts: all
+          tasks:
+            - name: Installer tree
+              ansible.builtin.apt:
+                name: tree
+                state: latest
+
+            - name: Noter la date du déploiement
+              ansible.builtin.shell: date > /srv/site/deploiement.txt
+        ```
+      ]
+    ],
     bloc(role: "pratique", poids: 1.15)[Terminal][
-      #terminal(titre: none, taille: px(18))[
+      #terminal(titre: none, taille: px(17))[
         ```
         $ ansible-lint --offline preparer-naif.yml
         WARNING  Listing 2 violation(s) that are fatal
@@ -1003,17 +1022,27 @@
         ```
       ]
     ],
-    bloc(role: "retenir", taille: px(23))[À faire][
+  ),
+  source-de: [#link("https://docs.ansible.com/ansible/latest/tips_tricks/ansible_tips_tricks.html")[docs.ansible.com, General tips] · #link("https://docs.ansible.com/projects/lint/rules/")[ansible-lint, Rules]],
+  note: _note,
+)
+
+== Bonnes pratiques : écrire, puis contrôler <bonnes-pratiques-liste>
+#anime(
+  rang(
+    bloc(role: "retenir")[À faire][
       - Un `name` par tâche, le nom complet du module (`ansible.builtin.apt`)
       - Un `state` explicite ; `present` plutôt que `latest`
       - Un module dédié plutôt que `shell` ou `command`
+    ],
+    bloc(role: "retenir")[Avant d’appliquer][
       - Le tout dans Git, contrôlé par `ansible-lint`
       - `--check --diff` avant d’appliquer ; un second passage à `changed=0`
       - Les secrets chiffrés par Ansible Vault
     ],
   ),
   source-de: [#link("https://docs.ansible.com/ansible/latest/tips_tricks/ansible_tips_tricks.html")[docs.ansible.com, General tips] · #link("https://docs.ansible.com/projects/lint/rules/")[ansible-lint, Rules]],
-  note: _note,
+  note: [Les bonnes pratiques de « General tips » que le cours a mises en œuvre : un nom et un module de nom complet par tâche, un état explicite, un module dédié plutôt que shell ou command (diapositives sur l’idempotence), Git et ansible-lint (TP, séance 2), --check --diff, second passage à changed=0. Ansible Vault sort du cadre du cours : les secrets s’y chiffrent, voir la documentation.],
 )
 
 // ======================================================================
@@ -1027,7 +1056,7 @@
     - L’inventaire range les hôtes en groupes ; un motif (`:`, `:&`, `:!`) choisit les hôtes visés
     - Un module agit, un playbook enchaîne des tâches ; `changed` si le nœud est modifié, `ok` sinon
     - Idempotence : second passage à `changed=0` ; `shell` et `command` en dernier recours, gardés
-    - Précédence : un ordre fixe de sources ; dans l’inventaire, enfant > parent, puis priorité, puis alphabet
+    - Précédence : un ordre fixe de sources ; entre groupes d’une même source, enfant > parent, puis priorité, puis alphabet
     - Gabarits Jinja2, handlers notifiés, rôles réutilisables ; `ansible-lint` et Git pour la qualité
   ]),
   note: [Récapitulatif, une idée par clic, dans l’ordre du cours.],

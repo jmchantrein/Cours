@@ -338,7 +338,8 @@ $ shellcheck a-relire.sh
 #indice(titre: [Indice : lire le rapport])[
   Chaque avertissement a un code (SC2045, SC2086…) et une page d’explication sur shellcheck.net. SC2045 :
   la sortie de `ls` se découpe en mots, d’où #d("for-ls")[for sur \$(ls) : un nom à espace se coupe en deux]. Un
-  motif (`"$dossier"/*`) donne un mot par chemin.
+  motif (`"$dossier"/*`) donne un mot par chemin ; l’artefact
+  #link("../../artefacts/expansions-bash/")[Avant d’exécuter, Bash réécrit la ligne] le montre pas à pas.
 ]
 
 #corrige[

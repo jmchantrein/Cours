@@ -1,6 +1,8 @@
 // precedence-variables.js — simulateur de « Quelle valeur gagne ? », selon le modèle du cours
 // (diapos <precedence-variables>, <precedence-demo> et <precedence-groupes>) :
 // - la source d'abord : un ordre fixe de niveaux (documentation, « Understanding variable precedence ») ;
+//   le simulateur ne traite que des variables de groupe écrites dans des fichiers group_vars/ (une variable de groupe
+//   écrite dans le fichier d'inventaire serait au niveau 3 et perdrait contre eux : non simulé) ;
 //   dans l'inventaire, les fichiers group_vars se chargent par (profondeur du groupe, ansible_group_priority, nom),
 //   puis host_vars : le dernier chargé gagne ;
 // - un groupe enfant bat son parent ; à profondeur égale, la plus grande priorité (1 par défaut) ; à priorité
@@ -129,12 +131,12 @@
     if (!r.source) {
       p.push(`Aucune source ne définit ${VARIABLE} pour ${HOTE} : la variable est indéfinie.`);
     } else {
-      p.push(`${HOTE} voit ${VARIABLE} = « ${r.valeur} » : ${nomSource(r.source)} (niveau ${r.source.niveau}) gagne, la dernière des ${r.classement.length} source${r.classement.length > 1 ? "s" : ""} présente${r.classement.length > 1 ? "s" : ""}.`);
+      p.push(`${HOTE} voit ${VARIABLE} = « ${r.valeur} » : ${nomSource(r.source)} (niveau ${r.source.niveau}) gagne, ${r.classement.length > 1 ? `la dernière des ${r.classement.length} sources présentes` : "la seule source présente"}.`);
       const dernier = r.paires.at(-1);
       if (dernier) p.push(`${nomSource(dernier.fort)} bat ${nomSource(dernier.faible)} : ${phraseRegle(dernier)}`);
       const groupes = r.classement.filter(s => s.niveau === "3–10" && s.id !== "host");
       if (groupes.length > 1) {
-        p.push(`Groupes chargés du premier au dernier, par (profondeur, priorité, nom) : ${groupes.map(g => `${g.groupe ?? "all"} (${g.profondeur}, ${g.priorite})`).join(", ")}.`);
+        p.push(`Fichiers group_vars/ des groupes, chargés du premier au dernier par (profondeur, priorité, nom) : ${groupes.map(g => `${g.groupe ?? "all"} (${g.profondeur}, ${g.priorite})`).join(", ")}.`);
       }
     }
     for (const nom of r.ignores) p.push(`group_vars/${nom} est ignoré : ${HOTE} n’est pas dans le groupe ${nom}.`);
@@ -286,7 +288,7 @@
       el("span", { class: "source-texte" }, el("code", {}, SOURCES[id].nom)));
     racine.replaceChildren(
       el("section", { class: "zone-groupes cadre" },
-        el("div", { class: "titre-zone" }, el("h2", {}, `Groupes de ${HOTE} (all est la racine)`),
+        el("div", { class: "titre-zone" }, el("h2", {}, `Groupes de ${HOTE} · variables dans group_vars/ (all est la racine)`),
           bouton("Remettre à zéro", () => { moteur.fermer(); etat = depart(); phase = 3; appliquer(); dessinerResultats(); }, { class: "zero" })),
         tableau),
       el("section", { class: "zone-sources cadre" },

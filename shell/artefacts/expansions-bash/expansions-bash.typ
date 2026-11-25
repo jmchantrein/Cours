@@ -10,9 +10,8 @@
   titre: [Avant d’exécuter, Bash réécrit la ligne],
   surtitre: [Shell : Bash, sed et awk · artefact],
   // La règle que l’artefact fait manipuler, toujours sous les yeux.
-  sous-titre: [Bash coupe la ligne en mots, puis développe chaque mot : accolades, tilde, variables et substitutions,
-    découpage en mots, chemins ; il retire enfin les guillemets. Les guillemets doubles empêchent le découpage et les chemins,
-    les simples tout. La commande reçoit la liste d’arguments qui en résulte.
+  sous-titre: [Bash découpe la ligne en mots, développe chaque mot, puis retire les guillemets : la commande reçoit la liste d’arguments
+    qui en résulte. Les guillemets doubles empêchent le découpage et les chemins, les simples tout.
     #diapo(pdf, "ordre-expansions")[Avant d’exécuter, Bash réécrit la ligne] ·
     #diapo(pdf, "guillemets")[Les guillemets décident des expansions]],
   sommaire: false,
@@ -51,7 +50,7 @@
         guillemets trois arguments
         (#diapo(pdf, "ordre-expansions")[l’ordre des expansions]).], "ligne"),
   )
-  #note(role: "precaution")[Simulé : mots, guillemets simples, doubles et `$'…'`, antislash, `$nom`, `${nom}`, `$(echo …)`, accolades `{a,b}` et
-    `{1..3}`, tilde seul, `*` et `?` sur les fichiers listés, `IFS` par défaut, Bash 5.2 en script. Le reste (arithmétique, `${x:-…}`, `$@`, tubes,
-    redirections, `[…]`…) est signalé « Limitation du simulateur ».]
+  #note(role: "precaution")[Le simulateur suit le sous-ensemble de Bash vu en cours (mots, guillemets, `$nom`, `${nom}`, `$(echo …)`,
+    accolades, tilde, `*` et `?`). Tout le reste (arithmétique, `${x:-…}`, `$@`, tubes, `[…]`…) est signalé « Limitation du simulateur ».
+    Dans le chemin, un fond jaune marque le résultat d’une expansion, un trait ce que des guillemets protègent, `·` une espace, `∅` un argument vide.]
 ]

@@ -549,7 +549,7 @@
       case "expansion":
         if (n.commande) return court ? `${code(n.src)} → ${guill(n.valeur)}`
           : `${code(n.src)} : la commande s’exécute, ${code("echo")} reçoit ${pl(n.commande.argv.length, "argument")}${n.commande.argv.length ? " (" + liste(n.commande.argv) + ")" : ""} et sa sortie ${guill(n.valeur)} prend la place de l’écriture${n.q === "d" ? " ; entre guillemets doubles, la substitution s’exécute" : ""}`;
-        if (n.def === false) return court ? `${code(n.src)} : non définie, vide` : `${code(n.src)} n’est pas définie : sa valeur est vide`;
+        if (n.def === false) return court ? `${code(n.src)} : non définie, vide` : `${code(n.src)} : variable non définie, donc vide`;
         return court ? `${code(n.src)} → ${guill(n.valeur)}` : `${code(n.src)} devient ${guill(n.valeur)}${n.q === "d" ? " (entre guillemets doubles, le dollar agit)" : ""}`;
       case "expansion-gardee": return court ? `${code(n.ce)} : protégé (${n.par})`
         : n.par === "antislash" ? `${code(n.ce)} : l’antislash protège le dollar, qui reste un caractère ordinaire`
@@ -565,7 +565,6 @@
       default: return "";
     }
   }
-  const ETAPES_NOM = { 2: "accolades", 3: "tilde, $, $( )", 4: "découpage", 5: "chemins", 6: "guillemets" };
   const grasse = n => n.genre === "expansion" && n.q !== "d" && !/[ \t\n*?]/.test(n.valeur) && n.def !== false && !n.commande;
   // Les phrases qui expliquent le résultat ; `bref` : celles d'une recette (sans les faits sans conséquence).
   function expliquer(res, bref = false) {
@@ -576,15 +575,24 @@
     const notes = res.notes.filter(n => !(bref && grasse(n)));
     // Une phrase par étape : les faits de l'étape, séparés par des points-virgules.
     for (const etape of [2, 3, 4, 5]) {
-      const faits = notes.filter(n => n.etape === etape).map(n => phraseNote(n, false)).filter(Boolean);
-      if (faits.length) p.push(`Étape ${etape} (${ETAPES_NOM[etape]}) : ${faits.join(" ; ")}.`);
+      // Les faits identiques de plusieurs mots (les mots d'une même accolade) ne se disent qu'une fois.
+      const groupes = new Map();
+      for (const n of notes.filter(n => n.etape === etape)) {
+        const corps = phraseCorps(n, false);
+        if (!corps) continue;
+        const g = groupes.get(corps) ?? { n, mots: [] };
+        if (n.mot !== undefined && n.mot !== n.src && n.mot !== n.ce && !g.mots.includes(n.mot)) g.mots.push(n.mot);
+        groupes.set(corps, g);
+      }
+      const faits = [...groupes].map(([corps, g]) => g.mots.length ? `dans ${g.mots.map(code).join(" et ")}, ${corps}` : corps);
+      if (faits.length) p.push(`Étape ${etape} : ${faits.join(" ; ")}.`);
     }
     if (res.marquesRetirees.some(m => m.m)) {
       const quelles = [...new Set(res.marquesRetirees.filter(m => m.m).map(m => m.c === "\\" ? "antislash" : m.c === "'" && m.q === "s" ? "guillemets simples" : m.c === "$'" || m.q === "a" ? "$'…'" : "guillemets doubles"))];
-      if (!bref) p.push(`Étape 6 (guillemets) : retrait des ${quelles.join(", ")} : la commande ne les reçoit pas.`);
+      if (!bref) p.push(`Étape 6 : ${quelles.join(", ")} retirés.`);
     }
     const n = res.argv.length;
-    p.push(`${code(res.commande)} reçoit ${n === 0 ? "aucun argument" : `${pl(n, "argument")} : ${res.argv.slice(0, 8).map(guill).join(" · ")}${n > 8 ? " · …" : ""}`}${res.etapes[0].mots.length !== n ? ` (la ligne avait ${pl(res.etapes[0].mots.length, "mot")} après la commande)` : ""}.`);
+    p.push(`${code(res.commande)} reçoit ${n === 0 ? "aucun argument" : `${pl(n, "argument")} : ${res.argv.slice(0, 8).map(guill).join(" · ")}${n > 8 ? " · …" : ""}`}.`);
     return p;
   }
 
@@ -610,7 +618,8 @@
       ["Écrire $motif, sans guillemets.", P + "$motif"], ["Entourer $motif de guillemets doubles.", P + '"$motif"']],
     vide: [["Écrire cd $dossier.", "cd $dossier"], ["Entourer $dossier de guillemets doubles.", 'cd "$dossier"'],
       ["Tester [ $nom = \"Etudiant\" ].", '[ $nom = "Etudiant" ]'], ["Entourer $nom de guillemets doubles.", '[ "$nom" = "Etudiant" ]']],
-    accolades: [["Écrire les quatre variables de la diapo, entre guillemets doubles.", P + `"$fichierext" "\${fichier}.\${ext}" "$chemin_backup" "\${chemin}_backup"`],
+    accolades: [["Écrire $fichierext et ${fichier}.${ext}, entre guillemets doubles.", P + `"$fichierext" "\${fichier}.\${ext}"`],
+      ["Écrire $chemin_backup et ${chemin}_backup, entre guillemets doubles.", P + `"$chemin_backup" "\${chemin}_backup"`],
       ["Écrire ${p}{a,b}, sans guillemets.", P + "${p}{a,b}"], ["Entourer ${p} de guillemets doubles.", P + `"\${p}"{a,b}`]],
     ligne: [["Écrire la ligne de la diapo, qui emploie les six étapes.", P + `~ {1..2} $p "$p" *.txt "*.txt" "$(echo ok)"`],
       ["Écrire \"$(echo *.txt)\" (question 5 de l’exercice).", P + `"$(echo *.txt)"`], ["Retirer les guillemets autour de $(echo *.txt).", P + "$(echo *.txt)"]],
@@ -709,7 +718,7 @@
   }
 
   const modifie = () => { phase = 6; appliquer(); dessiner(); aLaMain(); };
-  const aLaMain = () => moteur.libre(expliquer(resultat(), true));
+  const aLaMain = () => moteur.libre(expliquer(resultat(), true).map(riche));   // le moteur accepte des nœuds : le code s'y affiche en code
   function batir() {
     const champLigne = el("input", { type: "text", spellcheck: "false", autocomplete: "off", autocapitalize: "off", "aria-label": "La ligne de commande", "data-cle": "ligne",
       placeholder: "ex. printf '[%s]\\n' $p", oninput: ev => { etat.ligne = ev.target.value; modifie(); } });
@@ -746,7 +755,7 @@
   const regler = (titre, changements) => async () => {
     const moi = ++tour;
     const decrits = [];
-    if (changements.ligne !== undefined && changements.ligne !== etat.ligne) decrits.push(`La ligne écrite : ${changements.ligne}.`);
+    if (changements.ligne !== undefined && changements.ligne !== etat.ligne) decrits.push(`La ligne écrite : ${code(changements.ligne)}.`);
     phase = 0; Object.assign(etat, changements); appliquer(); dessiner();
     for (const c of racine.querySelectorAll("[data-cle=ligne]")) c.classList.add("signale");
     for (let p = 1; p <= 6; p++) {
@@ -755,7 +764,7 @@
       phase = p; dessiner();
     }
     for (const c of racine.querySelectorAll(".signale")) c.classList.remove("signale");
-    return [...decrits, ...expliquer(resultat(), true)];
+    return [...decrits, ...expliquer(resultat(), true)].map(riche);
   };
   const RECETTES = Object.fromEntries(Object.entries(RECETTES_DONNEES).map(([nom, etapes]) =>
     [nom, etapes.map(([titre, ligne]) => [titre, regler(titre, { ligne })])]));
@@ -766,7 +775,7 @@
     for (const c of racine.querySelectorAll(".signale")) c.classList.remove("signale");
     appliquer(); dessiner();
   }
-  const moteur = recettes({ recettes: RECETTES, depart: [`Départ : la ligne ${code(LIGNE_DEPART)}, avec les variables et les fichiers de départ.`],
+  const moteur = recettes({ recettes: RECETTES, depart: [riche(`Départ : la ligne ${code(LIGNE_DEPART)}, avec les variables et les fichiers de départ.`)],
     titreLibre: "Votre ligne", pause: () => PAUSE,
     remettre: () => { etat = depart(); phase = 6; dessiner(); }, capturer, retablir, afficher: appliquer });
 

@@ -45,7 +45,7 @@ et #link("../playbooks/index.html")[playbooks].
   $ cd ~/Cours/ansible/cm/labo
   $ export ANSIBLE_PROJET="$HOME/tp-ansible"
   $ docker compose up --detach --build
-  $ ./cabler-ssh.sh   # votre script de la séance 1, à côté de vos autres fichiers
+  $ ./cabler-ssh.sh   # votre script de la séance 1, rangé dans ce dossier, à côté de compose.yaml
   $ docker compose exec control-node bash
   ```]
   Dans `control-node`, le dossier de départ est `/etc/ansible` : c’est `~/tp-ansible` de votre machine. Toutes
@@ -202,9 +202,9 @@ et #link("../playbooks/index.html")[playbooks].
   Le préfixe `nginx_hello_world_` évite les collisions : toutes les variables d’un playbook vivent dans le même
   espace de noms, et deux rôles qui déclareraient chacun `port` s’écraseraient. Le fichier d’origine de Debian
   contient aussi une ligne `listen [::]:80 default_server;`, pour l’IPv6. Sur une machine dont le noyau n’a pas
-  IPv6, comme celles du labo, nginx refuse alors de démarrer
+  IPv6, nginx refuse alors de démarrer
   (`socket() [::]:8080 failed (97: Address family not supported by protocol)`) : le gabarit ne garde que
-  l’écoute en IPv4.
+  l’écoute en IPv4, pour fonctionner aussi sur un hôte sans IPv6.
 ]
 
 = Étape 4 : la page, les tâches et le handler <etape-4>
@@ -258,7 +258,9 @@ et #link("../playbooks/index.html")[playbooks].
 #bloc(role: "question")[Consignes][
   - Écrivez `site-web.yml` : un play qui vise le groupe `web_server` et applique le rôle `nginx_hello_world` avec
     `ansible.builtin.import_role`.
-  - Lintez le projet avec `ansible-lint --offline` : sans argument, il lit tout le dossier, rôle compris.
+  - Lintez le playbook avec `ansible-lint --offline site-web.yml` : il lit aussi le rôle qu’il importe. Sans
+    argument, `ansible-lint` lirait tout le dossier, donc aussi les contre-exemples volontairement fautifs de la
+    séance 2 (`write_hello_world_naif.yaml`, `install-common-software-latest.yaml`, le brouillon), et les refuserait.
   - Jouez le playbook. Combien de tâches changent ? Le handler tourne-t-il ?
   - Lisez la page avec `curl` depuis `control-node`. Sur quel port ? Que contient la première ligne du fichier
     déployé sur le nœud ?
@@ -279,7 +281,7 @@ et #link("../playbooks/index.html")[playbooks].
 #corrige[
   #f("site-web.yml")
   #terminal[```console
-  $ ansible-lint --offline
+  $ ansible-lint --offline site-web.yml
   Passed: 0 failure(s), 0 warning(s) in 8 files processed of 10 encountered. Last profile that met the validation criteria was 'production'.
   $ ansible-playbook site-web.yml
   PLAY [Installer les serveurs web de l’infrastructure] **************************

@@ -164,6 +164,15 @@ lint_projet() {
   fi
 }
 
+# ansible-lint sur un playbook et ce qu’il importe (le rôle compris), sans lire le reste du dossier.
+lint_playbook() { # $1 playbook
+  if dans_controle ansible-lint --offline "$1" > "$travail/lint.log" 2>&1; then
+    ok "ansible-lint $1"
+  else
+    ko "ansible-lint $1"; tail -n 30 "$travail/lint.log"
+  fi
+}
+
 # Un contre-exemple : ansible-lint doit le refuser, avec exactement ces règles.
 lint_refuse() { # $1 fichier, puis les règles attendues
   local f="$1"; shift
