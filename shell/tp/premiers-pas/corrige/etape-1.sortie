@@ -1,0 +1,8 @@
+$ whoami
+ada
+$ echo Bonjour
+Bonjour
+$ echo Bonjour     tout     le     monde
+Bonjour tout le monde
+$ echo "Bonjour     tout     le     monde"
+Bonjour     tout     le     monde

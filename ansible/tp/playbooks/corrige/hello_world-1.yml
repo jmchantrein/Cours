@@ -1,0 +1,10 @@
+---
+- name: Hello world
+  hosts: all
+  tasks:
+    - name: Pinguer les nœuds gérés
+      ansible.builtin.ping:
+
+    - name: Afficher hello world
+      ansible.builtin.debug:
+        msg: hello world

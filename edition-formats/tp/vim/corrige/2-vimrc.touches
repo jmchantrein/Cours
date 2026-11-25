@@ -1,0 +1,7 @@
+" chercher le 4 : le curseur se pose dessus
+/4<CR>
+" le remplacer par un 2, sans passer en insertion
+r2
+" ouvrir une ligne en dessous, l’écrire, revenir au mode normal
+osyntax on<Esc>
+:wq<CR>

@@ -1,0 +1,38 @@
+$ cd ~/fichiers
+# 1. Une archive, puis la même compressée
+$ tar -cf journaux.tar journaux
+$ tar -czf journaux.tar.gz journaux
+$ ls -l journaux/serveur.log journaux.tar journaux.tar.gz
+-rw-rw-r-- 1 ada ada 81920 Nov 25 10:54 journaux.tar
+-rw-rw-r-- 1 ada ada  6578 Nov 25 10:54 journaux.tar.gz
+-rw-r--r-- 1 ada ada 72375 Sep  1 08:00 journaux/serveur.log
+$ tar -tzf journaux.tar.gz
+journaux/
+journaux/serveur.log
+# 2. Extraire ailleurs, puis comparer à l'original
+$ mkdir restauration
+$ tar -xzf journaux.tar.gz -C restauration
+$ diff -r journaux restauration/journaux && echo "identiques"
+identiques
+# 3. Compresser un seul fichier, en gardant l'original (-k)
+$ gzip -k journaux/serveur.log
+$ ls journaux
+serveur.log  serveur.log.gz
+$ zcat journaux/serveur.log.gz | tail -n 1
+2026-11-01 12:05:00 ERROR GET /api/commandes 500
+# 4. Le script de sauvegarde du cours, puis une restauration après suppression
+$ ./scripts/sauvegarde.sh documents
+$ ls sauvegarde_*.tar.gz
+sauvegarde_20261125.tar.gz
+$ tar -tzf sauvegarde_*.tar.gz | sort
+documents/
+documents/brouillons/
+documents/brouillons/vide.txt
+documents/notes/
+documents/notes/reunion-2026-11-18.txt
+documents/notes/reunion-2026-11-25.txt
+documents/rapport-2026.txt
+$ rm -r documents
+$ tar -xzf sauvegarde_*.tar.gz
+$ ls documents
+brouillons  notes  rapport-2026.txt

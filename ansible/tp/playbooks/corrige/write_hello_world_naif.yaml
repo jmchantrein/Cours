@@ -1,0 +1,19 @@
+---
+# Version naïve, gardée comme contre-exemple : shell et command ne lisent pas l’état du
+# nœud ; ansible-lint la refuse (no-changed-when).
+- name: Écrire hello world (version naïve)
+  hosts: all
+  tasks:
+    - name: Écrire /hello avec le module shell
+      ansible.builtin.shell: echo hello > /hello
+
+    # command ne passe pas par un shell : pas de redirection, d’où le détour par Python.
+    - name: Écrire /world avec le module command
+      ansible.builtin.command: python3 -c "open('/world', 'w').write('world\n')"
+
+    - name: Écrire /hello_world avec le module lineinfile
+      ansible.builtin.lineinfile:
+        path: /hello_world
+        line: "Hello world !"
+        create: true
+        mode: "0644"

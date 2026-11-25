@@ -1,0 +1,4 @@
+Ce fichier contient des erreurs à corriger.
+Cette ligne contient des caractères en trop.
+Il manque la fin de cette ligne.
+La couleur du bouton est verte.

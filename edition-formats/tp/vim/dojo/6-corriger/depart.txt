@@ -1,0 +1,5 @@
+Ce fichier contient des des erreurs a corriger.
+Cette ligne est en trop : supprimez-la entièrement.
+Cette ligne contient des caractèeres en trrop.
+Il manque la fin de cette
+La couleur du bouton est rouge.

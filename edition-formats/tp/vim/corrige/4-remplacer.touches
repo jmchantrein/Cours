@@ -1,0 +1,4 @@
+" tout le fichier (%), toutes les occurrences de chaque ligne (g),
+" le point protégé (\.) : example-org ne correspond plus au motif
+:%s/example\.org/example.net/g<CR>
+:wq<CR>

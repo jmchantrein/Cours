@@ -1,0 +1,9 @@
+---
+# Chaque valeur a le type voulu, quel que soit l'analyseur : des guillemets
+# pour les chaînes qui ressemblent à autre chose, true pour le booléen.
+titre: "1984"
+traductions: [fr, de, "no"]
+disponible: true
+cote: "0123"
+duree_lecture: "7:30"
+publication: "1949-06-08"

@@ -14,15 +14,13 @@
 )
 
 // Un fichier d’exemple, affiché tel qu’il est dans exemples/ (celui que rejouer.sh exécute).
-#let fichier-ex(nom, taille: px(18), hauteur: auto) = terminal(titre: none, taille: taille, hauteur: hauteur)[
-  #text(font: mono, size: px(19), weight: 600, fill: c.prompt)[#nom]
-  #raw(read("exemples/" + nom).trim(at: end), block: true, lang: none)
-]
+#let fichier-ex(nom, taille: px(18), hauteur: auto) = fichier(nom, taille: taille, hauteur: hauteur,
+  raw(read("exemples/" + nom).trim(at: end), block: true, lang: none))
 // Version des outils, rappelée dans les notes de l’orateur.
 #let versions = [Sortie réelle : conteneur debian:13 (Debian 13.8), bash 5.2.37, locale C.UTF-8 (messages en anglais), rejouée par shell/cm/rejouer.sh.]
 
-#couverture(illustration: "couches")[Shell][Bash, sed et awk : les outils de l’administrateur][Jean-Mathieu Chantrein][25 novembre 2026]
-#speaker-note[Illustration provisoire : la charte n’a pas encore d’illustration propre au shell. Cours tiré des parties Bash, sed et awk du cours « Outils de l’administration système » (sources/outils\_admin\_sys/partie\_1) et des scripts d’exploration « subtilités de Bash ».]
+#couverture(illustration: "tube")[Shell][Bash, sed et awk : les outils de l’administrateur][Jean-Mathieu Chantrein][25 novembre 2026]
+#speaker-note[Cours tiré des parties Bash, sed et awk du cours « Outils de l’administration système » (sources/outils\_admin\_sys/partie\_1) et des scripts d’exploration « subtilités de Bash ».]
 
 // ======================================================================
 = Sommaire
@@ -286,7 +284,7 @@
   note: _note,
 )
 
-== > vide le fichier avant de lancer la commande
+== > vide le fichier avant de lancer la commande <troncature>
 
 #let _note = [#versions GNU sort lit toute son entrée avant d’écrire : -o peut désigner le fichier d’entrée (documenté dans le manuel de coreutils). Pour les autres commandes : écrire dans un fichier temporaire, puis mv. set -o noclobber fait refuser > sur un fichier existant (>| force).]
 #anime(
@@ -576,7 +574,7 @@
   note: _note,
 )
 
-== for sur \$(ls) : un nom à espace se coupe en deux
+== for sur \$(ls) : un nom à espace se coupe en deux <for-ls>
 
 #let _note = [#versions Exemple d’origine du cours : for fichier in \$(ls). La sortie de ls est découpée en mots sur les espaces, d’où « mon » et « rapport.txt ». Le motif \*.txt est développé après le découpage : chaque nom reste un seul mot. ShellCheck signale la première forme (SC2045).]
 #anime(
@@ -669,9 +667,8 @@
 #let _note = [Tableau établi par la diapositive suivante (bash 5.2.37). Entre guillemets doubles, l’antislash garde un sens devant \$, \`, ", \\ et le saut de ligne ; entre simples, rien n’a de sens : on ne peut pas y écrire une apostrophe. Le tilde n’est développé qu’en début de mot, hors guillemets.]
 #anime(
   rang(bloc(taille: px(26))[Ce qui a lieu selon les guillemets][
-    #table(columns: (1.6fr, 1fr, 1fr, 1fr), stroke: none, inset: (x: px(10), y: px(7)), align: (left, center, center, center),
-      fill: (x, y) => if y == 0 { c.bleu-clair } else if calc.even(y) { c.bleu-clair.transparentize(50%) },
-      table.header([*Expansion*], [*sans*], [*`"…"`*], [*`'…'`*]),
+    #tableau((1.6fr, 1fr, 1fr, 1fr), inset: (x: px(10), y: px(7)), align: (left, center, center, center),
+      ([Expansion], [sans], [`"…"`], [`'…'`]),
       [Tilde `~`], oui, non, non,
       [Accolades `{a,b}`], oui, non, non,
       [Variables `$p`, `${p}`], oui, oui, non,
@@ -1041,7 +1038,7 @@
   note: _note,
 )
 
-== Saisie interactive ou arguments
+== Saisie interactive ou arguments <saisie-ou-arguments>
 
 #let _note = [#versions Script d’origine (exemple\_saisie.bash). read -r : l’antislash est gardé tel quel (sans -r, il échappe le caractère suivant). <<< (chaîne ici, here string) envoie le mot sur l’entrée standard : c’est ainsi qu’on teste un script interactif (Bats, plus loin).]
 #anime(
@@ -1066,7 +1063,7 @@
   note: _note,
 )
 
-== Exemple : sauvegarder un dossier
+== Exemple : sauvegarder un dossier <sauvegarder-dossier>
 
 #let _note = [#versions Script d’origine (« Script pour sauvegarder des fichiers »), avec deux changements : le dossier arrive en argument (l’original écrivait /chemin/vers/dossier), et les variables sont entre guillemets. date +%Y%m%d donne 20261125 le 25 novembre 2026 : le nom trie bien par ordre chronologique. tar -c crée, -z compresse (gzip), -f nomme l’archive ; -t liste son contenu.]
 #anime(
@@ -1189,7 +1186,7 @@
   note: _note,
 )
 
-== Les limites de set -e
+== Les limites de set -e <limites-set-e>
 
 #let _note = [#versions Le manuel de Bash liste les exceptions : commande testée par if, while ou until, membre d’une liste && ou || (sauf la dernière), commande précédée de !. Une fonction appelée dans un if perd aussi set -e pour tout son corps. D’où les avis partagés sur set -e (BashFAQ/105) : il aide, mais ne dispense pas de tester les commandes qui comptent.]
 #anime(
@@ -1682,7 +1679,7 @@
   note: _note,
 )
 
-== Supprimer et insérer : d, i, a
+== Supprimer et insérer : d, i, a <sed-commandes>
 
 #let _note = [#versions Exemples d’origine (commandes d et i), sur un même fichier de trois lignes. La forme d’une ligne 2i texte est une extension GNU ; la forme POSIX écrit i\\ puis le texte sur la ligne suivante. d supprime l’espace de motif et passe à la ligne suivante, sans l’afficher.]
 #anime(
@@ -1715,7 +1712,7 @@
   note: _note,
 )
 
-== Adresser : numéro, plage, motif
+== Adresser : numéro, plage, motif <sed-adresses>
 
 #let _note = [#versions L’adresse se place devant la commande ; une plage s’écrit début,fin ; \$ désigne la dernière ligne. /langages/ : les lignes qui contiennent langages (expression régulière). Le cours d’origine citait l’« édition de texte sur des plages de lignes » parmi les capacités non abordées.]
 #anime(
@@ -1789,7 +1786,7 @@
   note: _note,
 )
 
-== Expressions régulières : basiques ou étendues
+== Expressions régulières : basiques ou étendues <sed-regex>
 
 #let _note = [#versions Exemple d’origine (identifiants à trois chiffres). Sans -E, sed lit des expressions régulières basiques (BRE, POSIX) : \{3\} y est littéral, il faut \\\{3\\\}, de même \\( \\) et \\+ (GNU). Avec -E, étendues (ERE) : \{3\}, ( ), +, ? sans antislash. -E est POSIX depuis 2024 ; -r en est l’ancien synonyme GNU.]
 #anime(
@@ -1959,7 +1956,7 @@
   utils.speaker-note(self: self, _note)
 })
 
-== Les champs : \$1, \$2… et le séparateur -F
+== Les champs : \$1, \$2… et le séparateur -F <awk-champs>
 
 #let _note = [#versions Premier exemple : celui du cours d’origine (« enlever les informations concernant le genre »). La virgule de print insère le séparateur de sortie OFS, une espace par défaut. NR > 1 saute l’en-tête du CSV.]
 #anime(
@@ -2017,7 +2014,7 @@
   note: _note,
 )
 
-== Calculer, puis résumer avec END
+== Calculer, puis résumer avec END <awk-begin-end>
 
 #let _note = [#versions Exemples d’origine (« Calculs avec awk », « Regrouper et sommer »). Une variable awk non initialisée vaut 0 (ou la chaîne vide) : somme += \$2 n’a pas besoin de déclaration. La virgule de print insère OFS : "Total : ", somme donne deux espaces, la sortie d’origine (« Total : 45 ») en montrait une.]
 #anime(
@@ -2089,7 +2086,7 @@
   note: _note,
 )
 
-== Filtrer par expression régulière : `~`
+== Filtrer par expression régulière : `~` <awk-regex>
 
 #let _note = [#versions Exemple d’origine (adresses électroniques), dont le motif /\@example.fr/ marche, mais où le point désigne n’importe quel caractère : il accepterait \@exampleXfr. \\. désigne un point littéral, \$ la fin du champ. !\~ est la négation. Sans précision, /motif/ seul s’applique à \$0.]
 #anime(
@@ -2177,9 +2174,8 @@
 #let _note = [#versions Chaque ligne rejouée par shell/cm/rejouer.sh (session « Mémo »), dans un dossier qui ne contient que ada.txt, grace.txt et hedy.txt. Exemples originaux de l’article du site ; le tableau classique qui circule vient de Stack Overflow, sous une licence (CC BY-SA) incompatible avec celle de ce cours : il n’est pas repris.]
 #anime(
   rang(bloc(taille: px(22))[`p="Ada Lovelace"`, le dossier contient ada.txt, grace.txt, hedy.txt][
-    #table(columns: (1fr, 1.25fr, 2fr), stroke: none, inset: (x: px(10), y: px(5)),
-      fill: (x, y) => if y == 0 { c.bleu-clair } else if calc.even(y) { c.bleu-clair.transparentize(50%) },
-      table.header([*Écrit*], [*Arguments reçus*], [*Pourquoi*]),
+    #tableau((1fr, 1.25fr, 2fr), inset: (x: px(10), y: px(5)),
+      ([Écrit], [Arguments reçus], [Pourquoi]),
       [`"${p}"`], [`Ada Lovelace`], [variable développée, un seul mot],
       [`'${p}'`], [`${p}`], [rien n’est développé entre simples],
       [`"'${p}'"`], [`'Ada Lovelace'`], [des simples dans des doubles : ordinaires],

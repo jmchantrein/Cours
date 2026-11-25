@@ -12,14 +12,14 @@
 )
 
 // ---------- Graphe des commits ----------
-// Composants propres à ce cours, faute d’équivalent dans la charte (besoin signalé pour commun/).
+// Composants propres à ce cours ; flèches : fleche-pose de la charte.
 // Coordonnées en px de la maquette ; (x, y) est le centre d’un commit. Chaque commit pointe vers son parent :
 // la flèche part de l’enfant (à droite) et arrive au parent (à gauche), comme le champ « parent » d’un commit.
 #let gc-l = 150
 #let gc-h = 56
-// Couleurs du graphe : commits de main en bleu (notion), commits d’une autre branche en vert (pratique).
+// Couleurs du graphe : commits de main en bleu (notion), commits d’une autre branche en orange (c.branche).
 #let g-main = c.bleu
-#let g-branche = roles.pratique.entete
+#let g-branche = c.branche
 
 #let g-commit(x, y, id, couleur: g-main, fantome: false) = pose(x - gc-l / 2, y - gc-h / 2, box(
   width: px(gc-l), height: px(gc-h), radius: px(gc-h / 2),
@@ -28,21 +28,9 @@
   align(center + horizon, text(font: mono, size: px(24), weight: 600,
     fill: if fantome { c.gris } else { texte-sur(couleur) }, id))))
 
-#let g-fleche(x1, y1, x2, y2, couleur: c.gris, tirets: false, ep: 4) = {
-  let dx = x2 - x1
-  let dy = y2 - y1
-  let l = calc.sqrt(dx * dx + dy * dy)
-  let (ux, uy) = (dx / l, dy / l)
-  let t = 16
-  let (bx, by) = (x2 - ux * t, y2 - uy * t)
-  let (nx, ny) = (-uy * 9, ux * 9)
-  let trait = if tirets { (paint: couleur, thickness: px(ep), dash: "dashed") } else { px(ep) + couleur }
-  place(top + left, line(start: (px(x1), px(y1)), end: (px(bx), px(by)), stroke: trait))
-  place(top + left, polygon(fill: couleur, (px(x2), px(y2)), (px(bx + nx), px(by + ny)), (px(bx - nx), px(by - ny))))
-}
 // Flèche d’un commit enfant vers son parent.
-#let g-parent(enfant, parent, ..args) = g-fleche(enfant.at(0) - gc-l / 2, enfant.at(1),
-  parent.at(0) + gc-l / 2, parent.at(1), ..args)
+#let g-parent(enfant, parent, ..args) = fleche-pose(enfant.at(0) - gc-l / 2, enfant.at(1),
+  parent.at(0) + gc-l / 2, parent.at(1), couleur: c.gris, ..args)
 
 // Étiquette d’un pointeur : branche (fond nuit), HEAD (contour), branche de suivi origin/… (fond gris).
 #let g-etiquette(nom) = {
@@ -60,7 +48,7 @@
     let centre = bord + s * (44 + i * 60)
     pose(x - 130, centre - 18, box(width: px(260), height: px(36), align(center + horizon, g-etiquette(n))))
     let cible = if i == 0 { bord } else { bord + s * (44 + (i - 1) * 60) + s * 18 }
-    g-fleche(x, centre - s * 18, x, cible, couleur: c.encre, ep: 3)
+    fleche-pose(x, centre - s * 18, x, cible, couleur: c.encre, ep: 3)
   }
 }
 // Canevas d’un graphe : hauteur fixe, éléments posés en coordonnées de la maquette.
@@ -112,14 +100,14 @@
     v(px(6)),
     align(center, text(size: px(24), corps))))
 #let commande-fleche(x1, x2, y, cmd, dessous: false) = {
-  g-fleche(x1, y, x2, y, couleur: c.encre, ep: 4)
+  fleche-pose(x1, y, x2, y, couleur: c.encre, ep: 4)
   let gauche = calc.min(x1, x2)
   pose(gauche, if dessous { y + 10 } else { y - 46 }, box(width: px(calc.abs(x2 - x1)),
     align(center, text(font: mono, size: px(20), weight: 600, fill: c.bleu, cmd))))
 }
 
-#couverture(illustration: "couches")[Git][Versionner et collaborer][Jean-Mathieu Chantrein][25 novembre 2026]
-#speaker-note[Illustration provisoire (la charte n’a que « vm » et « couches ») : un graphe de commits conviendrait mieux. Toutes les sorties de terminal du cours sont relevées par git/cm/rejouer.sh avec Git 2.43.0 (Ubuntu 24.04), dans un dossier jetable, identité « Ada Lovelace » et date fixées, messages de Git en anglais (LC\_ALL=C) ; dans une session en français, Git traduit ses messages.]
+#couverture(illustration: "graphe")[Git][Versionner et collaborer][Jean-Mathieu Chantrein][25 novembre 2026]
+#speaker-note[Toutes les sorties de terminal du cours sont relevées par git/cm/rejouer.sh avec Git 2.43.0 (Ubuntu 24.04), dans un dossier jetable, identité « Ada Lovelace » et date fixées, messages de Git en anglais (LC\_ALL=C) ; dans une session en français, Git traduit ses messages.]
 
 // ======================================================================
 = Sommaire
@@ -188,7 +176,7 @@
   note: [« Distribué » : un clone est un dépôt entier, pas une simple copie de travail ; d’où des opérations locales rapides et une sauvegarde naturelle (chaque clone peut reconstituer le serveur). GitHub (Microsoft), GitLab et Forgejo (forge libre, celle de Codeberg) ajoutent ce que Git n’a pas : comptes, interface web, demandes de fusion, intégration continue.],
 )
 
-== Installer Git et se présenter
+== Installer Git et se présenter <se-presenter>
 
 #anime(
   rang(
@@ -245,7 +233,7 @@
   utils.speaker-note(self: self)[Une zone puis une commande par clic. Pro Git parle de trois états d’un fichier suivi : modifié (modified), indexé (staged), validé (committed), qui correspondent aux trois zones. L’index est un fichier, .git/index. Commit se traduit parfois par « validation » ; on garde « commit », le terme de toutes les sorties de Git. git restore (Git 2.23, 2019) remplace ici l’ancien git checkout -\- fichier (annexe). La page de manuel de Git 2.43 qualifie encore restore et switch d’expérimentales ; git status les propose pourtant dans ses conseils (diapositive suivante).]
 })
 
-== Créer un dépôt : git init
+== Créer un dépôt : git init <git-init>
 
 #anime(
   rang(
@@ -313,7 +301,7 @@
   note: [Un clic par geste, avec son explication en face. Dans le cours d’origine, le fichier est écrit avec Vim ; echo montre ici son contenu exact. Format court de git status : deux colonnes, la première pour l’index, la seconde pour le répertoire de travail. L’identifiant 30b6212 est celui du relevé : il dépend du contenu, de l’auteur et de la date, il sera différent chez vous (annexe « Rejouer le cours à l’identique »). Sorties relevées par git/cm/rejouer.sh, Git 2.43.0.],
 )
 
-== Voir ce qui change : git diff
+== Voir ce qui change : git diff <diff>
 
 #anime(
   rang(
@@ -359,7 +347,7 @@
   note: [Après git add, git diff ne montre plus rien et git diff -\-staged montre exactement le même extrait (relevé complet dans rejouer.sh) : la modification est passée de l’écart travail/index à l’écart index/commit. 2db0a09..1031066 : les blobs du fichier avant et après. Le cours d’origine écrivait git commit index.html -m … ; on sépare ici git add et git commit, qui rend l’index visible. Raccourci : git commit -a -m … indexe d’abord tous les fichiers déjà suivis (pas les nouveaux) ; pratique, mais on ne choisit plus ce qui entre. Sorties relevées par git/cm/rejouer.sh.],
 )
 
-== Lire l’historique : git log
+== Lire l’historique : git log <log>
 
 #anime(
   rang(
@@ -495,15 +483,15 @@
         pose(0, 150, block(width: px(430), stroke: px(3) + c.gris, radius: px(12), inset: px(14), fill: c.fond,
           stack(spacing: px(8), text(size: px(24), weight: 600, fill: c.gris)[commit parent #text(font: mono)[30b6212]],
             text(size: px(21))[le commit précédent, son propre arbre])))
-        g-fleche(40, 95, 40, 150, couleur: c.gris)
+        fleche-pose(40, 95, 40, 150, couleur: c.gris)
       })
       uncover("3-", {
         objet(0, 300, [arbre (_tree_)], [bf2cf2d], [noms de fichiers, droits, et l’objet de chacun], g-branche)
-        g-fleche(520, 95, 520, 300, couleur: g-branche)
+        fleche-pose(520, 95, 520, 300, couleur: g-branche)
       })
       uncover("4-", {
         objet(0, 450, [blob], [1031066], [le contenu de `index.html`, octet pour octet], g-branche)
-        g-fleche(520, 395, 520, 450, couleur: g-branche)
+        fleche-pose(520, 395, 520, 450, couleur: g-branche)
       })
     }),
   )
@@ -511,7 +499,7 @@
   utils.speaker-note(self: self)[Un objet par clic : le commit, son parent, son arbre, le blob. git cat-file -t donne le type d’un objet, -p l’affiche. Un commit contient l’identifiant de son arbre (l’instantané complet du projet, pas une différence), de son ou ses parents, l’auteur et le validateur (committer) avec une date en secondes depuis le 1er janvier 1970 (1795597200 = 25 novembre 2026, 10 h, heure de Paris), puis le message. Un arbre peut contenir d’autres arbres (sous-répertoires). HEAD^\{tree\} : l’arbre du commit HEAD ; HEAD:index.html : le blob de ce fichier dans ce commit. Sorties relevées par git/cm/rejouer.sh.]
 })
 
-== Un identifiant est l’empreinte du contenu
+== Un identifiant est l’empreinte du contenu <empreinte>
 
 #anime(
   rang(
@@ -624,7 +612,7 @@
 // ======================================================================
 = Branches
 
-== Une branche se voit dans `git log --graph`
+== Une branche se voit dans `git log --graph` <log-graph>
 
 #anime(
   rang(
@@ -790,7 +778,7 @@
   note: [Les deux commits ont été faits avec sed -i 's/sur mon site/chez Ada/' index.html (sur titre) et sed -i 's/sur mon site/sur notre site/' index.html (sur main), puis git commit -am. Un conflit n’est pas une erreur : Git refuse de choisir à votre place entre deux intentions. Deux modifications de lignes différentes du même fichier ne sont pas en conflit. Sorties relevées par git/cm/rejouer.sh.],
 )
 
-== Résoudre un conflit, puis terminer la fusion
+== Résoudre un conflit, puis terminer la fusion <resoudre>
 
 #anime(
   rang(
@@ -918,7 +906,7 @@
   note: [-4 : les quatre derniers commits ; le « |\\ » final est le début de la fusion 9d21555, coupée par -4. Pendant le rebasage, Git affiche « Rebasing (1/2) » puis « Rebasing (2/2) » sur la même ligne, que le message final remplace : la ligne ci-dessus est ce qui reste à l’écran. En cas de conflit, le rebasage s’arrête sur le commit en cause : on résout, git add, puis git rebase -\-continue (ou -\-abort pour tout annuler). Mêmes messages et même contenu : seuls les identifiants des deux commits de faq ont changé. Sorties relevées par git/cm/rejouer.sh.],
 )
 
-== Fusionner ou rebaser ?
+== Fusionner ou rebaser ? <fusionner-ou-rebaser>
 
 #anime(
   rang(
@@ -1062,7 +1050,7 @@
   utils.speaker-note(self: self)[Un élément par clic. origin est le nom donné par défaut au dépôt cloné. Un dépôt nu (bare) n’a pas de répertoire de travail : c’est la forme d’un dépôt sur un serveur, et ce qu’on emploie ici pour simuler une forge sans réseau (diapositive suivante). git pull rapatrie puis intègre : avance rapide si possible ; si les deux côtés ont divergé, Git 2.43 exige de choisir fusion ou rebasage (diapositive « Pull sur une histoire divergente »).]
 })
 
-== Publier : git remote add, puis git push
+== Publier : git remote add, puis git push <publier>
 
 #anime(
   rang(
@@ -1103,7 +1091,7 @@
   note: [Le dépôt nu (git init -\-bare) remplace ici GitHub ou GitLab : mêmes commandes, sans compte ni réseau. Les lignes de progression (Enumerating…, Writing…) ne s’affichent que dans un terminal ; débit et nombre de fils (threads) varient d’une machine à l’autre. Authentification sur une forge : de préférence par clé SSH (cours Accès distants) ; en HTTPS, un jeton d’accès remplace le mot de passe sur GitHub et GitLab. Sorties relevées par git/cm/rejouer.sh.],
 )
 
-== Cloner, puis publier un commit
+== Cloner, puis publier un commit <cloner>
 
 #anime(
   rang(
@@ -1145,7 +1133,7 @@
   note: [Grace est simulée dans le même compte : un second clone, avec user.name et user.email fixés dans ce dépôt seulement. Sur une vraie forge : git clone git\@github.com:ada/site.git. Lignes de progression du push omises (voir la diapositive précédente pour leur forme). Sorties relevées par git/cm/rejouer.sh.],
 )
 
-== Push refusé : le distant a avancé
+== Push refusé : le distant a avancé <push-refuse>
 
 #anime(
   terminal-explique(taille: px(18), cle: px(64),
@@ -1183,7 +1171,7 @@
   note: [Commit d’Ada : echo '\<p\>Ouvert le lundi.\</p\>' >> contact.html, puis git commit -am "Jour d'ouverture". Un push n’est accepté que s’il fait avancer la branche distante (avance rapide). git push -\-force passerait outre et effacerait le commit de Grace du distant : à proscrire sur une branche partagée ; -\-force-with-lease, plus prudent, refuse si le distant a bougé depuis le dernier fetch. Dernier log : 4 commits seulement (-4). git status, à ce moment, dit la même chose en mots : « Your branch and 'origin/main' have diverged, and have 1 and 1 different commits each » (relevé de rejouer.sh). Sorties relevées par git/cm/rejouer.sh.],
 )
 
-== Pull sur une histoire divergente
+== Pull sur une histoire divergente <pull-divergent>
 
 #anime(
   terminal-explique(taille: px(18), cle: px(64),
@@ -1231,9 +1219,8 @@
 
 #anime(
   rang(bloc(taille: px(23))[Selon ce qu’il faut défaire][
-    #table(columns: (1.2fr, 1.1fr, 1.4fr), stroke: none, inset: (x: px(10), y: px(8)),
-      fill: (x, y) => if y == 0 or calc.even(y) { c.bleu-clair } else { c.fond },
-      table.header(..([Défaire…], [Commande], [Effet]).map(t => strong(t))),
+    #tableau((1.2fr, 1.1fr, 1.4fr), inset: (x: px(10), y: px(8)),
+      ([Défaire…], [Commande], [Effet]),
       [une modification non indexée], [`git restore f`], [fichier ← index : modification perdue],
       [un `git add`], [`git restore --staged f`], [index ← dernier commit ; fichier intact],
       [un commit déjà publié], [`git revert C`], [un commit de plus, qui défait C],
@@ -1248,7 +1235,7 @@
   note: [La page git(1) distingue elle-même les trois commandes : restore agit sur des fichiers, revert crée un commit qui défait un autre, reset déplace la branche. Le reflog ne garde que des positions de HEAD, donc des commits : une modification jamais indexée ni enregistrée n’y est pas.],
 )
 
-== restore : défaire une modification non enregistrée
+== restore : défaire une modification non enregistrée <restore>
 
 #anime(
   rang(
@@ -1282,7 +1269,7 @@
   note: [Étape 5 du cours d’origine (« ajoutez une erreur… »), faite avec git checkout index.html ; git restore (Git 2.23) en est la forme actuelle, que git status conseille (« use "git restore \<file\>..." to discard changes »). Ancienne forme en annexe. La sortie vide de git status -\-short est réelle : rien à signaler. Sorties relevées par git/cm/rejouer.sh.],
 )
 
-== revert : annuler en ajoutant un commit
+== revert : annuler en ajoutant un commit <revert>
 
 #anime(
   rang(
@@ -1324,9 +1311,8 @@
 
 #anime(
   rang(bloc(taille: px(25))[`git reset <commit>` : la branche courante recule jusqu’à `<commit>`, puis…][
-    #table(columns: (0.9fr, 1fr, 1fr, 1.6fr), stroke: none, inset: (x: px(10), y: px(8)),
-      fill: (x, y) => if y == 0 or calc.even(y) { c.bleu-clair } else { c.fond },
-      table.header(..([Mode], [Index], [Répertoire de travail], [Les modifications des commits défaits]).map(t => strong(t))),
+    #tableau((0.9fr, 1fr, 1fr, 1.6fr), inset: (x: px(10), y: px(8)),
+      ([Mode], [Index], [Répertoire de travail], [Les modifications des commits défaits]),
       [`--soft`], [inchangé], [inchangé], [restent indexées : prêtes pour un nouveau commit],
       [`--mixed` (défaut)], [remis à `<commit>`], [inchangé], [restent dans les fichiers, non indexées],
       [`--hard`], [remis à `<commit>`], [remis à `<commit>`], [sont effacées],
@@ -1614,13 +1600,12 @@
 // ======================================================================
 = Annexes
 
-== Ancienne syntaxe : git checkout fait tout
+== Ancienne syntaxe : git checkout fait tout <checkout>
 
 #anime(
   rang(bloc(taille: px(26))[Avant Git 2.23 (2019), une seule commande pour deux métiers][
-    #table(columns: (1.2fr, 1fr, 1fr), stroke: none, inset: (x: px(10), y: px(8)),
-      fill: (x, y) => if y == 0 or calc.even(y) { c.bleu-clair } else { c.fond },
-      table.header(..([Pour…], [Forme actuelle], [Ancienne forme]).map(t => strong(t))),
+    #tableau((1.2fr, 1fr, 1fr), inset: (x: px(10), y: px(8)),
+      ([Pour…], [Forme actuelle], [Ancienne forme]),
       [changer de branche], [`git switch main`], [`git checkout main`],
       [créer une branche et s’y placer], [`git switch -c contact`], [`git checkout -b contact`],
       [défaire une modification], [`git restore f`], [`git checkout -- f`],
@@ -1663,7 +1648,7 @@
   note: [rejouer.sh fixe aussi GIT\_CONFIG\_NOSYSTEM=1 (ignorer /etc/gitconfig) et LC\_ALL=C (messages en anglais), et se lance dans un pseudo-terminal pour afficher ce qu’affiche un terminal. Seul l’ordre des commandes compte : sautez-en une, et les identifiants suivants changent. Grace garde son identité, fixée par git config dans son clone : les variables ne fixent que les dates. Fermer le terminal remet HOME à sa valeur.],
 )
 
-== Sans -b main : la branche master et des conseils
+== Sans -b main : la branche master et des conseils <sans-b-main>
 
 #anime(
   rang(

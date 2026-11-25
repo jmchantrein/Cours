@@ -3,7 +3,7 @@
 // commande au terminal ouvert, où elle s’exécute. Deux modes :
 // - "vm" : une VM Linux dans le navigateur (v86), sans réseau ; l’image se télécharge au premier démarrage,
 //   puis se range dans Cache Storage sous une clé qui porte sa version ;
-// - "compagnon" : le vrai shell de l’étudiant, par iadmin-terminal.py (WebSocket sur 127.0.0.1, jeton).
+// - "compagnon" : le vrai shell de l’étudiant, par l’exécutable iadmin-terminal (compagnon/, WebSocket sur 127.0.0.1, jeton).
 // Les fichiers tiers (xterm.js, v86, image) sont dans vendor/, construit par preparer.sh, chargés à la demande.
 (() => {
   const modes = (document.body.dataset.terminal || "").split(" ").filter(m => m === "vm" || m === "compagnon");
@@ -238,7 +238,7 @@
     m.accueil = el("div", { class: "terminal-accueil" },
       el("aside", { class: "note", "data-role": "danger" }, el("span", { class: "role" }, "Danger"),
         "Ce mode relie la page à votre vrai shell : un clic sur « Exécuter » lance la commande sur votre machine, avec vos droits. Lisez chaque commande avant de cliquer."),
-      el("p", {}, "1. ", lien, " (une fois). 2. Dans un terminal, lancez ", code("iadmin-terminal local"), ". 3. Collez ici l’adresse qu’il affiche :"),
+      el("p", {}, "1. ", lien, " (une fois). 2. Dans un terminal, lancez ", code("./iadmin-terminal local"), ". 3. Collez ici l’adresse qu’il affiche :"),
       formulaire,
       el("p", {}, "Si le navigateur demande l’autorisation d’accéder au réseau local, acceptez : c’est ainsi que la page joint le compagnon, sur votre machine (127.0.0.1)."));
     m.ecran = el("div", { class: "terminal-ecran", hidden: true });
@@ -278,7 +278,7 @@
         if (xterm) { xterm.fermer(); xterm = null; }
         majBoutons(); majActions();
         etat.textContent = ouverte
-          ? "Compagnon déconnecté. Pour reprendre, relancez iadmin-terminal local et collez la nouvelle adresse."
+          ? "Compagnon déconnecté. Pour reprendre, relancez ./iadmin-terminal local et collez la nouvelle adresse."
           : "Connexion impossible : le compagnon est-il lancé ? Son adresse ne sert qu’une fois : relancez-le pour en obtenir une nouvelle.";
       });
     });

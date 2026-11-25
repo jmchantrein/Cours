@@ -1,0 +1,16 @@
+$ cd ~/fichiers
+$ umask
+0002
+$ umask -S
+u=rwx,g=rwx,o=rx
+$ touch public.txt
+$ mkdir public
+$ ls -ld public.txt public
+drwxrwxr-x 2 ada ada 4096 Nov 25 10:54 public
+-rw-rw-r-- 1 ada ada    0 Nov 25 10:54 public.txt
+$ umask 077
+$ touch prive.txt
+$ mkdir prive
+$ ls -ld prive.txt prive
+drwx------ 2 ada ada 4096 Nov 25 10:54 prive
+-rw------- 1 ada ada    0 Nov 25 10:54 prive.txt

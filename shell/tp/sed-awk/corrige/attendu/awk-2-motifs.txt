@@ -1,0 +1,6 @@
+Booth Kathleen;1947;langages;premier langage d'assemblage
+Hopper Grace;1952;langages;premier compilateur A-0
+1952 Hopper Grace
+1962 Johnson Katherine
+1969 Hamilton Margaret
+1978 Conway Lynn

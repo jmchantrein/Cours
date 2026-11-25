@@ -12,20 +12,7 @@
   titre-court: [Éditer et structurer du texte],
 )
 
-// ---------- Composants locaux (en attendant leur équivalent dans la charte) ----------
-// Touche du clavier : Échap, Entrée, Ctrl+v…
-#let touche(t) = box(stroke: px(2) + c.gris, radius: px(6), inset: (x: px(7), y: px(1)), outset: (y: px(3)),
-  fill: c.fond, text(font: mono, size: 0.85em, weight: 600, fill: c.encre, tracking: 0pt, t))
-// Fichier affiché (objet), distinct du terminal (commande) : nom du fichier en tête, contenu brut.
-#let fichier-source(nom, taille: px(20), hauteur: auto, corps) = block(width: 100%, height: hauteur,
-  fill: c.espace, stroke: px(1) + c.filet, radius: px(12), clip: true, stack(
-    if nom != none { block(width: 100%, fill: c.filet, inset: (x: px(18), y: px(6)),
-      text(font: mono, size: px(20), weight: 600, fill: c.ardoise, nom)) },
-    block(width: 100%, inset: (x: px(18), y: px(10)), {
-      show raw.where(block: true): set text(size: taille)
-      corps
-    }),
-  ))
+// ---------- Composant propre à ce cours ----------
 // Rendu d’un document Markdown, tel qu’un visualiseur l’afficherait.
 #let rendu(titre: [Rendu], hauteur: auto, corps) = block(width: 100%, height: hauteur,
   fill: c.fond, stroke: px(2) + c.filet, radius: px(12), clip: true, stack(
@@ -33,17 +20,9 @@
       text(size: px(20), weight: 600, fill: c.ardoise, titre)) },
     block(width: 100%, inset: (x: px(18), y: px(12)), { set text(size: px(22)); set par(spacing: px(14)); corps }),
   ))
-// Tableau à en-tête : lignes alternées sur le bleu clair de la charte.
-#let tableau(colonnes, taille: px(22), entete, ..lignes) = {
-  set text(size: taille)
-  table(columns: colonnes, stroke: none, inset: (x: px(10), y: px(6)),
-    fill: (x, y) => if y == 0 { c.bleu-clair } else if calc.even(y) { c.espace } else { none },
-    table.header(..entete.map(t => text(weight: 600, t))),
-    ..lignes.pos().flatten())
-}
 
-#couverture(illustration: "couches")[Éditer et structurer du texte][Vim, Markdown, YAML et JSON : l’administrateur travaille en texte brut][Jean-Mathieu Chantrein][25 novembre 2026]
-#speaker-note[Le cours réunit trois outils qui ont un point commun : le texte brut. Un serveur se configure par des fichiers texte (Vim les édite), se documente par des fichiers texte (Markdown), et se décrit par des données en texte (YAML, JSON). Illustration de couverture provisoire : la charte n’en a pas encore pour ce cours.]
+#couverture(illustration: "texte")[Éditer et structurer du texte][Vim, Markdown, YAML et JSON : l’administrateur travaille en texte brut][Jean-Mathieu Chantrein][25 novembre 2026]
+#speaker-note[Le cours réunit trois outils qui ont un point commun : le texte brut. Un serveur se configure par des fichiers texte (Vim les édite), se documente par des fichiers texte (Markdown), et se décrit par des données en texte (YAML, JSON).]
 
 // ======================================================================
 = Sommaire
@@ -70,7 +49,7 @@
       - Les mêmes outils pour tout : un éditeur, `grep`, `diff`, Git
     ],
     bloc(role: "pratique", poids: 0.9, taille: px(24))[Fil rouge : MonApplication sur le serveur web01][
-      #fichier-source([/srv/monapp/config.yaml])[```
+      #fichier([/srv/monapp/config.yaml])[```
       ---
       application:
         nom: MonApplication
@@ -105,7 +84,7 @@
         # sur le poste : ouvrir une session sur web01
         $ ssh admin@web01
         ```
-        #cadre([web01 (session SSH)], niveau: 1)[
+        #cadre([web01 (session SSH)], niveau: "distant")[
           ```
           # sur web01 : ouvrir le fichier dans Vim
           $ vim /srv/monapp/config.yaml
@@ -119,7 +98,7 @@
     - Pas toujours là : l’image `debian:13` d’un conteneur n’a ni `vi`, ni `nano`, ni `vim` ; installez le paquet `vim` pour la version complète
   ]),
   source-de: [#link("https://pubs.opengroup.org/onlinepubs/9699919799/utilities/vi.html")[POSIX, vi] · #link("https://www.vim.org/")[vim.org]],
-  note: [Vi : Bill Joy, 1976 ; Vim : Bram Moolenaar, 1991, maintenu par la communauté depuis 2023. Le cadre en tirets est la session ouverte sur web01 par la commande ssh au-dessus (l’accès distant est le sujet du cours Accès distants). Le conteneur sans éditeur : docker container run --rm debian:13 sh -c "command -v vi nano vim || echo aucun éditeur" répond « aucun éditeur » (rejouer.sh). Sur Debian, la commande vi est souvent fournie par vim-tiny, version réduite (ni coloration, ni vimtutor) : à vérifier sur une installation Debian 13 minimale ; sur Ubuntu 24.04, vim-tiny est de priorité « important », vim « optional ». Nano est l’éditeur par défaut (commande editor) de Debian et d’Ubuntu.],
+  note: [Vi : Bill Joy, 1976 ; Vim : Bram Moolenaar, 1991, maintenu par la communauté depuis 2023. Le cadre en trait mixte est la session ouverte sur web01 par la commande ssh au-dessus (l’accès distant est le sujet du cours Accès distants). Le conteneur sans éditeur : docker container run --rm debian:13 sh -c "command -v vi nano vim || echo aucun éditeur" répond « aucun éditeur » (rejouer.sh). Sur Debian, la commande vi est souvent fournie par vim-tiny, version réduite (ni coloration, ni vimtutor) : à vérifier sur une installation Debian 13 minimale ; sur Ubuntu 24.04, vim-tiny est de priorité « important », vim « optional ». Nano est l’éditeur par défaut (commande editor) de Debian et d’Ubuntu.],
 )
 
 == Les modes de Vim et leurs transitions <vim-modes>
@@ -129,17 +108,6 @@
   align(center + horizon, stack(spacing: px(10),
     text(size: px(32), weight: 600, fill: if sombre { c.fond } else { c.encre }, nom),
     text(size: px(22), fill: if sombre { c.texte-term } else { c.ardoise }, detail)))))
-// Flèche horizontale de x1 vers x2 (pointe en x2), ou verticale de y1 vers y2 (pointe en y2).
-#let fleche-h(x1, x2, y) = {
-  let s = if x2 > x1 { 1 } else { -1 }
-  place(top + left, line(start: (px(x1), px(y)), end: (px(x2 - s * 18), px(y)), stroke: px(4) + c.ardoise))
-  place(top + left, polygon(fill: c.ardoise, (px(x2), px(y)), (px(x2 - s * 22), px(y - 11)), (px(x2 - s * 22), px(y + 11))))
-}
-#let fleche-v(x, y1, y2) = {
-  let s = if y2 > y1 { 1 } else { -1 }
-  place(top + left, line(start: (px(x), px(y1)), end: (px(x), px(y2 - s * 18)), stroke: px(4) + c.ardoise))
-  place(top + left, polygon(fill: c.ardoise, (px(x), px(y2)), (px(x - 11), px(y2 - s * 22)), (px(x + 11), px(y2 - s * 22))))
-}
 #let etiquette(x, y, l, corps, cote: center) = pose(x, y, block(width: px(l), align(cote, text(size: px(26), corps))))
 
 #slide(repeat: 6, self => {
@@ -148,30 +116,30 @@
     uncover("1-", noeud(622, 180, 420, 140, [Normal], [naviguer, supprimer, copier], sombre: true))
     uncover("2-", {
       noeud(0, 180, 380, 140, [Insertion], [écrire du texte])
-      fleche-h(622, 380, 222)
+      fleche-pose(622, 222, 380, 222)
       etiquette(380, 172, 242, [#touche[i] #touche[a] #touche[o]])
-      fleche-h(380, 622, 280)
+      fleche-pose(380, 280, 622, 280)
       etiquette(380, 290, 242, [#touche[Échap]])
     })
     uncover("3-", {
       noeud(1284, 180, 380, 140, [Ligne de commande], [`:w`, `:q`, `:s`, `/motif`])
-      fleche-h(1042, 1284, 222)
+      fleche-pose(1042, 222, 1284, 222)
       etiquette(1042, 172, 242, [#touche[:] #touche[/]])
-      fleche-h(1284, 1042, 280)
+      fleche-pose(1284, 280, 1042, 280)
       etiquette(1042, 290, 242, [#touche[Entrée] #touche[Échap]])
     })
     uncover("4-", {
       noeud(622, 400, 420, 120, [Visuel], [sélectionner, puis agir])
-      fleche-v(780, 320, 400)
+      fleche-pose(780, 320, 780, 400)
       etiquette(330, 340, 430, [#touche[v] #touche[V] #touche[Ctrl+v]], cote: right)
-      fleche-v(884, 400, 320)
+      fleche-pose(884, 400, 884, 320)
       etiquette(904, 340, 300, [#touche[Échap]], cote: left)
     })
     uncover("5-", {
       noeud(622, 0, 420, 100, [Remplacement], [écrire par-dessus])
-      fleche-v(780, 180, 100)
+      fleche-pose(780, 180, 780, 100)
       etiquette(330, 120, 430, [#touche[R]], cote: right)
-      fleche-v(884, 100, 180)
+      fleche-pose(884, 100, 884, 180)
       etiquette(904, 120, 300, [#touche[Échap]], cote: left)
     })
   })
@@ -181,7 +149,7 @@
   utils.speaker-note(self: self)[Un mode par clic, avec les touches qui y mènent et celle qui en revient. Vim démarre en mode normal. i insère avant le curseur, a après, o ouvre une ligne en dessous. : ouvre la ligne de commande (commandes Ex), / une recherche ; Entrée exécute, Échap abandonne. v sélectionne par caractères, V par lignes, Ctrl+v par colonnes (bloc). R est une variante du mode insertion : chaque caractère tapé remplace celui du dessous. Le manuel (:help vim-modes) compte sept modes de base (normal, visuel, sélection, insertion, ligne de commande, Ex, terminal) et sept variantes, dont le remplacement ; sélection, Ex et terminal sortent du cadre du cours. Le manuel conseille Échap deux fois si l’on ne sait plus où l’on est. Vim affiche le mode en bas de l’écran (-- INSERTION --, -- VISUEL --) quand l’option showmode est active (par défaut).]
 })
 
-== Survivre : écrire, enregistrer, quitter
+== Survivre : écrire, enregistrer, quitter <vim-survivre>
 
 #anime(
   rang(
@@ -213,7 +181,7 @@
   note: [La séquence de touches a été jouée dans Vim (vim -s, sans configuration) : le fichier contient « Hello World ! ». Message E37 en français (LANG=fr\_FR.UTF-8), Vim 9.1.0016 (Ubuntu 24.04, faute d’accès aux miroirs Debian ici) : à rejouer sur Debian 13 avec rejouer.sh. ZZ (mode normal) équivaut à :x, qui n’enregistre que si le fichier a changé.],
 )
 
-== Se déplacer en mode normal
+== Se déplacer en mode normal <vim-deplacer>
 
 #anime(
   rang(
@@ -263,7 +231,7 @@
   note: [Un clic pour la règle, puis bloc par bloc et ligne par ligne. Apprendre Vim, c’est apprendre cette petite grammaire, pas une liste de raccourcis : n opérateurs et m mouvements donnent n × m commandes. motion.txt, section operator : « When doubling the operator it operates on a line » et « 2d3w deletes six words » (les compteurs se multiplient). p colle (_put_) après le curseur, P avant. Autres opérateurs : gU (majuscules), = (réindenter), gq (formater). Le mode « opérateur en attente » (_Operator-pending_) est une des variantes listées par :help vim-modes.],
 )
 
-== La grammaire à l’œuvre sur config.yaml
+== La grammaire à l’œuvre sur config.yaml <vim-grammaire-config>
 
 #let essai(t, e, r) = (text(font: mono, size: px(25), t), text(size: px(25), e), text(font: mono, size: px(24), r))
 #anime(
@@ -286,7 +254,7 @@
   note: [Chaque ligne part du config.yaml d’origine (avec la ligne --- en tête), le curseur en début de fichier. Toutes les séquences ont été jouées dans Vim sans configuration (vim -u NONE -s fichier-de-touches) et les résultats relevés dans le fichier (rejouer.sh, Vim 9.1.0016 ; à rejouer sur Debian 13). Après /1.2.3, le curseur est sur le « 1 » ; c’est un mot de Vim, distinct du « . » qui suit. Note : dans /1.2.3, le point est un métacaractère de l’expression régulière (n’importe quel caractère) : il trouve aussi « 1x2y3 ».],
 )
 
-== Rechercher et remplacer : `:s`
+== Rechercher et remplacer : `:s` <vim-substituer>
 
 #anime(
   rang(
@@ -322,7 +290,7 @@
   note: [Les lignes qui suivent chaque commande sont le début du fichier obtenu (relevé après :wq ; Vim 9.1.0016, à rejouer sur Debian 13). Ce terminal montre la ligne de commande de Vim (« : »), pas celle du shell. Avec le drapeau c, Vim demande pour chaque occurrence : y (oui), n (non), a (toutes), q (quitter). & répète la dernière substitution sur la ligne courante.],
 )
 
-== Les modes visuels : commenter un bloc
+== Les modes visuels : commenter un bloc <vim-visuel>
 
 #anime(
   rang(
@@ -334,7 +302,7 @@
     ],
     bloc(role: "pratique", poids: 1.15, taille: px(24))[Mettre l’environnement de développement en commentaire][
       Touches : `/developpement` #touche[Entrée] #touche[Ctrl+v] #touche[j] #touche[I] `# ` #touche[Échap]
-      #fichier-source([config.yaml, après], taille: px(20))[```
+      #fichier([config.yaml, après], taille: px(20))[```
       ---
       application:
         nom: MonApplication
@@ -351,12 +319,12 @@
   note: [Le geste d’administrateur par excellence : commenter plusieurs lignes d’un coup, puis les décommenter (Ctrl+v, sélection des deux colonnes « \# », d). Le texte tapé après I n’apparaît que sur la première ligne pendant la frappe ; il est recopié sur toutes les lignes du bloc à l’appui sur Échap. Le fichier « après » est le résultat réel de la séquence (vim -s). Le \# étant inséré dans la colonne du curseur, l’indentation est conservée : le fichier reste un YAML valide, et yq n’y lit plus que l’environnement de production (partie 3).],
 )
 
-== Configurer Vim : `~/.vimrc`
+== Configurer Vim : `~/.vimrc` <vimrc>
 
 #anime(
   rang(
     bloc(poids: 1.1, taille: px(24))[Le fichier de configuration][
-      #fichier-source([~/.vimrc])[```
+      #fichier([~/.vimrc])[```
       " les commentaires commencent par un guillemet
       set number
       set autoindent
@@ -420,7 +388,7 @@
     reponse[`:set tabstop?` affiche `tabstop=2`.]),
 )
 
-== S’entraîner, chaque jour
+== S’entraîner, chaque jour <vim-entrainer>
 
 #anime(
   rang(
@@ -470,7 +438,7 @@
 #anime(
   rang(
     bloc(role: "pratique", taille: px(24))[Source : README.md][
-      #fichier-source(none, taille: px(20))[```
+      #fichier(none, taille: px(20))[```
       # MonApplication
 
       Une application web, déployée sur **web01**.
@@ -510,7 +478,7 @@
 #anime(
   rang(
     bloc(role: "pratique", taille: px(24))[Source : README.md (suite)][
-      #fichier-source([README.md], taille: px(21))[````
+      #fichier([README.md], taille: px(21))[````
       [Documentation de Debian](https://www.debian.org/doc/)
 
       ![Schéma de l’architecture](schema.png)
@@ -548,7 +516,7 @@
 #anime(
   rang(
     bloc(role: "pratique", poids: 0.7, taille: px(24))[Un tableau GFM][
-      #fichier-source([tableau.md])[```
+      #fichier([tableau.md])[```
       | Option | Effet |
       |:-------|:------|
       | `-l` | format long |
@@ -631,7 +599,7 @@
 #slide(repeat: 3, self => {
   let (uncover,) = utils.methods(self)
   corrige(1, [Créez `doc.md` : titre, paragraphe, bloc de code, liste des options courantes],
-    uncover("2-", reponse(fichier-source([doc.md], taille: px(20))[````
+    uncover("2-", reponse(fichier([doc.md], taille: px(20))[````
     # Documentation de la commande `ls`
 
     `ls` liste le contenu d’un répertoire : ses fichiers et ses sous-répertoires.
@@ -665,14 +633,14 @@
 #anime(
   rang(
     bloc(role: "pratique", taille: px(22))[CSV (_comma-separated values_) : à plat][
-      #fichier-source([personne.csv], taille: px(17))[```
+      #fichier([personne.csv], taille: px(17))[```
       nom,age,rue,ville,hobby1,hobby2,hobby3
       John Doe,30,123 Main St,Paris,lecture,course,voyage
       ```]
       - Pas de hiérarchie : rien ne dit qu’une adresse contient une rue et une ville ; trois loisirs, ni plus ni moins
     ],
     bloc(role: "pratique", poids: 0.8, taille: px(22))[XML (_eXtensible Markup Language_) : verbeux][
-      #fichier-source([personne.xml], taille: px(17))[```
+      #fichier([personne.xml], taille: px(17))[```
       <personne>
         <nom>John Doe</nom>
         <age>30</age>
@@ -687,14 +655,14 @@
   ),
   rang(
     bloc(role: "pratique", taille: px(22))[JSON : hiérarchique, strict][
-      #fichier-source([personne.json], taille: px(17))[```
+      #fichier([personne.json], taille: px(17))[```
       {"personne": {"nom": "John Doe", "age": 30,
         "adresse": {"rue": "123 Main St", "ville": "Paris"},
         "hobbies": ["lecture", "course", "voyage"]}}
       ```]
     ],
     bloc(role: "pratique", poids: 0.8, taille: px(22))[YAML : la hiérarchie par l’indentation][
-      #fichier-source([personne.yaml], taille: px(17))[```
+      #fichier([personne.yaml], taille: px(17))[```
       personne:
         nom: John Doe
         age: 30
@@ -706,7 +674,7 @@
   note: [Exemple du cours d’origine (README yaml_et_json). Le XML est abrégé (« … » : les deux autres loisirs et les balises fermantes). Le JSON est ici compacté, le YAML mélange style bloc (indentation) et style flux (accolades, crochets) : les deux styles sont du YAML. Le cours d’origine affirme qu’un YAML ne peut pas tenir sur une ligne : c’est vrai du style bloc, pas du style flux ; echo "{personne: {nom: John Doe, age: 30, hobbies: [lecture, course]}}" | yq -c . rend l’objet JSON attendu.],
 )
 
-== JSON : une syntaxe stricte, six types
+== JSON : une syntaxe stricte, six types <json-syntaxe>
 
 #anime(
   rang(
@@ -736,12 +704,12 @@
   note: [jq 1.7.1 (binaire officiel, conteneur Debian 13 ; à rejouer avec le paquet jq de Debian 13). Ordre des sorties : jq écrit l’erreur sur la sortie d’erreur, l’objet sur la sortie standard ; le terminal les mêle dans l’ordre de leur arrivée. RFC 8259 (2017) : « The names within an object SHOULD be unique » ; le doublon est traité deux diapositives plus loin. Le cours d’origine classe JSON parmi les formats de données et YAML parmi les langages ; la comparaison reste pertinente, car les deux servent aux mêmes usages (configuration, sérialisation, transfert).],
 )
 
-== YAML : la hiérarchie par l’indentation
+== YAML : la hiérarchie par l’indentation <yaml-syntaxe>
 
 #anime(
   rang(
     bloc(role: "pratique", poids: 0.95, taille: px(24))[config.yaml, annoté][
-      #fichier-source([config.yaml, élargi], taille: px(20))[```
+      #fichier([config.yaml, élargi], taille: px(20))[```
       ---                      # début de document
       # un commentaire
       application:             # clé: valeur (mapping)
@@ -789,7 +757,7 @@
   note: [Le tableau apparaît d’un bloc, puis la synthèse. La spécification décrit trois sortes de nœuds : mapping, séquence, scalaire. Une clé YAML non chaîne (par exemple 80: http) devient une chaîne en JSON ("80"). Les commentaires et les ancres appartiennent à la présentation du fichier, pas aux données : un convertisseur les abandonne ou les résout.],
 )
 
-== Convertir et comparer : python3, yq, jq
+== Convertir et comparer : python3, yq, jq <yaml-convertir>
 
 #anime(
   rang(
@@ -884,12 +852,12 @@
   note: [Le tableau résume les relevés des deux diapositives suivantes. La spécification 1.1 inclut aussi y, Y, n, N parmi les booléens ; PyYAML ne les applique pas (y reste une chaîne, relevé). Le schéma de base 1.2 n’a pas de type date ; ruamel.yaml (typ safe, 1.2 par défaut) en reconnaît pourtant, comme PyYAML ; yq (Go) l’étiquette !!timestamp mais l’écrit en chaîne. Une directive %YAML 1.1 en tête de document fait lire ruamel.yaml en 1.1 ; PyYAML ignore %YAML 1.2 et reste en 1.1 (relevé). JSON a les mêmes types, sans date.],
 )
 
-== Le problème de la Norvège : `NO` vaut `false`
+== Le problème de la Norvège : `NO` vaut `false` <yaml-norvege>
 
 #anime(
   rang(
     bloc(role: "pratique", poids: 1.7)[Le même fichier, deux analyseurs][
-      #fichier-source([norvege.yaml], taille: px(20))[```
+      #fichier([norvege.yaml], taille: px(20))[```
       ---
       pays: [FR, NO, SE]
       actif: yes
@@ -922,12 +890,12 @@
   note: [Sorties réelles, conteneur Debian 13 : PyYAML 6.0.4, ruamel.yaml 0.19.1, yamllint 1.38.0 (PyPI ; à rejouer avec les paquets Debian 13). yamllint s’appuie lui-même sur PyYAML. Ansible lit ses fichiers avec PyYAML : un yes y est un booléen (documentation Ansible, YAML Syntax) — à vérifier sur la version d’ansible-core du cours Ansible. Le yq de Debian (version Python) ne suit ni l’un ni l’autre exactement : yq 4.4.5 lit NO et yes comme des chaînes.],
 )
 
-== Autres pièges : octal, base 60, versions, dates
+== Autres pièges : octal, base 60, versions, dates <yaml-pieges>
 
 #anime(
   rang(
     bloc(role: "pratique", poids: 0.75, taille: px(24))[typage.yaml][
-      #fichier-source([typage.yaml], taille: px(21))[```
+      #fichier([typage.yaml], taille: px(21))[```
       ---
       mode: 0644
       mode_12: 0o644
@@ -963,7 +931,7 @@
 #anime(
   rang(
     bloc(role: "pratique", poids: 0.8, taille: px(24))[multi.yaml][
-      #fichier-source([multi.yaml], taille: px(21))[```
+      #fichier([multi.yaml], taille: px(21))[```
       ---
       litteral: |
         ligne 1
@@ -1001,12 +969,12 @@
   note: [Sortie réelle, PyYAML 6.0.4 (conteneur Debian 13). ruamel.yaml donne les mêmes chaînes. Le réglage de fin (_chomping_) : « clip » par défaut (un seul retour à la ligne final), « strip » avec -, « keep » avec +.],
 )
 
-== Ancres, alias et clé de fusion
+== Ancres, alias et clé de fusion <yaml-ancres>
 
 #anime(
   rang(
     bloc(role: "pratique", poids: 0.8, taille: px(24))[ancres.yaml][
-      #fichier-source([ancres.yaml], taille: px(21))[```
+      #fichier([ancres.yaml], taille: px(21))[```
       ---
       defaut: &defaut
         couleur: bleu
@@ -1037,12 +1005,12 @@
   note: [Exemple du cours d’origine (par défaut, objet1, objet2), clé « par défaut » renommée defaut (une clé sans espace). Sortie réelle, yq 4.4.5 (Python) ; yq -c . ancres.yaml affiche aussi defaut, sur une seule ligne trop longue pour la diapositive. PyYAML 6.0.4, ruamel.yaml 0.19.1 et yq Go v4.44.3 (explode) donnent le même arbre. En JSON, il n’y a plus d’ancre : objet2 est une copie.],
 )
 
-== Valider avant d’appliquer : yamllint
+== Valider avant d’appliquer : yamllint <yamllint>
 
 #anime(
   rang(
     bloc(role: "pratique", poids: 0.75, taille: px(22))[Deux fichiers fautifs][
-      #fichier-source([tabulation.yaml (`cat -T`)], taille: px(18))[```
+      #fichier([tabulation.yaml (`cat -T`)], taille: px(18))[```
       titre: 1984
       auteur: George Orwell
       mots_cles:
@@ -1050,7 +1018,7 @@
       ^I- politique
       ```]
       #v(px(4))
-      #fichier-source([indentation.yaml], taille: px(18))[```
+      #fichier([indentation.yaml], taille: px(18))[```
       ---
       application:
         nom: MonApplication
@@ -1081,7 +1049,7 @@
   note: [Sorties réelles, yamllint 1.38.0 (PyPI, conteneur Debian 13 ; à rejouer avec le paquet yamllint de Debian 13). tabulation.yaml : la ligne 5 commence par une tabulation. indentation.yaml : « version » est indenté de trois espaces sous « nom » (deux) : l’analyseur y voit la suite de la valeur MonApplication, puis bute sur les deux-points. La configuration de yamllint se règle par un fichier .yamllint (règles activées, niveaux).],
 )
 
-== Interroger et modifier : jq et yq
+== Interroger et modifier : jq et yq <yq-jq>
 
 #anime(
   rang(
@@ -1113,7 +1081,7 @@
   note: [Sorties réelles, yq 4.4.5 (Python) et jq 1.7.1, conteneur Debian 13 ; la dernière commande porte sur le config.yaml dont l’environnement de développement a été mis en commentaire avec Ctrl+v (diapositive « Les modes visuels »). Le site affirmait que -i sans -y réécrit le fichier en JSON : yq 4.4.5 (et yq 3.1.0 d’Ubuntu 24.04) refusent, avec le message ci-dessus ; à rejouer avec le yq de Debian 13. -yi réécrit le fichier : les commentaires et la mise en forme d’origine sont perdus (-Y les garde en partie).],
 )
 
-== Deux outils nommés yq
+== Deux outils nommés yq <deux-yq>
 
 #anime(
   rang(
@@ -1154,7 +1122,7 @@
 #anime(
   rang(
     bloc(role: "pratique", poids: 0.9, taille: px(24))[Décrire une action en YAML][
-      #fichier-source([commande.yaml], taille: px(21))[```
+      #fichier([commande.yaml], taille: px(21))[```
       ---
       command:
         - bash
@@ -1205,7 +1173,7 @@
 #slide(repeat: 3, self => {
   let (uncover,) = utils.methods(self)
   corrige(1, [Écrivez `livre.yaml`],
-    uncover("2-", reponse(fichier-source([livre.yaml], taille: px(21))[```
+    uncover("2-", reponse(fichier([livre.yaml], taille: px(21))[```
     ---
     titre: "1984"
     auteur: George Orwell

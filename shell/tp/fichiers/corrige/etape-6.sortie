@@ -1,0 +1,20 @@
+$ cd ~/fichiers
+$ id -un
+ada
+$ id -Gn
+ada etudiants
+$ ls -l /etc/passwd /etc/shadow
+-rw-r--r-- 1 root root   876 Nov 25 10:54 /etc/passwd
+-rw-r----- 1 root shadow 499 Nov 25 10:54 /etc/shadow
+$ cat /etc/shadow
+cat: /etc/shadow: Permission denied
+$ chown root pionnieres.csv
+chown: changing ownership of 'pionnieres.csv': Operation not permitted
+$ chgrp etudiants pionnieres.csv
+$ ls -l pionnieres.csv
+-rw-r----- 1 ada etudiants 474 Sep  1 08:00 pionnieres.csv
+$ chgrp root pionnieres.csv
+chgrp: changing group of 'pionnieres.csv': Operation not permitted
+$ cp /etc/passwd copie-passwd
+$ ls -l copie-passwd
+-rw-r--r-- 1 ada ada 876 Nov 25 10:54 copie-passwd

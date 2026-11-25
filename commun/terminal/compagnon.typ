@@ -13,7 +13,7 @@
   racine: "../../",
   terminal: ("compagnon",),
   liens: (
-    ([Code du compagnon], "iadmin-terminal.py"),
+    ([Code du compagnon], "https://github.com/jmchantrein/Cours/tree/main/commun/terminal/compagnon"),
     ([Licences], "https://github.com/jmchantrein/Cours/blob/main/commun/terminal/LICENCES.md"),
   ),
 )
@@ -21,8 +21,8 @@
 = Ce que fait le compagnon <principe>
 
 Les pages de TP proposent un bouton « Exécuter » à côté de chaque commande. Avec le compagnon, un clic envoie
-la commande à votre propre shell, qui l’exécute. Le compagnon est un petit programme Python, sans dépendance,
-qui tourne sur l’ordinateur où s’ouvre votre navigateur : il ouvre votre shell et le relie à la page.
+la commande à votre propre shell, qui l’exécute. Le compagnon est un petit programme, un seul fichier à
+télécharger, qui tourne sur l’ordinateur où s’ouvre votre navigateur : il ouvre votre shell et le relie à la page.
 
 #bloc(role: "danger")[Un clic lance la commande dans votre vrai shell][
   - La commande s’exécute sur votre machine, avec vos droits et sur vos fichiers, comme si vous l’aviez tapée.
@@ -41,27 +41,38 @@ qui tourne sur l’ordinateur où s’ouvre votre navigateur : il ouvre votre sh
 #note(role: "precaution")[Toutes les pages publiées sous `jmchantrein.github.io` partagent la même origine. Ne
   collez l’adresse du compagnon que dans la page du cours que vous suivez.]
 
-= Installer le compagnon <installer>
+= Télécharger le compagnon <installer>
 
-Il faut Linux ou macOS, avec Python 3 et `curl`. Sous Windows, installez-le et lancez-le dans WSL. Sur Debian
-ou Ubuntu, installez d’abord les prérequis, puis téléchargez le script d’installation, lisez-le, et lancez-le :
+Une commande le télécharge dans le dossier courant et le rend exécutable ; rien d’autre n’est installé.
+Choisissez celle de votre système (`uname -sm` l’affiche) :
 
-#terminal[```console
-$ sudo apt install python3 curl
-$ curl -fLO https://jmchantrein.github.io/Cours/commun/terminal/installer-compagnon.sh
-$ less installer-compagnon.sh
-$ sh installer-compagnon.sh
-```]
+#let base = "https://jmchantrein.github.io/Cours/commun/terminal/compagnon/dist/"
+#let telecharger(cible) = raw("$ curl -fLo iadmin-terminal " + base + "iadmin-terminal-" + cible + " && chmod +x iadmin-terminal", lang: "console", block: true)
 
-Le script copie le compagnon dans `~/.local/bin/iadmin-terminal`, et rien d’autre :
+#table(columns: 2,
+  [*Système*], [*Commande*],
+  [Linux x86_64, et WSL sous Windows], terminal(telecharger("linux-amd64")),
+  [Linux arm64 (aarch64)], terminal(telecharger("linux-arm64")),
+  [macOS, processeur Apple], terminal(telecharger("darwin-arm64")),
+  [macOS, processeur Intel], terminal(telecharger("darwin-amd64")),
+)
 
-#fichier("installer-compagnon.sh", read("installer-compagnon.sh"))
+#indice(titre: [Vérifier la somme SHA-256 du fichier téléchargé])[
+  Le site publie la somme de chaque exécutable dans
+  #link(base + "SHA256SUMS")[`SHA256SUMS`]. Comparez la ligne de votre système avec la somme du fichier
+  (sous macOS, `shasum -a 256` remplace `sha256sum`) :
+  #terminal[```console
+  $ curl -fsSL https://jmchantrein.github.io/Cours/commun/terminal/compagnon/dist/SHA256SUMS | grep linux-amd64
+  $ sha256sum iadmin-terminal
+  ```]
+  Les deux sommes doivent être identiques ; sinon, supprimez le fichier et signalez-le.
+]
 
 = Relier une page à votre shell <connecter>
 
 + Dans un terminal, lancez le compagnon. Il affiche l’adresse à coller dans la page :
   #terminal[```console
-  $ iadmin-terminal local
+  $ ./iadmin-terminal local
   # Adresse à coller dans la page :
   # ws://localhost:41234/?token=…
   ```]
@@ -79,7 +90,7 @@ $ pwd
 ```]
 
 #note(role: "pratique")[Chaque adresse ne sert qu’une fois : après avoir fermé ou rechargé la page, relancez
-  `iadmin-terminal local` et collez la nouvelle adresse.]
+  `./iadmin-terminal local` et collez la nouvelle adresse.]
 
 = Travailler sur une machine distante <ssh>
 
@@ -87,7 +98,7 @@ Le compagnon peut aussi lancer votre client `ssh` : les commandes cliquées s’
 distante. Le compagnon reste sur votre ordinateur ; vos clés et votre `~/.ssh/config` servent comme d’habitude.
 
 #terminal[```console
-$ iadmin-terminal ssh utilisateur@machine
+$ ./iadmin-terminal ssh utilisateur@machine
 ```]
 
 = Si la connexion échoue <depannage>
@@ -99,8 +110,4 @@ $ iadmin-terminal ssh utilisateur@machine
   des cours.
 - Navigateur vérifié : Chromium (et donc Chrome). Les autres navigateurs n’ont pas encore été essayés.
 
-Pour désinstaller le compagnon :
-
-#terminal[```console
-$ rm ~/.local/bin/iadmin-terminal
-```]
+Pour désinstaller le compagnon, supprimez le fichier `iadmin-terminal`.

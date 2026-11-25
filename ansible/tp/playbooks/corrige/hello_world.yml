@@ -1,0 +1,26 @@
+---
+- name: Hello world
+  hosts: all
+  tasks:
+    - name: Pinguer les nœuds gérés
+      ansible.builtin.ping:
+
+    - name: Afficher le message d’accueil
+      ansible.builtin.debug:
+        msg: "{{ welcome_msg }}"
+
+    # ansible_hostname est un fact : relevé sur le nœud par Gathering Facts.
+    - name: Afficher le nom d’hôte
+      ansible.builtin.debug:
+        msg: "{{ ansible_hostname }}"
+
+    # Le même mécanisme, à la main : setup filtré, sa réponse gardée par register.
+    - name: Relever la distribution
+      ansible.builtin.setup:
+        filter:
+          - ansible_distribution
+      register: distribution_ansible_facts
+
+    - name: Afficher la distribution
+      ansible.builtin.debug:
+        msg: "{{ distribution_ansible_facts.ansible_facts.ansible_distribution }}"

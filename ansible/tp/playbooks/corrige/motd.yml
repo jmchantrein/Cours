@@ -1,0 +1,11 @@
+---
+- name: Message d’accueil des nœuds
+  hosts: all
+  tasks:
+    - name: Déposer /etc/motd depuis son gabarit
+      ansible.builtin.template:
+        src: templates/motd.j2
+        dest: /etc/motd
+        owner: root
+        group: root
+        mode: "0644"

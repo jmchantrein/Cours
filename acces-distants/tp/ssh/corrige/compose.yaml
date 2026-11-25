@@ -1,0 +1,36 @@
+# Le labo du TP SSH : trois conteneurs Debian 13 jouent trois machines.
+#   poste   : le poste d'Ada, d'où partent les commandes ssh (pas de sshd) ;
+#   bastion : la porte d'entrée, sur les deux réseaux, sshd sur le port 2222 ;
+#   serveur : sur le réseau privé seulement, joignable par le bastion.
+# Lancement : docker compose up -d --build ; arrêt : docker compose down.
+name: labo-ssh
+
+x-machine: &machine
+  build: machine
+  init: true
+
+services:
+  poste:
+    <<: *machine
+    hostname: poste
+    working_dir: /home/ada
+    command: ["sleep", "infinity"]
+    networks: [public]
+  bastion:
+    <<: *machine
+    hostname: bastion
+    environment:
+      PORT_SSH: "2222"
+    networks: [public, prive]
+  serveur:
+    <<: *machine
+    hostname: serveur
+    environment:
+      SUPERVISION: "8000"
+    networks: [prive]
+
+networks:
+  public:
+  # internal : pas de sortie vers l'extérieur, comme un réseau d'administration.
+  prive:
+    internal: true

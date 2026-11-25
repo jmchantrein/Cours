@@ -1,0 +1,6 @@
+nom | annee;domaine;contribution
+Lovelace Ada | 1843;programmation;premier programme publié
+Booth Kathleen | 1947;langages;premier langage d'assemblage
+nom | annee | domaine | contribution
+Lovelace Ada | 1843 | programmation | premier programme publié
+Booth Kathleen | 1947 | langages | premier langage d'assemblage

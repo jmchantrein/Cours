@@ -1,0 +1,10 @@
+12,15c12,15
+< [sauvegarde]
+< port = 0
+< user = backup
+< autostart = no
+---
+> # [sauvegarde]
+> # port = 0
+> # user = backup
+> # autostart = no

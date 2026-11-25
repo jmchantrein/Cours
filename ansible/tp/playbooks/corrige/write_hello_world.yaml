@@ -1,0 +1,28 @@
+---
+- name: Écrire hello world
+  hosts: all
+  tasks:
+    # Une garde simple : creates, la commande ne s’exécute pas si le fichier existe.
+    - name: Écrire /hello, seulement s’il manque
+      ansible.builtin.shell: echo hello > /hello
+      args:
+        creates: /hello
+
+    # Une garde explicite : constater l’état avec stat, puis décider (when) et le dire
+    # (changed_when, que la règle no-changed-when d’ansible-lint exige).
+    - name: Constater si /world existe
+      ansible.builtin.stat:
+        path: /world
+      register: world_file
+
+    - name: Écrire /world, seulement s’il manque
+      ansible.builtin.command: python3 -c "open('/world', 'w').write('world\n')"
+      when: not world_file.stat.exists
+      changed_when: true
+
+    - name: Écrire /hello_world avec le module lineinfile
+      ansible.builtin.lineinfile:
+        path: /hello_world
+        line: "Hello world !"
+        create: true
+        mode: "0644"

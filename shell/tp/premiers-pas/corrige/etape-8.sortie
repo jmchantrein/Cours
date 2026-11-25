@@ -1,0 +1,43 @@
+$ cd ~/atelier
+# 1. La sortie de ls -l dans un fichier
+$ ls -l > liste.txt
+$ cat liste.txt
+total 20
+drwxrwxr-x 4 ada ada 4096 Nov 25 10:51 archives
+drwxr-xr-x 2 ada ada 4096 Nov 25 10:51 journaux
+-rw-rw-r-- 1 ada ada    0 Nov 25 10:51 liste.txt
+drwxr-xr-x 2 ada ada 4096 Nov 25 10:51 notes
+-rw-r--r-- 1 ada ada  474 Sep  1 08:00 pionnieres.csv
+drwxr-xr-x 4 ada ada 4096 Sep  1 08:00 projets
+# 2. Ajouter une ligne à la fin, sans écraser
+$ echo "- relire les diapos" >> notes/a-faire.txt
+$ cat notes/a-faire.txt
+- lire le manuel de ls
+- ranger les notes
+- archiver les journaux de 2025
+- relire les diapos
+# 3. Séparer la sortie et les erreurs
+$ ls pionnieres.csv absent.txt
+ls: cannot access 'absent.txt': No such file or directory
+pionnieres.csv
+$ ls pionnieres.csv absent.txt 2> erreurs.txt
+pionnieres.csv
+$ cat erreurs.txt
+ls: cannot access 'absent.txt': No such file or directory
+# 4. Compter les erreurs du serveur
+$ grep ERROR journaux/serveur-2026-novembre.log | wc -l
+30
+# 5. La 4e ligne de pionnieres.csv
+$ head -n 4 pionnieres.csv | tail -n 1
+Hopper Grace;1952;langages;premier compilateur A-0
+# 6. Les trois pionnières les plus anciennes, sans la ligne d'en-tête
+$ tail -n +2 pionnieres.csv | sort -t';' -k2 -n | head -n 3
+Lovelace Ada;1843;programmation;premier programme publié
+Booth Kathleen;1947;langages;premier langage d'assemblage
+Hopper Grace;1952;langages;premier compilateur A-0
+# 7. Les trois dernières erreurs, dans un fichier
+$ grep ERROR journaux/serveur-2026-novembre.log | tail -n 3 > dernieres-erreurs.txt
+$ cat dernieres-erreurs.txt
+2026-11-01 11:16:40 ERROR GET /api/commandes 500
+2026-11-01 11:40:50 ERROR GET /api/commandes 500
+2026-11-01 12:05:00 ERROR GET /api/commandes 500

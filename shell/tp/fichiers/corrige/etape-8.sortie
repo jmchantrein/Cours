@@ -1,0 +1,56 @@
+$ cd ~/fichiers
+# 1. Le joker : le shell remplace *.txt par les noms du dossier courant
+$ ls *.txt
+prive.txt  public.txt  rapport-dur.txt  rapport-lien.txt
+$ ls documents/notes/reunion-*
+documents/notes/reunion-2026-11-18.txt  documents/notes/reunion-2026-11-25.txt
+# 2. find descend dans les sous-dossiers ; les guillemets protègent le motif du shell
+$ find . -name '*.txt' | sort
+./coffre/secret.txt
+./documents/brouillons/vide.txt
+./documents/notes/reunion-2026-11-18.txt
+./documents/notes/reunion-2026-11-25.txt
+./documents/rapport-2026.txt
+./prive.txt
+./public.txt
+./rapport-dur.txt
+./rapport-lien.txt
+$ find . -type d | sort
+.
+./coffre
+./documents
+./documents/brouillons
+./documents/notes
+./journaux
+./prive
+./public
+./scripts
+$ find . -type f -size +10k
+./journaux/serveur.log
+$ find . -empty | sort
+./documents/brouillons/vide.txt
+./prive
+./prive.txt
+./public
+./public.txt
+$ find . -type l
+./rapport-lien.txt
+# 3. Les fichiers modifiés depuis moins d'un jour (-mtime -1)
+$ find . -type f -mtime -1 | sort
+./coffre/secret.txt
+./copie-passwd
+./documents/rapport-2026.txt
+./prive.txt
+./public.txt
+./rapport-dur.txt
+# 4. Agir sur ce qu'on trouve : rendre exécutables tous les scripts
+$ find scripts -name '*.sh' -exec chmod u+x {} +
+$ ls -l scripts
+total 8
+-rwxr--r-- 1 ada ada 165 Sep  1 08:00 bonjour.sh
+-rwxr-x--- 1 ada ada 174 Sep  1 08:00 sauvegarde.sh
+# 5. Ailleurs que chez soi : les dossiers interdits donnent des erreurs, qu'on écarte
+$ find /etc -name 'host*' 2> /dev/null | sort
+/etc/host.conf
+/etc/hostname
+/etc/hosts

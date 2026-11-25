@@ -1,0 +1,32 @@
+$ cd ~/fichiers
+$ ln documents/rapport.txt rapport-dur.txt
+$ ln -s documents/rapport.txt rapport-lien.txt
+$ ls -li documents/rapport.txt rapport-dur.txt rapport-lien.txt
+1707048 -rw-rw---- 2 ada ada 80 Sep  1 08:00 documents/rapport.txt
+1707048 -rw-rw---- 2 ada ada 80 Sep  1 08:00 rapport-dur.txt
+1707136 lrwxrwxrwx 1 ada ada 21 Nov 25 10:54 rapport-lien.txt -> documents/rapport.txt
+# 1. Un lien physique est un second nom du même fichier
+$ echo "Ajouté par le lien physique." >> rapport-dur.txt
+$ cat documents/rapport.txt
+Rapport d'activité
+Rien à signaler : le serveur a répondu toute la journée.
+Ajouté par le lien physique.
+# 2. Le nom d'origine change : le lien symbolique pointe dans le vide
+$ mv documents/rapport.txt documents/rapport-2026.txt
+$ cat rapport-dur.txt
+Rapport d'activité
+Rien à signaler : le serveur a répondu toute la journée.
+Ajouté par le lien physique.
+$ cat rapport-lien.txt
+cat: rapport-lien.txt: No such file or directory
+$ ls -l rapport-lien.txt
+lrwxrwxrwx 1 ada ada 21 Nov 25 10:54 rapport-lien.txt -> documents/rapport.txt
+# 3. Le réparer : -f remplace le lien existant
+$ ln -sf documents/rapport-2026.txt rapport-lien.txt
+$ cat rapport-lien.txt
+Rapport d'activité
+Rien à signaler : le serveur a répondu toute la journée.
+Ajouté par le lien physique.
+# 4. Pas de lien physique vers un répertoire
+$ ln documents documents-dur
+ln: documents: hard link not allowed for directory

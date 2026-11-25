@@ -1,0 +1,36 @@
+# Laboratoire du TP WireGuard : trois pairs sur un réseau ordinaire, le réseau « porteur ».
+# Des conteneurs jetables avec la capacité NET_ADMIN (créer des interfaces réseau) : un labo, pas une
+# architecture de production.
+x-pair: &pair
+  build: .
+  image: wireguard-labo
+  init: true
+  cap_add: [NET_ADMIN]
+  # wireguard-go, le repli sans module noyau, crée son interface par /dev/net/tun.
+  devices: [/dev/net/tun]
+
+services:
+  pair-a:
+    <<: *pair
+    hostname: pair-a
+    # Étape 7 : pair-a relaie les paquets entre pair-b et pair-c.
+    sysctls:
+      net.ipv4.ip_forward: 1
+    networks:
+      porteur: { ipv4_address: 172.20.0.2 }
+  pair-b:
+    <<: *pair
+    hostname: pair-b
+    networks:
+      porteur: { ipv4_address: 172.20.0.3 }
+  pair-c:
+    <<: *pair
+    hostname: pair-c
+    networks:
+      porteur: { ipv4_address: 172.20.0.4 }
+
+networks:
+  porteur:
+    ipam:
+      config:
+        - subnet: 172.20.0.0/24

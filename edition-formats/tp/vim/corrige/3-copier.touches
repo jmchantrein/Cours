@@ -1,0 +1,11 @@
+" aller sur la ligne de web01, la sélectionner avec les deux suivantes, les copier
+/web01<CR>
+V2jy
+" aller à la dernière ligne et coller en dessous : le curseur est sur la copie
+Gp
+" sauter au w de web01 dans la copie, changer le mot
+fwcwweb02<Esc>
+" revenir à la première ligne, ouvrir une ligne en dessous et l’écrire
+gg
+o# configuration de MonApplication sur web01 et web02<Esc>
+:wq<CR>

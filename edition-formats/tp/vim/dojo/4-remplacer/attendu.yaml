@@ -1,0 +1,13 @@
+---
+application:
+  nom: MonApplication
+  version: 1.2.3
+  contact: admin@example.net
+  environnements:
+    production:
+      url: https://prod.example.net
+      miroirs: [https://m1.example.net, https://m2.example.net]
+    developpement:
+      url: http://dev.example.net
+  # le dépôt d'une autre organisation : à ne pas modifier
+  depot: https://git.example-org.fr/monapp.git

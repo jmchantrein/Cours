@@ -1,0 +1,32 @@
+#!/bin/bash
+# Crochet Git pre-commit : refuse le commit si shellcheck ou ansible-lint signale une erreur.
+# Installation : cp hooks/pre-commit .git/hooks/pre-commit
+#
+# Seuls les fichiers indexés pour ce commit sont vérifiés (git diff --cached), pas tout le
+# dépôt : relire tout le dépôt à chaque commit ne passerait pas à l’échelle, et le crochet
+# n’a qu’à contrôler ce qui entre.
+set -euo pipefail
+
+statut=0
+
+# Fichiers indexés : ajoutés (A), copiés (C) ou modifiés (M).
+indexes="$(git diff --cached --name-only --diff-filter=ACM)"
+
+while IFS= read -r f; do
+  case "$f" in
+    *.bash | *.sh)
+      if ! shellcheck "$f"; then
+        echo "shellcheck refuse ${f} : corrigez-le avant de commiter." >&2
+        statut=1
+      fi
+      ;;
+    *.yaml | *.yml)
+      if ! ansible-lint --offline "$f"; then
+        echo "ansible-lint refuse ${f} : corrigez-le avant de commiter." >&2
+        statut=1
+      fi
+      ;;
+  esac
+done <<< "$indexes"
+
+exit "$statut"

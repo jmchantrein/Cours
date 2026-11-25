@@ -1,0 +1,17 @@
+" ligne 1 : supprimer le premier des deux « des », puis remplacer le a par un à
+/des des<CR>
+dw
+farà
+" ligne 2 : supprimer la ligne entière
+jdd
+" ligne 3, devenue 2 : supprimer le e de trop, puis le r de trop
+/èe<CR>
+lx
+/rr<CR>
+x
+" ligne suivante : ajouter la fin de la phrase
+jA ligne.<Esc>
+" dernière ligne : changer le mot rouge
+/rouge<CR>
+cwverte<Esc>
+:wq<CR>

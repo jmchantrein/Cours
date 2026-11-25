@@ -1,0 +1,16 @@
+$ cd ~/fichiers
+$ id
+uid=1000(ada) gid=1000(ada) groups=1000(ada),1001(etudiants)
+$ ls -l
+total 20
+drwxr-xr-x 2 ada ada 4096 Sep  1 08:00 coffre
+drwxr-xr-x 4 ada ada 4096 Sep  1 08:00 documents
+drwxr-xr-x 2 ada ada 4096 Sep  1 08:00 journaux
+-rw-r--r-- 1 ada ada  474 Sep  1 08:00 pionnieres.csv
+drwxr-xr-x 2 ada ada 4096 Sep  1 08:00 scripts
+$ ls -l scripts
+total 8
+-rw-r--r-- 1 ada ada 165 Sep  1 08:00 bonjour.sh
+-rw-r--r-- 1 ada ada 174 Sep  1 08:00 sauvegarde.sh
+$ ls -ld coffre
+drwxr-xr-x 2 ada ada 4096 Sep  1 08:00 coffre

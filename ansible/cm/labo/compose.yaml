@@ -1,28 +1,37 @@
-# Labo du cours Ansible : un nœud de contrôle, deux nœuds gérés, sur un réseau
-# Docker dont le DNS résout les noms des services (l’inventaire les emploie).
-# projet/ est monté dans /etc/ansible du nœud de contrôle.
+# Labo Ansible, commun au cours et aux trois séances de TP : un nœud de contrôle, deux nœuds
+# gérés, sur un réseau Docker dont le DNS résout les noms des services (l’inventaire les emploie).
+# Le dossier de travail est monté dans /etc/ansible du nœud de contrôle : ANSIBLE_PROJET
+# (chemin absolu), ou projet/, les fichiers des diapos. Nom du projet Compose : -p ou
+# COMPOSE_PROJECT_NAME, sinon ansible-cm ; les images en prennent le nom.
+# Derrière un proxy HTTPS (facultatif, construction seulement) : LABO_APT_PROXY (adresse du
+# proxy), LABO_CA (son certificat d’autorité), LABO_RESEAU_BUILD=host si le proxy écoute sur
+# l’hôte.
 name: ansible-cm
+x-construction: &construction
+  context: .
+  network: ${LABO_RESEAU_BUILD:-default}
+  args:
+    LABO_APT_PROXY: ${LABO_APT_PROXY:-}
+  secrets: [ca]
 services:
   control-node:
     build:
-      context: .
+      <<: *construction
       dockerfile: Dockerfile.control
-      secrets: [ca]
-    image: ansible-cm-control
     hostname: control-node
     working_dir: /etc/ansible
     volumes:
-      - ./projet:/etc/ansible
+      - ${ANSIBLE_PROJET:-./projet}:/etc/ansible
   managed-node-1:
     build:
-      context: .
+      <<: *construction
       dockerfile: Dockerfile.node
-    image: ansible-cm-node
     hostname: managed-node-1
   managed-node-2:
-    image: ansible-cm-node
+    build:
+      <<: *construction
+      dockerfile: Dockerfile.node
     hostname: managed-node-2
-    depends_on: [managed-node-1]
 secrets:
   ca:
-    file: ${CA_PIP:-/dev/null}
+    file: ${LABO_CA:-/dev/null}

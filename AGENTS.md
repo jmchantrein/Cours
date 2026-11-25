@@ -21,6 +21,11 @@ l’organisation et la compilation dans [`README.md`](README.md).
 - Aligne un TP sur son cours : mêmes commandes, même vocabulaire ; renvoie aux diapos par `diapo(…)`.
 - Après une modification de corrigés, lance `<cours>/tp/<tp>/tester.sh --lint`, et `--up` quand Docker a accès au réseau.
 - Écris un artefact sans dépendance externe : une page Typst, un script, un style qui emploie les variables CSS de la charte.
+- Déclare le terminal d’une page par `page-web(terminal: …)` : `("compagnon",)` pour Docker ou libvirt, `("vm", "compagnon")`
+  pour un TP shell. Ses dépendances tierces sont fixées en version et en SHA-256 (`commun/terminal/dependances.txt`,
+  `go.sum`), téléchargées par la CI et servies par le site : ni CDN, ni fichier tiers dans git.
+- Après une modification du terminal, lance `commun/terminal/tester-vm.mjs`, `compagnon/tester.py` et
+  `tester-navigateur.js` (voir `commun/README.md`).
 - Fais reposer un artefact sur le modèle énoncé dans le cours, et relie-le à la diapo et au TP concernés.
 - Après une modification d’artefact, déroule ses expériences dans un navigateur et vérifie les résultats annoncés dans ses réponses.
 - Fais tenir un artefact dans la fenêtre sans défilement de la page : vérifie de 1280 × 650 à 1920 × 950 px,

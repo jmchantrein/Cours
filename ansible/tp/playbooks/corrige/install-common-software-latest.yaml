@@ -1,0 +1,12 @@
+---
+# Contre-exemple de l’étape 8 : state: latest, qu’ansible-lint refuse (package-latest).
+- name: Installer les logiciels communs
+  hosts: all
+  tasks:
+    - name: Installer la liste de paquets communs
+      ansible.builtin.apt:
+        name:
+          - htop
+          - ncdu
+          - vim
+        state: latest

@@ -9,3 +9,4 @@
 # par commun/terminal/preparer.sh (publiées par la CI).
 /commun/terminal/index.html
 /commun/terminal/vendor/
+/commun/terminal/compagnon/dist/

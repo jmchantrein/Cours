@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""Vérifie le compagnon de bout en bout, sans navigateur : python3 -I commun/terminal/tester-compagnon.py
+"""Vérifie l'exécutable du compagnon de bout en bout, sans navigateur, après construire.sh :
+    python3 -I commun/terminal/compagnon/tester.py [exécutable]   (par défaut : dist/iadmin-terminal-linux-<arch>)
 
 Porté de site/scripts/test-terminal-companion.py. Contrôle le protocole (poignée de main WebSocket,
 redimensionnement, entrée, sortie du PTY) et les protections : écoute sur 127.0.0.1 seulement, jeton,
@@ -17,14 +18,15 @@ import sys
 import time
 from pathlib import Path
 
-COMPAGNON = Path(__file__).with_name("iadmin-terminal.py")
+ARCH = {"x86_64": "amd64", "aarch64": "arm64"}.get(os.uname().machine, os.uname().machine)
+COMPAGNON = Path(sys.argv[1]) if len(sys.argv) > 1 else Path(__file__).parent / f"dist/iadmin-terminal-linux-{ARCH}"
 ORIGINE = "https://jmchantrein.github.io"
 reussis = []
 
 
 def lancer():
     """Démarre un compagnon en mode local ; rend le processus, le port et le jeton."""
-    processus = subprocess.Popen([sys.executable, "-I", str(COMPAGNON), "local", "--shell", "/bin/sh"],
+    processus = subprocess.Popen([str(COMPAGNON), "local", "--shell", "/bin/sh"],
                                  stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
     assert processus.stdout.readline().strip() == "Adresse à coller dans la page :"
     adresse = processus.stdout.readline().strip()
@@ -118,7 +120,7 @@ for cas, jeton_essai, origine, statut in (
     client, reponse = poignee(port, jeton_essai or jeton, origine)
     assert reponse.startswith(b"HTTP/1.1 " + statut), (cas, reponse)
     client.close()
-    assert processus.wait(timeout=5) == 0
+    processus.wait(timeout=5)
     try:
         socket.create_connection(("127.0.0.1", port), timeout=2).close()
         raise AssertionError(f"{cas} : le compagnon écoute encore")

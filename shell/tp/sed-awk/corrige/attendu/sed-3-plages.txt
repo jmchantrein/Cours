@@ -1,0 +1,8 @@
+[base_de_donnees]
+port = 5432
+user = postgres
+autostart = yes
+
+3:port = 8443
+8:port = 5432
+13:port = 0

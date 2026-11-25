@@ -1,0 +1,29 @@
+$ cd ~/fichiers
+# 1. Sans r : on ne peut plus lister, mais on atteint un fichier dont on connaît le nom
+$ chmod u-r coffre
+$ ls coffre
+ls: cannot open directory 'coffre': Permission denied
+$ cat coffre/secret.txt
+Le code du coffre est 1843.
+# 2. Sans x : on lit la liste des noms, mais on n'entre plus
+$ chmod u=rw coffre
+$ ls coffre
+secret.txt
+$ cat coffre/secret.txt
+cat: coffre/secret.txt: Permission denied
+$ cd coffre
+bash: cd: coffre: Permission denied
+# 3. Sans w : on ne crée ni ne supprime plus de nom ; le fichier, lui, reste modifiable
+$ chmod u=rx coffre
+$ touch coffre/nouveau.txt
+touch: cannot touch 'coffre/nouveau.txt': Permission denied
+$ rm coffre/secret.txt
+rm: cannot remove 'coffre/secret.txt': Permission denied
+$ echo "Nouveau code : 1969." >> coffre/secret.txt
+$ cat coffre/secret.txt
+Le code du coffre est 1843.
+Nouveau code : 1969.
+# 4. Les droits d'origine
+$ chmod 755 coffre
+$ ls -ld coffre
+drwxr-xr-x 2 ada ada 4096 Sep  1 08:00 coffre

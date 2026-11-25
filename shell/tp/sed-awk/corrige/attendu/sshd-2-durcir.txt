@@ -1,0 +1,8 @@
+11c11
+< #PermitRootLogin prohibit-password
+---
+> PermitRootLogin no
+15c15
+< #PasswordAuthentication yes
+---
+> PasswordAuthentication no

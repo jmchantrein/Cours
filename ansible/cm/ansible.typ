@@ -33,12 +33,12 @@
     ..range(2).map(_ => stack(spacing: px(6),
       align(center, text(size: px(22), weight: 600, fill: c.gris)[SSH, port 22]), fleche-ssh)))),
   uncover("2-", stack(spacing: px(24),
-    ..(1, 2).map(i => machine([Nœud géré · managed-node-#i], c.ardoise,
+    ..(1, 2).map(i => machine([Nœud géré · managed-node-#i], c.distant,
       puce-schema[sshd], puce-schema[python3],
       puce-schema(trait: (paint: c.gris, thickness: px(2), dash: "dashed"))[aucun agent])))),
 )
 
-#couverture[Ansible][Automatiser les configurations][Jean-Mathieu Chantrein][25 novembre 2026]
+#couverture(illustration: "noeuds")[Ansible][Automatiser les configurations][Jean-Mathieu Chantrein][25 novembre 2026]
 #speaker-note[Cours compagnon des cours Virtualisation et Conteneurisation : ils fournissent les machines ; celui-ci les configure. Versions employées pour toutes les sorties : ansible-core 2.19.4 et ansible-lint 26.11.0 (installés par pip, Python 3.12), nœuds gérés Ubuntu 24.04 dans des conteneurs Docker. Le labo du TP repose sur Debian : les sorties qui dépendent de la distribution sont signalées « à rejouer ». Script de rejeu : ansible/cm/rejouer.sh.]
 
 // ======================================================================

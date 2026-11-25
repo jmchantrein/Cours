@@ -1,0 +1,11 @@
+      2 langages
+      1 reseau
+      1 programmation
+      1 materiel
+      1 logiciel
+      1 cryptographie
+      1 calcul
+Lovelace Ada;1843;programmation;premier programme publié
+code de retour de cut : 1
+9
+cut: donnees/absent.csv: No such file or directory

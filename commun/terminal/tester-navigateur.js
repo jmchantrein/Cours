@@ -49,10 +49,12 @@ const adresse = (nom, port = 8000) => `http://localhost:${port}/${html[nom]}`;
 
 // ---------- Serveurs et compagnon ----------
 const enfants = [];
+const arch = { x64: "amd64", arm64: "arm64" }[process.arch];
+const binaire = path.join(__dirname, `compagnon/dist/iadmin-terminal-linux-${arch}`);
 const serveur = port => enfants.push(spawn("python3", ["-I", "-m", "http.server", String(port), "--bind", "127.0.0.1",
   "--directory", depot], { stdio: "ignore" }));
 function compagnon() {
-  const p = spawn("python3", ["-I", path.join(__dirname, "iadmin-terminal.py"), "local", "--shell", "/bin/bash"],
+  const p = spawn(binaire, ["local", "--shell", "/bin/bash"],
     { cwd: temporaire, env: { ...process.env, HOME: temporaire } });
   enfants.push(p);
   p.erreurs = ""; p.stderr.on("data", d => { p.erreurs += d; });
@@ -62,8 +64,17 @@ function compagnon() {
 const attendre = ms => new Promise(r => setTimeout(r, ms));
 const ecran = page => page.locator(".terminal-ecran:not([hidden]) .xterm-rows");
 const etat = page => page.locator(".terminal-etat");
-const executer = (page, debut) => page.locator(".terminal .executer").filter({ has: page.locator("xpath=..") })
-  .and(page.locator(`xpath=//button[contains(@class,'executer')][starts-with(@data-commande, ${JSON.stringify(debut)})]`)).first();
+// Attend un motif dans le texte affiché par le terminal, ligne par ligne (innerText).
+async function attendreTexte(page, motif, delai = 30000) {
+  const fin = Date.now() + delai;
+  for (;;) {
+    const texte = await ecran(page).innerText().catch(() => "");
+    if (typeof motif === "string" ? texte.includes(motif) : motif.test(texte)) return texte;
+    if (Date.now() > fin) throw new Error(`motif ${motif} absent du terminal :\n${texte}`);
+    await attendre(100);
+  }
+}
+const executer = (page, debut) => page.locator(`.terminal .executer[data-commande^=${JSON.stringify(debut)}]`).first();
 async function connecter(page, url) {
   await page.click(".terminal-lanceur");
   await page.fill(".terminal-appairage input", url);
@@ -111,6 +122,8 @@ async function connecter(page, url) {
     await page.goto(adresse(nom));
     await connecter(page, url);
     await etat(page).filter({ hasText: "Connecté" }).waitFor({ timeout: 10000 });
+    // La commande peut être dans un indice ou un corrigé replié : on l’ouvre, comme le lecteur.
+    await executer(page, debut).evaluate(b => { for (let d = b.closest("details"); d; d = d.parentElement.closest("details")) d.open = true; });
     await executer(page, debut).click();
     await ecran(page).filter({ hasText: attendu }).waitFor({ timeout: 10000 });
     ok(`${nom} : « ${debut} » exécutée, sortie ${attendu}`);
@@ -163,7 +176,7 @@ async function connecter(page, url) {
   await page.click(".terminal-lanceur");
   await page.locator(".terminal-modes button", { hasText: "VM" }).click();
   await page.locator(".terminal-accueil:not([hidden])").filter({ hasText: "à télécharger" }).waitFor();
-  await executer(page, "printf 'a;1").click();
+  await executer(page, "printf 'a;1").click({ force: true }); // aria-disabled : Playwright le croit inactif
   verifier(/Démarrez d’abord/.test(await etat(page).innerText()), "VM : avant le démarrage, « Exécuter » invite à démarrer");
   t0 = Date.now();
   await page.locator(".terminal-accueil button.principal", { hasText: "Démarrer" }).click();
@@ -173,10 +186,10 @@ async function connecter(page, url) {
   const froid = Date.now() - t0;
   const telecharges = vmFichiers.length;
   ok(`VM, premier démarrage : prête en ${(froid / 1000).toFixed(1)} s, ${telecharges} fichiers téléchargés`);
-  for (const [debut, attendu] of [["awk", "Total : 3"], ["sed", "A;1"], ["git init", /^1$/m], ["printf 'été", /^2$/m], ["echo un", "un deux"]]) {
+  for (const [debut, attendu] of [["awk", "Total : 3"], ["sed", "A;1"], ["git init", /^1$/m], ["printf 'été", /^4$/m] /* 3 lettres et la fin de ligne : l’UTF-8 passe */, ["echo un", "un deux"]]) {
     const avant = Date.now();
     await executer(page, debut).click();
-    await ecran(page).filter({ hasText: attendu }).waitFor({ timeout: 30000 });
+    await attendreTexte(page, attendu);
     ok(`VM : « ${debut} » → ${attendu} (${Date.now() - avant} ms)`);
   }
   const lignes = (await ecran(page).innerText()).split("\n").filter(l => l.includes("printf 'a;1"));
@@ -219,4 +232,5 @@ async function connecter(page, url) {
 })().catch(e => { console.error(e); process.exitCode = 1; }).finally(() => {
   for (const e of enfants) e.kill();
   fs.rmSync(temporaire, { recursive: true, force: true });
+  process.exit();
 });

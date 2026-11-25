@@ -13,11 +13,11 @@
 )
 
 // ---------- Schémas du cours ----------
-// Une machine : le poste d’Ada (client) en bleu, une machine où l’on entre à distance en violet,
-// comme les cadres des terminaux (niveau 0 : poste local, niveau 1 : session distante).
+// Une machine : le poste d’Ada (client) en bleu, une machine où l’on entre à distance en turquoise (c.distant),
+// comme les cadres des terminaux (niveau 0 : poste local, niveau "distant" : session distante).
 #let machine(nom, role: none, distant: true, taille: px(28)) = {
-  let couleur = if distant { c.invite } else { c.bleu }
-  block(width: 100%, fill: if distant { c.invite-clair } else { c.appli }, stroke: px(3) + couleur,
+  let couleur = if distant { c.distant } else { c.bleu }
+  block(width: 100%, fill: if distant { c.distant-clair } else { c.appli }, stroke: px(3) + couleur,
     radius: px(12), inset: (x: px(12), y: px(10)),
     align(center, {
       text(size: taille, weight: 600, fill: couleur, nom)
@@ -46,8 +46,8 @@
 #let fichier-cle(chemin, role) = block(width: 100%, fill: c.fond, radius: px(8), inset: (x: px(12), y: px(8)),
   { text(font: mono, size: px(20), fill: c.bleu, chemin); linebreak(); text(size: px(21), role) })
 
-#couverture(illustration: "vm")[Accès distants][SSH, tmux, WireGuard][Jean-Mathieu Chantrein][25 novembre 2026]
-#speaker-note[Trois outils pour travailler sur des machines qu’on ne voit pas : SSH pour y entrer, tmux pour ne pas perdre son travail quand la connexion tombe, WireGuard pour relier des réseaux. L’illustration de couverture est provisoire (celle du cours Virtualisation) : la charte n’a pas encore d’illustration propre à ce cours.]
+#couverture(illustration: "tunnel")[Accès distants][SSH, tmux, WireGuard][Jean-Mathieu Chantrein][25 novembre 2026]
+#speaker-note[Trois outils pour travailler sur des machines qu’on ne voit pas : SSH pour y entrer, tmux pour ne pas perdre son travail quand la connexion tombe, WireGuard pour relier des réseaux.]
 
 // ======================================================================
 = Sommaire
@@ -122,11 +122,11 @@
       fichier-cle("~/.ssh/known_hosts", [clés *publiques* des serveurs déjà rencontrés]),
     )),
     stack(spacing: px(36),
-      uncover("2-", fleche(vers: "gauche", couleur: c.invite, haut: [① le serveur prouve son identité], bas: [signature par sa clé d’hôte ; le client la compare à `known_hosts`])),
+      uncover("2-", fleche(vers: "gauche", couleur: c.distant, haut: [① le serveur prouve son identité], bas: [signature par sa clé d’hôte ; le client la compare à `known_hosts`])),
       uncover("3-", fleche(couleur: c.bleu, haut: [② Ada prouve qu’elle détient sa clé privée], bas: [signature de données propres à cette connexion ; vérifiée avec `authorized_keys`])),
     ),
-    block(width: 100%, stroke: px(3) + c.invite, radius: px(12), inset: px(14), fill: c.invite-clair, stack(spacing: px(10),
-      align(center, text(size: px(30), weight: 600, fill: c.invite)[bastion (serveur sshd)]),
+    block(width: 100%, stroke: px(3) + c.distant, radius: px(12), inset: px(14), fill: c.distant-clair, stack(spacing: px(10),
+      align(center, text(size: px(30), weight: 600, fill: c.distant)[bastion (serveur sshd)]),
       fichier-cle("~/.ssh/authorized_keys", [clés *publiques* autorisées à entrer sur le compte `ada`]),
       fichier-cle("/etc/ssh/ssh_host_ed25519_key", [clé *privée* d’hôte du serveur : secrète]),
     )),
@@ -251,7 +251,7 @@
         # affichée par ssh à la première connexion :
         ED25519 key fingerprint is SHA256:tyfoZhF/lIT3fCB704iqukU924CaAI+Nb5t24lT8nlY.
         ```
-        #cadre([bastion · root, sur la console de la machine], niveau: 1)[
+        #cadre([bastion · root, sur la console de la machine], niveau: "distant")[
           ```
           # empreinte de la clé d’hôte, lue sur le bastion lui-même
           $ ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub
@@ -318,7 +318,7 @@
   rang(
     bloc(role: "pratique", taille: px(24))[Connexion par clé][
       #terminal(titre: [client · ada], taille: px(18))[
-        #cadre([bastion · ada], niveau: 1)[
+        #cadre([bastion · ada], niveau: "distant")[
           ```
           $ ls -l ~/.ssh; cat ~/.ssh/authorized_keys
           total 4
@@ -336,7 +336,7 @@
     ],
     bloc(role: "avertissement", taille: px(24))[StrictModes : des droits trop larges, et la clé est ignorée][
       #terminal(titre: [client · ada], taille: px(18))[
-        #cadre([bastion · ada], niveau: 1)[
+        #cadre([bastion · ada], niveau: "distant")[
           ```
           $ ls -l ~/.ssh/authorized_keys
           -rw-----w- 1 ada ada 92 Nov 25 10:17 /home/ada/.ssh/authorized_keys
@@ -347,7 +347,7 @@
         $ ssh -o BatchMode=yes ada@bastion hostname
         ada@bastion: Permission denied (publickey,password).
         ```
-        #cadre([bastion · root, journal de sshd], niveau: 1)[
+        #cadre([bastion · root, journal de sshd], niveau: "distant")[
           ```
           Authentication refused: bad ownership or modes for file /home/ada/.ssh/authorized_keys
           ```
@@ -446,7 +446,7 @@
         # Ada ouvre une session vers le bastion en transférant son agent (-A)
         $ ssh -A bastion sleep 30
         ```
-        #cadre([bastion · root, pendant la session d’Ada], niveau: 1)[
+        #cadre([bastion · root, pendant la session d’Ada], niveau: "distant")[
           ```
           # la socket de l’agent d’Ada, relayée sur le bastion
           $ ls -d /tmp/ssh-*/agent.*
@@ -509,7 +509,7 @@
   rang(
     bloc(role: "pratique", poids: 1.5, taille: px(24))[Démonstration][
       #terminal(titre: [client · ada], taille: px(18))[
-        #cadre([serveur · ada], niveau: 1)[
+        #cadre([serveur · ada], niveau: "distant")[
           ```
           # supervision : seulement en local ; wiki : sur le réseau privé
           $ ss -ltn | grep -E ":(80|8000) "
@@ -595,7 +595,7 @@
   rang(
     bloc(role: "pratique", poids: 1.35, taille: px(24))[Ada veut interdire le mot de passe][
       #terminal(titre: [client · ada], taille: px(18))[
-        #cadre([serveur · root], niveau: 1)[
+        #cadre([serveur · root], niveau: "distant")[
           ```
           # -T : la configuration effective de sshd
           $ sshd -T | grep -E '^(passwordauthentication|pubkeyauthentication|permitrootlogin|port) '
@@ -631,7 +631,7 @@
   rang(
     bloc(role: "pratique", poids: 1.35, taille: px(24))[Un fichier à soi, lu en premier][
       #terminal(titre: [client · ada], taille: px(18))[
-        #cadre([serveur · root], niveau: 1)[
+        #cadre([serveur · root], niveau: "distant")[
           ```
           # « 10- » : lu avant « 50- », donc prioritaire
           $ echo 'PasswordAuthentication no' > /etc/ssh/sshd_config.d/10-durcissement.conf
@@ -704,19 +704,20 @@
 #corriges(
   note: [Sorties réelles (OpenSSH 9.6p1), sur un poste sans réseau : ssh -G ne se connecte pas. La question reste affichée ; un clic par réponse.],
   (1, [Entrée `bastion` : `bastion.example.org`, compte `admin`, port 2222 ; et sans le fichier ?],
-    reponse(terminal(titre: [\~/.ssh/config, puis client · ada], taille: px(19))[```
+    reponse(stack(spacing: px(8), fichier([\~/.ssh/config], taille: px(19))[```
   Host bastion
       HostName bastion.example.org
       User admin
       Port 2222
+  ```], terminal(titre: [client · ada], taille: px(19))[```
   # sans le fichier, la même configuration :
   $ ssh -G -p 2222 admin@bastion.example.org | grep -E '^(hostname|user|port) '
   user admin
   hostname bastion.example.org
   port 2222
-  ```])),
+  ```]))),
   (2, [Entrée `base` : `base.interne`, compte `admin`, seulement par ce bastion],
-    reponse(terminal(titre: [\~/.ssh/config, à la suite], taille: px(19))[```
+    reponse(fichier([\~/.ssh/config, à la suite], taille: px(19))[```
   Host base
       HostName base.interne
       User admin
@@ -763,7 +764,7 @@
         # sleep 600 joue le rôle d’une mise à jour de dix minutes
         $ ssh -t serveur sleep 600
         ```
-        #cadre([serveur · ada, dans une autre fenêtre], niveau: 1)[
+        #cadre([serveur · ada, dans une autre fenêtre], niveau: "distant")[
           ```
           $ pgrep -afx "sleep 600"
           289 sleep 600
@@ -773,7 +774,7 @@
         # le terminal du client se ferme brutalement
         $ pkill -KILL -f "^ssh -t serveur"
         ```
-        #cadre([serveur · ada], niveau: 1)[
+        #cadre([serveur · ada], niveau: "distant")[
           ```
           $ pgrep -afx "sleep 600"
           $ echo "code de retour : $?"
@@ -842,7 +843,7 @@
       client([client 2], [un second terminal]),
       uncover("5-", align(center, text(size: px(20), fill: c.gris)[tous deux attachés à `admin`])),
     ),
-    boite([serveur tmux (un processus sur `serveur`)], c.invite, fond: c.invite-clair, stack(spacing: px(12),
+    boite([serveur tmux (un processus sur `serveur`)], c.distant, fond: c.distant-clair, stack(spacing: px(12),
       uncover("2-", boite([session `admin`], c.bleu, grid(columns: (1.6fr, 1fr), column-gutter: px(10),
         fenetre([fenêtre 0 : `edition`], ([0.0], [0.1])),
         fenetre([fenêtre 1 : `journaux`], ([1.0],)),
@@ -867,7 +868,7 @@
   rang(
     bloc(role: "pratique", poids: 1.35, taille: px(24))[Démonstration][
       #terminal(titre: [client · ada], taille: px(19))[
-        #cadre([serveur · ada], niveau: 1)[
+        #cadre([serveur · ada], niveau: "distant")[
           ```
           # -d : créer sans s’attacher ; -s : session ; -n : fenêtre
           $ tmux new -d -s admin -n edition
@@ -903,7 +904,7 @@
 #anime(
   rang(
     bloc(taille: px(25))[Dans tmux : préfixe, puis une touche][
-      - On presse *Ctrl+b*, on relâche, puis la touche : « préfixe d » = Ctrl+b, puis d
+      - On presse #touche[Ctrl+b], on relâche, puis la touche : « préfixe d » = #touche[Ctrl+b], puis #touche[d]
       - `d` : se *détacher* ; la session continue · `c` : nouvelle fenêtre · `,` : la renommer
       - `n` / `p` : fenêtre suivante / précédente · `0` à `9` : aller à une fenêtre
       - `%` : couper gauche / droite · `"` : couper haut / bas · flèches : changer de panneau
@@ -927,7 +928,7 @@
   rang(
     bloc(role: "pratique", poids: 1.3, taille: px(24))[Taper et lire dans un panneau, sans s’y attacher][
       #terminal(titre: [client · ada], taille: px(19))[
-        #cadre([serveur · ada], niveau: 1)[
+        #cadre([serveur · ada], niveau: "distant")[
           ```
           # taper une commande dans la fenêtre « journaux »
           $ tmux send-keys -t admin:journaux 'hostname; whoami' Enter
@@ -957,7 +958,7 @@
   rang(
     bloc(role: "pratique", poids: 1.25, taille: px(24))[Le fichier, puis la vérification][
       #terminal(titre: [client · ada], taille: px(19))[
-        #cadre([serveur · ada], niveau: 1)[
+        #cadre([serveur · ada], niveau: "distant")[
           ```
           $ cat ~/.tmux.conf
           set -g mouse on
@@ -1208,7 +1209,7 @@
           latest handshake: 3 seconds ago
           transfer: 476 B received, 532 B sent
         ```
-        #cadre([pair-b · root : tcpdump -lni eth0 -c 6 udp, pendant le ping], niveau: 1)[
+        #cadre([pair-b · root : tcpdump -lni eth0 -c 6 udp, pendant le ping], niveau: "distant")[
           ```
           10:18:57.240756 IP 172.20.0.2.51820 > 172.20.0.3.51820: UDP, length 148
           10:18:57.241505 IP 172.20.0.3.51820 > 172.20.0.2.51820: UDP, length 92
@@ -1233,15 +1234,13 @@
 
 #slide(repeat: 4, self => {
   let (uncover,) = utils.methods(self)
-  let cellule(t, gras: false) = text(size: px(22), weight: if gras { 600 } else { 400 }, t)
   grid(columns: (1fr, 1fr), column-gutter: px(40),
     stack(spacing: px(16),
       bloc-anime(bloc(taille: px(23))[Les pairs de pair-a][
-        #table(columns: (px(170), 1fr), stroke: none, inset: (x: px(8), y: px(8)),
-          fill: (x, y) => if y == 0 { c.bleu-clair } else { none },
-          cellule([Pair], gras: true), cellule([AllowedIPs], gras: true),
-          cellule([pair-b]), cellule[`10.9.9.2/32`],
-          cellule([pair-c]), cellule[`10.9.9.3/32`, `192.168.50.0/24`],
+        #tableau((px(170), 1fr), taille: px(22), inset: (x: px(8), y: px(8)),
+          ([Pair], [AllowedIPs]),
+          ([pair-b], [`10.9.9.2/32`]),
+          ([pair-c], [`10.9.9.3/32`, `192.168.50.0/24`]),
         )
       ], 1, uncover),
       bloc-anime(bloc(taille: px(23))[Sortant : à qui chiffrer ?][
@@ -1293,7 +1292,7 @@
         $ wg show wg0 transfer
         tEh1…sQk=    532    476
         ```
-        #cadre([pair-a · root], niveau: 1)[
+        #cadre([pair-a · root], niveau: "distant")[
           ```
           $ ping -c 2 -W 1 10.9.9.2
           PING 10.9.9.2 (10.9.9.2) 56(84) bytes of data.
@@ -1338,11 +1337,10 @@
 #anime(
   rang(
     bloc(taille: px(24))[pair-a et ses pairs][
-      #table(columns: (px(150), 1fr), stroke: none, inset: (x: px(8), y: px(8)),
-        fill: (x, y) => if y == 0 { c.bleu-clair } else { none },
-        text(weight: 600)[Pair], text(weight: 600)[AllowedIPs],
-        [pair-b], [`10.9.9.2/32`],
-        [pair-c], [`10.9.9.3/32`, `192.168.50.0/24`],
+      #tableau((px(150), 1fr), inset: (x: px(8), y: px(8)),
+        ([Pair], [AllowedIPs]),
+        ([pair-b], [`10.9.9.2/32`]),
+        ([pair-c], [`10.9.9.3/32`, `192.168.50.0/24`]),
       )
       pair-b n’a pas d’`Endpoint` pour pair-a.
     ],

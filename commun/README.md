@@ -5,6 +5,7 @@
   Import depuis un cours : `#import "../../commun/theme-cours.typ": *`
 - `theme-tp.typ`, `tp.css`, `tp.js` : la charte appliquée aux pages web (énoncés de TP, accueil).
   Import depuis un TP : `#import "../../../commun/theme-tp.typ": *`
+- `terminal/` : le terminal des pages web (voir « Pages web : terminal »).
 - `fonts/` : IBM Plex Sans et Mono (SIL Open Font License 1.1, voir `fonts/OFL-IBM-Plex.txt`).
 
 ## Principe : le cours dit le rôle, la charte décide de l’apparence
@@ -110,6 +111,40 @@ Un artefact est un petit logiciel interactif qui fait manipuler un concept : `<c
 - `<nom>.js` : construit l’interface dans l’élément `#artefact`, sans bibliothèque externe.
 - `<nom>.css` : n’emploie que les variables CSS de la charte (`--c-*`, `--<rôle>-entete`…), pour suivre la variante choisie.
 - Un état se lit dans le texte (« CACHED », « DONE ») ; la couleur ne fait que le doubler.
+
+## Pages web : terminal
+Une page déclare son terminal : `page-web(…, terminal: ("compagnon",))` pour un TP Docker ou libvirt, qui ne
+tourne pas dans une VM de navigateur ; `terminal: ("vm", "compagnon")` pour un TP shell (le premier mode est
+proposé d’abord). Une page qui ne déclare rien reste telle quelle. Les sources des TP ne changent pas : `tp.js`
+pose un bouton « Exécuter » après chaque commande `$ ` (suites `\` comprises) des blocs `terminal[…]`, actif
+quand un terminal est ouvert ; un bouton « Terminal » du bandeau ouvre un volet en bas de la fenêtre, dont la page
+réserve la hauteur.
+- Mode `vm` : une VM Alpine Linux x86 dans l’onglet (v86), sans réseau ni installation. L’image se télécharge
+  au clic sur « Démarrer la VM », avec sa progression, puis se range dans Cache Storage, sous une clé qui porte
+  sa version (`cours-terminal-vm-<version>`) : une visite suivante ne télécharge rien.
+- Mode `compagnon` : le vrai shell de l’étudiant, par l’exécutable `iadmin-terminal` (`terminal/compagnon/`, en Go),
+  qui écoute sur `127.0.0.1` avec un jeton à usage unique, une liste d’origines et un seul client. La page
+  [`terminal/compagnon.typ`](terminal/compagnon.typ) (publiée en `commun/terminal/`) explique son téléchargement.
+
+Fichiers de `terminal/` :
+- `terminal.js`, `terminal.css` : le volet, ajoutés par `theme-tp.typ` aux seules pages qui le déclarent ; le
+  style n’emploie que les variables de la charte, et xterm.js reçoit ses couleurs de `--c-nuit`, `--c-texte-term`…
+- `dependances.txt` : version, SHA-256 et adresse de chaque fichier tiers ; `preparer.sh [--vm]` les télécharge
+  dans `vendor/` et, avec `--vm`, construit l’image (`construire-vm.sh`, Docker ; `vm/init`, `vm/profil.sh`) et son
+  manifeste `vendor/vm/manifeste.json`.
+- `compagnon/` : le code Go (`go.mod`, `go.sum`), `construire.sh` (exécutables statiques Linux et macOS, amd64 et
+  arm64, et `SHA256SUMS`, dans `compagnon/dist/`), `tester.py` (protocole et refus).
+- `LICENCES.md` : licences et sources des composants publiés.
+
+`vendor/` et `compagnon/dist/` ne sont pas versionnés : la CI les construit et les publie avec le site.
+Tester, depuis la racine du dépôt, après `preparer.sh --vm` et `compagnon/construire.sh` :
+
+    node commun/terminal/tester-vm.mjs               # démarre la VM dans Node, vérifie ses outils
+    python3 -I commun/terminal/compagnon/tester.py   # protocole, jeton, origine, un seul client
+    node commun/terminal/tester-navigateur.js        # Chromium : clics, deux modes, cache, refus, captures
+
+`tester-navigateur.js` compile les pages testées, dont une page d’essai du mode VM (`build/essai-terminal/`), et
+les sert sur `localhost:8000`, origine que le compagnon admet pour les essais.
 
 Limite connue : l’export HTML de Typst est expérimental. La CI fixe la version de Typst ; à chaque montée de
 version, recompiler les pages et les relire dans un navigateur.

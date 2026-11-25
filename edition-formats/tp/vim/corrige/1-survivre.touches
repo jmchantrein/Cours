@@ -1,0 +1,4 @@
+" passer en insertion, écrire le texte, revenir au mode normal
+iHello World !<Esc>
+" enregistrer et quitter
+:wq<CR>

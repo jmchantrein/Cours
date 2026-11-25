@@ -1,0 +1,14 @@
+---
+livres:
+  - titre: "1984"
+    auteur: George Orwell
+    annee_publication: 1949
+    genre: Dystopie
+    mots_cles:
+      - dystopie
+      - politique
+      - science-fiction
+  - titre: Le meilleur des mondes
+    auteur: Aldous Huxley
+    annee_publication: 1932
+    genre: Dystopie

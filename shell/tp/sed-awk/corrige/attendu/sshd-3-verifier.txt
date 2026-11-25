@@ -1,0 +1,3 @@
+11: PermitRootLogin no
+15: PasswordAuthentication no
+9 directives actives

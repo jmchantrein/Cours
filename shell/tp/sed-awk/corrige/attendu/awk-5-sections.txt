@@ -1,0 +1,3 @@
+web 8080 yes
+base_de_donnees 5432 yes
+sauvegarde 0 no

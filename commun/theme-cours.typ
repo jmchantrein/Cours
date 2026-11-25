@@ -135,6 +135,21 @@
     corps
   })
 
+// Touche du clavier, dans le texte : #touche[Échap], #touche[Ctrl+b].
+#let touche(t) = box(stroke: px(2) + c.gris, radius: px(6), inset: (x: px(7), y: px(1)), outset: (y: px(3)),
+  fill: c.fond, text(font: mono, size: 0.85em, weight: 600, fill: c.encre, tracking: 0pt, t))
+
+// Tableau à en-tête, lignes alternées. Les cellules se donnent ligne par ligne, ou à plat ; les réglages nommés
+// (inset, align) passent à table. taille : taille du texte, sinon celle du bloc qui le contient.
+// Les fonds sont translucides : ils se lisent sur le fond de la diapo comme sur celui de n’importe quel bloc.
+#let tableau(colonnes, taille: none, entete, ..lignes) = {
+  set text(size: taille) if taille != none
+  table(columns: colonnes, stroke: none, ..((inset: (x: px(10), y: px(6))) + lignes.named()),
+    fill: (x, y) => if y == 0 { c.bleu.transparentize(82%) } else if calc.even(y) { c.bleu.transparentize(93%) },
+    table.header(..entete.map(t => text(weight: 600, t))),
+    ..lignes.pos().flatten())
+}
+
 // Petite note sur le fond clair d’un rôle, avec son pictogramme.
 #let note(role: "pratique", taille: px(20), corps) = {
   let r = roles.at(role)
@@ -175,6 +190,18 @@
   },
 )
 
+// Fichier affiché (un objet), à distinguer du terminal (des commandes) : fond clair, nom du fichier en tête
+// (none : sans nom), contenu brut. #fichier([config.yaml])[```yaml …```] ; à côté d’un terminal, dans une rangee.
+#let fichier(nom, taille: px(20), hauteur: auto, corps) = block(width: 100%, height: hauteur,
+  fill: c.espace, stroke: px(1) + c.filet, radius: px(12), clip: true, stack(
+    if nom != none { block(width: 100%, fill: c.filet, inset: (x: px(18), y: px(6)),
+      text(font: mono, size: px(20), weight: 600, fill: c.ardoise, nom)) },
+    block(width: 100%, inset: (x: px(18), y: px(10)), {
+      show raw.where(block: true): set text(size: taille)
+      corps
+    }),
+  ))
+
 // Encart plus clair dans un terminal (moniteur QEMU, session dans l'invité…).
 #let encart(titre, corps) = block(width: 100%, fill: c.encart, radius: px(8),
   inset: (x: px(14), y: px(10)), above: px(10), below: px(4), {
@@ -182,12 +209,12 @@
     corps
   })
 
-// Cadre dans un terminal : une machine lancée par la commande au-dessus.
-// niveau 0 = hôte (bleu, trait plein), 1 = VM invitée (violet, tirets), 2 = VM imbriquée (rose, pointillés) :
-// le trait double la couleur.
+// Cadre dans un terminal : une machine lancée par la commande au-dessus, ou dans laquelle elle entre.
+// niveau 0 = hôte (bleu, trait plein), 1 = VM invitée (violet, tirets), 2 = VM imbriquée (rose, pointillés),
+// "distant" = session sur une machine distante, ouverte par ssh (turquoise, trait mixte) : le trait double la couleur.
 #let cadre(etiquette, niveau: 0, corps) = {
-  let couleur = (c.hote-t, c.invite-t, c.imbrique-t).at(niveau)
-  let trait = ("solid", "dashed", "dotted").at(niveau)
+  let (couleur, trait) = if niveau == "distant" { (c.distant-t, "dash-dotted") } else {
+    ((c.hote-t, c.invite-t, c.imbrique-t).at(niveau), ("solid", "dashed", "dotted").at(niveau)) }
   block(
     width: 100%, stroke: (paint: couleur, thickness: px(2), dash: trait), radius: px(10),
     fill: couleur.transparentize(90%),
@@ -292,18 +319,33 @@
 
 // Élément placé sur un canevas aux coordonnées de la maquette (px).
 #let pose(x, y, corps) = place(top + left, dx: px(x), dy: px(y), corps)
+// Flèche sur un canevas, de (x1, y1) à la pointe (x2, y2), en px de la maquette, dans toute direction.
+#let fleche-pose(x1, y1, x2, y2, couleur: c.ardoise, ep: 4, tirets: false) = {
+  let (dx, dy) = (x2 - x1, y2 - y1)
+  let l = calc.sqrt(dx * dx + dy * dy)
+  let (ux, uy) = (dx / l, dy / l)
+  let (bx, by) = (x2 - ux * 18, y2 - uy * 18)  // base de la pointe
+  let (nx, ny) = (-uy * 10, ux * 10)
+  let trait = if tirets { (paint: couleur, thickness: px(ep), dash: "dashed") } else { px(ep) + couleur }
+  place(top + left, line(start: (px(x1), px(y1)), end: (px(bx), px(by)), stroke: trait))
+  place(top + left, polygon(fill: couleur, (px(x2), px(y2)), (px(bx + nx), px(by + ny)), (px(bx - nx), px(by - ny))))
+}
 
 // ---------- Couverture ----------
-// Illustrations de couverture : « vm » (trois VM sur un hyperviseur, sur le matériel) ou
-// « couches » (les couches d’une image : trois en lecture seule, une en lecture/écriture au sommet).
-#let illustrations = (vm: illustration("vm", c, px(1)), couches: illustration("couches", c, px(1)))
+// Illustrations de couverture (dessinées dans charte.typ) : « vm » (trois VM sur un hyperviseur, sur le matériel),
+// « couches » (les couches d’une image : trois en lecture seule, une en lecture/écriture au sommet),
+// « tube » (trois commandes reliées par des tubes, le shell, le noyau), « graphe » (main et une branche fusionnée),
+// « texte » (un fichier structuré, indenté, et le curseur), « tunnel » (le poste et une machine distante, reliés par
+// un tunnel chiffré à travers le réseau), « noeuds » (un nœud de contrôle et trois nœuds gérés).
+// (Nommée ici, car le paramètre `illustration` de page-titre masque la fonction de la charte.)
+#let illustration-couverture(nom) = illustration(nom, c, px(1))
 
 #let page-titre(titre, sous-titre, auteur, date, surtitre: "Cours · LERIA", illustration: "vm") = touying-slide-wrapper(self => {
   self = utils.merge-dicts(self,
     config-common(subslide-preamble: none),
     config-page(fill: c.nuit, footer: none, margin: px(128)))
   touying-slide(self: self, {
-    place(top + left, dx: px(1104), dy: px(184), illustrations.at(illustration))
+    place(top + left, dx: px(1104), dy: px(184), illustration-couverture(illustration))
     text(size: px(24), weight: 600, tracking: px(2), fill: c.prompt, maj(surtitre))
     v(1fr)
     block(width: px(1040), {
@@ -340,8 +382,9 @@
           #d.sens. En projection : *#d.projection*.]),
       ))))
     v(px(16))
-    grid(columns: (1fr, 1fr, 1fr), column-gutter: px(24),
-      ..((0, [Hôte], [bleu, trait plein]), (1, [VM invitée], [violet, tirets]), (2, [VM imbriquée], [rose, pointillés]))
+    grid(columns: (1fr,) * 4, column-gutter: px(24),
+      ..((0, [Hôte], [bleu, trait plein]), (1, [VM invitée], [violet, tirets]), (2, [VM imbriquée], [rose, pointillés]),
+        ("distant", [Session distante], [turquoise, trait mixte]))
         .map(((n, nom, proj)) => block(width: 100%, fill: c.nuit, radius: px(12), inset: px(12),
           cadre([#nom], niveau: n)[#text(size: px(20), fill: c.texte-term)[En projection : #proj]])))
   })

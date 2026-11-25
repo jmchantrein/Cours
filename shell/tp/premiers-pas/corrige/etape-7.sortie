@@ -1,0 +1,25 @@
+$ cd ~/atelier
+$ mkdir -p archives/2025
+$ cp pionnieres.csv archives/pionnieres-copie.csv
+$ mv archives/pionnieres-copie.csv archives/pionnieres-v1.csv
+$ mv journaux/serveur-2025-novembre.log archives/2025/
+$ cp -r notes archives/notes-sauvegarde
+$ touch notes/brouillon.txt
+$ ls notes
+a-faire.txt  brouillon.txt  idees.txt  lisezmoi.txt
+$ rm notes/brouillon.txt
+$ mkdir essai
+$ rmdir essai
+$ rmdir vieux
+rmdir: failed to remove 'vieux': Directory not empty
+$ ls vieux
+brouillon-1.txt  brouillon-2.txt
+$ rm -r vieux
+$ ls
+archives  journaux  notes  pionnieres.csv  projets
+$ ls archives archives/2025
+archives:
+2025  notes-sauvegarde  pionnieres-v1.csv
+
+archives/2025:
+serveur-2025-novembre.log

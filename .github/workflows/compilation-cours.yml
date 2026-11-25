@@ -5,7 +5,9 @@ name: Compilation et publication des supports (Typst)
 # - diapos : <cours>/cm/<cours>.typ donne un PDF par variante, <cours>/cm/<cours>-<variante>.pdf
 #   (projection, puis les rendus adaptés ; liste dans commun/charte.typ) ;
 # - pages web : <cours>/tp/<tp>/<tp>.typ, <cours>/artefacts/<nom>/<nom>.typ et index.typ donnent chacun
-#   un index.html à côté de leur source ; elles embarquent toutes les variantes.
+#   un index.html à côté de leur source ; elles embarquent toutes les variantes ;
+# - terminal des pages web (commun/terminal/) : dépendances tierces à SHA-256 fixé et image de la VM dans
+#   commun/terminal/vendor/, exécutables du compagnon dans commun/terminal/compagnon/dist/, vérifiés avant publication.
 on:
   push:
     branches: [main]
@@ -38,6 +40,24 @@ jobs:
         with:
           typst-version: "0.15"
 
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: commun/terminal/compagnon/go.mod
+          cache-dependency-path: commun/terminal/compagnon/go.sum
+
+      # xterm.js, v86 et ses BIOS (sommes dans dependances.txt), puis l'image Alpine de la VM (Docker), démarrée
+      # une fois dans Node pour vérifier ses outils.
+      - name: Terminal, VM dans le navigateur
+        run: |
+          commun/terminal/preparer.sh --vm
+          node commun/terminal/tester-vm.mjs
+
+      # Exécutables statiques du compagnon (Linux et macOS, amd64 et arm64), SHA256SUMS, puis test du protocole.
+      - name: Terminal, compagnon
+        run: |
+          commun/terminal/compagnon/construire.sh
+          python3 -I commun/terminal/compagnon/tester.py
+
       - name: Compilation des diapos
         run: |
           for src in */cm/*.typ; do
@@ -63,6 +83,7 @@ jobs:
             echo "::endgroup::"
           done
           web index.typ index.html
+          web commun/terminal/compagnon.typ commun/terminal/index.html
 
       # Le site est le dépôt, complété des supports compilés ci-dessus.
       - uses: actions/upload-pages-artifact@v3

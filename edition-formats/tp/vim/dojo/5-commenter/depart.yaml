@@ -1,0 +1,13 @@
+---
+application:
+  nom: MonApplication
+  version: 1.2.3
+  environnements:
+    production:
+      url: https://prod.example.org
+    # developpement:
+    #   url: http://dev.example.org
+serveurs:
+  - nom: web01
+    role: production
+    port: 8080

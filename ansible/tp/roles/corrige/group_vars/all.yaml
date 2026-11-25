@@ -1,0 +1,2 @@
+welcome_msg: "Bonjour le monde from group_vars"
+ansible_managed: "Ce fichier est géré par Ansible : ne le modifiez pas ici, vos modifications seraient perdues."

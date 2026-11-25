@@ -1,0 +1,10 @@
+---
+# Exercice 1 : le livre 1, un mapping dont une valeur est une séquence.
+titre: "1984"
+auteur: George Orwell
+annee_publication: 1949
+genre: Dystopie
+mots_cles:
+  - dystopie
+  - politique
+  - science-fiction

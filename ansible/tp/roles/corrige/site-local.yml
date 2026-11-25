@@ -1,0 +1,15 @@
+---
+# Le nœud de contrôle se configure lui-même : localhost, sans SSH (connection: local).
+- name: Configurer le nœud de contrôle
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  tasks:
+    - name: Ouvrir chaque shell de root dans /etc/ansible, avec des raccourcis
+      ansible.builtin.blockinfile:
+        path: /root/.bashrc
+        marker: "# {mark} raccourcis du TP Ansible (site-local.yml)"
+        block: |
+          cd /etc/ansible
+          alias ap=ansible-playbook
+          alias al='ansible-lint --offline'

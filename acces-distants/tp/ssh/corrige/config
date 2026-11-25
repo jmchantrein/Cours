@@ -1,0 +1,14 @@
+# ~/.ssh/config du poste d'Ada (droits 600). Le premier réglage lu l'emporte :
+# les entrées précises d'abord, une éventuelle entrée générale « Host * » à la fin.
+
+# Étape 6 : un alias, l'utilisateur, le port.
+Host bastion
+    HostName bastion
+    User ada
+    Port 2222
+
+# Étape 7 : le serveur, joint par le bastion.
+Host serveur
+    HostName serveur
+    User ada
+    ProxyJump bastion

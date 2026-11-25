@@ -1,0 +1,20 @@
+$ cd ~/atelier
+$ pwd
+/home/ada/atelier
+$ ls
+journaux  notes  pionnieres.csv  projets  vieux
+$ ls -a
+.  ..  .reglages  journaux  notes  pionnieres.csv  projets  vieux
+$ ls -l
+total 20
+drwxr-xr-x 2 ada ada 4096 Sep  1 08:00 journaux
+drwxr-xr-x 2 ada ada 4096 Sep  1 08:00 notes
+-rw-r--r-- 1 ada ada  474 Sep  1 08:00 pionnieres.csv
+drwxr-xr-x 4 ada ada 4096 Sep  1 08:00 projets
+drwxr-xr-x 2 ada ada 4096 Sep  1 08:00 vieux
+$ ls notes
+a-faire.txt  idees.txt  lisezmoi.txt
+$ ls -l journaux
+total 80
+-rw-r--r-- 1 ada ada  5790 Sep  1 08:00 serveur-2025-novembre.log
+-rw-r--r-- 1 ada ada 72375 Sep  1 08:00 serveur-2026-novembre.log
