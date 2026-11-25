@@ -842,6 +842,62 @@
   utils.speaker-note(self: self)[Tous s’appuient sur KVM (rappel : KVM exécute, un programme en espace utilisateur fournit la machine ; ici ce programme remplace QEMU ou l’allège). Firecracker : publié en open source par AWS en novembre 2018 ; les chiffres de démarrage et de mémoire sont ceux annoncés par le projet (firecracker-microvm.github.io). Cloud Hypervisor : lancé par Intel en 2019. QEMU : machine microvm introduite en version 4.2 (décembre 2019). Kata Containers : fusion d’Intel Clear Containers et de Hyper runV (2017), fondation OpenInfra (rattachée à la Linux Foundation depuis 2025) ; peut utiliser QEMU, Cloud Hypervisor ou Firecracker comme hyperviseur. crosvm (Google, ChromeOS et Android) est de la même famille.]
 })
 
+== Docker Sandboxes : une microVM par agent IA
+
+#slide(repeat: 11, self => {
+  let (uncover,) = utils.methods(self)
+  // Schéma dans le vocabulaire de pile-archi : appli en bleu clair, invité en violet, gestion en tirets.
+  let case(fond: c.appli, hauteur: px(52), corps) = block(width: 100%, height: hauteur, fill: fond, radius: px(8),
+    inset: (x: px(6)), align(center + horizon, text(size: px(22), weight: 600, corps)))
+  let tirets(corps) = block(width: 100%, stroke: (paint: c.gris, thickness: px(2), dash: "dashed"),
+    radius: px(10), inset: (x: px(10), y: px(8)), align(center, text(size: px(20), fill: c.ardoise, corps)))
+  let microvm(nom, cases, bas) = block(width: 100%, stroke: px(3) + c.invite, radius: px(12), inset: px(8), fill: c.fond,
+    stack(spacing: px(8),
+      align(center, text(fill: c.invite, size: px(22), weight: 600, nom)),
+      cases,
+      case(fond: c.invite-clair, hauteur: px(44), bas)))
+  let schema = stack(spacing: px(8),
+    block(width: 100%, fill: c.espace, radius: px(12), inset: (x: px(12), top: px(10), bottom: px(14)),
+      stack(spacing: px(8),
+        text(size: px(22), weight: 600, fill: c.gris)[Espace utilisateur de l’hôte],
+        uncover("6-", grid(columns: (1fr, 1fr), column-gutter: px(12),
+          tirets[*Proxy* : filtre le réseau sortant],
+          tirets[*Dossier du projet* : partagé])),
+        grid(columns: (3fr, 1fr), column-gutter: px(12),
+          microvm([microVM 1],
+            uncover("5-", grid(columns: (0.75fr, 1.5fr, 1.15fr), column-gutter: px(8),
+              case[Agent 1], case[Docker Engine privé], case[Ses conteneurs])),
+            [Noyau Linux invité]),
+          microvm([microVM 2], case[Agent 2], [Noyau invité]),
+        ),
+      )),
+    couche(hauteur: px(84), taille: px(26), stack(spacing: px(8), [Hyperviseur de l’hôte],
+      text(size: px(20), weight: 400)[KVM (Linux) · Hypervisor.framework (macOS) · Windows Hypervisor Platform])),
+    couche([Matériel], fond: c.ardoise, hauteur: px(52), taille: px(26)),
+  )
+  let besoin = bloc(taille: px(22), taille-titre: px(24))[Le besoin : isoler un agent IA][
+    - Un *agent IA de programmation* : un programme piloté par un modèle de langage, qui lance des commandes et modifie des fichiers de lui-même (Claude Code, Codex…)
+    - Le besoin : lui laisser lancer Docker sans lui donner la machine
+    - *Docker Sandboxes* (30 janvier 2026, Docker Desktop 4.58) : un *bac à sable* (_sandbox_) par agent, dans une microVM ; avril 2026 : l’outil autonome `sbx` (cours Conteneurisation)
+  ]
+  let concurrents = bloc(role: "pratique", taille: px(22), taille-titre: px(24))[Les concurrents, par technique d’isolation][
+    - *MicroVM* : E2B, Vercel Sandbox (dans le cloud de l’éditeur, sur Firecracker) ; `container` d’Apple (local, macOS)
+    - *Noyau en espace utilisateur* : Agent Sandbox de Kubernetes, sur gVisor (ou sur Kata Containers, une microVM)
+    - *Filtrage par le noyau de l’hôte* : `sandbox-runtime` d’Anthropic
+    - *Conteneur*, noyau partagé : `container-use` de Dagger
+  ]
+  grid(columns: (1fr, 1fr), column-gutter: px(32),
+    stack(spacing: px(20), bloc-anime(besoin, 1, uncover), bloc-anime(concurrents, 7, uncover)),
+    stack(spacing: px(16),
+      uncover("4-", schema),
+      uncover("5-", text(size: px(22), fill: c.ardoise)[Des conteneurs dans une microVM ; la machine est fournie par un programme de Docker, pas par Firecracker.]),
+      uncover("11-", encadre(role: "retenir", libelle: [À retenir :])[la microVM seule ne distingue pas Docker Sandboxes (E2B et Vercel Sandbox en ont une) ; ses atouts : local sur macOS, Windows et Linux, un Docker Engine privé par agent.]),
+    ),
+  )
+  source[#link("https://docs.docker.com/ai/sandboxes/")[docs.docker.com/ai/sandboxes] · #link("https://docs.docker.com/ai/sandboxes/architecture/")[architecture] · #link("https://docs.docker.com/ai/sandboxes/security/isolation/")[isolation] · #link("https://www.docker.com/blog/docker-sandboxes-run-claude-code-and-other-coding-agents-unsupervised-but-safely/")[docker.com/blog, 30/01/2026]]
+  utils.speaker-note(self: self)[Lu le 25 novembre 2026 : documentation docs.docker.com/ai/sandboxes (pages Get started, Install, Architecture, Isolation), notes de version de Docker Desktop, billets du blog de Docker. Chronologie : Docker Desktop 4.58.0 (26 janvier 2026) introduit la nouvelle version de Docker Sandboxes, fondée sur des microVM (commande expérimentale docker sandbox) ; billet d’annonce du 30 janvier 2026 (macOS et Windows, Linux annoncé pour la suite) ; 16 avril 2026 : billet d’architecture (docker.com/blog, why-microvms) et outil autonome sbx, pour macOS, Windows et Linux ; Docker Desktop 4.80.0 (29 juin 2026) retire le plugin docker sandbox au profit de sbx ; 24 septembre 2026 : Cloud Sandboxes, la même microVM sur des machines gérées par Docker (payant). Dernière version stable de sbx au 25 novembre 2026 : 0.54.1 (24 novembre), toujours en 0.x. sbx est propriétaire, gratuit y compris en usage commercial ; un compte Docker est obligatoire ; ni Docker Desktop ni Docker Engine ne sont requis sur l’hôte. Hyperviseur : KVM sous Linux, Hypervisor.framework sous macOS (Apple silicon), Windows Hypervisor Platform sous Windows 11. Le programme qui fournit la machine (VMM, virtual machine monitor, le rôle de QEMU) est écrit par Docker, « purpose-built » : ce n’est pas Firecracker. Des conteneurs dans une VM ne sont pas de la virtualisation imbriquée (une VM dans une VM) ; celle-ci n’intervient que si l’on lance sbx depuis une VM. Dans la microVM : l’agent (utilisateur non root, avec sudo) et un Docker Engine privé, à qui s’adressent docker build et docker compose up ; aucun chemin vers le démon Docker de l’hôte, aucun socket de l’hôte monté ; chaque bac à sable a son démon et son cache d’images, rien n’est partagé entre bacs à sable. Dossier du projet : monté par virtiofs, en lecture-écriture, au même chemin absolu que sur l’hôte ; c’est la seule partie de la machine que l’agent voit. Limite dite par la doc : l’agent peut y lire, modifier et supprimer tout, hooks Git compris ; l’option --clone monte le dépôt en lecture seule et fait travailler l’agent sur un clone privé. Réseau : tout le trafic TCP sortant passe par un proxy sur l’hôte, qui applique la politique réseau ; par défaut tout est refusé sauf règle explicite (préréglage Balanced : services de développement courants) ; UDP désactivé, ICMP bloqué. Le proxy injecte aussi les identifiants dans les en-têtes HTTP : l’agent n’en lit pas la valeur. Surcoût : une VM plus son démon. La doc compare avec un conteneur à socket monté (démon de l’hôte partagé), Docker-in-Docker (conteneur privilégié) et l’exécution directe (aucune isolation). Concurrents, lus sur les dépôts GitHub des éditeurs : E2B, microVM Firecracker, hébergé ou auto-hébergeable, Apache-2.0 (github.com/e2b-dev/infra) ; Vercel Sandbox, microVM Firecracker, hébergé (github.com/vercel/sandbox) ; container d’Apple, macOS 26 sur Apple silicon, chaque conteneur Linux dans une VM légère, Apache-2.0 (github.com/apple/container) ; microsandbox, microVM locale, Apache-2.0 (github.com/zerocore-ai/microsandbox) ; Agent Sandbox, Kubernetes SIG Apps, à l’initiative de Google : des pods sur gVisor ou sur Kata Containers (github.com/kubernetes-sigs/agent-sandbox) ; sandbox-runtime d’Anthropic, le bac à sable de Claude Code : bubblewrap et seccomp sous Linux, Seatbelt (sandbox-exec) sous macOS, proxy réseau à liste de domaines, Apache-2.0 (github.com/anthropic-experimental/sandbox-runtime) ; Gemini CLI, au choix Seatbelt, conteneur Docker ou Podman, gVisor (github.com/google-gemini/gemini-cli) ; Cloudflare Sandbox SDK, conteneur hébergé (github.com/cloudflare/sandbox-sdk) ; container-use de Dagger, un conteneur et une branche Git par agent (github.com/dagger/container-use). Ce qui distingue Docker Sandboxes : local sur les trois OS, VMM maison, Docker Engine privé dans la microVM, identifiants gardés hors de la VM. Mise en place (installation, sbx login, sbx run, politique réseau) : cours Conteneurisation.]
+})
+
 == VM et conteneurs : deux façons d’isoler
 
 #slide(repeat: 2, self => {
@@ -873,6 +929,7 @@
     - Une image téléchargée se vérifie : signature (authenticité), puis empreinte SHA-256 (intégrité)
     - Une VM est un processus de l’hôte ; avec `-cpu host`, elle peut à son tour lancer des VM
     - MicroVM et conteneurs isolent plus légèrement : machine minimale pour l’une, noyau partagé pour les autres
+    - Docker Sandboxes : une microVM par agent IA, avec son propre Docker Engine
   ]),
   note: [Récapitulatif, une idée par clic, dans l’ordre du cours.],
 )
