@@ -78,6 +78,9 @@ Chaque étape reprend une notion du cours : #d("distants")[Un dépôt distant et
   chemin du dépôt central. Vos identifiants de commit ne seront pas ceux du corrigé, et aucune étape ne vous demande
   d’en recopier un : lisez les vôtres avec `git log --oneline`
   (#d("empreinte")[Un identifiant est l’empreinte du contenu]).
+  Un Git plus récent que 2.47.3 (à partir de 2.48, donc celui de la VM de la page) affiche aussi `origin/HEAD` : après
+  un `git fetch`, les décorations de `git log` montrent `(origin/main, origin/HEAD)` là où l’énoncé montre
+  `(origin/main)` (étapes 4, 6, 7 et 8), et `ls depot-central.git` de l’étape 1 n’y liste plus le dossier `branches`.
 ]
 
 = Étape 1 : le dépôt central <etape-1>
@@ -207,7 +210,7 @@ Chaque étape reprend une notion du cours : #d("distants")[Un dépôt distant et
   - Dans le clone de Grace, ajoutez à la fin de `README.md` la ligne `Contact : grace@example.org`, enregistrez
     « Adresse de contact » et publiez.
   - Dans le clone d’Ada, lisez `git status` : que sait-il du commit de Grace ?
-  - Faites `git fetch`, puis relisez `git status` et `git log --oneline --all`. Qu’est-ce qui a changé, et qu’est-ce
+  - Faites `git fetch`, puis relisez `git status` et `git log --oneline --graph --all`. Qu’est-ce qui a changé, et qu’est-ce
     qui n’a pas bougé ?
   - Intégrez le commit de Grace avec `git pull`. De quelle sorte d’intégration s’agit-il ?
 ]
@@ -245,9 +248,9 @@ Chaque étape reprend une notion du cours : #d("distants")[Un dépôt distant et
     (use "git pull" to update your local branch)
 
   nothing to commit, working tree clean
-  $ git log --oneline --all
-  a22363e (HEAD -> main) Ajout du README
-  461c264 (origin/main) Adresse de contact
+  $ git log --oneline --graph --all
+  * 461c264 (origin/main) Adresse de contact
+  * a22363e (HEAD -> main) Ajout du README
   $ git pull
   Updating a22363e..461c264
   Fast-forward

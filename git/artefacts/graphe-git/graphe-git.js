@@ -230,7 +230,7 @@
       if (r.deja) { p.push(`HEAD est déjà sur ${r.vers} : rien ne bouge.`); return p; }
       p.push(`HEAD quitte ${r.de} (${r.tipAvant}) pour ${r.vers} (${r.tipApres}) : seul HEAD se déplace, aucun commit n'est créé.`);
       const d = [r.apparus.length ? `${liste(r.apparus)} ${r.apparus.length > 1 ? "apparaissent" : "apparaît"}` : "", r.disparus.length ? `${liste(r.disparus)} ${r.disparus.length > 1 ? "disparaissent" : "disparaît"}` : ""].filter(Boolean);
-      p.push(d.length ? `Le répertoire de travail reçoit les fichiers de ${r.tipApres} : ${d.join(", ")} du disque, pas du dépôt.` : `Le répertoire de travail ne change pas : ${r.tipApres} a les mêmes fichiers que ${r.tipAvant}.`);
+      p.push(d.length ? `Le répertoire de travail reçoit les fichiers de ${r.tipApres} : ${d.join(", ")} du disque, pas du dépôt.` : r.tipApres === r.tipAvant ? `Le répertoire de travail ne change pas : ${r.de} et ${r.vers} désignent le même commit, ${r.tipApres}.` : `Le répertoire de travail ne change pas : ${r.tipApres} a les mêmes fichiers que ${r.tipAvant}.`);
     } else if (r.op === "merge") {
       if (r.type === "a-jour") p.push(`Already up to date : ${r.nom} (${r.cible}) est déjà un ancêtre de ${tete} (${r.tip}) — ou le même commit : il n'y a rien à fusionner, rien ne bouge.`);
       else if (r.type === "avance-rapide") {

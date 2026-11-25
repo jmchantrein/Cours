@@ -52,5 +52,5 @@
   )
   #note(role: "precaution")[Le simulateur suit le sous-ensemble de Bash vu en cours (mots, guillemets, `$nom`, `${nom}`, `$(echo …)`,
     accolades, tilde, `*` et `?`). Tout le reste (arithmétique, `${x:-…}`, `$@`, tubes, `[…]`…) est signalé « Limitation du simulateur ».
-    Dans le chemin, un fond jaune marque le résultat d’une expansion, un trait ce que des guillemets protègent, `·` une espace, `∅` un argument vide.]
+    Dans le chemin, un fond teinté marque le résultat d’une expansion, un trait ce que des guillemets protègent, `·` une espace, `∅` un argument vide.]
 ]

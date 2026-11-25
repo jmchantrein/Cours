@@ -37,6 +37,7 @@ Sept cours, à lire dans l’ordre de la page : les outils de l’administrateur
       bouton([TP : Droits, liens, recherche et archives], "shell/tp/fichiers/"),
       bouton([TP : Du pipeline au script robuste], "shell/tp/scripts/"),
       bouton([TP : sed et awk : exercices progressifs], "shell/tp/sed-awk/"),
+      bouton([Artefact : Bash réécrit la ligne], "shell/artefacts/expansions-bash/"),
     )
     #rendus("shell")
   ],

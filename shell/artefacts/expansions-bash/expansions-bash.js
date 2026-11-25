@@ -693,7 +693,7 @@
   function dessiner() {
     const res = resultat(), ph = phase;
     const bloque = res.limites.length || res.erreur || res.vide;
-    const entete = el("h2", {}, "Le chemin, étape par étape", res.commande ? el("small", {}, el("code", {}, res.commande), " reçoit :") : false);
+    const entete = el("h2", {}, "Le chemin, étape par étape", res.commande ? el("small", {}, el("code", {}, res.commande), " reçoit :") : "");
     let corps, pied = "";
     if (res.limites.length) corps = el("p", { class: "limite" }, `Limitation du simulateur : ${res.limites[0]}.`);
     else if (res.erreur) corps = el("p", { class: "erreur" }, `Bash refuse cette ligne : ${res.erreur}.`);

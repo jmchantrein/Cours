@@ -421,13 +421,14 @@
 
 == Versionner un script : corrigé (2/2)
 
-#corriges-cote(note: [Un clic par réponse. git status -\-short montre M dans la seconde colonne : modifié, pas encore indexé. Sorties relevées par git/cm/rejouer.sh.],
+#corriges-cote(note: [Un clic par réponse. git status -\-short montre M dans la seconde colonne : modifié, pas encore indexé. Nuance par rapport au corrigé d’origine (« pas besoin de git add », avec git commit index.html -m …) : avec git commit seul, oui, il faut refaire git add, sinon « no changes added to commit » ; avec git commit sauvegarde.sh ou git commit -a, non, car Git enregistre le contenu actuel des fichiers déjà suivis sans passer par l’index. Un fichier jamais suivi, lui, passe d’abord par git add (git commit n.txt échoue : pathspec did not match). Cas rejoués avec Git 2.47.3. Sorties relevées par git/cm/rejouer.sh.],
   (3, [Une ligne de plus, un commit de plus : refaire `git add` ?],
     reponse(terminal(titre: none, taille: px(19))[```
     $ echo 'echo Sauvegarde terminée' >> sauvegarde.sh
     $ git status --short
      M sauvegarde.sh
-    # oui : la modification n’est pas encore dans l’index
+    # oui, avec git commit seul : rien n’est encore indexé
+    # (git commit sauvegarde.sh ou git commit -a n’en ont pas besoin)
     $ git add sauvegarde.sh
     $ git commit -m "Message de fin"
     [main 87218ff] Message de fin
@@ -668,7 +669,7 @@
       titre-schema[Commit de fusion (_merge commit_)],
       canevas(370, {
         let (base, d, e, m) = ((90, 215), (320, 150), (320, 280), (560, 150))
-        g-commit(..base, [1420e6a])
+        g-commit(..base, [1420e6a], couleur: g-branche)
         g-commit(..d, [964810d])
         g-parent(d, base)
         g-commit(..e, [4dcef0c], couleur: g-branche)
@@ -832,7 +833,7 @@
         g-commit(..d2, [81f39fc], couleur: g-branche)
         g-parent(d1, m)
         g-parent(d2, d1)
-        g-pointeurs(..d2, "faq", "HEAD")
+        g-pointeurs(..d2, "faq")
       })
       uncover("2-", {
         g-commit(..d1, [6b5b179], fantome: true)
@@ -845,7 +846,8 @@
         g-parent(d2b, d1b)
       })
       uncover("2", g-pointeurs(..d2b, "faq", "HEAD"))
-      uncover("1-2", g-pointeurs(..f, "main", bas: true))
+      uncover("1", g-pointeurs(..f, "main", "HEAD", bas: true))
+      uncover("2", g-pointeurs(..f, "main", bas: true))
       uncover("3-", {
         g-pointeurs(..d2b, "faq")
         g-pointeurs(..d2b, "main", "HEAD", bas: true)
@@ -1167,7 +1169,7 @@
     ),
   ),
   source-de: [#link("https://git-scm.com/docs/git-push#_note_about_fast_forwards")[git-push(1), Note about fast-forwards]],
-  note: [Commit d’Ada : echo '\<p\>Ouvert le lundi.\</p\>' >> contact.html, puis git commit -am "Jour d'ouverture". Un push n’est accepté que s’il fait avancer la branche distante (avance rapide). git push -\-force passerait outre et effacerait le commit de Grace du distant : à proscrire sur une branche partagée ; -\-force-with-lease, plus prudent, refuse si le distant a bougé depuis le dernier fetch. Dernier log : 4 commits seulement (-4). git status, à ce moment, dit la même chose en mots : « Your branch and 'origin/main' have diverged, and have 1 and 1 different commits each » (relevé de rejouer.sh). Sorties relevées par git/cm/rejouer.sh.],
+  note: [Commit d’Ada : echo '\<p\>Ouvert le lundi.\</p\>' >> contact.html, puis git commit -am "Jour d'ouverture". Un push n’est accepté que s’il fait avancer la branche distante (avance rapide). git push -\-force passerait outre et effacerait le commit de Grace du distant : à proscrire sur une branche partagée ; -\-force-with-lease, plus prudent, refuse si le distant a bougé depuis le dernier fetch. Dernier log : 4 commits seulement (-4). git status, à ce moment, dit la même chose en mots : « Your branch and 'origin/main' have diverged, and have 1 and 1 different commits each » (relevé de rejouer.sh). Sorties relevées par git/cm/rejouer.sh avec Git 2.47.3. À partir de Git 2.48, git fetch crée aussi origin/HEAD dans un dépôt relié par git remote add : les décorations de git log affichent alors « (origin/main, origin/HEAD) » là où la diapo montre « (origin/main) », ici et sur les diapos suivantes qui en montrent (pull, revert, reflog). C’est le même commit, rien n’a changé d’autre ; prévenez les étudiants qui ont un Git récent (la VM Alpine du TP en a un).],
 )
 
 == Pull sur une histoire divergente <pull-divergent>

@@ -9,6 +9,6 @@ cd ~/collab/ada || exit 1
 git status
 git fetch
 git status
-git log --oneline --all
+git log --oneline --graph --all
 git pull
 git log --oneline
