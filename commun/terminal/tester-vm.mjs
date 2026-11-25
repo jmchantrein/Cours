@@ -29,10 +29,10 @@ async function demarrerVM() {
     wasm_fn: async env => (await WebAssembly.instantiate(lire("v86.wasm"), env)).instance.exports,
     bios: { buffer: lire("seabios.bin") }, vga_bios: { buffer: lire("vgabios.bin") },
     bzimage: { buffer: lire("vm/bzImage") }, initrd: { buffer: lire("vm/initrd.gz") },
-    cmdline: "console=ttyS0,115200 rdinit=/init terminal=100x30",
+    cmdline: "console=ttyS0,115200 rdinit=/init quiet terminal=100x30",
     memory_size: manifeste.memoire_mo * 1024 * 1024, autostart: true, disable_keyboard: true, disable_mouse: true,
   });
-  let sortie = "", attente = null;
+  let sortie = "", attente = null, compte = 0;
   // L'invite de bash : précédée de l'activation du collage balisé (\x1b[?2004h), pour ne pas la confondre avec une ligne de
   // sortie qui finit par « # » ou « $ » (un commentaire, un diff).
   const INVITE = /\x1b\[\?2004h[^\n]*[$#] $/;
@@ -47,7 +47,7 @@ async function demarrerVM() {
     attente = { motif, depuis, fini, minuteur };
   });
   await attendre(/\x1b\]0;cours-terminal-pret\x07/, 240_000);
-  await attendre(INVITE, 60_000);
+  await attendre(INVITE, 60_000, sortie.indexOf("cours-terminal-pret\x07"));
   const secondes = ((Date.now() - debut) / 1000).toFixed(1);
   const utf8 = s => Buffer.from(s, "latin1").toString("utf8");
   return {
@@ -56,16 +56,20 @@ async function demarrerVM() {
     async executer(commande, delai = 60_000, avant = null) {
       const depuis = sortie.length;
       const taper = texte => { let octets = ""; for (const o of new TextEncoder().encode(texte)) octets += String.fromCharCode(o); vm.serial0_send(octets); };
-      taper(commande.replace(/\n/g, "\r") + "\r");
+      // Fin de commande : sans touches à envoyer, une seconde commande (echo FIN_n) en donne le signal sans ambiguïté ;
+      // avec des touches (Vim), on attend que Vim rende l'écran (\x1b[?1049l), puis l'invite de bash.
+      const marque = avant ? null : `FIN_${++compte}`;
+      const fin = marque ? new RegExp(`[\\r\\n]FIN_${compte}\\r?\\n`) : /\x1b\[\?1049l[\s\S]*\x1b\[\?2004h[^\n]*[$#] $/;
+      taper(commande.replace(/\n/g, "\r") + "\r" + (marque ? `echo FIN_$((${compte}+0))\r` : ""));
       if (avant) { await attendre(avant.quand, delai, depuis); await new Promise(r => setTimeout(r, avant.pause)); taper(avant.envoyer); }
       let bloque = false;
-      try { await attendre(INVITE, delai, depuis); } catch { bloque = true; vm.serial0_send("\x03"); await new Promise(r => setTimeout(r, 1500)); }
-      if (process.env.DEBUG_RAW && commande.includes(process.env.DEBUG_RAW)) console.log("RAW", JSON.stringify(sortie.slice(depuis - 60)));
+      try { await attendre(fin, delai, depuis); } catch { bloque = true; vm.serial0_send("\x03"); await new Promise(r => setTimeout(r, 1500)); }
       let lignes = bruit(utf8(sortie.slice(depuis))).split("\n");
-      const derniere = commande.split("\n").at(-1).slice(-20);
-      const i = lignes.findIndex(l => l.includes(derniere));
-      lignes = lignes.slice(i >= 0 ? i + 1 : 0);
-      if (lignes.length && /[$#] $/.test(lignes.at(-1))) lignes.pop();
+      if (marque) { const k = lignes.findIndex(l => l === marque); if (k >= 0) lignes = lignes.slice(0, k); while (lignes.length && /echo FIN_/.test(lignes.at(-1))) lignes.pop(); }
+      // L'écho de la commande : la ligne d'invite, puis une ligne par ligne de la commande au-delà de la première.
+      const p = lignes.findIndex(l => /^[\w-]+@cours:\S*[$#] /.test(l));
+      lignes = lignes.slice(p >= 0 ? p + commande.split("\n").length : 0);
+      if (lignes.length && /^[\w-]+@cours:\S*[$#] ?$/.test(lignes.at(-1))) lignes.pop();
       return { sortie: lignes.join("\n"), bloque };
     },
     fermer: () => vm.destroy(),
@@ -124,6 +128,7 @@ const normaliser = s => s.replace(/\x1b=/g, "").split("\n")
 // debut      commandes lancées avant le rejeu (tmux : une session sans client, que l'énoncé ouvre à la main)
 // touches    corrige/<kata>.touches rejoué dans Vim après « vim kata.* »
 // attendu    [commande, motif de sa sortie] : la dernière exécution de la commande doit le satisfaire
+// tolere     commandes qui échouent à dessein (le script « à relire » casse sur un nom à espace)
 // ecarts     commandes dont la sortie diffère de l'annonce sans que ce soit un défaut (système de fichiers en
 //            mémoire, fichiers de /etc propres à Debian…) : écartées de la comparaison
 const corrige = (tp, ...noms) => noms.map(n => path.join(racine, tp, "corrige", n));
@@ -132,13 +137,14 @@ const SPECS = {
     ecarts: [/^ls -l/, /^cat liste\.txt/, /^type /] },
   "shell/tp/fichiers": { existe: ["~/fichiers/pionnieres.csv", "~/fichiers/coffre", "~/fichiers/scripts/bonjour.sh"],
     ecarts: [/^ls -l?d? /, /^ls -li/, /^find \/etc/, /^cp \/etc/] },
-  "shell/tp/scripts": { sauter: [/^shellcheck /], attendu: [[/^bats solutions\.bats/, /tests, 0 failures/]],
+  "shell/tp/scripts": { sauter: [/^shellcheck /], tolere: [/^\.\/a-relire\.sh/], ecarts: [/^bats /],
+    attendu: [[/^bats solutions\.bats/, /15 tests, 0 failures/], [/^\.\/a-relire\.sh/, /^Trouvé : rapport\.txt$/m]],
     fixtures: [
       { dossier: "~/tp-scripts", fichiers: corrige("shell/tp/scripts", "liste_fichiers.bash", "copie_fichiers.bash", "copie_fichiers_args.bash",
         "copie_fichiers_robuste.bash", "pipelines.sh", "solutions.bats") },
       { avant: /^\.\/a-relire\.sh/, fois: 2, dossier: "~/tp-scripts", fichiers: corrige("shell/tp/scripts", "a-relire.sh") }] },
   "shell/tp/sed-awk": {},
-  "git/tp/git-local": {},
+  "git/tp/git-local": { ecarts: [/^git --version/] },
   "git/tp/git-distant": {},
   "edition-formats/tp/vim": { existe: ["~/dojo/1-survivre/depart.txt", "~/dojo/6-corriger/attendu.txt"], touches: true, sauter: [/^vimtutor/] },
   "acces-distants/tp/tmux": { debut: ["tmux new -d -s atelier"],
@@ -174,7 +180,8 @@ async function rejouerTP(tp) {
     const etapes = lireEnonce(readFileSync(html, "utf8"));
     if (!etapes.length) throw new Error("aucune commande trouvée dans l'énoncé");
     const vm = await demarrerVM();
-    await vm.executer("stty rows 200");   // un pager (git log) s'arrête à la page : on en tient 200 lignes
+    // Sans pager : les touches de fin de commande que ce script tape gêneraient less (git log, git config --list).
+    await vm.executer("export PAGER=cat GIT_PAGER=cat");
     const echecs = [], sorties = [], derniere = new Map();
     let kata = null;
     const vues = new Map();
@@ -195,10 +202,9 @@ async function rejouerTP(tp) {
       }
       const r = await vm.executer(commande, avant ? 120_000 : 60_000, avant);
       const e = { commande, annonce, sortie: r.sortie, bloque: r.bloque };
-      if (process.env.DEBUG_TP) console.log("» " + commande.split("\n")[0].slice(0, 70) + "\n   = " + JSON.stringify(r.sortie.slice(0, 100)));
       sorties.push(e); derniere.set(commande.split("\n")[0], e);
       if (r.bloque) echecs.push(`bloquée : ${commande.split("\n")[0]}`);
-      else if (MOTIFS_ECHEC.test(r.sortie) && !MOTIFS_ECHEC.test(annonce)) echecs.push(`échec inattendu : ${commande.split("\n")[0]} → ${r.sortie.split("\n")[0]}`);
+      else if (MOTIFS_ECHEC.test(r.sortie) && !MOTIFS_ECHEC.test(annonce) && !(spec.tolere || []).some(t => t.test(commande))) echecs.push(`échec inattendu : ${commande.split("\n")[0]} → ${r.sortie.split("\n")[0]}`);
       // Fichiers de départ : vérifiés dès que la première étape a lancé son script ou extrait l'archive.
       if (spec.existe && /^bash preparer\.sh|tar -xz/.test(commande) && !spec.verifie) {
         spec.verifie = true;
@@ -264,7 +270,7 @@ if (argument === "--tp") {
     let texte = "";
     const p = spawn(process.execPath, [import.meta.filename, "--tp", tp]);
     p.stdout.on("data", d => { texte += d; }); p.stderr.on("data", d => { texte += d; });
-    p.on("exit", code => { process.stdout.write(texte); if (code) echecs++; fini(); });
+    p.on("close", code => { process.stdout.write(texte); if (code) echecs++; fini(); });
   });
   const attente = [...file];
   await Promise.all(Array.from({ length: 4 }, async () => { for (let tp; (tp = attente.shift());) await lancer(tp); }));

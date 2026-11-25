@@ -27,7 +27,7 @@ version="alpine-${reference##*:}"
 # Python restent hors de l'image : l'image reste légère, et ces TP passent par le compagnon.
 paquets=(
   linux-virt bash bash-completion coreutils findutils grep sed gawk diffutils less file tree
-  nano vim git jq tmux tar ncurses-terminfo-base procps-ng bats vim-tutor
+  nano vim git jq tmux tar ncurses-terminfo-base procps-ng ncurses bats vim-tutor
   mandoc coreutils-doc bash-doc less-doc grep-doc tmux-doc
 )
 
@@ -69,10 +69,8 @@ docker run --rm --platform linux/386 --name "terminal-vm-$$" "${reseau[@]}" \
     addgroup ada etudiants
     chmod u=rwx,go=,g-s /home/ada
     rm -rf /usr/share/info
-    # Git de Debian 13 (2.47), la référence des énoncés : dossier branches/ dans un dépôt nu, et pas de refs/remotes/
-    # origin/HEAD créé par git fetch (2.48 et suivants).
+    # Comme Git de Debian : un dépôt nu a son dossier branches/ (le paquet Alpine ne le crée pas).
     mkdir -p /usr/share/git-core/templates/branches
-    git config --system fetch.followRemoteHEAD never
     printf "127.0.0.1 localhost cours\n" > /etc/hosts
     : > /etc/resolv.conf
     cp /boot/vmlinuz-virt /sortie/bzImage

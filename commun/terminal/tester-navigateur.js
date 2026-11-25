@@ -38,6 +38,11 @@ const pages = {
   essai: "build/essai-terminal/essai.typ", compagnon: "commun/terminal/compagnon.typ",
   wordpress: "conteneurisation/tp/wordpress/wordpress.typ", libvirt: "virtualisation/tp/libvirt/libvirt.typ",
   accueil: "index.typ", artefact: "conteneurisation/artefacts/cache-de-build/cache-de-build.typ",
+  // Les TP en mode vm (le rejeu complet de leurs commandes est dans tester-vm.mjs).
+  "tp-premiers-pas": "shell/tp/premiers-pas/premiers-pas.typ", "tp-fichiers": "shell/tp/fichiers/fichiers.typ",
+  "tp-scripts": "shell/tp/scripts/scripts.typ", "tp-sed-awk": "shell/tp/sed-awk/sed-awk.typ",
+  "tp-git-local": "git/tp/git-local/git-local.typ", "tp-git-distant": "git/tp/git-distant/git-distant.typ",
+  "tp-vim": "edition-formats/tp/vim/vim.typ", "tp-tmux": "acces-distants/tp/tmux/tmux.typ",
 };
 const html = {};
 for (const [nom, source] of Object.entries(pages)) {
@@ -229,6 +234,29 @@ async function connecter(page, url) {
   await executer(page, "awk").click();
   await attendreTexte(page, "Total : 3");
   ok("VM, deuxième visite : commandes exécutées");
+
+  // 7. TP en mode vm : la page propose le terminal et un « Exécuter » par commande ; sur deux TP, les clics de la
+  // première étape (téléchargement sans réseau, script de départ) posent les fichiers de départ, sous le compte ada.
+  for (const nom of Object.keys(pages).filter(n => n.startsWith("tp-"))) {
+    await page.goto(adresse(nom));
+    const r = await page.evaluate(() => [document.body.dataset.terminal, document.querySelectorAll(".terminal .executer").length,
+      document.querySelector(".terminal-lanceur") !== null]);
+    verifier(r[0] === "vm compagnon" && r[1] > 0 && r[2], `${nom} : terminal « vm compagnon », ${r[1]} boutons « Exécuter »`);
+  }
+  for (const [nom, clics, attendu] of [
+    ["tp-premiers-pas", ["wget ", "bash preparer.sh", "whoami"], "Dossier de travail prêt : /home/ada/atelier"],
+    ["tp-vim", ["curl ", "ls dojo"], "1-survivre"],
+  ]) {
+    await page.goto(adresse(nom));
+    await page.click(".terminal-lanceur");
+    await page.locator(".terminal-accueil button.principal", { hasText: "Démarrer" }).click();
+    for (const debut of clics) {   // une commande peut être dans un corrigé replié : on l'ouvre, comme le lecteur
+      await executer(page, debut).evaluate(b => { for (let d = b.closest("details"); d; d = d.parentElement.closest("details")) d.open = true; });
+      await executer(page, debut).click();
+    }
+    await attendreTexte(page, attendu, 120000);
+    ok(`${nom} : « ${clics.join(" », « ")} » cliqués dans la VM, fichiers de départ présents (${attendu})`);
+  }
   await contexte.close();
 
   console.log(`\n${reussis.length} vérifications réussies ; captures dans ${captures}`);

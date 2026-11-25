@@ -28,7 +28,10 @@ correspondantes sont celles de la distribution :
   Git (GPL-2.0) sont donc dans cette liste, sans copie sur ce site : l’engagement est de maintenir `paquets.txt`
   à jour avec chaque image publiée, de sorte qu’une version exacte retrouve toujours ses sources.
 
-Seuls `vm/init` et `vm/profil.sh`, écrits pour ce dépôt, sont ajoutés à l’image.
+Seuls `vm/init`, `vm/profil.sh` et `vm/telecharger`, écrits pour ce dépôt, sont ajoutés à l’image, avec les fichiers de
+départ des TP en mode `vm` (`preparer.sh`, `dojo/` : contenus du dépôt, sous sa licence CC BY-NC-SA 4.0). Parmi les
+paquets, `procps-ng` (GPL-2.0 et LGPL-2.1), `bats` (MIT), `mandoc` (ISC) et les pages de manuel `*-doc` suivent leurs licences,
+indiquées dans `paquets.txt`.
 
 ## Le compagnon
 Le code du compagnon (`compagnon/`) est écrit pour ce dépôt. **Il n’a pas de licence logicielle propre** (le dépôt
