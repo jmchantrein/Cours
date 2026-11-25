@@ -26,12 +26,14 @@
 Périmètre décidé le 2026-11-25 : virtualisation (libvirt), delta conteneurisation, Ansible, outils d’administration
 système en quatre cours (`shell/`, `edition-formats/`, `acces-distants/`, `git/`) ; pas de « page de cours » ;
 Qt (licence à régler avec Vincent Barichard), ia-apprentissage, intro-ordinateur, intro-systeme et glossaire restent sur le site.
-- [ ] Vague 1 — diapos : delta virtualisation (libvirt, réseau, stockage, instantanés), delta conteneurisation (réseau, erreurs à éviter), `ansible/cm/`, `shell/cm/`, `edition-formats/cm/`, `acces-distants/cm/`, `git/cm/`
 - [ ] Vague 2 — TP avec corrigés testés : `virtualisation/tp/libvirt/`, Ansible (trois séances), shell (dont premiers pas et fichiers, issus d’intro-linux), sed et awk, YAML/JSON, SSH, tmux, WireGuard, Git
 - [ ] Vague 3 — artefacts : chaîne de backing files qcow2, CMD × ENTRYPOINT, précédence et inventaire Ansible, idempotence, expansions Bash, graphe Git, typage YAML ↔ JSON
 - [ ] Terminal interactif des pages web (clic sur une commande → exécution dans un terminal), repris du principe du site
 - [ ] Intégration : accueil `index.typ`, tableau du `README.md`, CI (paquets des harnais), relecture indépendante de chaque cours
 - [ ] Relecture par l’auteur des contenus dont la source du site est rédigée par IA (réseau Docker, erreurs à éviter, réseau et stockage libvirt, concepts Ansible, tmux, labo WireGuard)
+- [ ] Rejouer sur Debian 13 les scripts `<cours>/cm/rejouer*.sh` des cours migrés (sorties prises sur Ubuntu 24.04 ou Docker 29.9, marquées « à rejouer » dans les notes) : `shell`, `edition-formats`, `acces-distants` (OpenSSH 10, tmux 3.5a, module noyau WireGuard), `ansible`, `conteneurisation` (docker.io 26.1.5), `virtualisation/cm/rejouer-libvirt.sh` et les étapes 3, 4, 8 et 9 du TP libvirt (KVM réel)
+- [ ] Ouvrir les liens des sources citées dans les diapos migrées (docs.ansible.com, git-scm.com, wireguard.com, docs.docker.com : inaccessibles lors de la rédaction)
+- [ ] Faits à faire relire par l’auteur — libvirt : `qemu:///system` sans sudo par le groupe `libvirt`, VM du TP en BIOS (l’UEFI refuse l’instantané interne) ; Ansible : règle de précédence en 22 niveaux, idiome `creates:` ; shell : `sed -E` POSIX depuis 2024, corrections du support d’origine ; SSH : Ed25519 à la place de RSA 4096, changement de port requalifié en confort ; Docker : port publié sur 127.0.0.1 joignable du réseau local avant Docker 28 ; Git : exercice de conflit nouveau, dépôt nu local à la place de GitHub
 
 ## Fait
 
@@ -72,3 +74,4 @@ Qt (licence à régler avec Vincent Barichard), ia-apprentissage, intro-ordinate
 - [x] 2026-11-23 — Artefact « cache de build » : lecteur de recette (étape précédente, lecture ou pause, étape suivante, quitter, rejouer) ; la pause fige le build en cours, le retour en arrière rétablit l’état mémorisé après chaque étape et annule une étape en cours
 - [x] 2026-11-24 — Artefact « cache de build » : modèle recalé sur BuildKit (CMD, ENTRYPOINT, LABEL, EXPOSE hors des clés ; casse, espaces et commentaires sans effet ; FROM fixe ; instructions non simulées signalées), vérifié par `verifier-buildkit.js` (140 builds, aucun écart) ; recettes en carte distincte, pause après chaque étape avec explication calculée et « Continuer », option sans pause, reprise en main à la fin sans quitter ; la règle passe dans le bandeau du titre
 - [x] 2026-11-24 — Artefact « cache de build » : la liste des étapes de la recette reste affichée pendant sa lecture (étapes faites cochées, étape expliquée surlignée, suivante repérée) ; panneau d’aide resserré sur les fenêtres basses
+- [x] 2026-11-25 — Migration depuis `site`, vague 1 (diapos) : section « Administrer avec libvirt » et TP `virtualisation/tp/libvirt/` (harnais : 17 vérifications en lint, 54 en TCG) ; delta conteneurisation (réseau, journaux, audit, tableau CMD × ENTRYPOINT) ; cours nouveaux `ansible/`, `shell/`, `edition-formats/`, `acces-distants/`, `git/`, chacun avec son script de rejeu
