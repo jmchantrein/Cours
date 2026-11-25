@@ -37,6 +37,8 @@ Qt (licence à régler avec Vincent Barichard), ia-apprentissage, intro-ordinate
 - [ ] Terminal : essayer dans Firefox et Safari ; essayer le compagnon sur un macOS réel (binaire non signé, Gatekeeper) ; vérifier l’avertissement « accès au réseau local » de Chrome ; choisir une licence logicielle pour le compagnon (il suit CC BY-NC-SA par défaut) ; décider si `http://localhost:8000` reste une origine admise par défaut
 - [ ] Terminal : les paquets `apk` de l’image Alpine ne sont pas épinglés (image non reproductible à l’identique, `paquets.txt` en garde la trace) ; ShellCheck n’existe pas pour Alpine x86 (étapes 6 à 8 du TP scripts par le compagnon)
 - [ ] Vérifier la première compilation complète du site par la CI après fusion dans `main` (`compilation-cours.yml` ne tourne que sur `main` : construction de l’image de la VM, binaires du compagnon, sept cours, seize TP)
+- [ ] Sur un Debian 13 réel (libvirt 11.3, AppArmor) : démarrer une VM dont le disque est déclaré `<disk type="volume">`, pour savoir si le refus AppArmor constaté sur Ubuntu 24.04 (libvirt 10.0) s’y produit aussi, puis ajuster le commentaire de `vm-exemple.xml` et la note de la diapo « Pools et volumes »
+- [ ] Le runner GitHub dispose de `/dev/kvm` : décider si le harnais libvirt démarre aussi le domaine en `type="kvm"` (aujourd’hui il force TCG, le XML KVM n’est validé que par son schéma)
 
 ## Fait
 
@@ -83,3 +85,5 @@ Qt (licence à régler avec Vincent Barichard), ia-apprentissage, intro-ordinate
 - [x] 2026-11-25 — Terminal interactif des pages web (`commun/terminal/`) : VM Alpine dans le navigateur (v86, téléchargée à la demande, mise en cache, 34 Mo) et compagnon local en Go ; `page-web(terminal: …)` ; fichiers de départ des TP embarqués dans l’image ; les huit TP en mode `vm` rejoués dans la VM par les tests
 - [x] 2026-11-25 — Accueil et README pour sept cours en trois groupes ; CI des corrigés en matrice (un harnais par tâche), paquets `apt` déclarés par TP (`paquets-apt.txt`), convention de proxy unique `TPTEST_CA`
 - [x] 2026-11-25 — Sorties des diapos rejouées sur Debian 13 : shell (ShellCheck 0.10.0, Bats 1.11.1, cron), Git 2.47.3, édition et formats (vim 9.1.1230, yq 3.4.3, yamllint 1.37.1), accès distants (OpenSSH 10.0, tmux 3.5a), Ansible (Debian 13.8, Python 3.13) ; les scripts de rejeu se relancent seuls dans `debian:13-slim`
+- [x] 2026-11-25 — CI des corrigés verte sur la branche : seize TP sur seize (ShellCheck ≥ 0.11, capture WireGuard filtrée, labo Ansible sans secret de build) ; TP libvirt : disque déclaré par fichier, parce que libvirt 10.0 écrit le profil AppArmor avant de traduire un disque `type="volume"` en chemin ; l’ISO sous `$HOME` demande une ACL pour `libvirt-qemu`
+- [x] 2026-11-25 — Énoncés alignés sur les diapos rejouées : Git 2.47.3, justification de `indentkeys` du dojo Vim, messages réels de `ip link add` sans module WireGuard
