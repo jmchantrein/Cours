@@ -106,6 +106,7 @@ Sept cours, à lire dans l’ordre de la page : les outils de l’administrateur
       bouton([TP, séance 1 : inventaire et commandes ad hoc], "ansible/tp/inventaire/"),
       bouton([TP, séance 2 : playbooks, variables et idempotence], "ansible/tp/playbooks/"),
       bouton([TP, séance 3 : un rôle, nginx_hello_world], "ansible/tp/roles/"),
+      bouton([Artefact : Quelle valeur gagne ?], "ansible/artefacts/precedence-variables/"),
     )
     #rendus("ansible")
   ],

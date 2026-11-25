@@ -136,7 +136,8 @@ vous constatez l’idempotence, vous la cassez exprès, et vous la réparez
   #link("https://docs.ansible.com/ansible/latest/playbook_guide/playbooks_variables.html#understanding-variable-precedence")[Understanding variable precedence].
   Le cours en résume l’ordre : #d("precedence-variables")[Précédence : un ordre fixe de sources]. L’option
   `-e` (_extra vars_) de `ansible-playbook` déclare une variable en ligne de commande ; une valeur qui contient
-  une espace s’écrit `-e 'variable="deux mots"'`.
+  une espace s’écrit `-e 'variable="deux mots"'`. Pour rejouer la règle et la mettre en défaut :
+  l’artefact #link("../../artefacts/precedence-variables/index.html")[Quelle valeur gagne ?]
 ]
 
 #corrige[

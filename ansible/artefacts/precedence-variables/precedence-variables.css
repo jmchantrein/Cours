@@ -1,0 +1,83 @@
+/* precedence-variables.css — mise en forme de l’artefact ; les couleurs sont celles de la charte (variables CSS).
+   À gauche, les entrées : l’arbre de groupes de srv1, puis les sources hors inventaire. À droite, le résultat :
+   la valeur vue par srv1, le classement des sources présentes, et l’explication calculée.
+   Sur un écran d’ordinateur, l’ensemble occupe la hauteur de la fenêtre.
+   La source qui gagne se lit à son rang et à son libellé « gagne » ; la couleur ne fait que le doubler. */
+#artefact { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: .5rem .7rem; align-content: start; }
+#artefact .zone-groupes { grid-column: 1; grid-row: 1; }
+#artefact .zone-sources { grid-column: 2; grid-row: 1; }
+#artefact .zone-resultat { grid-column: 1; grid-row: 2; }
+#artefact .zone-explication { grid-column: 2; grid-row: 2; }
+#artefact h2 { margin: 0 0 .25rem; padding: 0; border: 0; font-size: .72rem; color: var(--c-gris);
+  letter-spacing: .08em; text-transform: uppercase; }
+#artefact .cadre { display: flex; flex-direction: column; padding: .4rem .65rem .45rem; background: #fff;
+  border: 1px solid var(--c-filet); border-radius: .6rem; box-shadow: 0 1px 2px rgb(15 30 51 / .05); }
+#artefact .cadre > h2 { flex: none; }
+#artefact code { padding: 0; border: 0; background: none; color: inherit; font-family: "IBM Plex Mono", ui-monospace, monospace; }
+#artefact .vide { margin: 0; color: var(--c-gris); font-size: .8rem; }
+#artefact button { padding: .2rem .6rem; border: 1px solid var(--c-ardoise); border-radius: .3rem; background: #fff;
+  color: var(--c-encre); font: inherit; font-size: .78rem; cursor: pointer; }
+.titre-zone { display: flex; align-items: baseline; justify-content: space-between; gap: .5rem; }
+#artefact button.zero { margin-bottom: .2rem; padding: .05rem .5rem; font-size: .72rem; }
+
+/* L’arbre : une ligne par groupe ; la profondeur et l’appartenance sont calculées par le simulateur. */
+.groupes { width: 100%; border-collapse: collapse; font-size: .74rem; }
+.groupes th, .groupes td { padding: .05rem .25rem; text-align: left; font-weight: 400; border-top: 1px solid var(--c-filet); }
+.groupes thead th { border-top: 0; color: var(--c-gris); font-size: .66rem; font-weight: 600; }
+.groupes tbody th code { font-weight: 600; font-size: .8rem; }
+.groupes .centre { text-align: center; }
+.groupes select, .groupes input[type="number"] { min-width: 0; padding: .05rem .15rem; border: 1px solid var(--c-ardoise); border-radius: .25rem;
+  background: #fff; color: var(--c-encre); font: inherit; font-size: .72rem; line-height: 1.2; }
+.groupes select { width: 100%; }
+.groupes input[type="number"] { width: 3.4rem; }
+.groupes tr.hors .etat, .groupes tr.hors th { color: var(--c-gris); }
+.groupes tr.hors th code { font-weight: 400; text-decoration: line-through; text-decoration-thickness: 1px; }
+.groupes .prof { font-weight: 700; color: var(--notion-accent); }
+#artefact input[type="checkbox"] { width: 1rem; height: 1rem; accent-color: var(--c-bleu); }
+
+/* Les sources hors groupes : des cases, dans l’ordre de la documentation. */
+.sources { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .2rem .5rem; }
+.source-case { display: flex; align-items: center; gap: .35rem; font-size: .76rem; }
+.source-texte { display: flex; align-items: baseline; gap: .4rem; min-width: 0; }
+.source-texte code { font-size: .74rem; }
+
+/* La valeur que voit l’hôte. */
+.zone-resultat .valeur { margin: 0 0 .25rem; font-size: .9rem; line-height: 1.2; overflow-wrap: anywhere; }
+.zone-resultat .variable { color: var(--c-gris); }
+.zone-resultat .resultat { font-weight: 700; color: var(--pratique-accent); }
+.zone-resultat .gagnante { color: var(--c-ardoise); font-size: .78rem; }
+.zone-resultat .indefini { color: var(--avertissement-accent); font-weight: 600; }
+.erreur { margin: 0; color: var(--danger-accent); font-weight: 600; font-size: .85rem; }
+.limite { color: var(--avertissement-accent); }
+
+/* Le classement : du plus fort au plus faible ; la première ligne est marquée « gagne ». */
+.classement { margin: 0; padding: 0; list-style: none; counter-reset: rang; }
+.classement li { display: grid; grid-template-columns: 1rem minmax(0, 1.5fr) 2.4rem minmax(0, 1fr); gap: 0 .35rem;
+  align-items: baseline; padding: .02rem .3rem; border-top: 1px solid var(--c-filet); font-size: .7rem; line-height: 1.25; }
+.classement .source { counter-increment: rang; }
+.classement .source::before { content: counter(rang); color: var(--c-gris); font-weight: 600; }
+.classement .entete { border-top: 0; color: var(--c-gris); font-size: .64rem; font-weight: 600; }
+.classement .entete .nom { grid-column: 1 / 3; }
+.classement .source.gagne { background: var(--pratique-fond); border-radius: .3rem; font-weight: 700; }
+.classement .badge { margin-left: .4rem; padding: 0 .3rem; border-radius: .25rem; background: var(--pratique-entete); color: #fff; font-size: .62rem; }
+.classement .nom code { font-size: .72rem; overflow-wrap: anywhere; }
+.classement .niveau { color: var(--c-gris); font-size: .64rem; }
+.classement .regle { color: var(--c-ardoise); font-size: .68rem; }
+.classement .gagne .regle { color: var(--c-encre); }
+
+/* L’explication calculée. */
+.explication-texte { font-size: .76rem; line-height: 1.32; }
+.explication-texte p { margin: .08rem 0; }
+.explication-texte .erreur { font-size: inherit; }
+.zone-explication, .zone-resultat { overflow-y: auto; }
+.zone-resultat .sous-titre-zone { margin-top: .4rem; }
+
+/* Écran d’ordinateur : l’artefact prend la hauteur disponible. */
+@media (min-width: 60rem) and (min-height: 36rem) {
+  #artefact { height: 100%; grid-template-rows: auto minmax(0, 1fr); }
+  #artefact .cadre { min-height: 0; }
+}
+@media (max-width: 60rem) {
+  #artefact { grid-template-columns: minmax(0, 1fr); }
+  #artefact .zone-groupes, #artefact .zone-sources, #artefact .zone-resultat, #artefact .zone-explication { grid-column: 1; grid-row: auto; }
+}
