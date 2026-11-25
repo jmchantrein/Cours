@@ -63,14 +63,14 @@ avoir quelque chose à faire tourner, vous y installez WordPress. La séance dur
 
 #bloc(role: "danger")[Le groupe `incus-admin` vaut root][
   Ses membres pilotent un démon qui tourne en root : ils peuvent monter n’importe quel dossier de l’hôte dans
-  une instance. C’est la mise en garde du groupe `docker`
-  (#dc("installation")[Contexte d’utilisation et installation]), pour la même raison. N’y inscrivez que des
-  comptes à qui vous confieriez `sudo`.
+  une instance. Le cours de conteneurisation fera la même mise en garde pour le groupe `docker`, pour la même
+  raison (#dc("installation")[Contexte d’utilisation et installation]). N’y inscrivez que des comptes à qui
+  vous confieriez `sudo`.
 ]
 
 #bloc(role: "precaution")[Si Docker est installé sur cette machine][
   Docker fait rejeter par le pare-feu de l’hôte le trafic qu’il ne connaît pas : vos instances démarrent, mais
-  n’ont pas de réseau, et `apt` échoue. La documentation d’Incus
+  n’ont pas de réseau, et `apt-get` y échoue. La documentation d’Incus
   (#link("https://github.com/lxc/incus/blob/v6.0.4/doc/howto/network_bridge_firewalld.md")[Prevent connectivity
   issues with Incus and Docker]) donne les deux règles qui autorisent le pont d’Incus ; elles sont à remettre
   après chaque redémarrage de l’hôte.
@@ -87,7 +87,7 @@ avoir quelque chose à faire tourner, vous y installez WordPress. La séance dur
   automatiquement à chaque modification ; tapez leurs commandes une à une plutôt que de les lancer d’un bloc.
 ]
 
-#schema([Les deux sortes d’instances du TP, sur le même hôte et le même pont : la VM `vm1` (étapes 1 à 4) a son noyau, le conteneur système `ct1` (étape 4) emploie celui de l’hôte.], ch => {
+#schema([Les deux sortes d’instances du TP, sur le même hôte et le même pont : la VM `vm1` (étapes 1 à 4, puis 6) a son noyau, le conteneur système `ct1` (étape 4) emploie celui de l’hôte.], ch => {
   let c = ch.c
   let large = 215pt
   boite([Hôte · Debian 13], largeur: 500pt, stack(spacing: 8pt,
@@ -150,8 +150,7 @@ par une VM, pour retrouver ce que vous connaissez du mini TP.
 + Combien de temps s’est écoulé entre votre commande et le premier shell dans la VM ? D’où vient le système
   qu’elle exécute ? `incus image list` vous aidera.
 + Sous quel utilisateur le processus QEMU tourne-t-il ? Sa ligne de commande ressemble-t-elle à celle que vous
-  aviez écrite au mini TP ?
-+ Que répond `systemd-detect-virt` dans la VM, et qu’aviez-vous obtenu au mini TP ?
+  aviez écrite au mini TP ? Et que répond `systemd-detect-virt` dans la VM ?
 + Avec QEMU seul, comme au #d("mini-tp")[mini TP], qu’auriez-vous dû faire vous-même pour en arriver là ?
 
 #corrige(titre: [Réponses])[
@@ -163,8 +162,8 @@ par une VM, pour retrouver ce que vous connaissez du mini TP.
     pas les VM qu’il lance. La ligne de commande est courte : pas de `-m`, pas de `-drive`, pas de `-nic`, mais
     une option `-readconfig` qui désigne un fichier, `/run/incus/vm1/qemu.conf`. Incus y a écrit la
     description de la machine ; `sudo cat` vous le montre. C’est toujours QEMU, avec KVM : rien de neuf sous
-    l’outil.
-  + `kvm`, comme à la question 5 du mini TP : l’invité sait qu’il est virtualisé, et par quoi.
+    l’outil. `systemd-detect-virt` répond `kvm`, comme à la question 5 du mini TP : l’invité sait qu’il est
+    virtualisé, et par quoi.
   + Télécharger une ISO et la vérifier, créer un disque avec `qemu-img`, écrire la commande QEMU (mémoire,
     disque et carte réseau virtio), dérouler l’installateur de Debian, puis trouver comment entrer dans la
     machine : sa fenêtre, ou un serveur SSH à installer. Incus remplace l’installation par une image, range
@@ -225,24 +224,23 @@ y installez WordPress par les paquets de Debian.
 
 + Dans la VM, que montre `systemctl status apache2 mariadb` ? Qui a démarré ces services, et qui les
   relancera au prochain démarrage de la VM ?
-+ L’adresse de la VM répond depuis l’hôte. Répondrait-elle depuis la machine de votre voisin ?
-+ Vous n’avez écrit aucun Dockerfile et lancé aucun conteneur applicatif. En quoi cette façon d’installer
-  WordPress diffère-t-elle de celle du cours de conteneurisation ?
-+ Avec QEMU seul, comment auriez-vous joint le site depuis l’hôte ?
++ L’adresse de la VM répond depuis l’hôte. Répondrait-elle depuis la machine de votre voisin ? Avec QEMU
+  seul, comment auriez-vous joint le site depuis l’hôte ?
++ Que faudrait-il refaire, et dans quel ordre, pour obtenir une seconde VM identique à `vm1` ?
 
 #corrige(titre: [Réponses])[
   + Deux services actifs et « enabled ». Les paquets les ont démarrés à l’installation, par systemd, qui les
-    relancera à chaque démarrage : la VM est une machine entière, avec son init. Un conteneur applicatif, lui,
-    n’a qu’un processus principal, que vous désignez.
+    relancera à chaque démarrage : la VM est une machine entière, avec son init.
   + Non. Le pont `incusbr0` est un réseau privé de votre hôte : les instances en sortent par traduction
-    d’adresses (NAT), rien n’y entre de l’extérieur. L’étape 4 publie un port.
-  + Ici vous administrez une machine : des paquets, des fichiers de configuration, des services, un état qui
-    s’accumule sur son disque. Le cours de conteneurisation construit une image à partir d’un Dockerfile, puis
-    jette et recrée ses conteneurs. Les deux approches coexistent ; l’étape 5 rapproche la première de la
-    seconde.
-  + Au mini TP, `-nic user` donnait à la VM un réseau privé simulé par QEMU, sans adresse joignable depuis
-    l’hôte : il aurait fallu y ajouter une redirection de port (`hostfwd`), ou créer vous-même un pont, une
-    interface TAP et un serveur DHCP. Incus fournit le pont, les adresses et la traduction vers l’extérieur.
+    d’adresses (NAT), rien n’y entre de l’extérieur ; l’étape 4 publie un port. Au mini TP, `-nic user`
+    donnait à la VM un réseau privé simulé par QEMU, sans adresse joignable depuis l’hôte : il aurait fallu
+    une redirection de port (`hostfwd`), ou créer vous-même un pont, une interface TAP et un serveur DHCP.
+    Incus fournit le pont, les adresses et la traduction vers l’extérieur.
+  + Tout ce que vous avez tapé, dans le même ordre : les paquets, la base, les deux fichiers, le site Apache.
+    Vous avez administré une machine, et son état s’est accumulé sur son disque, sans autre trace que votre
+    mémoire. L’étape 5 décrit cette installation dans un fichier, que chaque nouvelle instance rejoue. Le
+    cours de conteneurisation poussera l’idée plus loin : une image construite depuis un fichier de
+    description, des conteneurs qu’on jette et qu’on recrée.
 ]
 
 = Étape 3 : instantanés et limites <etape-3>
@@ -275,24 +273,26 @@ y installez WordPress par les paquets de Debian.
 == Questions
 
 + Qu’est-il arrivé à la VM pendant la restauration ? Un article publié entre l’instantané et la restauration
-  serait-il encore là ?
+  serait-il encore là ? Cet instantané vous protège-t-il d’une panne du disque de l’hôte ?
 + Que répond Incus quand vous demandez 2 Gio pour une VM en marche qui a démarré avec 1 Gio ? Et pour le
   second processeur : `lscpu --extended` le montre-t-il en ligne dans la VM ?
-+ Un instantané est-il une sauvegarde ?
 + Avec QEMU seul, comment auriez-vous pris un instantané, et comment auriez-vous changé la mémoire de la VM ?
 
 #corrige(titre: [Réponses])[
   + Incus l’a arrêtée, a remis son disque dans l’état de l’instantané, puis l’a redémarrée : `uptime` le
     montre. L’article serait perdu : restaurer ramène tout le disque, base de données comprise, à l’état
-    figé. Un instantané pris avec `--stateful` fige en plus la mémoire d’une VM en marche.
+    figé. `--stateful` y ajoute la mémoire d’une VM en marche, si elle a été préparée pour : la clé
+    `migration.stateful=true`, posée VM arrêtée, et un disque racine dont `size.state` vaut au moins sa
+    mémoire ; avec les valeurs par défaut, Incus refuse. Enfin, un instantané n’est pas une sauvegarde : il
+    est rangé dans le même pool de stockage que le disque de la VM, et une panne du disque de l’hôte emporte
+    les deux. Une sauvegarde sort de l’hôte : `incus export vm1 vm1.tar.gz`.
   + Incus 6.0 refuse : « Cannot increase memory size beyond boot time size when VM is running ». La VM a reçu
-    sa mémoire au démarrage de QEMU ; à chaud, Incus sait seulement lui en reprendre. Il faut l’arrêter,
-    changer la clé, la redémarrer. Le processeur, lui, est branché à chaud, comme une carte dans une machine
-    allumée : `lscpu --extended` l’affiche aussitôt, et sa colonne ONLINE dit si l’invité s’en sert déjà.
-    S’il ne l’a pas mis en ligne, le redémarrage qui suit s’en charge. Après le redémarrage : 2 processeurs,
-    2 Gio.
-  + Non. Il est rangé dans le même pool de stockage que le disque de la VM : une panne du disque de l’hôte
-    emporte les deux. Une sauvegarde sort de l’hôte : `incus export vm1 vm1.tar.gz`.
+    sa mémoire au démarrage de QEMU ; à chaud, Incus 6.0 sait seulement lui en reprendre. Il faut l’arrêter,
+    changer la clé, la redémarrer. L’ajout à chaud arrive avec Incus 6.12 (extension `memory_hotplug`), donc
+    après la version 6.0 de Debian 13. Le processeur, lui, est branché à chaud, comme une carte dans une
+    machine allumée : `lscpu --extended` l’affiche aussitôt, et sa colonne ONLINE dit si l’invité s’en sert
+    déjà. S’il ne l’a pas mis en ligne, le redémarrage qui suit s’en charge. Après le redémarrage :
+    2 processeurs, 2 Gio.
   + Un disque au format qcow2 sait porter des instantanés : `qemu-img snapshot -c propre debian.qcow2`, VM
     arrêtée, ou la commande `savevm` du moniteur QEMU. Pour la mémoire : arrêter la VM et relancer QEMU avec
     une autre valeur de `-m`. Incus garde ces réglages dans sa base, sous forme de clés, et écrit la commande
@@ -309,8 +309,9 @@ comparez à votre VM par des mesures faites sur votre machine.
   - Lancez `ct1` avec la commande de l’étape 1, sans `--vm`. Installez-y le paquet `apache2`.
   - *Noyau.* Comparez `uname -r`, puis `cat /proc/cmdline`, sur l’hôte, dans `vm1` et dans `ct1`. Que répond
     `systemd-detect-virt` dans `ct1` ?
-  - *Démarrage.* Dans chaque instance, `systemd-analyze` détaille la durée du démarrage : comparez les phases.
-    Chronométrez aussi `incus restart ct1`, puis `incus restart vm1`.
+  - *Démarrage.* Chronométrez le redémarrage de `ct1`, puis de `vm1` : de `incus restart` jusqu’à ce que
+    `incus exec` réponde de nouveau. Dans chaque instance, `systemd-analyze` détaille ensuite la durée du
+    démarrage : comparez les phases.
   - *Mémoire.* Comparez le total qu’affiche `free -m` sur l’hôte, dans `vm1` et dans `ct1`. Limitez ensuite
     `ct1` à 512 Mio, sans l’arrêter.
   - *Processus.* Sur l’hôte, listez les processus `apache2` avec leur UID : `ps -o uid,pid,args -C apache2`.
@@ -318,7 +319,8 @@ comparez à votre VM par des mesures faites sur votre machine.
     dans `ct1`.
   - *Publier un port.* Ajoutez à `ct1` un périphérique `proxy` qui publie son port 80 sur le port 8080 de
     l’hôte : #d("incus-reseau")[Réseau : un pont, des noms, un port publié]. Vérifiez depuis l’hôte :
-    `wget -qO- http://localhost:8080`.
+    `wget -qO- http://localhost:8080`. Ajoutez ensuite le même périphérique à `vm1`, en changeant de port :
+    `incus config device add vm1 web proxy listen=tcp:0.0.0.0:8081 connect=tcp:127.0.0.1:80`.
 ]
 
 #indice(titre: [Indice : la correspondance des UID])[
@@ -340,43 +342,40 @@ comparez à votre VM par des mesures faites sur votre machine.
 == Questions
 
 + Quel noyau le conteneur système exécute-t-il ? Et la VM ? Si `uname -r` donne la même version partout,
-  qu’est-ce qui les départage ?
-+ Quelles phases de démarrage la VM compte-t-elle, que le conteneur système n’a pas ?
+  qu’est-ce qui les départage ? Quelles phases de démarrage la VM compte-t-elle, que le conteneur système
+  n’a pas, et qu’en dit votre chronométrage ?
 + Pourquoi `ct1` affichait-il toute la mémoire de l’hôte ? Sa limite s’est appliquée sans arrêt : pourquoi
   est-ce possible ici, et pas pour augmenter la mémoire de la VM à l’étape 3 ?
 + Sous quels UID l’hôte voit-il les processus d’Apache de `ct1` ? Où sont ceux de `vm1` ?
-+ Ajoutez le même périphérique `proxy` à `vm1`. Que répond Incus, et pourquoi ?
-+ Avec QEMU seul, auriez-vous pu obtenir un conteneur système ? Et publier un port de la VM ?
++ Le périphérique `proxy` ajouté à `vm1` : que répond Incus, et pourquoi ?
++ Avec QEMU seul, auriez-vous pu obtenir un conteneur système ?
 
 #corrige(titre: [Réponses])[
   + Celui de l’hôte : même version, même ligne de commande de démarrage dans `/proc/cmdline`, qui est celle
     de votre machine. La VM a démarré son propre noyau, avec sa propre ligne de commande. Les versions
     peuvent coïncider, hôte et image étant des Debian 13 : c’est `/proc/cmdline` qui tranche.
     `systemd-detect-virt` répond `lxc` dans le conteneur, du nom de la technologie qu’Incus emploie, et `kvm`
-    dans la VM.
-  + Le noyau (`kernel`), et selon les cas le micrologiciel et le chargeur de démarrage (`firmware`, `loader`),
-    avant l’espace utilisateur. Le conteneur système ne compte que `userspace` : son noyau tournait déjà,
-    celui de l’hôte. Son redémarrage est bien plus court que celui de la VM.
+    dans la VM. Au démarrage, la VM compte le noyau (`kernel`), et selon les cas le micrologiciel et le
+    chargeur de démarrage (`firmware`, `loader`), avant l’espace utilisateur. Le conteneur système ne compte
+    que `userspace` : son noyau tournait déjà, celui de l’hôte. Le chronométrage le confirme : `ct1` répond
+    de nouveau bien avant `vm1`, qui doit arrêter son noyau, repasser par son micrologiciel et redémarrer
+    le tout.
   + Un conteneur système est un groupe de processus de l’hôte : sans limite, il voit tous ses processeurs et
     toute sa mémoire. Une limite est un réglage du cgroup de ces processus, que le noyau de l’hôte applique
     aussitôt : `incus exec ct1 -- cat /sys/fs/cgroup/memory.max` la montre, et `free -m` en tient compte. La
     mémoire d’une VM, elle, est du matériel virtuel, fixé au lancement de QEMU.
   + Sous des UID décalés : le root du conteneur est l’UID 1000000 de l’hôte sur une installation par défaut,
-    son `www-data` (33) l’UID 1000033. Vu de l’hôte, le root du conteneur n’a aucun privilège ; c’est le _user
-    namespace_ du cours de conteneurisation, activé d’office. Les processus de `vm1` n’apparaissent pas :
-    l’hôte n’en voit qu’un, QEMU, et ignore ce que le noyau invité exécute.
-  + « Only NAT mode is supported for proxies on VM instances ». Pour un conteneur, Incus lance sur l’hôte un
-    relais qui écoute sur le port 8080, puis entre dans le réseau du conteneur pour se connecter à
-    `127.0.0.1:80` : possible, puisque ce réseau appartient au noyau de l’hôte. Le réseau d’une VM vit dans
-    son noyau invité, où l’hôte n’entre pas. Reste la traduction d’adresses : une règle du pare-feu de l’hôte
-    réécrit la destination des paquets vers l’adresse de la VM, qui doit alors être fixe. Le script ci-dessous
-    publie ainsi le port 80 de `vm1` sur le port 8081 de l’hôte.
-    #f("4_conteneur_systeme/proxy-vm.sh")
-    #note(role: "precaution")[WordPress a enregistré à son installation l’adresse sous laquelle vous l’avez
-      consulté : joint par une autre adresse, il vous y renvoie. Par le port 8081, votre navigateur est donc
-      redirigé vers l’adresse de la VM sur le pont.]
-  + Un conteneur système, non : QEMU fournit des machines, il ne sait pas isoler des processus de l’hôte.
-    Publier un port, oui, par l’option `hostfwd` de `-nic user`, écrite au lancement de la VM.
+    son `www-data` (33) l’UID 1000033 ; dans `ct1`, la même commande `ps` les montre sous 0 et 33. Le noyau
+    traduit les UID du conteneur vers une plage réservée de l’hôte, celle que donne `uid_map` : c’est un
+    _user namespace_, que le cours de conteneurisation détaillera. Vu de l’hôte, le root du conteneur n’a
+    aucun privilège. Les processus de `vm1` n’apparaissent pas : l’hôte n’en voit qu’un, QEMU, et ignore ce
+    que le noyau invité exécute.
+  + « Only NAT mode is supported for proxies on VM instances ». Pour un conteneur, le relais est un processus
+    de l’hôte : il écoute sur le port 8080 de l’hôte, puis entre dans l’espace de noms réseau du conteneur,
+    sa vue isolée du réseau, pour se connecter à `127.0.0.1:80`. Possible, puisque ce réseau appartient au
+    noyau de l’hôte. Le réseau d’une VM vit dans son noyau invité : sur l’hôte, il n’y a rien où entrer.
+    L’étape 6 publie tout de même ce port, autrement.
+  + Non : QEMU fournit des machines, il ne sait pas isoler des processus de l’hôte.
 ]
 
 #bloc(role: "retenir")[VM ou conteneur système ?][
@@ -392,8 +391,10 @@ ces réglages réutilisables, et *cloud-init* rejoue l’installation au premier
 description produit une VM ou un conteneur système.
 
 #bloc(role: "question")[Consignes][
-  - Écrivez un fichier `cloud-init.yaml` qui refait l’étape 2 : paquets, fichiers de configuration, base,
-    site Apache. #d("incus-cloud-init")[cloud-init : s’installer au premier démarrage].
+  - Complétez le squelette ci-dessous, enregistré sous le nom `cloud-init.yaml`, pour qu’il refasse
+    l’étape 2 : #d("incus-cloud-init")[cloud-init : s’installer au premier démarrage]. Les deux fichiers de
+    configuration y sont déjà ; restent les paquets, l’ordre d’écriture des fichiers et les commandes.
+    #f("5_profils_cloud_init/squelette.yaml")
   - Créez un profil `wordpress` qui porte ce fichier dans sa clé `cloud-init.user-data`, et deux limites :
     2 processeurs, 1 Gio de mémoire. #d("incus-profils-commandes")[Profils : une configuration réutilisable].
   - Lancez deux instances à partir de l’image `images:debian/13/cloud`, avec les profils `default` et
@@ -406,10 +407,10 @@ description produit une VM ou un conteneur système.
   périphérique, essayez l’artefact #link("../../artefacts/heritage-des-profils/")[L’héritage des profils].]
 
 #indice(titre: [Indice : le format du fichier])[
-  La première ligne est `#cloud-config`, la suite est du YAML. Quatre clés suffisent : `package_update` et
-  `packages` pour les paquets, `write_files` pour les fichiers (`path`, `content`, `owner`, `permissions`), `runcmd`
-  pour les commandes. cloud-init écrit les fichiers avant d’installer les paquets, sauf ceux qui portent
-  `defer: true`.
+  La première ligne est `#cloud-config`, la suite est du YAML : `packages` liste les paquets, `write_files`
+  les fichiers, `runcmd` les commandes, une par élément, exécutées en root. cloud-init écrit les fichiers
+  avant d’installer les paquets, sauf ceux qui portent `defer: true` : or le groupe `www-data` et le dossier
+  `/etc/wordpress` n’existent qu’une fois les paquets installés.
 ]
 #indice(titre: [Indice : suivre cloud-init])[
   `incus exec wp-ct -- cloud-init status --wait` rend la main quand tout est fini. En cas d’erreur, le
@@ -424,28 +425,39 @@ description produit une VM ou un conteneur système.
 == Questions
 
 + `incus config show wp-ct` ne montre ni limite ni cloud-init ; avec `--expanded`, tout y est. D’où viennent
-  ces clés, et d’où viennent le disque `root` et la carte `eth0` ?
-+ Posez `limits.memory=512MiB` sur `wp-ct`. Quelle valeur l’emporte, pour `wp-ct` et pour `wp-vm` ?
+  ces clés, et d’où viennent le disque `root` et la carte `eth0` ? Posez ensuite `limits.memory=512MiB` sur
+  `wp-ct` : quelle valeur l’emporte, pour `wp-ct` et pour `wp-vm` ?
   #d("incus-profils")[Héritage des profils : deux régimes].
-+ Relancez une instance avec `--profile wordpress` seul. Que répond Incus ?
-+ À l’étape 4, `incus config device override vm1 eth0 ipv4.address=…` a recopié tout le périphérique `eth0`
-  dans la configuration de la VM. Pourquoi ne pas y écrire la seule clé `ipv4.address` ?
-+ Modifiez `cloud-init.yaml`, puis rechargez-le dans le profil. Les deux instances changent-elles ?
++ Créez une instance avec `--profile wordpress` seul : `incus create images:debian/13/cloud essai --profile
+  wordpress`. Que répond Incus ?
++ Fixez l’adresse de `wp-ct` : `incus config device set wp-ct eth0 ipv4.address=ADRESSE`, avec l’adresse
+  qu’elle a déjà. Incus refuse et propose `incus config device override`, qui recopie tout le périphérique
+  `eth0` dans la configuration de l’instance. Pourquoi ne pas y écrire la seule clé `ipv4.address` ?
++ Relevez `incus config get wp-ct volatile.cloud-init.instance-id`. Modifiez `cloud-init.yaml` (un paquet de
+  plus, par exemple), rechargez-le dans le profil, puis relevez de nouveau cette clé. Que se passe-t-il tout
+  de suite dans les deux instances, et que se passera-t-il à leur prochain démarrage ?
 + Avec QEMU seul, comment auriez-vous obtenu deux machines installées de la même façon ?
 
 #corrige(titre: [Réponses])[
   + Des profils. La configuration d’une instance est le résultat de ses profils, appliqués dans l’ordre, puis
     de ses propres clés : `default` apporte `root` et `eth0`, `wordpress` les limites et cloud-init, et
-    `wp-ct` n’a rien à elle.
-  + 512 Mio pour `wp-ct` : sa propre clé passe après celles des profils. `wp-vm` garde 1 Gio, la valeur du
-    profil. Les clés se remplacent une à une : `limits.cpu` vient toujours du profil.
-  + « No root device could be found ». Nommer un profil remplace la liste des profils : `default` n’est
-    appliqué d’office que si vous n’en nommez aucun. Sans lui, pas de disque `root`, pas de carte `eth0`.
-  + Parce que les périphériques ne suivent pas la règle des clés : à nom égal, le dernier remplace l’autre
-    en entier. Un `eth0` réduit à `ipv4.address` n’aurait plus ni type ni réseau. `override` recopie donc le
-    périphérique du profil dans l’instance, avec la clé en plus.
-  + Non. cloud-init n’agit qu’au premier démarrage d’une instance : le profil modifié vaut pour les
-    prochaines. Les limites du profil, elles, valent pour toutes ses instances dès qu’on les modifie.
+    `wp-ct` n’a rien à elle. Avec la clé posée : 512 Mio pour `wp-ct`, dont la propre clé passe après celles
+    des profils ; `wp-vm` garde 1 Gio, la valeur du profil. Les clés se remplacent une à une : `limits.cpu`
+    vient toujours du profil.
+  + « No root device could be found » : l’instance n’est pas créée. Nommer un profil remplace la liste des
+    profils : `default` n’est appliqué d’office que si vous n’en nommez aucun. Sans lui, pas de disque
+    `root`, pas de carte `eth0`.
+  + « Device from profile(s) cannot be modified for individual instance » : `eth0` appartient au profil
+    `default`, pas à `wp-ct`. Les périphériques ne suivent pas la règle des clés : à nom égal, le dernier
+    remplace l’autre en entier. Un `eth0` de l’instance réduit à `ipv4.address` remplacerait celui du profil,
+    et n’aurait plus ni type ni réseau. `override` recopie donc le périphérique du profil dans l’instance,
+    avec la clé en plus ; l’étape 6 s’en sert.
+  + La clé a changé : modifier une clé `cloud-init.*`, dans le profil ou sur l’instance, fait tirer à Incus
+    un nouvel identifiant pour chaque instance concernée. Rien d’autre ne change tout de suite. Au prochain
+    démarrage de chaque instance, cloud-init voit une nouvelle instance et rejoue paquets, fichiers et
+    commandes : c’est pourquoi les commandes du corrigé créent la base avec `IF NOT EXISTS`, sans quoi la
+    seconde passe échouerait. Les limites du profil, elles, valent pour toutes ses instances dès qu’on les
+    modifie.
   + En refaisant l’installation dans chacune, ou en copiant le disque de la première. cloud-init fonctionne
     aussi sans Incus : c’est l’outil des images « cloud » de Debian, auxquelles on présente la description
     sur un second disque. Incus se charge de la lui transmettre.
@@ -454,7 +466,8 @@ description produit une VM ou un conteneur système.
 = Étape 6 : réseau et volumes <etape-6>
 
 _Pour aller plus loin._ WordPress et sa base vont dans deux instances, qui se joignent par leur nom ; les
-données de la base vont sur un volume, hors de l’instance.
+données de la base vont sur un volume, hors de l’instance. Enfin, le port de `vm1` refusé à l’étape 4 est
+publié autrement.
 
 #bloc(role: "question")[Consignes][
   - Créez un volume `donnees` dans le pool de stockage `default` :
@@ -465,6 +478,8 @@ données de la base vont sur un volume, hors de l’instance.
     nom `db.incus` : #d("incus-reseau")[Réseau : un pont, des noms, un port publié].
   - Installez WordPress depuis le navigateur.
   - Arrêtez `db`, supprimez-la, recréez-la avec le même volume. Le site est-il toujours installé ?
+  - *Publier le port d’une VM.* Sur `vm1`, Incus n’accepte le périphérique `proxy` qu’avec `nat=true`.
+    Publiez ainsi son port 80 sur le port 8081 de l’hôte, puis ouvrez le site par ce port.
 ]
 
 #indice(titre: [Indice : MariaDB n’écoute que localement])[
@@ -476,15 +491,25 @@ données de la base vont sur un volume, hors de l’instance.
 #indice(titre: [Indice : vérifier les noms])[
   `incus exec web -- getent hosts db.incus` interroge le serveur de noms du pont.
 ]
+#indice(titre: [Indice : le mode NAT])[
+  Incus pose alors deux exigences : une adresse IPv4 fixe sur la carte de la VM, la clé `ipv4.address` de
+  `eth0`, qui vient du profil `default` (question 3 de l’étape 5) ; et une adresse d’écoute précise de
+  l’hôte, le joker `0.0.0.0` étant refusé. `ip -4 route get 1.1.1.1` donne l’adresse que l’hôte emploie pour
+  sortir sur son réseau.
+]
 
 #corrige[
-  Ces corrigés emploient deux conteneurs système ; avec `--vm`, les commandes sont les mêmes.
+  `db` et `web` sont ici deux conteneurs système. Avec des VM (`--vm`), une différence : un volume ne
+  s’attache pas à une VM en marche. Attachez-le instance arrêtée : `incus create`, `incus storage volume
+  attach`, puis `incus start` (ou `incus stop` avant d’attacher).
   #f("6_reseau_volumes/deployer.sh")
   #f("6_reseau_volumes/db.sh")
   #f("6_reseau_volumes/ecoute.cnf", lang: "ini")
   #f("6_reseau_volumes/config-default.php", lang: "php")
   Le site Apache, `wordpress.conf`, est celui de l’étape 2.
   #f("6_reseau_volumes/recreer-db.sh")
+  La publication du port de `vm1`, en mode NAT :
+  #f("6_reseau_volumes/proxy-vm.sh")
 ]
 
 == Questions
@@ -492,6 +517,8 @@ données de la base vont sur un volume, hors de l’instance.
 + La nouvelle instance `db` a-t-elle la même adresse que l’ancienne ? Pourquoi `web` la retrouve-t-elle ?
 + Qu’est-ce qui a survécu à la suppression de `db`, et qu’a-t-il fallu refaire ?
 + Comparez avec l’étape 5 du TP de conteneurisation, si vous l’avez fait : que retrouvez-vous ?
++ En mode NAT, qu’est-ce qui conduit les connexions du port 8081 jusqu’à `vm1`, et pourquoi son adresse
+  doit-elle être fixe ? Par quelle adresse votre navigateur affiche-t-il finalement le site ?
 + Avec QEMU seul, comment deux VM se seraient-elles jointes par leur nom ?
 
 #corrige(titre: [Réponses])[
@@ -503,6 +530,11 @@ données de la base vont sur un volume, hors de l’instance.
   + Les mêmes idées sous d’autres noms : un réseau où les noms se résolvent, un volume qui survit à ce qui
     l’utilise, une base qui n’est pas publiée sur l’hôte. Docker les applique à des conteneurs applicatifs,
     Incus à des machines.
+  + Aucun processus relais : une règle du pare-feu de l’hôte réécrit la destination des paquets reçus sur
+    le port 8081 vers l’adresse de la VM, port 80. La règle désigne cette adresse une fois pour toutes : si
+    la VM en changeait, elle viserait une autre instance, ou personne. Le navigateur finit sur l’adresse de
+    la VM sur le pont : WordPress a enregistré à son installation l’adresse sous laquelle vous l’avez
+    consulté, et vous y renvoie quand vous le joignez par une autre.
   + Il aurait fallu créer un pont et ses interfaces, y faire tourner un serveur DHCP et un serveur de noms, ou
     tenir à la main le fichier `/etc/hosts` de chaque VM.
 ]
@@ -564,10 +596,12 @@ servir de poste pour le TP #link("../../../conteneurisation/tp/wordpress/")[Cont
     [Réseau et stockage gérés], [], [], [],
     [Conteneurs et VM ensemble], [], [], [],
     [API et automatisation], [], [], [],
+    [Outils bâtis dessus], [], [], [],
     [Poste de travail graphique], [], [], [],
     [Sans démon root], [], [], [],
   )
-  Comparez ensuite avec la diapositive #d("trois-etages")[QEMU, libvirt, Incus : trois étages, un moteur].
+  Le corrigé est la diapositive #d("trois-etages")[QEMU, libvirt, Incus : trois étages, un moteur], projetée
+  au retour du TP.
 ]
 
 #bloc(role: "retenir")[Ce que ce TP a montré][
@@ -582,10 +616,13 @@ servir de poste pour le TP #link("../../../conteneurisation/tp/wordpress/")[Cont
 ]
 
 #bloc(role: "pratique")[Faire le ménage][
-  Les instances arrêtées gardent leur disque. Pour tout supprimer :
+  Les instances arrêtées gardent leur disque. Pour tout supprimer, quelles que soient les étapes faites :
   #terminal[```console
-  $ incus delete --force vm1 ct1 wp-vm wp-ct web db docker
+  # une instance à la fois : une commande qui nomme une instance absente n'en supprime aucune
+  $ for i in vm1 ct1 wp-vm wp-ct essai web db docker; do incus delete --force "$i"; done
   $ incus profile delete wordpress
   $ incus storage volume delete default donnees
   ```]
+  Un nom absent, ou un profil, un volume que vous n’avez pas créés, donnent un message d’erreur sans
+  conséquence.
 ]

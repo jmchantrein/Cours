@@ -12,7 +12,7 @@ Un seul TP, `virtualisation/tp/incus/`, va de la machine virtuelle au conteneur 
 
 ## Conséquences
 
-Les conteneurs système sont enseignés dans le cours de virtualisation, ce qui peut surprendre. Le cours de conteneurisation y renvoie par un lien, sans dupliquer. Le TP cible l'Incus de Debian 13 (6.0.4).
+Les conteneurs système sont enseignés dans le cours de virtualisation, ce qui peut surprendre. Le TP WordPress du cours de conteneurisation y renvoie par un lien, sans dupliquer ; les diapos de conteneurisation n'y renvoient pas. Le TP cible l'Incus de Debian 13 (6.0.4).
 
 ## Options écartées
 

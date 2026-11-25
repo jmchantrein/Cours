@@ -1,8 +1,13 @@
 name: Test des corrigés de TP
 
 # Chaque TP qui a des corrigés exécutables (<cours>/tp/<tp>/corrige/) fournit à
-# côté un harnais <cours>/tp/<tp>/tester.sh. Ce workflow rejoue tous les
-# harnais en mode --up : construire, démarrer, vérifier, nettoyer.
+# côté un harnais <cours>/tp/<tp>/tester.sh. Ce workflow rejoue en mode --up
+# chaque harnais dont le TP a changé, dans un job à lui : un harnais qui dépasse
+# son délai n'emporte pas le bilan des autres.
+#
+# Un harnais peut déclarer, dans les commentaires de son en-tête :
+#   ci-delai: 180          délai du job, en minutes (90 par défaut) ;
+#   ci-prerequis: incus    installer et initialiser Incus avant de le lancer.
 on:
   push:
     paths:
@@ -20,11 +25,76 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  corriges:
+  decouverte:
+    runs-on: ubuntu-26.04
+    timeout-minutes: 5
+    outputs:
+      harnais: ${{ steps.liste.outputs.harnais }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # L'historique permet de comparer avec le commit précédent du push.
+          fetch-depth: 0
+
+      - name: Un harnais par TP corrigé
+        run: |
+          manquants=0
+          for corrige in */tp/*/corrige; do
+            [ -d "$corrige" ] || continue
+            harnais="$(dirname "$corrige")/tester.sh"
+            if [ ! -x "$harnais" ]; then
+              echo "::error file=$corrige::$corrige n'a pas de harnais exécutable $harnais"
+              manquants=1
+            fi
+          done
+          exit "$manquants"
+
+      # Tous les harnais si le workflow change, s'il est lancé à la main, ou si
+      # le commit précédent est inconnu (nouvelle branche) ; sinon, ceux des TP
+      # dont le corrigé ou le harnais a changé.
+      - name: Harnais à jouer
+        id: liste
+        env:
+          AVANT: ${{ github.event.before }}
+          EVENEMENT: ${{ github.event_name }}
+        run: |
+          tous=""
+          if [ "$EVENEMENT" != "push" ] || ! git cat-file -e "${AVANT:-0000000}^{commit}" 2> /dev/null; then
+            tous="1"
+          elif git diff --name-only "$AVANT" HEAD | grep -qx '.github/workflows/test-corriges.yml'; then
+            tous="1"
+          fi
+          entrees=()
+          for harnais in */tp/*/tester.sh; do
+            [ -f "$harnais" ] || continue
+            tp="$(dirname "$harnais")"
+            if [ -z "$tous" ] && [ -z "$(git diff --name-only "$AVANT" HEAD -- "$tp/corrige" "$harnais")" ]; then
+              echo "$tp : inchangé"
+              continue
+            fi
+            delai="$(sed -n 's/^#[[:space:]]*ci-delai:[[:space:]]*\([0-9][0-9]*\)[[:space:]]*$/\1/p' "$harnais" | head -n 1)"
+            prerequis="$(sed -n 's/^#[[:space:]]*ci-prerequis:[[:space:]]*//p' "$harnais" | head -n 1)"
+            incus=false
+            case " $prerequis " in *" incus "*) incus=true ;; esac
+            echo "$tp : délai ${delai:-90} min, Incus : $incus"
+            entrees+=("{\"tp\":\"$tp\",\"delai\":${delai:-90},\"incus\":$incus}")
+          done
+          liste="[$(IFS=,; echo "${entrees[*]}")]"
+          echo "harnais=$liste" >> "$GITHUB_OUTPUT"
+          echo "$liste"
+
+  harnais:
+    needs: decouverte
+    if: needs.decouverte.outputs.harnais != '[]'
+    name: ${{ matrix.tp }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJSON(needs.decouverte.outputs.harnais) }}
     # Runner épinglé : la version d'Ubuntu décide des paquets (Docker, Incus) et
     # ne doit pas changer sans qu'on le voie. Ubuntu 26.04 fournit Incus.
     runs-on: ubuntu-26.04
-    timeout-minutes: 90
+    timeout-minutes: ${{ matrix.delai }}
     steps:
       - uses: actions/checkout@v4
 
@@ -33,16 +103,16 @@ jobs:
       - name: Versions
         run: |
           . /etc/os-release && echo "$PRETTY_NAME, noyau $(uname -r), $(nproc) processeurs"
-          ls -l /dev/kvm || echo "::warning::/dev/kvm absent : le TP Incus ne pourra pas lancer de VM"
+          ls -l /dev/kvm || echo "::warning::/dev/kvm absent : pas de machine virtuelle possible"
           df -h / | tail -n 1
           docker version --format 'Docker {{.Server.Version}}'
           docker compose version
           docker buildx version
 
-      # Le TP Incus (virtualisation/tp/incus) a besoin d'un Incus initialisé, comme
-      # dans son énoncé : paquet de la distribution, « incus admin init --minimal »,
-      # compte dans le groupe incus-admin.
+      # Un Incus initialisé, comme dans l'énoncé du TP Incus : paquet de la
+      # distribution, « incus admin init --minimal », compte dans le groupe incus-admin.
       - name: Incus
+        if: matrix.incus
         run: |
           sudo apt-get update
           apt-cache policy incus | head -n 3
@@ -64,34 +134,13 @@ jobs:
           fi
           sudo iptables -S FORWARD || true
 
-      - name: Un harnais par TP corrigé
-        run: |
-          manquants=0
-          for corrige in */tp/*/corrige; do
-            [ -d "$corrige" ] || continue
-            harnais="$(dirname "$corrige")/tester.sh"
-            if [ ! -x "$harnais" ]; then
-              echo "::error file=$corrige::$corrige n'a pas de harnais exécutable $harnais"
-              manquants=1
-            fi
-          done
-          exit "$manquants"
-
       # « sudo --user » ouvre une session neuve du même compte : elle a le groupe
       # incus-admin, que le shell de cette étape n'a pas encore.
       - name: Harnais (--up)
+        env:
+          TP: ${{ matrix.tp }}
         run: |
-          echecs=0
-          for harnais in */tp/*/tester.sh; do
-            [ -f "$harnais" ] || continue
-            echo "::group::$harnais --up"
-            if sudo --user "$USER" bash "$harnais" --up; then
-              resultat="réussi"
-            else
-              resultat="en échec"; echecs=1
-            fi
-            echo "::endgroup::"
-            echo "$harnais : $resultat"
-            [ "$resultat" = "réussi" ] || echo "::error file=$harnais::$harnais --up a échoué (détail dans le groupe ci-dessus)"
-          done
-          exit "$echecs"
+          if ! sudo --user "$USER" bash "$TP/tester.sh" --up; then
+            echo "::error file=$TP/tester.sh::$TP/tester.sh --up a échoué (bilan à la fin du journal)"
+            exit 1
+          fi

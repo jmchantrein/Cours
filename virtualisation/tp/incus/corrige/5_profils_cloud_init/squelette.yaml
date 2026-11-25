@@ -1,0 +1,46 @@
+#cloud-config
+# Étape 5 — squelette à compléter : remplacez chaque « À COMPLÉTER ».
+# Les deux fichiers de l'étape 2 sont déjà recopiés dans write_files.
+package_update: true
+packages:
+  - À COMPLÉTER   # un élément « - nom » par paquet installé à l'étape 2
+
+write_files:
+  - path: /etc/wordpress/config-default.php
+    owner: root:www-data
+    permissions: "0640"
+    defer: À COMPLÉTER   # true ou false ? voir l'indice sur le format
+    content: |
+      <?php
+      // Réglages du WordPress de Debian : /usr/share/wordpress/wp-config.php charge ce
+      // fichier, /etc/wordpress/config-default.php, quel que soit le nom du site.
+      define('DB_NAME', 'wordpress');
+      define('DB_USER', 'wordpress');
+      define('DB_PASSWORD', 'tempo');
+      define('DB_HOST', 'localhost');
+  - path: /etc/apache2/sites-available/wordpress.conf
+    defer: À COMPLÉTER   # true ou false ? voir l'indice sur le format
+    content: |
+      # Site Apache du WordPress de Debian, à placer dans
+      # /etc/apache2/sites-available/wordpress.conf.
+      # Le code est dans /usr/share/wordpress ; les contenus (thèmes, extensions,
+      # médias) sont dans /var/lib/wordpress/wp-content.
+      <VirtualHost *:80>
+          DocumentRoot /usr/share/wordpress
+          Alias /wp-content /var/lib/wordpress/wp-content
+
+          <Directory /usr/share/wordpress>
+              Options FollowSymLinks
+              DirectoryIndex index.php
+              Require all granted
+          </Directory>
+          <Directory /var/lib/wordpress/wp-content>
+              Options FollowSymLinks
+              Require all granted
+          </Directory>
+      </VirtualHost>
+
+# Les commandes de l'étape 2 qui créent la base et activent le site, une par
+# élément « - commande », exécutées en root après les paquets et les fichiers.
+runcmd:
+  - À COMPLÉTER

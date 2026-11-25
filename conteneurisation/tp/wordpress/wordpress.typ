@@ -43,7 +43,8 @@ utilisent Compose et les images officielles, qui emploient ces mêmes mécanisme
   - Un dossier de travail par étape : chaque étape part d’une copie du dossier de la précédente.
   - Le port 8080 de votre machine libre : le site se consulte sur #link("http://localhost:8080").
   - Facultatif : qui a fait le TP #link("../../../virtualisation/tp/incus/#etape-7")[Découvrir Incus] peut
-    travailler dans la VM `docker` de son étape 7, au lieu d’une machine Debian 13.
+    travailler dans la VM `docker` de son étape 7, au lieu d’une machine Debian 13 ; le site s’ouvre alors
+    depuis l’hôte à l’adresse de la VM, port 8080.
 ]
 
 #bloc[Indices et corrigés][

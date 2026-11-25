@@ -7,13 +7,13 @@
 #
 # Usage : ./tester.sh [--lint | --up] [--only N] [--keep]
 #   --lint    (défaut) validation sans Incus : syntaxe, droits et shellcheck des
-#             scripts, validité des YAML, cohérence des fichiers que l'énoncé
-#             dit identiques.
+#             scripts, validité des YAML (corrigé et squelette cloud-init),
+#             cohérence des fichiers que l'énoncé dit identiques.
 #   --up      --lint, puis pour chaque étape : jouer les scripts du corrigé,
 #             vérifier, nettoyer.
-#   --only N  ne traite que l'étape N (1 à 7). En mode --up, les étapes 2 à 4
-#             rejouent d'abord celles dont elles dépendent (la VM de l'étape 1,
-#             le site de l'étape 2).
+#   --only N  ne traite que l'étape N (1 à 7). En mode --up, les étapes 2, 3,
+#             4 et 6 rejouent d'abord celles dont elles dépendent (la VM de
+#             l'étape 1, le site de l'étape 2).
 #   --keep    ne nettoie pas en fin de test (pour examiner un échec).
 #
 # Ce que --up vérifie, étape par étape :
@@ -23,16 +23,19 @@
 #   3  l'instantané restaure le site cassé ; Incus 6.0 refuse d'augmenter à
 #      chaud la mémoire de la VM ; après redémarrage elle a 2 processeurs et
 #      2 Gio, et ses services sont revenus seuls ;
-#   4  le conteneur partage le noyau de l'hôte et la VM non ; ses processus
-#      sont visibles de l'hôte sous des UID décalés ; il voit la mémoire de
+#   4  le conteneur partage le noyau de l'hôte et la VM non ; il redémarre plus
+#      vite qu'elle ; ses processus sont visibles de l'hôte sous des UID
+#      décalés, et sous 0 et 33 dans le conteneur ; il voit la mémoire de
 #      l'hôte, puis sa limite ; le proxy publie son port 80 sur le port 8080
-#      de l'hôte ; la même commande est refusée sur la VM, que le mode NAT
-#      publie sur le port 8081 ;
+#      de l'hôte ; sans NAT, le proxy est refusé sur la VM ;
 #   5  le profil wordpress produit un WordPress fonctionnel dans une VM et dans
 #      un conteneur ; une clé posée sur l'instance l'emporte sur celle du
-#      profil ; sans le profil default, pas de disque racine ;
+#      profil ; sans le profil default, pas de disque racine ; une carte
+#      héritée ne se modifie pas dans l'instance ; recharger cloud-init dans
+#      le profil change l'identifiant cloud-init des instances ;
 #   6  web et db se joignent par leur nom ; le site survit à la suppression de
-#      l'instance db, ses données étant sur le volume ;
+#      l'instance db, ses données étant sur le volume ; en mode NAT, le proxy
+#      publie le port 80 de la VM sur le port 8081 de l'hôte ;
 #   7  Docker exécute un conteneur applicatif dans la VM.
 #
 # Isolation : tout est créé dans un projet Incus « tptest », relié à un pont à
@@ -40,6 +43,8 @@
 # avec les noms de l'énoncé ; le harnais ne touche à aucune instance, aucun
 # profil, aucun volume du projet default. Un pont à part est nécessaire : Incus
 # refuse deux instances de même nom sur un même pont, même dans deux projets.
+# Le projet et le pont portent la clé user.tptest=harnais : le harnais refuse
+# de supprimer un projet ou un pont de ce nom qui ne la porte pas.
 # Le harnais a besoin des ports 8080 et 8081 de l'hôte, et du pool de stockage
 # « default » que crée « incus admin init --minimal ».
 #
@@ -48,12 +53,18 @@
 # dépôts Debian ; Docker Hub pour l'étape 7). Si Docker est installé sur
 # l'hôte, autorisez le pont « tptestbr0 » dans la chaîne DOCKER-USER (voir
 # l'énoncé, « Avant de commencer »).
+#
+# Intégration continue (.github/workflows/test-corriges.yml), qui lit ces deux
+# lignes : délai du job en minutes, prérequis à installer.
+#   ci-delai: 180
+#   ci-prerequis: incus
 set -euo pipefail
 
 ici="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 corrige="$ici/corrige"
 projet="tptest"
 pont="tptestbr0"
+marque="user.tptest"   # clé posée sur le projet et le pont que le harnais crée
 
 mode="lint"; seule=""; garder=""
 while [ $# -gt 0 ]; do
@@ -62,7 +73,7 @@ while [ $# -gt 0 ]; do
     --up) mode="up" ;;
     --only) seule="${2:-}"; shift ;;
     --keep) garder="1" ;;
-    -h | --help) sed -n '2,50p' "$0"; exit 0 ;;
+    -h | --help) sed -n '2,/^set -euo/p' "$0" | sed '$d'; exit 0 ;;
     *) echo "Option inconnue : $1" >&2; exit 2 ;;
   esac
   shift
@@ -78,12 +89,12 @@ info() { printf '       %s\n' "$*"; }
 retrait() { sed 's/^/       | /'; }
 titre_etape() { printf '\n======== Étape %s — %s (corrige/%s) ========\n' "$1" "$3" "$2"; }
 
-# Étape à traiter ? En mode --up, les étapes 2 à 4 dépendent des précédentes.
+# Étape à traiter ? En mode --up, les étapes 2 à 4 et 6 dépendent des étapes 1 et 2.
 voulue() { # $1 étape
   [ -z "$seule" ] && return 0
   [ "$seule" = "$1" ] && return 0
   [ "$mode" = "up" ] || return 1
-  case "$seule:$1" in 2:1 | 3:1 | 3:2 | 4:1 | 4:2) return 0 ;; esac
+  case "$seule:$1" in 2:1 | 3:1 | 3:2 | 4:1 | 4:2 | 6:1 | 6:2) return 0 ;; esac
   return 1
 }
 
@@ -144,6 +155,42 @@ PYTHON
   fi
 }
 
+# Le squelette que l'énoncé fait compléter : les mêmes clés que le corrigé, les
+# mêmes fichiers, et rien à compléter hors des paquets, de defer et de runcmd.
+verifier_squelette() { # $1 squelette  $2 corrigé complet
+  local sortie
+  if [ -z "$yaml_dispo" ]; then info "(python3 avec PyYAML indisponible : $1 non comparé)"; return 0; fi
+  if sortie="$(python3 - "$corrige/$1" "$corrige/$2" 2>&1 << 'PYTHON'
+import sys, yaml
+
+with open(sys.argv[1], encoding="utf-8") as f:
+    squelette = yaml.safe_load(f)
+with open(sys.argv[2], encoding="utf-8") as f:
+    complet = yaml.safe_load(f)
+if set(squelette) != set(complet):
+    sys.exit(f"clés {sorted(squelette)} au lieu de {sorted(complet)}")
+a_completer = "À COMPLÉTER"
+if squelette["packages"] != [a_completer] or squelette["runcmd"] != [a_completer]:
+    sys.exit("packages et runcmd doivent se réduire à « À COMPLÉTER »")
+if len(squelette["write_files"]) != len(complet["write_files"]):
+    sys.exit("write_files n'a pas le même nombre de fichiers que le corrigé")
+for s, c in zip(squelette["write_files"], complet["write_files"]):
+    if s.get("defer") != a_completer:
+        sys.exit(f"{s['path']} : defer doit valoir « À COMPLÉTER »")
+    for cle in set(s) | set(c):
+        if cle != "defer" and s.get(cle) != c.get(cle):
+            sys.exit(f"{s['path']} : la clé {cle} diffère du corrigé")
+for cle in set(complet) - {"packages", "runcmd", "write_files"}:
+    if squelette[cle] != complet[cle]:
+        sys.exit(f"la clé {cle} diffère du corrigé")
+PYTHON
+  )"; then
+    ok "squelette $1 : le corrigé $2 en retire seulement les paquets, defer et les commandes"
+  else
+    ko "squelette $1 : $sortie"
+  fi
+}
+
 # ------------------------------------------------- mode --up : préalables, isolation
 
 travail=""
@@ -151,12 +198,28 @@ isolation_prete=""
 
 mourir() { printf '%s\n' "$@" >&2; exit 1; }
 
+# Un projet ou un pont de ce nom existe-t-il, et porte-t-il la marque du harnais ?
+# Le harnais refuse de toucher à ce qu'il n'a pas créé.
+projet_existe() { incus project show "$projet" > /dev/null 2>&1; }
+pont_existe() { incus network show "$pont" --project default > /dev/null 2>&1; }
+verifier_marques() {
+  if projet_existe && [ "$(incus project get "$projet" "$marque" 2> /dev/null || true)" != "harnais" ]; then
+    mourir "Un projet Incus « $projet » existe sans la clé $marque=harnais : le harnais ne l'a pas créé" \
+      "et refuse de le supprimer. Renommez-le (incus project rename $projet autre-nom) ou supprimez-le vous-même."
+  fi
+  if pont_existe && [ "$(incus network get "$pont" "$marque" --project default 2> /dev/null || true)" != "harnais" ]; then
+    mourir "Un réseau Incus « $pont » existe sans la clé $marque=harnais : le harnais ne l'a pas créé" \
+      "et refuse de le supprimer. Renommez-le (incus network rename $pont autre-nom) ou supprimez-le vous-même."
+  fi
+}
+
 # Suppression de tout ce que le harnais a pu créer. Appelée avant le test
-# (restes d'un test interrompu) et en sortie. Les options --project sont
-# explicites : la fonction ne dépend pas de INCUS_PROJECT.
+# (restes d'un test interrompu) et en sortie, toujours après verifier_marques.
+# Les options --project sont explicites : la fonction ne dépend pas de
+# INCUS_PROJECT.
 nettoyer_tout() {
   local i
-  if incus project show "$projet" > /dev/null 2>&1; then
+  if projet_existe; then
     for i in $(incus list --project "$projet" -c n -f csv 2> /dev/null); do
       incus delete --force --project "$projet" "$i" > /dev/null 2>&1 || true
     done
@@ -174,9 +237,16 @@ nettoyer_tout() {
       incus project delete "$projet" > /dev/null 2>&1 || true
     fi
   fi
-  if incus network show "$pont" --project default > /dev/null 2>&1; then
+  if pont_existe; then
     incus network delete "$pont" --project default > /dev/null 2>&1 || true
   fi
+}
+
+# Suppression d'instances une à une : « incus delete » vérifie d'abord que toutes
+# celles qu'il nomme existent, et n'en supprime aucune si l'une manque.
+supprimer_instances() { # $1… instances
+  local i
+  for i in "$@"; do incus delete --force "$i" > /dev/null 2>&1 || true; done
 }
 
 en_sortie() {
@@ -227,11 +297,13 @@ preparer() {
 
   # L'isolation : un pont et un projet à part. IPv6 est coupé sur ce pont : sans
   # route IPv6 sur l'hôte (cas des machines de CI), apt attendrait pour rien.
+  # Restes d'un test interrompu : supprimés s'ils portent la marque du harnais.
+  verifier_marques
   nettoyer_tout
   isolation_prete="1"
-  incus network create "$pont" ipv6.address=none --project default > /dev/null \
+  incus network create "$pont" ipv6.address=none "$marque=harnais" --project default > /dev/null \
     || mourir "Création du pont $pont impossible."
-  incus project create "$projet" > /dev/null || mourir "Création du projet $projet impossible."
+  incus project create "$projet" --config "$marque=harnais" > /dev/null || mourir "Création du projet $projet impossible."
   # Le profil default d'un projet neuf est vide : le disque et la carte réseau.
   incus profile device add default root disk path=/ pool=default --project "$projet" > /dev/null \
     || mourir "Profil default du projet $projet : ajout du disque racine impossible."
@@ -537,7 +609,7 @@ fi
 
 if voulue 4; then
   titre_etape 4 4_conteneur_systeme "conteneur système"
-  for s in conteneur.sh comparer.sh proxy.sh proxy-vm.sh; do verifier_script "4_conteneur_systeme/$s"; done
+  for s in conteneur.sh comparer.sh proxy.sh; do verifier_script "4_conteneur_systeme/$s"; done
   if [ "$mode" != "up" ]; then
     :
   elif [ -z "$site_vm1" ]; then
@@ -548,15 +620,25 @@ if voulue 4; then
     else ko "étape 4 : état de ct1 inattendu ($etat)"; fi
 
     # Les mesures de l'énoncé : le journal du script les montre toutes.
-    if jouer 4_conteneur_systeme/comparer.sh 600; then
-      sed -n '/^== /,$p' "$travail/4_conteneur_systeme_comparer.sh.log" | grep -v '^+ ' | retrait || true
+    if jouer 4_conteneur_systeme/comparer.sh 900; then
+      journal_comparer="$travail/4_conteneur_systeme_comparer.sh.log"
+      sed -n '/^== /,$p' "$journal_comparer" | grep -v '^+ ' | retrait || true
+      # Redémarrage : le script chronomètre les deux instances, en secondes.
+      duree_ct="$(sed -n 's/^ct1  : \([0-9]*\) s$/\1/p' "$journal_comparer")"
+      duree_vm="$(sed -n 's/^vm1  : \([0-9]*\) s$/\1/p' "$journal_comparer")"
+      if [ -n "$duree_ct" ] && [ -n "$duree_vm" ] && [ "$duree_ct" -lt "$duree_vm" ]; then
+        ok "étape 4 : le conteneur redémarre plus vite que la VM ($duree_ct s contre $duree_vm s)"
+      else
+        ko "étape 4 : redémarrages inattendus (ct1 : ${duree_ct:-?} s, vm1 : ${duree_vm:-?} s)"
+      fi
     fi
 
     # Noyau : celui de l'hôte dans le conteneur, un autre dans la VM.
     noyau_hote="$(uname -r)"; ligne_hote="$(cat /proc/cmdline)"
-    noyau_ct="$(dans ct1 uname -r 2>&1 || true)"; ligne_ct="$(dans ct1 cat /proc/cmdline 2>&1 || true)"
-    noyau_vm="$(dans vm1 uname -r 2>&1 || true)"; ligne_vm="$(dans vm1 cat /proc/cmdline 2>&1 || true)"
-    if [ "$noyau_ct" = "$noyau_hote" ] && [ "$ligne_ct" = "$ligne_hote" ]; then
+    # Sans 2>&1 : un message d'erreur ne doit pas passer pour une ligne de commande.
+    noyau_ct="$(dans ct1 uname -r 2> /dev/null || true)"; ligne_ct="$(dans ct1 cat /proc/cmdline 2> /dev/null || true)"
+    noyau_vm="$(dans vm1 uname -r 2> /dev/null || true)"; ligne_vm="$(dans vm1 cat /proc/cmdline 2> /dev/null || true)"
+    if [ -n "$noyau_ct" ] && [ "$noyau_ct" = "$noyau_hote" ] && [ "$ligne_ct" = "$ligne_hote" ]; then
       ok "étape 4 : le conteneur partage le noyau de l'hôte ($noyau_hote, même /proc/cmdline)"
     else
       ko "étape 4 : noyau du conteneur ($noyau_ct) différent de celui de l'hôte ($noyau_hote)"
@@ -567,7 +649,7 @@ if voulue 4; then
       ko "étape 4 : la VM montre la ligne de commande du noyau de l'hôte"
     fi
     virt="$(dans ct1 systemd-detect-virt 2>&1 || true)"
-    if [ "$virt" = "lxc" ]; then ok "étape 4 : le système du conteneur se sait dans un conteneur LXC"
+    if [ "$virt" = "lxc" ]; then ok "étape 4 : le système du conteneur se sait dans un conteneur système (systemd-detect-virt : lxc)"
     else ko "étape 4 : systemd-detect-virt répond « $virt » dans ct1"; fi
 
     # Démarrage : systemd chronomètre un noyau dans la VM, pas dans le conteneur.
@@ -588,6 +670,12 @@ if voulue 4; then
       ok "étape 4 : l'hôte voit les processus du conteneur, sous des UID décalés (root = $base, www-data = $((base + 33)))"
     else
       ko "étape 4 : processus apache2 du conteneur introuvables sur l'hôte sous les UID attendus"
+    fi
+    uid_ct="$({ dans ct1 ps -o uid= -C apache2 2> /dev/null || true; } | sort -un | xargs)"
+    if [ "$uid_ct" = "0 33" ]; then
+      ok "étape 4 : dans le conteneur, les mêmes processus apparaissent sous les UID 0 et 33"
+    else
+      ko "étape 4 : dans ct1, les processus apache2 ont les UID « $uid_ct », 0 et 33 attendus"
     fi
 
     # Mémoire : sans limite, le conteneur voit celle de l'hôte ; la VM a la sienne.
@@ -622,30 +710,22 @@ if voulue 4; then
       fi
     fi
 
-    # La même commande sur la VM : refusée, sauf en mode NAT.
-    if sortie="$(incus config device add vm1 web proxy listen=tcp:0.0.0.0:8080 connect=tcp:127.0.0.1:80 2>&1)"; then
+    # La commande de l'énoncé sur la VM : refusée sans NAT (le mode NAT est à l'étape 6).
+    if sortie="$(incus config device add vm1 web proxy listen=tcp:0.0.0.0:8081 connect=tcp:127.0.0.1:80 2>&1)"; then
       ko "étape 4 : Incus accepte un proxy sans NAT sur une VM, l'énoncé annonce un refus"
       incus config device remove vm1 web > /dev/null 2>&1 || true
-    elif [[ "$sortie" == *"Only NAT mode is supported"* ]]; then
+    elif [[ "$sortie" == *"Only NAT mode is supported for proxies on VM instances"* ]]; then
       ok "étape 4 : sur la VM, le proxy sans NAT est refusé"
       retrait <<< "$sortie"
     else
       ko "étape 4 : proxy sur la VM refusé pour une autre raison"
       retrait <<< "$sortie"
     fi
-    if jouer 4_conteneur_systeme/proxy-vm.sh 300; then
-      hote="$(incus config device get vm1 web listen 2> /dev/null | sed 's/^tcp://' || true)"
-      if [ -n "$hote" ] && attendre_http "http://$hote/"; then
-        ok "étape 4 : en mode NAT, http://$hote/ mène à l'Apache de la VM"
-      else
-        ko "étape 4 : le proxy NAT de la VM ne répond pas (http://$hote/)"
-        incus config show vm1 2>&1 | retrait || true
-      fi
-    fi
   else
     diagnostic ct1
   fi
-  if [ "$mode" = "up" ] && [ -z "$garder" ]; then incus delete --force vm1 ct1 > /dev/null 2>&1 || true; fi
+  # vm1 sert encore à l'étape 6 : le harnais la supprime après celle-ci, ou en sortie.
+  if [ "$mode" = "up" ] && [ -z "$garder" ]; then supprimer_instances ct1; fi
 fi
 
 # ============================================================================
@@ -656,6 +736,8 @@ if voulue 5; then
   titre_etape 5 5_profils_cloud_init "profils et cloud-init"
   verifier_script 5_profils_cloud_init/profil.sh
   verifier_cloud_init 5_profils_cloud_init/cloud-init.yaml 2_administrer
+  verifier_cloud_init 5_profils_cloud_init/squelette.yaml 2_administrer
+  verifier_squelette 5_profils_cloud_init/squelette.yaml 5_profils_cloud_init/cloud-init.yaml
   if [ "$mode" = "up" ]; then
     if jouer 5_profils_cloud_init/profil.sh 2700; then
       for paire in wp-vm:VIRTUAL-MACHINE wp-ct:CONTAINER; do
@@ -677,29 +759,57 @@ if voulue 5; then
       else
         ko "étape 5 : limits.memory de wp-ct : « $herite » avec les profils, « $propre » sans"
       fi
-      incus config set wp-ct limits.memory=512MiB || true
-      if [ "$(incus config get wp-ct limits.memory --expanded 2>&1 || true)" = "512MiB" ] \
+      if ! sortie="$(incus config set wp-ct limits.memory=512MiB 2>&1)"; then
+        ko "étape 5 : incus config set wp-ct limits.memory=512MiB refusé"; retrait <<< "$sortie"
+      elif [ "$(incus config get wp-ct limits.memory --expanded 2>&1 || true)" = "512MiB" ] \
         && [ "$(incus config get wp-vm limits.memory --expanded 2>&1 || true)" = "1GiB" ]; then
         ok "étape 5 : la clé posée sur wp-ct l'emporte sur le profil ; wp-vm garde la valeur du profil"
       else
         ko "étape 5 : la clé posée sur l'instance ne l'emporte pas sur le profil"
       fi
-      # Sans le profil default, ni disque ni carte réseau : la création échoue.
-      if sortie="$(incus create images:debian/13/cloud sans-default --profile wordpress 2>&1)"; then
+      # Sans le profil default, ni disque ni carte réseau : la création échoue
+      # (ErrNoRootDisk, internal/instance/device.go).
+      if sortie="$(incus create images:debian/13/cloud essai --profile wordpress 2>&1)"; then
         ko "étape 5 : une instance se crée avec le seul profil wordpress, l'énoncé annonce un refus"
-        incus delete --force sans-default > /dev/null 2>&1 || true
-      elif [[ "$sortie" == *"root"* ]]; then
+        supprimer_instances essai
+      elif [[ "$sortie" == *"No root device could be found"* ]]; then
         ok "étape 5 : avec le seul profil wordpress, la création échoue faute de disque racine"
         tail -n 2 <<< "$sortie" | retrait
       else
         ko "étape 5 : création refusée pour une autre raison"
         retrait <<< "$sortie"
       fi
+
+      # Une carte héritée du profil ne se modifie pas dans l'instance.
+      adresse_wp_ct="$(adresse wp-ct || true)"
+      if sortie="$(incus config device set wp-ct eth0 "ipv4.address=$adresse_wp_ct" 2>&1)"; then
+        ko "étape 5 : Incus modifie dans wp-ct la carte eth0 du profil, l'énoncé annonce un refus"
+      elif [[ "$sortie" == *"Device from profile(s) cannot be modified for individual instance"* ]]; then
+        ok "étape 5 : la carte eth0, héritée du profil default, ne se modifie pas dans l'instance"
+      else
+        ko "étape 5 : modification de eth0 refusée pour une autre raison"
+        retrait <<< "$sortie"
+      fi
+
+      # cloud-init rechargé dans le profil : Incus tire un nouvel identifiant
+      # (needsNewInstanceID), que cloud-init lira au prochain démarrage.
+      avant="$(incus config get wp-ct volatile.cloud-init.instance-id 2> /dev/null || true)"
+      if { cat "$corrige/5_profils_cloud_init/cloud-init.yaml"; echo "# modifié par le harnais"; } \
+        | incus profile set wordpress cloud-init.user-data -; then
+        apres="$(incus config get wp-ct volatile.cloud-init.instance-id 2> /dev/null || true)"
+        if [ -n "$apres" ] && [ "$apres" != "$avant" ]; then
+          ok "étape 5 : recharger cloud-init dans le profil change volatile.cloud-init.instance-id de wp-ct"
+        else
+          ko "étape 5 : volatile.cloud-init.instance-id de wp-ct inchangé (« $avant », puis « $apres »)"
+        fi
+      else
+        ko "étape 5 : incus profile set wordpress cloud-init.user-data refusé"
+      fi
     else
       diagnostic_cloud_init wp-vm; diagnostic_cloud_init wp-ct; diagnostic wp-vm wp-ct
     fi
     if [ -z "$garder" ]; then
-      incus delete --force wp-vm wp-ct > /dev/null 2>&1 || true
+      supprimer_instances wp-vm wp-ct essai
       incus profile delete wordpress > /dev/null 2>&1 || true
     fi
   fi
@@ -711,7 +821,7 @@ fi
 
 if voulue 6; then
   titre_etape 6 6_reseau_volumes "réseau et volumes"
-  for s in db.sh deployer.sh recreer-db.sh; do verifier_script "6_reseau_volumes/$s"; done
+  for s in db.sh deployer.sh recreer-db.sh proxy-vm.sh; do verifier_script "6_reseau_volumes/$s"; done
   identiques 2_administrer/wordpress.conf 6_reseau_volumes/wordpress.conf
   # « À une ligne près » : seule l'adresse de la base, et son commentaire, changent.
   if diff <(grep -v 'DB_HOST' "$corrige/2_administrer/config-default.php") \
@@ -757,8 +867,22 @@ if voulue 6; then
     else
       diagnostic db web
     fi
+
+    # Le port de la VM, publié en mode NAT. Il faut vm1 et son site (étapes 1 et 2).
+    if [ -z "$site_vm1" ]; then
+      ko "étape 6 : proxy-vm.sh non joué, vm1 et son site ne sont pas prêts (étapes 1 et 2)"
+    elif jouer 6_reseau_volumes/proxy-vm.sh 300; then
+      hote="$(incus config device get vm1 web listen 2> /dev/null | sed 's/^tcp://' || true)"
+      if [ -n "$hote" ] && attendre_http "http://$hote/"; then
+        ok "étape 6 : en mode NAT, http://$hote/ mène à l'Apache de la VM"
+      else
+        ko "étape 6 : le proxy NAT de la VM ne répond pas (http://$hote/)"
+        incus config show vm1 2>&1 | retrait || true
+      fi
+    fi
+
     if [ -z "$garder" ]; then
-      incus delete --force web db > /dev/null 2>&1 || true
+      supprimer_instances web db vm1
       incus storage volume delete default donnees > /dev/null 2>&1 || true
     fi
   fi
@@ -785,7 +909,7 @@ if voulue 7; then
     else
       diagnostic docker
     fi
-    if [ -z "$garder" ]; then incus delete --force docker > /dev/null 2>&1 || true; fi
+    if [ -z "$garder" ]; then supprimer_instances docker; fi
   fi
 fi
 
