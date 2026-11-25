@@ -2,7 +2,7 @@
 // Compilation (depuis la racine du dépôt) : typst compile --root . --font-path commun/fonts git/cm/git.typ build/git/git.pdf
 // Une diapo = un titre `==` ; une section (surtitre bleu) = un titre `=`.
 // Structure : règles de .claude/skills/structurer-diapos-cours ; apparence : charte de commun/.
-// Sorties : relevées par git/cm/rejouer.sh (Git 2.43.0, identité et date fixées, messages en anglais : LC_ALL=C).
+// Sorties : relevées par git/cm/rejouer.sh (Git 2.47.3, identité et date fixées, messages en anglais : LC_ALL=C).
 
 #import "../../commun/theme-cours.typ": *
 
@@ -105,7 +105,7 @@
 }
 
 #couverture(illustration: "graphe")[Git][Versionner et collaborer][Jean-Mathieu Chantrein][25 novembre 2026]
-#speaker-note[Toutes les sorties de terminal du cours sont relevées par git/cm/rejouer.sh avec Git 2.43.0 (Ubuntu 24.04), dans un dossier jetable, identité « Ada Lovelace » et date fixées, messages de Git en anglais (LC\_ALL=C) ; dans une session en français, Git traduit ses messages.]
+#speaker-note[Toutes les sorties de terminal du cours sont relevées par git/cm/rejouer.sh avec Git 2.47.3 (Debian 13, conteneur debian:13-slim), dans un dossier jetable, identité « Ada Lovelace » et date fixées, messages de Git en anglais (LC\_ALL=C) ; dans une session en français, Git traduit ses messages.]
 
 // ======================================================================
 = Sommaire
@@ -184,7 +184,7 @@
         # Debian, Ubuntu : paquet git
         $ sudo apt install git
         $ git --version
-        git version 2.43.0
+        git version 2.47.3
         # nom et adresse inscrits dans chaque version enregistrée
         $ git config --global user.name "Ada Lovelace"
         $ git config --global user.email ada@example.org
@@ -197,11 +197,11 @@
     bloc(taille: px(26))[À savoir][
       - `--global` écrit dans `~/.gitconfig` : la configuration vaut pour tous vos dépôts
       - Le nom et l’adresse figurent dans l’historique, que les autres liront : choisissez ceux que vous voulez rendre publics
-      - Prérequis du cours : Git ≥ 2.28, pour `git init -b main` ; version employée ici : 2.43.0
+      - Prérequis du cours : Git ≥ 2.28, pour `git init -b main` ; version employée ici : 2.47.3
     ],
   ),
   source-de: [#link("https://git-scm.com/book/en/v2/Getting-Started-First-Time-Git-Setup")[Pro Git, § 1.6 First-Time Git Setup] · #link("https://git-scm.com/docs/git-config")[git-config(1)]],
-  note: [Git 2.43.0 est celui d’Ubuntu 24.04 ; Debian 13 fournit une version plus récente. Sans user.name ni user.email, git commit refuse d’enregistrer ou devine une identité à partir du nom de la machine. Option utile : git config -\-global init.defaultBranch main, pour que git init crée la branche main sans l’option -b (annexe « Sans -b main »). Sorties relevées par git/cm/rejouer.sh.],
+  note: [Git 2.47.3 est celui de Debian 13 (Ubuntu 24.04 fournit 2.43.0). Sans user.name ni user.email, git commit refuse d’enregistrer ou devine une identité à partir du nom de la machine. Option utile : git config -\-global init.defaultBranch main, pour que git init crée la branche main sans l’option -b (annexe « Sans -b main »). Sorties relevées par git/cm/rejouer.sh.],
 )
 
 // ======================================================================
@@ -228,7 +228,7 @@
   )
   uncover("6-", note(role: "retenir")[Un commit enregistre l’index, pas le répertoire de travail : ce qui n’a pas été ajouté par `git add` n’y entre pas.])
   source[#link("https://git-scm.com/book/en/v2/Getting-Started-What-is-Git%3F")[Pro Git, § 1.3 What is Git? (The Three States)] · #link("https://git-scm.com/docs/git-restore")[git-restore(1)]]
-  utils.speaker-note(self: self)[Une zone puis une commande par clic. Pro Git parle de trois états d’un fichier suivi : modifié (modified), indexé (staged), validé (committed), qui correspondent aux trois zones. L’index est un fichier, .git/index. Commit se traduit parfois par « validation » ; on garde « commit », le terme de toutes les sorties de Git. git restore (Git 2.23, 2019) remplace ici l’ancien git checkout -\- fichier (annexe). La page de manuel de Git 2.43 qualifie encore restore et switch d’expérimentales ; git status les propose pourtant dans ses conseils (diapositive suivante).]
+  utils.speaker-note(self: self)[Une zone puis une commande par clic. Pro Git parle de trois états d’un fichier suivi : modifié (modified), indexé (staged), validé (committed), qui correspondent aux trois zones. L’index est un fichier, .git/index. Commit se traduit parfois par « validation » ; on garde « commit », le terme de toutes les sorties de Git. git restore (Git 2.23, 2019) remplace ici l’ancien git checkout -\- fichier (annexe). La page de manuel de Git 2.47 qualifie encore restore et switch d’expérimentales ; git status les propose pourtant dans ses conseils (diapositive suivante).]
 })
 
 == Créer un dépôt : git init <git-init>
@@ -261,7 +261,7 @@
     ],
   ),
   source-de: [#link("https://git-scm.com/docs/git-init")[git-init(1)] · #link("https://git-scm.com/docs/git-status")[git-status(1)]],
-  note: [Fil rouge du cours : le petit site d’Ada, dans mon\_projet (exemple du cours d’origine). Le chemin affiché est celui du relevé (HOME=/tmp/git-cours/ada) ; chez vous, votre dossier personnel. Sans -b main ni init.defaultBranch, Git 2.43 crée une branche master et affiche une dizaine de lignes « hint: » (annexe). Sorties relevées par git/cm/rejouer.sh.],
+  note: [Fil rouge du cours : le petit site d’Ada, dans mon\_projet (exemple du cours d’origine). Le chemin affiché est celui du relevé (HOME=/tmp/git-cours/ada) ; chez vous, votre dossier personnel. Sans -b main ni init.defaultBranch, Git 2.47 crée une branche master et affiche une dizaine de lignes « hint: » (annexe). Sorties relevées par git/cm/rejouer.sh.],
 )
 
 == Le cycle : modifier, indexer, enregistrer <cycle>
@@ -296,7 +296,7 @@
     ),
   ),
   source-de: [#link("https://git-scm.com/docs/git-status#_short_format")[git-status(1), format court] · #link("https://git-scm.com/docs/git-commit")[git-commit(1)]],
-  note: [Un clic par geste, avec son explication en face. Dans le cours d’origine, le fichier est écrit avec Vim ; echo montre ici son contenu exact. Format court de git status : deux colonnes, la première pour l’index, la seconde pour le répertoire de travail. L’identifiant 30b6212 est celui du relevé : il dépend du contenu, de l’auteur et de la date, il sera différent chez vous (annexe « Rejouer le cours à l’identique »). Sorties relevées par git/cm/rejouer.sh, Git 2.43.0.],
+  note: [Un clic par geste, avec son explication en face. Dans le cours d’origine, le fichier est écrit avec Vim ; echo montre ici son contenu exact. Format court de git status : deux colonnes, la première pour l’index, la seconde pour le répertoire de travail. L’identifiant 30b6212 est celui du relevé : il dépend du contenu, de l’auteur et de la date, il sera différent chez vous (annexe « Rejouer le cours à l’identique »). Sorties relevées par git/cm/rejouer.sh, Git 2.47.3.],
 )
 
 == Voir ce qui change : git diff <diff>
@@ -397,7 +397,7 @@
 
 == Versionner un script : corrigé (1/2)
 
-#corriges-cote(note: [La question reste affichée ; un clic par réponse. Identifiants du relevé (git/cm/rejouer.sh, Git 2.43.0, identité et date fixées) : les vôtres diffèrent. printf écrit les deux lignes d’un coup ; avec Vim, le résultat est le même fichier.],
+#corriges-cote(note: [La question reste affichée ; un clic par réponse. Identifiants du relevé (git/cm/rejouer.sh, Git 2.47.3, identité et date fixées) : les vôtres diffèrent. printf écrit les deux lignes d’un coup ; avec Vim, le résultat est le même fichier.],
   (1, [Un dépôt `admin`, branche `main`],
     reponse(terminal(titre: none, taille: px(18))[```
     $ mkdir admin
@@ -942,7 +942,7 @@
 
 == Une branche, un conflit : corrigé (1/2)
 
-#corriges-cote(note: [Un clic par réponse. Les commandes sed font les remplacements demandés ; Vim convient aussi. Identifiants du relevé (git/cm/rejouer.sh, Git 2.43.0) : les vôtres diffèrent.],
+#corriges-cote(note: [Un clic par réponse. Les commandes sed font les remplacements demandés ; Vim convient aussi. Identifiants du relevé (git/cm/rejouer.sh, Git 2.47.3) : les vôtres diffèrent.],
   (1, [Branche `compression` : archive compressée],
     reponse(terminal(titre: none, taille: px(18))[```
     $ git switch -c compression
@@ -1045,7 +1045,7 @@
   )
   uncover("6-", note(role: "retenir")[`origin/main` est une branche de suivi : la dernière position connue de `main` sur `origin`. Seuls `fetch`, `pull` et `push` parlent au réseau.])
   source[#link("https://git-scm.com/book/en/v2/Git-Branching-Remote-Branches")[Pro Git, § 3.5 Remote Branches] · #link("https://git-scm.com/docs/git-fetch")[git-fetch(1)] · #link("https://git-scm.com/docs/git-pull")[git-pull(1)]]
-  utils.speaker-note(self: self)[Un élément par clic. origin est le nom donné par défaut au dépôt cloné. Un dépôt nu (bare) n’a pas de répertoire de travail : c’est la forme d’un dépôt sur un serveur, et ce qu’on emploie ici pour simuler une forge sans réseau (diapositive suivante). git pull rapatrie puis intègre : avance rapide si possible ; si les deux côtés ont divergé, Git 2.43 exige de choisir fusion ou rebasage (diapositive « Pull sur une histoire divergente »).]
+  utils.speaker-note(self: self)[Un élément par clic. origin est le nom donné par défaut au dépôt cloné. Un dépôt nu (bare) n’a pas de répertoire de travail : c’est la forme d’un dépôt sur un serveur, et ce qu’on emploie ici pour simuler une forge sans réseau (diapositive suivante). git pull rapatrie puis intègre : avance rapide si possible ; si les deux côtés ont divergé, Git 2.47 exige de choisir fusion ou rebasage (diapositive « Pull sur une histoire divergente »).]
 })
 
 == Publier : git remote add, puis git push <publier>
@@ -1071,7 +1071,7 @@
         Delta compression using up to 4 threads
         Compressing objects: 100% (28/28), done.
         Writing objects: 100% (35/35), 3.20 KiB | 1.60 MiB/s, done.
-        Total 35 (delta 8), reused 0 (delta 0), pack-reused 0
+        Total 35 (delta 8), reused 0 (delta 0), pack-reused 0 (from 0)
         To /tmp/git-cours/ada/depot-central.git
          * [new branch]      main -> main
         branch 'main' set up to track 'origin/main'.
@@ -1202,12 +1202,12 @@
       ```],
     ),
     (
-      ([1], [Git 2.43 refuse de choisir entre fusion et rebasage : à vous de le dire]),
+      ([1], [Git 2.47 refuse de choisir entre fusion et rebasage : à vous de le dire]),
       ([2], [Rebaser un commit pas encore publié est sans danger : `edf4af0` devient `735f248`, puis le push passe]),
     ),
   ),
   source-de: [#link("https://git-scm.com/docs/git-pull")[git-pull(1)]],
-  note: [La règle de git-pull(1), Git 2.43 : si la branche courante est en retard, pull fait une avance rapide ; si les histoires ont divergé, il faut -\-rebase, -\-no-rebase (fusion) ou le réglage pull.rebase. Pour fixer un choix une fois pour toutes : git config -\-global pull.rebase true. Grace, elle, n’a rien de local : son git pull est une avance rapide (Updating 885281c..735f248, Fast-forward). Lignes hint: et de progression abrégées par « \# … » ; texte complet dans le relevé. Sorties relevées par git/cm/rejouer.sh.],
+  note: [La règle de git-pull(1), Git 2.47 : si la branche courante est en retard, pull fait une avance rapide ; si les histoires ont divergé, il faut -\-rebase, -\-no-rebase (fusion) ou le réglage pull.rebase. Pour fixer un choix une fois pour toutes : git config -\-global pull.rebase true. Grace, elle, n’a rien de local : son git pull est une avance rapide (Updating 885281c..735f248, Fast-forward). Lignes hint: et de progression abrégées par « \# … » ; texte complet dans le relevé. Sorties relevées par git/cm/rejouer.sh.],
 )
 
 // ======================================================================
@@ -1326,7 +1326,7 @@
     ],
   ),
   source-de: [#link("https://git-scm.com/docs/git-reset")[git-reset(1)] · #link("https://git-scm.com/book/en/v2/Git-Tools-Reset-Demystified")[Pro Git, § 7.7 Reset Demystified]],
-  note: [Lecture de git-reset(1), Git 2.43 : -\-soft « does not touch the index file or the working tree at all » ; -\-mixed « resets the index but not the working tree », c’est l’action par défaut ; -\-hard « resets the index and working tree ». Pro Git § 7.7 raconte la même chose en trois temps : déplacer la branche (soft), puis mettre à jour l’index (mixed), puis le répertoire de travail (hard). Les autres modes (-\-merge, -\-keep) sortent du cadre du cours. git reset fichier (sans mode) est une autre forme : elle équivaut à git restore -\-staged fichier.],
+  note: [Lecture de git-reset(1), Git 2.47 : -\-soft « does not touch the index file or the working tree at all » ; -\-mixed « resets the index but not the working tree », c’est l’action par défaut ; -\-hard « resets the index and working tree ». Pro Git § 7.7 raconte la même chose en trois temps : déplacer la branche (soft), puis mettre à jour l’index (mixed), puis le répertoire de travail (hard). Les autres modes (-\-merge, -\-keep) sortent du cadre du cours. git reset fichier (sans mode) est une autre forme : elle équivaut à git restore -\-staged fichier.],
 )
 
 == reset : un même commit, trois fois
@@ -1425,7 +1425,7 @@
 
 == Annuler de trois façons : corrigé (1/2)
 
-#corriges-cote(note: [Un clic par réponse. Identifiants du relevé (git/cm/rejouer.sh, Git 2.43.0) : les vôtres diffèrent.],
+#corriges-cote(note: [Un clic par réponse. Identifiants du relevé (git/cm/rejouer.sh, Git 2.47.3) : les vôtres diffèrent.],
   (1, [Une ligne fautive, annulée sans commit],
     reponse(terminal(titre: none, taille: px(18))[```
     $ echo 'tar -cf /tmp/home.tar /hoem' >> sauvegarde.sh
@@ -1650,7 +1650,7 @@
 
 #anime(
   rang(
-    bloc(role: "pratique", poids: 2.3, taille: px(24))[Git 2.43, sans réglage][
+    bloc(role: "pratique", poids: 2.3, taille: px(24))[Git 2.47, sans réglage][
       #terminal(titre: none, taille: px(18))[
         ```
         $ git init sans-config
@@ -1682,7 +1682,7 @@
 #anime(
   rang(bloc(taille: px(26))[Documentation de référence][
     - _Pro Git_, Scott Chacon et Ben Straub, 2#super[e] édition, libre (CC BY-NC-SA) : #link("https://git-scm.com/book/fr/v2")[git-scm.com/book/fr/v2] (français), #link("https://git-scm.com/book/en/v2")[git-scm.com/book/en/v2]
-    - Pages de manuel de Git, `man git-<commande>` ou `git help <commande>` : #link("https://git-scm.com/docs")[git-scm.com/docs] ; version employée : 2.43.0
+    - Pages de manuel de Git, `man git-<commande>` ou `git help <commande>` : #link("https://git-scm.com/docs")[git-scm.com/docs] ; version employée : 2.47.3
     - GitHub Docs et GitLab Docs, pour les demandes de fusion : #link("https://docs.github.com/en/pull-requests")[docs.github.com] · #link("https://docs.gitlab.com/user/project/merge_requests/")[docs.gitlab.com]
   ]),
   rang(bloc(role: "pratique", taille: px(26))[Pour s’exercer][

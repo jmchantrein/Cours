@@ -1,12 +1,40 @@
 #!/usr/bin/env bash
 # Rejoue, dans l'ordre du cours, chaque commande montrée dans git/cm/git.typ, et imprime sa sortie réelle.
 # Usage : ./rejouer.sh > sorties-git.txt 2>&1
-# Prérequis : bash et Git ≥ 2.28 (git init -b) ; aucun réseau, aucun droit particulier.
+# Environnement de référence : Debian 13 (Git 2.47.3). Hors d'un Debian 13, le script se relance tout seul dans un
+# conteneur debian:13-slim (Docker requis) où il installe git ; sur un Debian 13, il tourne tel quel.
+# Prérequis : bash, Git ≥ 2.28 (git init -b), script (util-linux) ; aucun droit particulier.
+# Derrière un proxy HTTPS qui réécrit TLS, TPTEST_CA (voir le README.md du dépôt) : facultatif, absent en CI.
+#   TPTEST_CA=/chemin/ca.crt HTTPS_PROXY=http://hôte:port ./rejouer.sh > sorties-git.txt 2>&1
 # Tout se passe dans un dossier jetable ($BASE, /tmp/git-cours par défaut), vidé au départ :
 # la configuration de l'utilisateur (~/.gitconfig, /etc/gitconfig) n'est pas lue.
 # Identité et date sont fixées : les identifiants de commit sont ceux des diapos. Pour les retrouver chez vous,
 # exportez les mêmes variables (voir l'annexe « Rejouer le cours à l'identique »).
 set -u
+# ---- Debian 13 par défaut : sinon, relance dans un conteneur debian:13-slim ----
+# shellcheck source=/dev/null
+debian13() { ( . /etc/os-release 2>/dev/null && [ "${ID:-}" = debian ] && [ "${VERSION_ID:-}" = 13 ] ); }
+if [ -z "${REJOUER_CONTENEUR:-}" ] && ! debian13; then
+  ici=$(cd "$(dirname "$0")" && pwd)
+  command -v docker > /dev/null || { echo "Docker est nécessaire hors d'un Debian 13." >&2; exit 1; }
+  reseau=(); apt_https=""
+  if [ -n "${TPTEST_CA:-}" ]; then
+    : "${HTTPS_PROXY:?TPTEST_CA demande aussi HTTPS_PROXY}"
+    reseau+=(--network host --env "HTTPS_PROXY=$HTTPS_PROXY" --volume "$TPTEST_CA:/run/ca-hote.crt:ro"); apt_https="1"
+  fi
+  # Le cours est monté en lecture seule ; le relevé s'écrit dans /tmp du conteneur.
+  exec docker container run --rm --name "rejeu-git-$$" "${reseau[@]}" \
+    --env "APT_HTTPS=$apt_https" --volume "$ici:/cm:ro" debian:13-slim bash -euc '
+      if [ -n "$APT_HTTPS" ]; then
+        sed -i "s|http://deb.debian.org|https://deb.debian.org|g" /etc/apt/sources.list.d/debian.sources
+        printf "Acquire::https::Proxy \"%s\";\nAcquire::https::CAInfo \"/run/ca-hote.crt\";\n" "$HTTPS_PROXY" > /etc/apt/apt.conf.d/99mandataire
+      fi
+      apt-get update -qq > /dev/null
+      DEBIAN_FRONTEND=noninteractive apt-get install -y -qq --no-install-recommends git > /dev/null
+      useradd --create-home --shell /bin/bash ada
+      exec setpriv --reuid=ada --regid=ada --init-groups env -i PATH="$PATH" HOME=/home/ada USER=ada LOGNAME=ada \
+        REJOUER_CONTENEUR=1 bash /cm/rejouer.sh'
+fi
 # Git n'affiche pas la même chose selon que sa sortie est un terminal ou non (décorations de git log,
 # progression de push et clone) : le script se relance dans un pseudo-terminal (script, de util-linux) et
 # n'imprime que ce qui reste affiché à l'écran.

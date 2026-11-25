@@ -1,14 +1,47 @@
 #!/usr/bin/env bash
 # Rejoue les commandes montrées dans les diapos du cours « Shell » et relève les versions.
-# À lancer sur un Debian 13 (bash 5.2, GNU sed 4.9, mawk 1.3.4 : l’awk par défaut), sans être root :
-#   ./rejouer.sh > sorties-shell.txt 2>&1
-# Prérequis : paquets shellcheck et bats (sinon, les sessions qui les emploient le signalent).
+# Usage : ./rejouer.sh > sorties-shell.txt 2>&1
+# Environnement de référence : Debian 13. Hors d’un Debian 13, le script se relance tout seul dans un conteneur
+# debian:13-slim (Docker requis), y installe shellcheck, bats et cron, et joue les sessions en utilisateur ordinaire
+# (ada, du groupe etudiants). Sur un Debian 13, il tourne tel quel : bash 5.2, GNU sed 4.9, mawk 1.3.4 (l’awk par
+# défaut), paquets shellcheck et bats (sinon, les sessions qui les emploient le signalent) ; la session cron n’est
+# jouée que si un service cron tourne.
+# Derrière un proxy HTTPS qui réécrit TLS, TPTEST_CA (voir le README.md du dépôt) : facultatif, absent en CI.
+#   TPTEST_CA=/chemin/ca.crt HTTPS_PROXY=http://hôte:port ./rejouer.sh > sorties-shell.txt 2>&1
 # Chaque session part d’une copie neuve de exemples/ dans ~/atelier, et se joue dans un vrai Bash
 # interactif : avant chaque commande, ce Bash affiche « $ » et la commande, puis l’exécute ; la
 # transcription est celle d’un terminal (seul `ls` diffère : hors terminal, un nom par ligne).
 # Les messages sont en anglais : locale C.UTF-8, comme dans un conteneur debian:13.
 set -u
 umask 022
+
+# ---- Debian 13 par défaut : sinon, relance dans un conteneur debian:13-slim ----
+# shellcheck source=/dev/null
+debian13() { ( . /etc/os-release 2>/dev/null && [ "${ID:-}" = debian ] && [ "${VERSION_ID:-}" = 13 ] ); }
+if [ -z "${REJOUER_CONTENEUR:-}" ] && ! debian13; then
+  ici=$(cd "$(dirname "$0")" && pwd)
+  command -v docker > /dev/null || { echo "Docker est nécessaire hors d’un Debian 13." >&2; exit 1; }
+  reseau=(); apt_https=""
+  if [ -n "${TPTEST_CA:-}" ]; then
+    : "${HTTPS_PROXY:?TPTEST_CA demande aussi HTTPS_PROXY}"
+    reseau+=(--network host --env "HTTPS_PROXY=$HTTPS_PROXY" --volume "$TPTEST_CA:/run/ca-hote.crt:ro"); apt_https="1"
+  fi
+  # Le cours est monté en lecture seule : les sessions n’écrivent que dans le dossier personnel d’ada.
+  exec docker container run --rm --name "rejeu-shell-$$" "${reseau[@]}" \
+    --env "APT_HTTPS=$apt_https" --volume "$ici:/cm:ro" debian:13-slim bash -euc '
+      if [ -n "$APT_HTTPS" ]; then
+        sed -i "s|http://deb.debian.org|https://deb.debian.org|g" /etc/apt/sources.list.d/debian.sources
+        printf "Acquire::https::Proxy \"%s\";\nAcquire::https::CAInfo \"/run/ca-hote.crt\";\n" "$HTTPS_PROXY" > /etc/apt/apt.conf.d/99mandataire
+      fi
+      apt-get update -qq > /dev/null
+      DEBIAN_FRONTEND=noninteractive apt-get install -y -qq --no-install-recommends shellcheck bats cron > /dev/null
+      groupadd etudiants
+      useradd --create-home --shell /bin/bash --groups etudiants ada
+      cron
+      exec setpriv --reuid=ada --regid=ada --init-groups env -i PATH="$PATH" HOME=/home/ada USER=ada LOGNAME=ada \
+        REJOUER_CONTENEUR=1 REJOUER_CRON=1 bash /cm/rejouer.sh'
+fi
+
 export LANG=C.UTF-8 LC_ALL=C.UTF-8
 EXEMPLES=$(cd "$(dirname "$0")/exemples" && pwd)
 ATELIER="$HOME/atelier"
@@ -32,16 +65,18 @@ recopier() {
 }
 
 # Copie neuve des exemples, puis transcription des commandes lues sur l’entrée standard.
+# Le second argument, facultatif, est un préambule que le Bash interactif exécute sans l’afficher.
 session() {
   printf '\n######## %s\n' "$1"
   rm -rf "$ATELIER" "$HOME/demo" /tmp/chantier
   mkdir -p "$ATELIER"
   cp -p "$EXEMPLES"/* "$ATELIER"/
   cd "$ATELIER" || exit 1
-  { printf "PS1=''; PS2=''\n"; recopier; } \
+  { printf "PS1=''; PS2=''\n"; printf '%s\n' "${2:-}"; recopier; } \
     | bash --norc --noediting -i 2>&1 \
     | sed -e '/cannot set terminal process group/d' -e '/no job control in this shell/d' \
-          -e 's/^bash-[0-9.]*\$ //' -e '/^exit$/d'
+          -e 's/^bash-[0-9.]*\$ //' -e '/^exit$/d' \
+          -e 's/.*\x1b\[1G//' -e 's/\x1b\[[0-9;]*[A-Za-z]//g'
 }
 
 # shellcheck source=/dev/null
@@ -271,6 +306,28 @@ ls sauvegarde_*
 tar -tzf sauvegarde_*.tar.gz
 EOF
 
+# cron : le service tourne en root dans le conteneur ; la session n’a de sens que s’il tourne.
+if [ -n "${REJOUER_CRON:-}" ]; then
+  session "cron" <<'EOF'
+crontab -l
+bin=$HOME/bin; mkdir -p "$bin"; cd "$HOME"
+printf '%s\n' '#!/bin/sh' 'pwd; echo "SHELL=$SHELL"; echo "PATH=$PATH"; echo "HOME=$HOME"; echo "LOGNAME=$LOGNAME"' > "$bin/env-cron.sh"
+chmod +x "$bin/env-cron.sh"
+jour_mois=$(( $(date +%-d) % 28 + 1 )); jour_semaine=$(date +%w)
+printf '%s\n' \
+  "* * * * * $bin/env-cron.sh > $HOME/env-cron.txt 2>&1" \
+  "* * * * * ada /bin/echo bonjour > $HOME/piege-login.txt 2>&1" \
+  "* * $jour_mois * $jour_semaine /bin/echo ou-logique > $HOME/ou.txt 2>&1" \
+  "* * $jour_mois * * /bin/echo jour-seul > $HOME/jour-seul.txt 2>&1" | crontab -
+crontab -l | cut -c1-40
+sleep $((70 - $(date +%-S)))
+cat env-cron.txt piege-login.txt ou.txt
+ls jour-seul.txt
+EOF
+else
+  printf '\n######## cron\nNon rejoué : aucun service cron (REJOUER_CRON absent).\n'
+fi
+
 session "set -e" <<'EOF'
 ./nettoyage.sh
 echo $?
@@ -315,7 +372,9 @@ saluer Ada
 type saluer
 EOF
 
-session "Bats" <<'EOF'
+# Bats n’écrit le format « pretty » (celui d’un terminal, avec ✓) que sur un terminal : on le demande
+# par un préambule masqué, et le filtre de session reconstitue l’écran final (retour en colonne 1, effacements).
+session "Bats" 'export TERM=xterm; bats() { command bats --formatter pretty "$@"; }' <<'EOF'
 bats exemple_test_unit.bats
 mkdir donnees && cp pionnieres.csv donnees/
 bats liste_fichiers.bats

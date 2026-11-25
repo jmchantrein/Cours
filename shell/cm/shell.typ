@@ -3,7 +3,7 @@
 //   typst compile --root . --font-path commun/fonts shell/cm/shell.typ build/shell/shell.pdf
 // Une diapo = un titre `==` ; une section (surtitre bleu) = un titre `=`.
 // Structure : règles de .claude/skills/structurer-diapos-cours ; apparence : charte de commun/.
-// Sorties : rejouées dans un conteneur debian:13 (bash 5.2.37, GNU sed 4.9, mawk 1.3.4) par shell/cm/rejouer.sh ;
+// Sorties : rejouées dans un conteneur debian:13-slim (bash 5.2.37, GNU sed 4.9, mawk 1.3.4, ShellCheck 0.10.0, Bats 1.11.1) par shell/cm/rejouer.sh ;
 // les fichiers montrés sur les diapos sont ceux de shell/cm/exemples/, lus tels quels.
 
 #import "../../commun/theme-cours.typ": *
@@ -17,7 +17,7 @@
 #let fichier-ex(nom, taille: px(18), hauteur: auto) = fichier(nom, taille: taille, hauteur: hauteur,
   raw(read("exemples/" + nom).trim(at: end), block: true, lang: none))
 // Version des outils, rappelée dans les notes de l’orateur.
-#let versions = [Sortie réelle : conteneur debian:13 (Debian 13.8), bash 5.2.37, locale C.UTF-8 (messages en anglais), rejouée par shell/cm/rejouer.sh.]
+#let versions = [Sortie réelle : conteneur debian:13-slim (Debian 13.8), bash 5.2.37, locale C.UTF-8 (messages en anglais), rejouée par shell/cm/rejouer.sh.]
 
 #couverture(illustration: "tube")[Shell][Bash, sed et awk : les outils de l’administrateur][Jean-Mathieu Chantrein][25 novembre 2026]
 #speaker-note[Cours tiré des parties Bash, sed et awk du cours « Outils de l’administration système » (sources/outils\_admin\_sys/partie\_1) et des scripts d’exploration « subtilités de Bash ».]
@@ -1091,7 +1091,7 @@
 
 == Digression : planifier avec cron <cron>
 
-#let _note = [Formats d’après crontab(5) de Debian 13 (paquet cron). Le cours d’origine donnait le format système (avec login) comme format unique ; recopié dans crontab -e, le champ en trop devient le début de la commande. cron fournit un environnement minimal : SHELL=/bin/sh, HOME et LOGNAME tirés de /etc/passwd, PATH réduit (/usr/bin:/bin) ; le répertoire courant est HOME. Quand jour du mois et jour de la semaine sont tous deux restreints, la tâche tourne si l’un OU l’autre correspond. Pas de sortie rejouée ici : le conteneur de démonstration n’a pas de service cron.]
+#let _note = [Formats d’après crontab(5) de Debian 13 (paquet cron). Le cours d’origine donnait le format système (avec login) comme format unique ; recopié dans crontab -e, le champ en trop devient le début de la commande. cron fournit un environnement minimal : SHELL=/bin/sh, HOME et LOGNAME tirés de /etc/passwd, PATH réduit (/usr/bin:/bin) ; le répertoire courant est HOME. Quand jour du mois et jour de la semaine sont tous deux restreints, la tâche tourne si l’un OU l’autre correspond. Rejoué avec le service cron de Debian 13 (session « cron » de shell/cm/rejouer.sh) : la tâche voit SHELL=/bin/sh, PATH=/usr/bin:/bin, HOME et LOGNAME d’ada, et démarre dans HOME ; une ligne de crontab -e qui commence par un login échoue (« /bin/sh: 1: ada: not found ») ; avec jour du mois et jour de la semaine tous deux restreints, la tâche tourne dès que l’un des deux correspond ; avec le seul jour du mois, elle ne tourne pas un autre jour. Aucune sortie de cron n’est affichée sur la diapositive.]
 #anime(
   rang(
     bloc(taille: px(25))[Le service cron][
@@ -1241,7 +1241,7 @@
 
 == ShellCheck relit le script avant l’exécution <shellcheck>
 
-#let _note = [Sortie de ShellCheck 0.9.0 (Ubuntu 24.04, faute de dépôt Debian accessible depuis le conteneur) ; à rejouer avec ShellCheck 0.10.0 de Debian 13 (shell/cm/rejouer.sh). Niveaux : error, warning, info, style. Chaque code (SC2045…) a sa page d’explication sur shellcheck.net. Intégrable à Vim, VS Code, aux crochets Git et à la CI : les corrigés des TP le passent.]
+#let _note = [#versions ShellCheck 0.10.0, paquet de Debian 13. Niveaux : error, warning, info, style. Chaque code (SC2045…) a sa page d’explication sur shellcheck.net. Intégrable à Vim, VS Code, aux crochets Git et à la CI : les corrigés des TP le passent.]
 #anime(
   rang(
     bloc(role: "pratique", poids: 0.75, taille: px(24))[Un script à relire][
@@ -1352,7 +1352,7 @@
 
 == Tester un script avec Bats <bats>
 
-#let _note = [Bats 1.10.0 dans le conteneur debian:13 (paquet d’Ubuntu 24.04 : le dépôt Debian n’était pas accessible) ; Debian 13 fournit bats 1.11 : à rejouer avec shell/cm/rejouer.sh. Dans un terminal, bats affiche ce format ; dans un tube ou en CI, il écrit le format TAP (1..2, ok 1 …), que rejouer.sh relève. run lance la commande et range son code dans \$status et sa sortie dans \$output. L’exemple d’origine (run ls) ne teste que ls : celui-ci teste le script de l’exercice.]
+#let _note = [#versions Bats 1.11.1, paquet de Debian 13. Dans un terminal, bats affiche ce format (rejouer.sh le demande par --formatter pretty, puis reconstitue l’écran) ; dans un tube ou en CI, il écrit le format TAP (1..2, ok 1 …). run lance la commande et range son code dans \$status et sa sortie dans \$output. L’exemple d’origine (run ls) ne teste que ls : celui-ci teste le script de l’exercice.]
 #anime(
   rang(
     bloc(role: "pratique", poids: 1.5)[Deux tests de liste\_fichiers.bash][
