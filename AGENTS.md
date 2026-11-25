@@ -19,7 +19,7 @@ l’organisation et la compilation dans [`README.md`](README.md).
   dans `build/` et ouvre-la dans un navigateur.
 - Écris chaque corrigé de TP comme un fichier réel sous `corrige/`, affiché par `fichier(…)` dans un bloc `corrige`.
 - Aligne un TP sur son cours : mêmes commandes, même vocabulaire ; renvoie aux diapos par `diapo(…)`.
-- Après une modification de corrigés, lance `<cours>/tp/<tp>/tester.sh --lint`, et `--up` quand Docker a accès au réseau.
+- Après une modification de corrigés, lance `<cours>/tp/<tp>/tester.sh --lint`, et `--up` quand Docker a accès au réseau, ou quand Incus et KVM sont disponibles pour un harnais qui les exige.
 - Écris un artefact sans dépendance externe : une page Typst, un script, un style qui emploie les variables CSS de la charte.
 - Fais reposer un artefact sur le modèle énoncé dans le cours, et relie-le à la diapo et au TP concernés.
 - Après une modification d’artefact, déroule ses expériences dans un navigateur et vérifie les résultats annoncés dans ses réponses.
@@ -31,4 +31,4 @@ l’organisation et la compilation dans [`README.md`](README.md).
 - Calcule chaque explication d’un artefact à partir du résultat de la simulation ; pour un cas que le simulateur
   ne sait pas traiter, affiche « Limitation du simulateur : … ».
 - Confronte un simulateur à l’outil réel avant de le publier, et après toute modification de son modèle
-  (`verifier-buildkit.js` pour le cache de build).
+  (`verifier-buildkit.js` pour le cache de build, `verifier-incus.js` pour l’héritage des profils).

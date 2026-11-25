@@ -55,7 +55,7 @@ Les apparitions suivent la skill `structurer-diapos-cours` : bloc par bloc, puis
   pour une mise en page libre.
 - Notes de l’orateur d’une diapo animée : paramètre `note:` de `anime`, ou `utils.speaker-note(self: self)[…]`.
 - Notes de l’orateur : `#speaker-note[...]`.
-- Apparitions au clic : voir, dans `virtualisation/virtualisation.typ`, les diapos « Architecture simplifiée et bilan »,
+- Apparitions au clic : voir, dans `virtualisation/cm/virtualisation.typ`, les diapos « Architecture simplifiée et bilan »,
   « La migration à chaud » et le corrigé du TP (style callback : `#slide(repeat: n, self => ...)` avec `uncover("2-", ...)`).
   Chaque étape devient une page du PDF.
 
@@ -102,7 +102,7 @@ Un artefact est un petit logiciel interactif qui fait manipuler un concept : `<c
   À la fin, le lecteur reprend la main sans rien fermer, et ses propres builds sont expliqués.
 - Une explication se calcule à partir du résultat de la simulation ; elle ne s’écrit pas d’avance. Ce que le
   simulateur ne sait pas simuler, il le dit (« Limitation du simulateur : … ») au lieu de répondre.
-- Un simulateur se vérifie contre l’outil réel : `cache-de-build/verifier-buildkit.js` rejoue des
+- Un simulateur se vérifie contre l’outil réel : `conteneurisation/artefacts/cache-de-build/verifier-buildkit.js` rejoue des
   manipulations tirées au hasard dans l’artefact et dans un vrai `docker build`, et compare les résultats.
 - Sur un écran d’ordinateur, la page d’atelier prend exactement la hauteur de la fenêtre : le texte grossit
   avec elle, et ce qui peut grandir défile dans son cadre. Rien n’est rogné à 1280 × 650 px utiles, toutes

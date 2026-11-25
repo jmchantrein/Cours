@@ -63,7 +63,10 @@ place, à côté de sa source (`…/wordpress/index.html`).
 
 Sur GitHub, l’action `.github/workflows/compilation-cours.yml` recompile les supports à chaque push sur `main`
 touchant les sources ou la charte, et les publie sur le site, sans rien commiter.
-L’action `.github/workflows/test-corriges.yml` lance le `tester.sh` de chaque TP.
+L’action `.github/workflows/test-corriges.yml` lance, dans un job par TP, le `tester.sh` de chaque TP dont les corrigés
+ont changé ; un harnais règle son job par des directives de son en-tête : `ci-delai: <minutes>` (90 par défaut) et
+`ci-prerequis: incus` (installe et initialise Incus). L’action `.github/workflows/verification-artefacts.yml`
+confronte l’artefact « L’héritage des profils » à un vrai Incus (`verifier-incus.js`).
 
 Ajouter un cours : créer `<cours>/cm/<cours>.typ` qui importe `../../commun/theme-cours.typ`.
 Ajouter un TP : créer `<cours>/tp/<tp>/<tp>.typ` qui importe `../../../commun/theme-tp.typ`, avec ses corrigés
