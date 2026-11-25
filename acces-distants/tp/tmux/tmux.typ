@@ -122,6 +122,8 @@ la retrouvez, et vous la faites reconstruire par un script.
   0.1 edition bash
   1.0 surveillance top
   ```]
+  Tapée dans le panneau de gauche, la commande y affiche `0.0 edition tmux` : `pane_current_command` montre ce qui
+  tourne à cet instant, ici `tmux list-panes` lui-même ; tapée hors de tmux, elle affiche `bash`.
   Le panneau de droite est `0.1` : fenêtre 0, panneau 1 (numérotation depuis 0 par défaut). `top` lancé depuis le
   shell : à `q`, le shell reprend la main et la fenêtre reste. Créée par `tmux new-window -n surveillance top`, la
   fenêtre n’a pas de shell : elle se ferme avec `top`, ce que le script de l’étape 5 fait exprès.
