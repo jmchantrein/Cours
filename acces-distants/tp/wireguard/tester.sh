@@ -154,7 +154,9 @@ construire() { # $1 image  $2 dossier de contexte
     contexte="$travail/contexte-$1"
     cp -r "$2" "$contexte"
     local ajout="RUN sed -i 's,http://deb.debian.org,https://deb.debian.org,g' /etc/apt/sources.list.d/debian.sources"
-    ajout+=" && printf 'Acquire::https::Proxy \"%s\";\\n' \"\$HTTPS_PROXY\" > /etc/apt/apt.conf.d/90tptest-mandataire"
+    # L'adresse du mandataire est écrite dans le Dockerfile, non lue d'un ARG : BuildKit ne la compte pas
+    # dans la clé de cache des ARG de proxy, et une couche bâtie avec un ancien mandataire serait réutilisée.
+    ajout+=" && echo 'Acquire::https::Proxy \"$HTTPS_PROXY\";' > /etc/apt/apt.conf.d/90tptest-mandataire"
     if [ -n "${SSL_CERT_FILE:-}" ] && [ -f "$SSL_CERT_FILE" ]; then
       cp "$SSL_CERT_FILE" "$contexte/tptest-ca.crt"
       ajout="COPY tptest-ca.crt /usr/local/share/tptest-ca.crt"$'\n'"$ajout"
@@ -264,7 +266,6 @@ sur pair-a "wg set wg0 peer ${PUBLIC[b]} allowed-ips 10.9.9.3/32"
 if sur pair-a 'ping -c 2 -W 1 10.9.9.2' > /dev/null 2>&1; then ko "sortant : le ping passe alors qu'aucun pair ne couvre 10.9.9.2"
 else ok "sortant : aucun pair ne couvre 10.9.9.2, le ping échoue"; fi
 sur pair-a "wg set wg0 peer ${PUBLIC[b]} allowed-ips 10.9.9.2/32"
-octets() { sur "$1" "wg show wg0 transfer" | awk -v k="$2" '$1 == k { print $'"'"'"$3"'"'"' }'; }
 recu() { sur "$1" "wg show wg0 transfer" | awk -v k="$2" '$1 == k { print $2 }'; }
 envoye() { sur "$1" "wg show wg0 transfer" | awk -v k="$2" '$1 == k { print $3 }'; }
 sur pair-b "wg set wg0 peer ${PUBLIC[a]} allowed-ips 10.9.9.100/32"

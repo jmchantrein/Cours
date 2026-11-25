@@ -28,8 +28,12 @@ précaution, avertissement, danger ; les trois partagent le triangle « ! ». Da
 tricolore dont le feu allumé (bas, milieu, haut) donne le niveau par sa position, donc même sans couleur. Le coureur ne marque que les questions : il signale une manipulation à faire. Les dessins du cerveau et du coureur viennent de Tabler Icons (MIT, `pictos/LICENSE-tabler-icons.txt`).
 
 Dans les schémas : hôte et applications en **bleu**, invité (VM, OS invité) en **violet** (`c.invite`,
-`c.invite-clair`). Dans les terminaux, `cadre(…, niveau: 0 | 1 | 2)` : hôte (trait plein), VM invitée (tirets),
-VM imbriquée (pointillés).
+`c.invite-clair`), machine où l’on entre à distance (SSH) en **turquoise** (`c.distant`, `c.distant-clair`,
+`c.distant-t`), commits d’une autre branche en **orange** (`c.branche`). Dans les terminaux,
+`cadre(…, niveau: 0 | 1 | 2 | "distant")` : hôte (trait plein), VM invitée (tirets), VM imbriquée (pointillés),
+session distante (trait mixte). Chaque couleur existe dans chaque palette ; elle se distingue de ses voisines dans
+chaque variante (ΔE CIELAB simulé, Machado 2009 pour les dichromasies, clarté seule pour l’achromatopsie ; les
+valeurs et les écarts sont en tête de `charte.typ`).
 
 ## Écrire une diapo
 - Une section (surtitre bleu) = un titre `=` ; une diapo = un titre `==`.
@@ -37,13 +41,31 @@ VM imbriquée (pointillés).
   `#colonnes(bloc[Titre][- point], bloc(role: "pratique")[Titre][- point])`
 - Note courte : `#note(role: "pratique")[...]` ; encadré à libellé : `#encadre(role: "precaution", libelle: [En vrai :])[...]`.
 - Plusieurs questions et réponses sur une diapo : `#corriges(note: […], (1, [question], reponse[…]), …)`.
-- Couverture : `#couverture(illustration: "vm" | "couches")[titre][sous-titre][auteur][date]` ; clôture, même design, en fin de cours : `#cloture(illustration: …)[Merci][Des questions ?][auteur][lien]`.
+- Couverture : `#couverture(illustration: "vm")[titre][sous-titre][auteur][date]` ; clôture, même design et même
+  illustration, en fin de cours : `#cloture(illustration: "vm")[Merci][Des questions ?][auteur][lien]`. Illustrations
+  (dessinées dans `charte.typ`, une par cours) : `"vm"` (virtualisation : trois VM sur un hyperviseur), `"couches"`
+  (conteneurisation : couches d’image), `"tube"` (shell : trois commandes reliées par des tubes), `"graphe"` (git : main et
+  une branche fusionnée), `"texte"` (édition et formats : fichier structuré et curseur), `"tunnel"` (accès distants :
+  le poste, un tunnel chiffré, la machine distante), `"noeuds"` (ansible : un nœud de contrôle, trois nœuds gérés).
+  Un cours nouveau ajoute sa illustration à `illustration(…)` de `charte.typ`, avec ses couleurs prises dans `c`.
 - Corrigé de TP : `#corrige(n, [question], uncover("2-", reponse(terminal[...])))` ; la question porte le vert
   clair du rôle `question`, la réponse une barre vert foncé qui apparaît avec elle.
 - Machine lancée par la commande au-dessus, dans un terminal : `#cadre([VM (niveau 1)], niveau: 1)[...]`.
 - Terminal : `#terminal[```...```]` ; une ligne `$ ` colore l’invite, une ligne `# ` grise le commentaire.
 - Bandeau sombre (origine, éditeur) : `#bandeau[...]`.
 - Source d’un fait, en bas de diapo : `#source[#link("https://…")[…]]`.
+- Touche du clavier, dans le texte : `#touche[Échap]`, `#touche[Ctrl+b]`.
+- Tableau à en-tête, lignes alternées : `#tableau((auto, 1fr), ([Commande], [Effet]), ([`ls`], [liste]), …)` ; `taille:`
+  fixe le texte, les réglages nommés (`inset`, `align`) passent à `table`. Les fonds sont translucides : le tableau se
+  lit sur la diapo comme dans un bloc.
+- Fichier affiché (un objet, à distinguer du terminal qui montre des commandes) : fond clair, nom en tête :
+  `#fichier([config.yaml])[```yaml …```]` ; `nom: none` sans en-tête ; à côté d’un terminal, dans une `rangee`.
+- Schéma sur un canevas aux coordonnées de la maquette (px) : `#canevas(512, { pose(x, y, …); fleche-pose(x1, y1, x2, y2) })`.
+  `fleche-pose` dessine une flèche dans toute direction (`couleur:`, `ep:` épaisseur, `tirets: true`).
+- Schéma en grille : `#machine(distant: false, role: [poste d’Ada])[client]` (le poste en bleu ; sans `distant: false`,
+  une machine où l’on entre à distance, en turquoise) ; ce qui suit le nom (puces, fichiers…) se place dessous, au centre.
+  `#fleche(haut: […], bas: […], vers: "gauche", couleur: …)` relie deux cellules d’une grille, libellée au-dessus et
+  au-dessous.
 
 ## Animer une diapo
 Les apparitions suivent la skill `structurer-diapos-cours` : bloc par bloc, puis puce par puce.

@@ -1087,7 +1087,7 @@
   note: [Le fil rouge change d’échelle : trois pairs, pair-a, pair-b et pair-c, sur un réseau ordinaire (172.20.0.0/16), le réseau « porteur ». Les adresses 10.9.9.x n’existent que dans le tunnel. Le port 51820 est la convention de la documentation, pas une obligation (ListenPort). Le cours d’origine : « Chaque pair dans WireGuard utilise une clé publique et une clé privée pour s’authentifier. Les paquets IP sont encapsulés dans des paquets UDP, qui sont ensuite chiffrés et transmis à l’autre pair » (plus exactement : le paquet IP est chiffré, puis placé dans un datagramme UDP).],
 )
 
-== Générer les clés : wg genkey, wg pubkey
+== Générer les clés : wg genkey, wg pubkey <wireguard-cles>
 
 #anime(
   rang(
@@ -1157,7 +1157,7 @@
   note: [Clé privée masquée à l’affichage (le script lit le fichier avec sed). Le noyau de la machine de rédaction n’a pas le module WireGuard : wg-quick l’a signalé (« Missing WireGuard kernel module. Falling back to slow userspace implementation ») et a lancé wireguard-go 0.0.20230223, implémentation en espace utilisateur, qui s’emploie avec les mêmes commandes wg. Lignes omises : « Error: Unknown device type », l’avertissement, « [\#] wireguard-go wg0 » et le bandeau de wireguard-go. Sur Debian 13 avec le module : à rejouer (la commande ip link add réussit, sans repli). man wg-quick : Address, DNS, MTU, Table, PreUp/PostUp… sont propres à wg-quick ; le reste passe à wg setconf. Le cours d’origine ne montait pas de tunnel (« il faudrait que chaque étudiant ait une machine root avec une adresse IP publique ») : deux machines qui se joignent en UDP suffisent, comme ici.],
 )
 
-== Le tunnel fonctionne, et ce que voit le réseau
+== Le tunnel fonctionne, et ce que voit le réseau <wireguard-tunnel>
 
 #anime(
   rang(
@@ -1232,7 +1232,7 @@
   utils.speaker-note(self: self)[Un clic par bloc. man wg, AllowedIPs : « a comma-separated list of IP (v4 or v6) addresses with CIDR masks from which incoming traffic for this peer is allowed and to which outgoing traffic for this peer is directed. The catch-all 0.0.0.0/0 may be specified for matching all IPv4 addresses ». 0.0.0.0/0 : tout le trafic IPv4 passe dans le tunnel (le « VPN complet ») ; wg-quick règle alors la route par défaut. Le choix du préfixe le plus précis est démontré dans le corrigé de l’exercice (question 4). Les trois points sont rejoués aux diapositives suivantes. Diapo de référence pour l’artefact « table AllowedIPs » et le TP WireGuard.]
 })
 
-== AllowedIPs à l’épreuve : sortant, puis entrant
+== AllowedIPs à l’épreuve : sortant, puis entrant <wireguard-epreuve>
 
 #anime(
   rang(

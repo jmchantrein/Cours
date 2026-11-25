@@ -66,8 +66,8 @@ yq 3.4.3
 #note(role: "avertissement")[Ce TP emploie le `yq` du paquet Debian : un programme en Python (dépôt `kislyuk/yq`)
 qui convertit le YAML en JSON et le passe à jq ; ses filtres sont ceux de jq. Un autre programme, en Go
 (`mikefarah/yq`), porte le même nom et n’accepte pas les mêmes commandes : #d("deux-yq")[Deux outils nommés yq].
-Si `yq --version` n’affiche pas `yq 3.4.3` ou une version voisine sans autre texte, vérifiez lequel est
-installé.]
+Le paquet de Debian 13 est la 3.4.3 (celui d’Ubuntu 24.04, la 3.1.0) ; les sorties de ce TP sont celles de la
+3.4.3. Si `yq --version` n’affiche pas `yq 3.` suivi de la version, sans autre texte, vérifiez lequel est installé.]
 
 #bloc[Indices et corrigés][
   Chaque étape propose des indices, puis un corrigé, repliés. Les corrigés sont des fichiers réels, vérifiés
@@ -190,7 +190,7 @@ installé.]
   #terminal[```console
   $ yq . livres.yaml > livres-yq.json
   $ cmp livres.json livres-yq.json
-  livres.json livres-yq.json differ: char 159, line 8
+  livres.json livres-yq.json differ: byte 159, line 8
   $ jq -S . livres.json > a.json
   $ yq -S . livres.yaml > b.json
   $ cmp a.json b.json && echo identiques
@@ -310,7 +310,7 @@ installé.]
   - fait la même extraction avec `jq`, sur `livres.json` ;
   - modifie en place, avec `yq`, le titre « 1984 » en « 2024 » dans `livres.yaml`.
 
-  Lancez-le sur une copie de `livres.yaml`, puis examinez le fichier modifié.
+  Sauvegardez d’abord `livres.yaml` par `cp` : le script le modifie en place. Lancez-le, puis examinez le fichier modifié.
 ]
 
 #indice(titre: [Indice : les filtres])[

@@ -45,7 +45,7 @@ Chaque étape reprend une notion du cours : #d("distants")[Un dépôt distant et
   let c = ch.c
   stack(spacing: 14pt,
     boite([`~/collab/depot-central.git` · dépôt nu, `origin` pour les deux clones], fond: c.distant-clair, trait: c.distant,
-      align(center, grid(columns: 2, column-gutter: 8pt, case[branche `main`], case[puis `horaires`]))),
+      align(center, case[branche `main`])),
     text(size: 9pt)[`git push` ↑ ↓ `git fetch`, `git pull`],
     grid(columns: 2, column-gutter: 16pt,
       boite([`~/collab/ada` · Ada Lovelace], fond: c.appli, trait: c.bleu,

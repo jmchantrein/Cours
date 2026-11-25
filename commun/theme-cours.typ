@@ -345,7 +345,7 @@
         text(size: taille, weight: 600, fill: couleur, nom)
         if role != none { linebreak(); text(size: px(20), fill: c.encre, role) }
       })
-      if contenu.pos().len() > 0 { v(px(10)); contenu.pos().join(h(px(8))) }
+      if contenu.pos().len() > 0 { v(px(10)); align(center, contenu.pos().join(h(px(8)))) }
     })
 }
 

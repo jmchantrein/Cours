@@ -1,6 +1,8 @@
 " décommenter : sélectionner en bloc les deux colonnes « # » des deux lignes, les supprimer
 /# developpement<CR>
 <C-v>jld
+" Vim 9.1.0016 (Ubuntu 24.04) réindente la ligne dès qu'on tape # en début de ligne : on le lui interdit
+:set indentkeys-=0#<CR>
 " commenter : sélectionner en bloc la première colonne des quatre lignes de serveurs,
 " insérer « # » devant ; Échap recopie le texte sur chaque ligne du bloc
 /serveurs<CR>

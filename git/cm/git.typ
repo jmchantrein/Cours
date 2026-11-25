@@ -51,8 +51,6 @@
     fleche-pose(x, centre - s * 18, x, cible, couleur: c.encre, ep: 3)
   }
 }
-// Canevas d’un graphe : hauteur fixe, éléments posés en coordonnées de la maquette.
-#let canevas(hauteur, corps) = block(width: 100%, height: px(hauteur), corps)
 // Titre court au-dessus d’un schéma.
 #let titre-schema(t) = text(size: px(28), weight: 600, fill: c.bleu, t)
 
@@ -486,12 +484,12 @@
         fleche-pose(40, 95, 40, 150, couleur: c.gris)
       })
       uncover("3-", {
-        objet(0, 300, [arbre (_tree_)], [bf2cf2d], [noms de fichiers, droits, et l’objet de chacun], g-branche)
-        fleche-pose(520, 95, 520, 300, couleur: g-branche)
+        objet(0, 300, [arbre (_tree_)], [bf2cf2d], [noms de fichiers, droits, et l’objet de chacun], c.ardoise)
+        fleche-pose(520, 95, 520, 300, couleur: c.ardoise)
       })
       uncover("4-", {
-        objet(0, 450, [blob], [1031066], [le contenu de `index.html`, octet pour octet], g-branche)
-        fleche-pose(520, 395, 520, 450, couleur: g-branche)
+        objet(0, 450, [blob], [1031066], [le contenu de `index.html`, octet pour octet], c.ardoise)
+        fleche-pose(520, 395, 520, 450, couleur: c.ardoise)
       })
     }),
   )
@@ -1713,5 +1711,5 @@
   note: [Récapitulatif, une idée par clic, dans l’ordre du cours.],
 )
 
-#cloture(illustration: "couches")[Merci][Des questions ?][Jean-Mathieu Chantrein][Supports : github.com/jmchantrein/cours]
+#cloture(illustration: "graphe")[Merci][Des questions ?][Jean-Mathieu Chantrein][Supports : github.com/jmchantrein/cours]
 #speaker-note[Page de clôture, dans le même design que la couverture.]

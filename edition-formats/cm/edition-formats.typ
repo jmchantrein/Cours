@@ -112,7 +112,7 @@
 
 #slide(repeat: 6, self => {
   let (uncover,) = utils.methods(self)
-  block(width: 100%, height: px(512), {
+  canevas(512, {
     uncover("1-", noeud(622, 180, 420, 140, [Normal], [naviguer, supprimer, copier], sombre: true))
     uncover("2-", {
       noeud(0, 180, 380, 140, [Insertion], [écrire du texte])
@@ -1244,5 +1244,5 @@
   note: [Récapitulatif, une idée par clic, dans l’ordre du cours.],
 )
 
-#cloture(illustration: "couches")[Merci][Des questions ?][Jean-Mathieu Chantrein][Supports : github.com/jmchantrein/cours]
+#cloture(illustration: "texte")[Merci][Des questions ?][Jean-Mathieu Chantrein][Supports : github.com/jmchantrein/cours]
 #speaker-note[Page de clôture, dans le même design que la couverture.]

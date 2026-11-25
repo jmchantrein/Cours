@@ -2253,5 +2253,5 @@
   note: [Récapitulatif, une idée par clic, dans l’ordre du cours.],
 )
 
-#cloture(illustration: "couches")[Merci][Des questions ?][Jean-Mathieu Chantrein][Supports : github.com/jmchantrein/cours]
+#cloture(illustration: "tube")[Merci][Des questions ?][Jean-Mathieu Chantrein][Supports : github.com/jmchantrein/cours]
 #speaker-note[Page de clôture, dans le même design que la couverture.]
