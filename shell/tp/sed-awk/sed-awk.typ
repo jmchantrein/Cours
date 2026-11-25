@@ -218,6 +218,7 @@ $ sed -n '/^\[base_de_donnees\]/,/^$/p' services.conf
 port = 5432
 user = postgres
 autostart = yes
+
 $ sed '/^\[web\]/,/^$/ s/^port = .*/port = 8443/' services.conf | grep -n '^port'
 3:port = 8443
 8:port = 5432
@@ -371,7 +372,7 @@ $ awk -F';' 'NR > 1 && $2 >= 1950 && $2 < 1980 { print $2, $1 }' pionnieres.csv
 1969 Hamilton Margaret
 1978 Conway Lynn
 ```]
-  Sur ces données, la comparaison de chaînes `$2 < "1970"` donnerait le même résultat, par chance : toutes les
+  Sur ces données, la comparaison de chaînes `$2 >= "1950" && $2 < "1980"` donnerait le même résultat, par chance : toutes les
   années ont quatre chiffres. Dès qu’une valeur en a trois (`"100" < "30"`, vrai : « 1 » vient avant « 3 »), le
   filtre se trompe sans rien signaler. Écrivez les nombres sans guillemets.
 ]

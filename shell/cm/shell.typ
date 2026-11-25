@@ -612,7 +612,7 @@
     ([1. Mots], [La ligne est coupée en mots sur les espaces ; les guillemets protègent ce qu’ils entourent]),
     ([2. Accolades], [`{a,b}` → `a b` ; `{1..3}` → `1 2 3`]),
     ([3. Tilde, \$, \$\( \)], [`~` → `/home/ada` ; `$nom`, `${nom}` ; `$((6*7))` ; `$(commande)` : de gauche à droite]),
-    ([4. Découpage], [Les résultats de l’étape 3 *hors guillemets* sont recoupés en mots (espace, tabulation, saut de ligne)]),
+    ([4. Découpage], [Les résultats de `$`, `$( )`, `$(( ))` *hors guillemets* (pas celui de `~`) sont recoupés en mots (espace, tabulation, saut de ligne)]),
     ([5. Chemins], [`*`, `?`, `[…]` hors guillemets → les noms de fichiers qui correspondent]),
     ([6. Guillemets], [Retirés : la commande reçoit ses arguments, sans les guillemets]),
   ),
@@ -1539,7 +1539,7 @@
     - Le processus parent garde sa copie intacte
   ]
   let b-ret = bloc(role: "retenir", taille: px(23))[À retenir][
-    Une fonction ne touche que ses arguments et ses locales ; pour toucher celles d’une autre, la déclarer *dans* celle-ci (fonction imbriquée).
+    Bonne pratique : qu’une fonction ne touche que ses arguments et ses locales ; pour toucher celles d’une autre, la déclarer *dans* celle-ci (fonction imbriquée).
   ]
   grid(columns: (1fr, 1fr), column-gutter: px(32),
     bloc-anime(b-script, 1, uncover),
@@ -2184,7 +2184,7 @@
       [`*.txt`], [`ada.txt` · `grace.txt` · `hedy.txt`], [chemins, hors guillemets],
       [`"*.txt"`], [`*.txt`], [pas de chemins entre guillemets],
       [`"\${p}"`, `"100$"`], [`${p}`, `100$`], [`\$` échappe ; un `$` sans nom reste `$`],
-      [`'\n'`, `"\n"`], [`\n`], [pas d’échappement dans les guillemets],
+      [`'\n'`, `"\n"`], [`\n`], [`\n` n’est interprété ni entre simples ni entre doubles],
       [`$'\n\t'`, `$'\''`], [saut de ligne, tabulation ; `'`], [citation ANSI-C],
       [`"$(echo hi)"`, `'$(echo hi)'`], [`hi`, `$(echo hi)`], [commande exécutée entre doubles seulement],
     )
