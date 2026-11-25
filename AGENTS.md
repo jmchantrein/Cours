@@ -19,6 +19,8 @@ l’organisation et la compilation dans [`README.md`](README.md).
   dans `build/` et ouvre-la dans un navigateur.
 - Écris chaque corrigé de TP comme un fichier réel sous `corrige/`, affiché par `fichier(…)` dans un bloc `corrige`.
 - Aligne un TP sur son cours : mêmes commandes, même vocabulaire ; renvoie aux diapos par `diapo(…)`.
+- Déclare les paquets `apt` qu’un harnais demande à son hôte dans `paquets-apt.txt`, à côté de lui ; la CI les installe.
+- Un harnais ne tient compte d’un proxy qui réécrit TLS que par `TPTEST_CA=/chemin/ca.crt` (avec `HTTPS_PROXY`).
 - Après une modification de corrigés, lance `<cours>/tp/<tp>/tester.sh --lint`, et `--up` quand Docker a accès au réseau.
 - Écris un artefact sans dépendance externe : une page Typst, un script, un style qui emploie les variables CSS de la charte.
 - Déclare le terminal d’une page par `page-web(terminal: …)` : `("compagnon",)` pour Docker ou libvirt, `("vm", "compagnon")`

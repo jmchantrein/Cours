@@ -30,8 +30,8 @@
 # Prérequis : --lint : bash, shellcheck. --local : en plus vim (version
 # complète, pas vim-tiny ni le vi de BusyBox), timeout, yamllint. --up : bash, le
 # programme shellcheck, Docker et l'accès aux dépôts Debian.
-# Derrière un mandataire HTTPS (variable HTTPS_PROXY, et SSL_CERT_FILE pour son
-# autorité de certification), --up fait passer apt par lui, en HTTPS.
+# Derrière un proxy HTTPS qui réécrit TLS, TPTEST_CA (voir le README.md du dépôt)
+# fait passer apt par HTTPS_PROXY, en HTTPS, avec cette autorité.
 set -euo pipefail
 
 ici="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -61,11 +61,9 @@ if [ "$mode" = "up" ]; then
   exiger docker docker.io
   docker info > /dev/null 2>&1 || { echo "Le démon Docker ne répond pas (docker info)." >&2; exit 1; }
   reseau=(); apt_https=""
-  if [ -n "${HTTPS_PROXY:-}" ]; then
-    reseau+=(--network host --env "HTTPS_PROXY=$HTTPS_PROXY"); apt_https="1"
-    if [ -n "${SSL_CERT_FILE:-}" ] && [ -f "$SSL_CERT_FILE" ]; then
-      reseau+=(--volume "$SSL_CERT_FILE:/run/ca-hote.crt:ro")
-    fi
+  if [ -n "${TPTEST_CA:-}" ]; then
+    : "${HTTPS_PROXY:?TPTEST_CA demande aussi HTTPS_PROXY}"
+    reseau+=(--network host --env "HTTPS_PROXY=$HTTPS_PROXY" --volume "$TPTEST_CA:/run/ca-hote.crt:ro"); apt_https="1"
   fi
   docker container rm -f tptest-vim > /dev/null 2>&1 || true
   echo "Conteneur debian:13-slim : installation de vim, yamllint et shellcheck…"
@@ -74,8 +72,7 @@ if [ "$mode" = "up" ]; then
     --env "APT_HTTPS=$apt_https" --volume "$ici:/tp:ro" debian:13-slim bash -euc '
       if [ -n "$APT_HTTPS" ]; then
         sed -i "s|http://deb.debian.org|https://deb.debian.org|g" /etc/apt/sources.list.d/debian.sources
-        { echo "Acquire::https::Proxy \"$HTTPS_PROXY\";"
-          [ ! -f /run/ca-hote.crt ] || echo "Acquire::https::CAInfo \"/run/ca-hote.crt\";"; } > /etc/apt/apt.conf.d/99mandataire
+        printf "Acquire::https::Proxy \"%s\";\nAcquire::https::CAInfo \"/run/ca-hote.crt\";\n" "$HTTPS_PROXY" > /etc/apt/apt.conf.d/99mandataire
       fi
       apt-get update -qq > /dev/null
       DEBIAN_FRONTEND=noninteractive apt-get install -y -qq --no-install-recommends \

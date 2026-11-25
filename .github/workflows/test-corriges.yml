@@ -1,8 +1,11 @@
 name: Test des corrigés de TP
 
 # Chaque TP qui a des corrigés exécutables (<cours>/tp/<tp>/corrige/) fournit à
-# côté un harnais <cours>/tp/<tp>/tester.sh. Ce workflow rejoue tous les
-# harnais en mode --up : construire, démarrer, vérifier, nettoyer.
+# côté un harnais <cours>/tp/<tp>/tester.sh. Ce workflow rejoue chaque
+# harnais en mode --up, dans sa propre tâche : construire, démarrer, vérifier,
+# nettoyer. Si le harnais demande des paquets apt, il les déclare dans le
+# fichier facultatif paquets-apt.txt à côté de lui (un nom par ligne, # pour
+# un commentaire) ; la tâche les installe avant de le lancer.
 on:
   push:
     paths:
@@ -20,20 +23,14 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  corriges:
+  matrice:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    outputs:
+      harnais: ${{ steps.liste.outputs.harnais }}
     steps:
       - uses: actions/checkout@v4
 
-      # ubuntu-latest fournit Docker, Compose v2, curl et shellcheck.
-      - name: Versions
-        run: |
-          docker version --format 'Docker {{.Server.Version}}'
-          docker compose version
-          docker buildx version
-
-      - name: Un harnais par TP corrigé
+      - name: Chaque dossier de corrigés a son harnais
         run: |
           manquants=0
           for corrige in */tp/*/corrige; do
@@ -46,19 +43,45 @@ jobs:
           done
           exit "$manquants"
 
-      - name: Harnais (--up)
+      - name: Liste des harnais
+        id: liste
         run: |
-          echecs=0
-          for harnais in */tp/*/tester.sh; do
-            [ -f "$harnais" ] || continue
-            echo "::group::$harnais --up"
-            if bash "$harnais" --up; then
-              resultat="réussi"
-            else
-              resultat="en échec"; echecs=1
-            fi
-            echo "::endgroup::"
-            echo "$harnais : $resultat"
-            [ "$resultat" = "réussi" ] || echo "::error file=$harnais::$harnais --up a échoué (détail dans le groupe ci-dessus)"
-          done
-          exit "$echecs"
+          liste="$(ls */tp/*/tester.sh | jq -R . | jq -sc .)"
+          echo "$liste"
+          echo "harnais=$liste" >> "$GITHUB_OUTPUT"
+
+  corriges:
+    needs: matrice
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        harnais: ${{ fromJSON(needs.matrice.outputs.harnais) }}
+    name: ${{ matrix.harnais }}
+    steps:
+      - uses: actions/checkout@v4
+
+      # ubuntu-latest fournit Docker, Compose v2, curl et shellcheck.
+      - name: Versions
+        run: |
+          docker version --format 'Docker {{.Server.Version}}'
+          docker compose version
+          docker buildx version
+
+      - name: Paquets apt du harnais
+        env:
+          HARNAIS: ${{ matrix.harnais }}
+        run: |
+          fichier="$(dirname "$HARNAIS")/paquets-apt.txt"
+          [ -f "$fichier" ] || exit 0
+          paquets="$(sed 's/#.*//' "$fichier" | tr -s '[:space:]' ' ')"
+          echo "apt : $paquets"
+          sudo apt-get update
+          # shellcheck disable=SC2086
+          sudo apt-get install -y --no-install-recommends $paquets
+
+      - name: Harnais (--up)
+        env:
+          HARNAIS: ${{ matrix.harnais }}
+        run: bash "$HARNAIS" --up

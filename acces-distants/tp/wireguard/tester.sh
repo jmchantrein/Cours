@@ -39,9 +39,7 @@
 #
 # Prérequis de --lint : bash, shellcheck ; Docker avec Compose v2 pour valider
 # compose.yaml. Prérequis de --up : Docker, Compose v2, /dev/net/tun sur l'hôte,
-# l'accès aux dépôts Debian. Derrière un mandataire HTTPS (HTTPS_PROXY), la
-# construction passe par lui, avec l'autorité de certification de SSL_CERT_FILE
-# si elle est donnée ; TPTEST_MANDATAIRE=0 désactive cet accommodement.
+# l'accès aux dépôts Debian. Derrière un proxy HTTPS qui réécrit TLS : TPTEST_CA (voir README.md du dépôt).
 set -euo pipefail
 
 ici="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -150,21 +148,20 @@ trap en_sortie EXIT
 # Construit une image ; derrière un mandataire HTTPS, apt passe par lui (dépôts en https).
 construire() { # $1 image  $2 dossier de contexte
   local contexte="$2" options=()
-  if [ -n "${HTTPS_PROXY:-}" ] && [ "${TPTEST_MANDATAIRE:-1}" != 0 ]; then
+  if [ -n "${TPTEST_CA:-}" ]; then
+    : "${HTTPS_PROXY:?TPTEST_CA demande aussi HTTPS_PROXY}"
     contexte="$travail/contexte-$1"
     cp -r "$2" "$contexte"
     local ajout="RUN sed -i 's,http://deb.debian.org,https://deb.debian.org,g' /etc/apt/sources.list.d/debian.sources"
     # L'adresse du mandataire est écrite dans le Dockerfile, non lue d'un ARG : BuildKit ne la compte pas
     # dans la clé de cache des ARG de proxy, et une couche bâtie avec un ancien mandataire serait réutilisée.
     ajout+=" && echo 'Acquire::https::Proxy \"$HTTPS_PROXY\";' > /etc/apt/apt.conf.d/90tptest-mandataire"
-    if [ -n "${SSL_CERT_FILE:-}" ] && [ -f "$SSL_CERT_FILE" ]; then
-      cp "$SSL_CERT_FILE" "$contexte/tptest-ca.crt"
-      ajout="COPY tptest-ca.crt /usr/local/share/tptest-ca.crt"$'\n'"$ajout"
-      ajout+=" && echo 'Acquire::https::CAInfo \"/usr/local/share/tptest-ca.crt\";' >> /etc/apt/apt.conf.d/90tptest-mandataire"
-    fi
+    cp "$TPTEST_CA" "$contexte/tptest-ca.crt"
+    ajout="COPY tptest-ca.crt /usr/local/share/tptest-ca.crt"$'\n'"$ajout"
+    ajout+=" && echo 'Acquire::https::CAInfo \"/usr/local/share/tptest-ca.crt\";' >> /etc/apt/apt.conf.d/90tptest-mandataire"
     AJOUT="$ajout" awk '{ print } /^FROM / && !fait { fait = 1; print ENVIRON["AJOUT"] }' "$2/Dockerfile" > "$contexte/Dockerfile"
     options=(--network host --build-arg "HTTPS_PROXY=$HTTPS_PROXY")
-    echo "Mandataire HTTPS $HTTPS_PROXY : la construction passe par lui (TPTEST_MANDATAIRE=0 pour l'éviter)."
+    echo "Mandataire HTTPS $HTTPS_PROXY : la construction passe par lui, avec l'autorité $TPTEST_CA."
   fi
   docker image build -q "${options[@]}" -t "$1" "$contexte" > /dev/null
 }

@@ -1,6 +1,6 @@
 #!/bin/sh
 # /init de la VM du terminal (v86) : premier processus de l'invité, lancé par le noyau (rdinit=/init).
-# Monte les systèmes de fichiers virtuels, règle la taille du terminal, puis ouvre bash sur le port série,
+# Monte les systèmes de fichiers virtuels, règle la taille du terminal, puis ouvre bash, sous le compte ada, sur le port série,
 # que la page relie à xterm.js. Le système vit en mémoire : tout s'efface quand la page se ferme.
 export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 export HOME=/root TERM=xterm-256color LANG=C.UTF-8
@@ -25,5 +25,6 @@ printf "\033[1mUne VM Linux dans votre navigateur.\033[0m Rien n'est installé s
 printf "tout s'efface quand vous fermez la page. Pas de réseau.\n\n"
 # Marqueur invisible (titre de fenêtre, séquence OSC) : la page sait que le shell démarre.
 printf '\033]0;cours-terminal-pret\007'
-cd /root || exit 1
-exec setsid sh -c 'exec bash -l </dev/ttyS0 >/dev/ttyS0 2>&1'
+# Le shell est celui d'un compte ordinaire, ada (les TP sur les droits n'ont pas de sens en root).
+chown ada:ada /dev/ttyS0
+exec setsid sh -c 'exec su - ada -c "exec bash -l" </dev/ttyS0 >/dev/ttyS0 2>&1'

@@ -1,0 +1,29 @@
+#!/bin/sh
+# wget et curl de la VM du terminal (installé sous les deux noms par construire-vm.sh). La VM n'a pas de réseau :
+# ce script sert, à la place, les fichiers de départ des TP que l'image embarque (/usr/share/cours/Cours-main/…),
+# pour les deux adresses que les énoncés emploient :
+#   https://jmchantrein.github.io/Cours/<chemin>                                le fichier <chemin> du dépôt
+#   https://github.com/jmchantrein/Cours/archive/refs/heads/main.tar.gz        l'archive des fichiers de départ
+# Toute autre adresse échoue, comme sans réseau. Options comprises : -O (wget : -O fichier ; curl : nom distant),
+# -o fichier ; les autres (-q, -f, -s, -S, -L…) sont ignorées.
+nom=${0##*/}
+miroir=/usr/share/cours
+mode=fichier; [ "$nom" = curl ] && mode=sortie
+url=; cible=; attend=
+for a in "$@"; do
+  if [ -n "$attend" ]; then cible=$a; attend=; continue; fi
+  case $a in
+    http://*|https://*) url=$a ;;
+    -o) attend=1 ;;
+    -O) if [ "$nom" = wget ]; then attend=1; else mode=fichier; fi ;;
+  esac
+done
+case $url in
+  https://jmchantrein.github.io/Cours/*) source=$miroir/Cours-main/${url#https://jmchantrein.github.io/Cours/}
+    [ -f "$source" ] || { echo "$nom : 404 Not Found ($url)" >&2; exit 8; } ;;
+  https://github.com/jmchantrein/Cours/archive/refs/heads/main.tar.gz) source= ;;
+  *) echo "$nom : pas de réseau dans cette VM, impossible de joindre ${url:-l'adresse demandée}." >&2; exit 4 ;;
+esac
+[ -n "$cible" ] || { [ "$mode" = fichier ] && cible=${url##*/}; }
+produire() { if [ -n "$source" ]; then cat "$source"; else tar -C "$miroir" -czf - Cours-main; fi; }
+if [ -n "$cible" ] && [ "$cible" != - ]; then produire > "$cible"; else produire; fi

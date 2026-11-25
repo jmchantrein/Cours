@@ -32,7 +32,7 @@
 # images tptest-ssh-*) et, derrière un proxy, l'image tptest-ssh-debian.
 #
 # Derrière un proxy HTTPS qui réécrit TLS (facultatif, absent en CI) :
-#   TPTEST_PROXY_CA=/chemin/ca.crt HTTPS_PROXY=http://127.0.0.1:port ./tester.sh --up
+#   TPTEST_CA=/chemin/ca.crt HTTPS_PROXY=http://127.0.0.1:port ./tester.sh --up
 # Le harnais construit alors une image de base debian:13-slim qui passe par ce
 # proxy, et la substitue à debian:13-slim (contexte nommé), sans toucher aux
 # fichiers du corrigé.
@@ -155,10 +155,10 @@ trap en_sortie EXIT
 nettoyer
 
 # Proxy facultatif : une base debian:13-slim qui passe par le proxy, substituée par un contexte nommé.
-if [ -n "${TPTEST_PROXY_CA:-}" ]; then
-  : "${HTTPS_PROXY:?TPTEST_PROXY_CA demande aussi HTTPS_PROXY}"
+if [ -n "${TPTEST_CA:-}" ]; then
+  : "${HTTPS_PROXY:?TPTEST_CA demande aussi HTTPS_PROXY}"
   mkdir -p "$travail/base"
-  cp "$TPTEST_PROXY_CA" "$travail/base/ca.crt"
+  cp "$TPTEST_CA" "$travail/base/ca.crt"
   cat > "$travail/base/Dockerfile" <<EOF
 FROM debian:13-slim
 COPY ca.crt /usr/local/share/ca-certificates/proxy.crt

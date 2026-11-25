@@ -1,0 +1,7 @@
+# Paquets apt que tester.sh --up demande (installés par la CI avant de le lancer).
+libvirt-daemon-system
+libvirt-clients
+qemu-system-x86
+qemu-utils
+virtinst
+dnsmasq-base

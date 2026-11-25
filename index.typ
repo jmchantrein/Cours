@@ -20,24 +20,93 @@
   #variantes.filter(v => v != "projection").map(v => link(pdf(cours, v), v)).join([, ]).
 ]
 
+// Les cours se lisent dans l’ordre de la page, du plus fondamental au plus avancé : chaque groupe s’appuie
+// sur le précédent.
+Sept cours, à lire dans l’ordre de la page : les outils de l’administrateur d’abord, puis les machines
+(accès, virtualisation, conteneurs), enfin l’automatisation, qui les suppose tous.
+
+= Les outils de l’administrateur
+
 #cartes(
-  carte([Fondements de la conteneurisation], illustration: "couches")[
-    Du chroot à Docker : images, conteneurs, persistance, sécurité, réseau, Dockerfile, Compose, puis les
-    orchestrateurs.
+  carte([Shell : Bash, sed et awk], illustration: "tube")[
+    Les commandes, les tubes, les droits et les fichiers, les scripts robustes, puis sed et awk pour transformer
+    du texte.
     #actions(
-      bouton(principal: true, [Diapositives], pdf("conteneurisation", "projection")),
-      bouton([TP : conteneuriser WordPress], "conteneurisation/tp/wordpress/"),
-      bouton([Artefact : le cache de build], "conteneurisation/artefacts/cache-de-build/"),
+      bouton(principal: true, [Diapositives], pdf("shell", "projection")),
+      bouton([TP : Premiers pas dans le shell], "shell/tp/premiers-pas/"),
+      bouton([TP : Droits, liens, recherche et archives], "shell/tp/fichiers/"),
+      bouton([TP : Du pipeline au script robuste], "shell/tp/scripts/"),
+      bouton([TP : sed et awk : exercices progressifs], "shell/tp/sed-awk/"),
     )
-    #rendus("conteneurisation")
+    #rendus("shell")
+  ],
+  carte([Éditer et structurer du texte], illustration: "texte")[
+    Vim, Markdown, YAML et JSON : l’administrateur travaille en texte brut.
+    #actions(
+      bouton(principal: true, [Diapositives], pdf("edition-formats", "projection")),
+      bouton([TP : Dojo Vim], "edition-formats/tp/vim/"),
+      bouton([TP : Décrire des livres en YAML et en JSON], "edition-formats/tp/yaml-json/"),
+    )
+    #rendus("edition-formats")
+  ],
+  carte([Git : versionner et collaborer], illustration: "graphe")[
+    Commits, branches, conflits, retour en arrière, puis le travail à plusieurs autour d’un dépôt central.
+    #actions(
+      bouton(principal: true, [Diapositives], pdf("git", "projection")),
+      bouton([TP : Git en local], "git/tp/git-local/"),
+      bouton([TP : Git à plusieurs, sans forge], "git/tp/git-distant/"),
+    )
+    #rendus("git")
+  ],
+)
+
+= Les machines : accès, virtualisation, conteneurs
+
+#cartes(
+  carte([Accès distants : SSH, tmux, WireGuard], illustration: "tunnel")[
+    Entrer sur une machine sans mot de passe, y travailler dans des sessions qui survivent à la coupure, relier
+    deux réseaux par un tunnel chiffré.
+    #actions(
+      bouton(principal: true, [Diapositives], pdf("acces-distants", "projection")),
+      bouton([TP : SSH : clés, bastion, tunnel, durcissement], "acces-distants/tp/ssh/"),
+      bouton([TP : Travailler dans tmux], "acces-distants/tp/tmux/"),
+      bouton([TP : Un tunnel WireGuard], "acces-distants/tp/wireguard/"),
+    )
+    #rendus("acces-distants")
   ],
   carte([Fondements de la virtualisation de machines], illustration: "vm")[
     Émulation et virtualisation, assistance matérielle, hyperviseurs, QEMU et KVM, libvirt, avec un mini TP :
     une VM, puis une VM dans la VM.
     #actions(
       bouton(principal: true, [Diapositives], pdf("virtualisation", "projection")),
+      bouton([TP : Administrer des VM avec libvirt], "virtualisation/tp/libvirt/"),
     )
     #rendus("virtualisation")
+  ],
+  carte([Fondements de la conteneurisation], illustration: "couches")[
+    Du chroot à Docker : images, conteneurs, persistance, sécurité, réseau, Dockerfile, Compose, puis les
+    orchestrateurs.
+    #actions(
+      bouton(principal: true, [Diapositives], pdf("conteneurisation", "projection")),
+      bouton([TP : Conteneuriser WordPress], "conteneurisation/tp/wordpress/"),
+      bouton([Artefact : Le cache de build], "conteneurisation/artefacts/cache-de-build/"),
+    )
+    #rendus("conteneurisation")
+  ],
+)
+
+= Automatiser
+
+#cartes(
+  carte([Ansible : automatiser les configurations], illustration: "noeuds")[
+    Un nœud de contrôle, des nœuds gérés : inventaire, playbooks, idempotence et rôles.
+    #actions(
+      bouton(principal: true, [Diapositives], pdf("ansible", "projection")),
+      bouton([TP, séance 1 : inventaire et commandes ad hoc], "ansible/tp/inventaire/"),
+      bouton([TP, séance 2 : playbooks, variables et idempotence], "ansible/tp/playbooks/"),
+      bouton([TP, séance 3 : un rôle, nginx_hello_world], "ansible/tp/roles/"),
+    )
+    #rendus("ansible")
   ],
 )
 

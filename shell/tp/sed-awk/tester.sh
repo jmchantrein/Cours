@@ -35,9 +35,8 @@
 #
 # Prérequis de --lint : bash, shellcheck. De --up : Docker, et l'accès aux dépôts
 # Debian (le conteneur installe gawk, busybox, openssh-server).
-# Mandataire facultatif : si HTTPS_PROXY est défini, le conteneur passe par lui
-# (réseau de l'hôte) ; si TPTEST_CA (ou SSL_CERT_FILE) nomme un fichier, apt
-# l'emploie comme autorité de certification et passe en HTTPS.
+# Derrière un proxy HTTPS qui réécrit TLS, TPTEST_CA (voir le README.md du dépôt)
+# fait passer le conteneur par HTTPS_PROXY ; apt passe en HTTPS avec cette autorité.
 set -euo pipefail
 
 ici="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -128,10 +127,9 @@ en_sortie() {
 trap en_sortie EXIT
 
 reseau=(); apt_options=""
-if [ -n "${HTTPS_PROXY:-}" ]; then reseau+=(--network host --env "https_proxy=$HTTPS_PROXY"); fi
-ca="${TPTEST_CA:-${SSL_CERT_FILE:-}}"
-if [ -n "$ca" ] && [ -f "$ca" ]; then
-  reseau+=(--volume "$ca:/run/ca-hote.crt:ro")
+if [ -n "${TPTEST_CA:-}" ]; then
+  : "${HTTPS_PROXY:?TPTEST_CA demande aussi HTTPS_PROXY}"
+  reseau+=(--network host --env "https_proxy=$HTTPS_PROXY" --volume "$TPTEST_CA:/run/ca-hote.crt:ro")
   apt_options="-o Acquire::https::CAInfo=/run/ca-hote.crt"
 fi
 sortie_attendus=()

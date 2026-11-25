@@ -36,8 +36,8 @@
 # Le harnais ne crée et ne supprime que le conteneur tptest-shell-fichiers et,
 # avec --alpine, l'image tptest-shell-fichiers-alpine. Prérequis : bash, shellcheck ;
 # pour --up et --alpine, Docker (l'image debian:13-slim, ou le réseau pour la
-# télécharger). Un mandataire HTTPS (HTTPS_PROXY, et SSL_CERT_FILE pour son
-# autorité) sert à apk pour --alpine, s'il est défini.
+# télécharger). Derrière un proxy HTTPS qui réécrit TLS, TPTEST_CA (voir le
+# README.md du dépôt) fait passer apk par lui pour --alpine.
 set -euo pipefail
 
 ici="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -337,9 +337,10 @@ else
   titre "Image $image_alpine : Alpine 3.22 et les paquets de la VM du navigateur"
   # Les paquets de commun/terminal/construire-vm.sh, et util-linux-misc pour script(1).
   reseau=()
-  if [ -n "${HTTPS_PROXY:-}" ]; then reseau+=(--network host --env "HTTPS_PROXY=$HTTPS_PROXY"); fi
-  if [ -n "${SSL_CERT_FILE:-}" ] && [ -f "$SSL_CERT_FILE" ]; then
-    reseau+=(--volume "$SSL_CERT_FILE:/run/ca-hote.crt:ro" --env SSL_CERT_FILE=/run/ca-hote.crt)
+  if [ -n "${TPTEST_CA:-}" ]; then
+    : "${HTTPS_PROXY:?TPTEST_CA demande aussi HTTPS_PROXY}"
+    reseau+=(--network host --env "HTTPS_PROXY=$HTTPS_PROXY"
+      --volume "$TPTEST_CA:/run/ca-hote.crt:ro" --env SSL_CERT_FILE=/run/ca-hote.crt)
   fi
   docker rm -f "$conteneur-image" > /dev/null 2>&1 || true
   if docker run --name "$conteneur-image" "${reseau[@]}" alpine:3.22 apk add --no-cache \

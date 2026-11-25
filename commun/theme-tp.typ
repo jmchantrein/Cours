@@ -63,14 +63,15 @@
 #let _par-palette(dessin) = for (vs, v) in _palettes-distinctes {
   _el("div", data: (pour: vs), html.frame(dessin(charte-de(v))))
 }
-// Illustration de couverture d’un cours ("vm", "couches"), décorative.
+// Illustration de couverture d’un cours, décorative : "vm", "couches", "tube", "graphe", "texte", "tunnel" ou "noeuds"
+// (dessinées dans charte.typ).
 #let _dessin-couverture(nom) = _el("div", class: "couverture-dessin", attrs: ("aria-hidden": "true"),
   _par-palette(ch => illustration(nom, ch.c, 0.4385pt)))
 
 // ---------- Page ----------
 // racine : chemin relatif de la page vers la racine du dépôt (polices, accueil).
 // liens : paires (texte, adresse) affichées dans le bandeau.
-// illustration-couverture : "vm" ou "couches", l’illustration de couverture du cours.
+// illustration-couverture : l’illustration de couverture du cours (celles de l’accueil, voir ci-dessus).
 // sommaire : affiche le sommaire des titres `=` (en colonne à gauche sur un écran large).
 // atelier : page d’artefact, compacte, qui tient sur un écran de portable sans défilement.
 // terminal : les modes du terminal de la page (commun/terminal/), par ordre de préférence : "vm" (VM Linux dans
