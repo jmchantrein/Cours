@@ -3275,6 +3275,73 @@ PING qwant.com (…): 56 data bytes
   note: _note,
 )
 
+== Agent IA : lui donner Docker, pas la machine <docker-sandboxes>
+#let _note = [Agent IA de programmation : Claude Code, Codex, Copilot, Cursor, Devin, Kiro, OpenCode… (agents pris en charge par Docker Sandboxes). Chronologie : Docker Desktop 4.58 (26/01/2026) introduit les bacs à sable sur microVM (commande expérimentale docker sandbox) ; billet d’annonce du 30/01/2026 ; outil autonome sbx (macOS, Windows, Linux) présenté le 16/04/2026 ; Docker Desktop 4.80 (29/06/2026) retire docker sandbox au profit de sbx ; Cloud Sandboxes (24/09/2026) : la même microVM sur des machines de Docker, payant à l’usage. sbx 0.54.1 (24/11/2026) : logiciel propriétaire, gratuit, usage commercial compris ; version 0.x, aucune page lue ne parle de version stable. Architecture (doc « Isolation » et billet du 16/04/2026) : le programme qui fournit la machine (VMM) est écrit par Docker, ce n’est pas Firecracker ; hyperviseur KVM sous Linux, Hypervisor.framework sous macOS (Apple silicon), Windows Hypervisor Platform sous Windows 11. Dans la microVM : l’agent (utilisateur non root, avec sudo) et un Docker Engine à lui ; aucun socket de l’hôte n’y est monté ; démon et cache d’images propres à chaque bac à sable, rien n’est partagé entre eux ; surcoût : une VM et un démon par agent. Comparaison de la doc : conteneur avec socket monté \= démon de l’hôte partagé ; Docker-in-Docker \= conteneur privilégié ; Sandboxes \= démon isolé derrière un hyperviseur. Ce qui distingue Docker Sandboxes : local sur les trois systèmes, Docker Engine privé dans la microVM, identifiants gardés hors de la VM ; la microVM seule ne le distingue pas d’E2B ou de Vercel Sandbox. Concurrents (dépôts lus le 25/11/2026) : E2B, hébergé ou auto-hébergé, une microVM Firecracker par bac à sable (https://github.com/e2b-dev/infra) ; Vercel Sandbox, hébergé, Firecracker (https://github.com/vercel/sandbox) ; Apple container, macOS 26 sur Apple silicon, conteneurs Linux exécutés comme VM légères (https://github.com/apple/container) ; Agent Sandbox, Kubernetes SIG Apps, pods sur gVisor ou Kata Containers (https://github.com/kubernetes-sigs/agent-sandbox) ; sandbox-runtime d’Anthropic, bac à sable de Claude Code : bubblewrap et seccomp sous Linux, Seatbelt sous macOS, proxy réseau à liste de domaines (https://github.com/anthropic-experimental/sandbox-runtime) ; Cloudflare Sandbox SDK, hébergé, conteneur (https://github.com/cloudflare/sandbox-sdk). Liens : https://docs.docker.com/ai/sandboxes/ ; https://docs.docker.com/ai/sandboxes/security/isolation/ ; https://www.docker.com/blog/docker-sandboxes-run-claude-code-and-other-coding-agents-unsupervised-but-safely/ ; https://www.docker.com/blog/why-microvms-the-architecture-behind-docker-sandboxes/.]
+#anime(
+  rang(
+    bloc(role: "danger", taille: px(26))[Le besoin : un agent IA qui construit][
+      - *Agent IA de programmation* : programme piloté par un modèle de langage, qui lance des commandes et modifie des fichiers seul (Claude Code, Codex…)
+      - Il veut `docker build` et `docker compose up`
+      - Lui monter `docker.sock` : root sur l'hôte (« Le socket Docker : la preuve »)
+    ],
+    bloc(role: "pratique", taille: px(26))[La réponse de Docker : Docker Sandboxes][
+      - Annoncé le 30/01/2026 (Docker Desktop 4.58) ; outil autonome `sbx` depuis avril 2026
+      - Une *microVM* (VM minimale, qui démarre vite) par agent : son noyau, son Docker Engine privé
+      - L'agent n'a aucun chemin vers le démon de l'hôte
+    ],
+  ),
+  note(role: "notion", taille: px(22))[Autres outils : microVM (E2B, Vercel Sandbox, Apple `container`) ; gVisor ou Kata (Agent Sandbox, Kubernetes) ; noyau de l'hôte filtré (#box[`sandbox-runtime`], Anthropic) ; conteneur (Cloudflare Sandbox SDK). Classement : cours Virtualisation, « MicroVM ».],
+  note(role: "retenir", taille: px(24))[C'est « une VM par application » (« Où faire tourner Docker : hôte ou VM ? »), en plus léger : une microVM par agent.],
+  source-de: [#link("https://docs.docker.com/ai/sandboxes/")[docs.docker.com/ai/sandboxes] · #link("https://www.docker.com/blog/docker-sandboxes-run-claude-code-and-other-coding-agents-unsupervised-but-safely/")[Docker, billet du 30/01/2026]],
+  note: _note,
+)
+
+== Docker Sandboxes : installer, lancer, nettoyer
+#let _note = [Sorties à rejouer : commandes recopiées de la doc Docker Sandboxes (lue le 25/11/2026, sbx 0.54.1 du 24/11/2026), non exécutées faute de KVM sur la machine de rédaction ; seule la sortie de sbx ls est affichée, celle de la doc, avec nos noms. Le cours tourne sur Debian 13, alors que Docker ne teste et ne prend en charge sbx que sur Ubuntu 24.04 ou plus récent (ni Debian ni les dérivés d’Ubuntu comme Mint ou Pop!\_OS ; le script peut y configurer un mauvais dépôt) : à rejouer sur une Ubuntu, physique ou dans une VM avec virtualisation imbriquée. Prérequis complets : processeur 64 bits (x86-64 ou Arm), KVM actif, utilisateur dans le groupe kvm (ou newgrp kvm), compte Docker ; ni Docker Desktop ni Docker Engine sur l’hôte. macOS : brew install docker/tap/sbx ; Windows 11 : winget install -h Docker.sbx. curl | sudo sh est la commande de la doc ; bonne pratique : télécharger le script, le lire, puis l’exécuter, ou ajouter le dépôt apt à la main (doc Docker Engine, « Install using the apt repository »). sbx run crée la microVM, y lance l’agent (ici claude \= Claude Code) et s’y attache : sbx ls se lance dans un autre terminal ; au premier lancement, sbx fait choisir un préréglage réseau (Balanced : services de développement courants autorisés ; Locked Down : tout sur règle explicite). Dossier du projet : monté par virtiofs, en lecture-écriture, au même chemin que sur l’hôte ; la doc le dit : aucune frontière entre les modifications de l’agent et ce dossier, hooks Git compris (un hook modifié s’exécute sur l’hôte au prochain commit). Variante --clone : dépôt monté en lecture seule, l’agent travaille sur un clone privé. Réseau : tout le TCP sortant passe par un proxy sur l’hôte, qui applique les règles ; UDP désactivé, ICMP bloqué ; registry.npmjs.org est l’exemple de la doc ; sbx policy ls liste les règles en vigueur. Identifiants : le proxy les ajoute aux en-têtes HTTP sortants, l’agent n’en lit pas la valeur. sbx stop garde paquets, images et fichiers ; sbx rm demande confirmation, supprime la VM et son contenu, et laisse le dossier de travail de l’hôte. Liens : https://docs.docker.com/ai/sandboxes/install/ ; https://docs.docker.com/ai/sandboxes/get-started/ ; https://docs.docker.com/ai/sandboxes/security/isolation/.]
+#anime(
+  pas(5, (u, d) => grid(columns: (1.25fr, 1fr), column-gutter: px(32),
+    terminal(taille: px(20))[
+      #u(str(d) + "-")[```
+      $ lsmod | grep kvm
+      # KVM disponible si la sortie cite kvm_intel, kvm_amd…
+      $ sudo usermod -aG kvm $USER
+      # puis se déconnecter et se reconnecter
+      ```]
+      #u(str(d + 1) + "-")[```
+      # ajoute le dépôt apt de Docker
+      $ curl -fsSL https://get.docker.com | sudo REPO_ONLY=1 sh
+      $ sudo apt install docker-sbx
+      $ sbx login
+      ```]
+      #u(str(d + 2) + "-")[```
+      $ cd ~/boutique
+      $ sbx run --name agent-boutique claude
+      # … (session de l'agent) ; dans un autre terminal :
+      $ sbx ls
+      SANDBOX          AGENT    STATUS      PORTS   WORKSPACE    CREATED
+      agent-boutique   claude   ● running           ~/boutique   2m
+      ```]
+      #u(str(d + 3) + "-")[```
+      $ sbx policy allow network registry.npmjs.org
+      ```]
+      #u(str(d + 4) + "-")[```
+      $ sbx stop agent-boutique
+      $ sbx rm agent-boutique
+      ```]
+    ],
+    lignes(largeur: px(150), taille-cle: px(24), taille: px(22), uncover: u, debut: d,
+      ([Prérequis], [Ubuntu 24.04 ou plus récent (seule distribution prise en charge), KVM, groupe `kvm`]),
+      ([Installer], [Paquet `docker-sbx` ; compte Docker obligatoire #note(role: "avertissement", taille: px(18))[#box[`curl … | sudo sh`] exécute en root un script non lu : le télécharger, le lire, puis l'exécuter]]),
+      ([Lancer], [Crée la microVM, y lance Claude Code et s'y attache ; `~/boutique` y est monté en lecture-écriture]),
+      ([Réseau], [Sortant refusé sauf règle, filtré par un proxy sur l'hôte ; ce proxy injecte les identifiants, absents de la VM]),
+      ([Nettoyer], [`stop` garde paquets, images, fichiers ; `rm` efface la VM, pas `~/boutique`]),
+    ),
+  )),
+  note(role: "precaution", taille: px(22))[Protégés : la machine, son démon Docker, le réseau, les identifiants. Exposé : `~/boutique`, hooks Git compris ; relire le diff avant de commiter.],
+  source-de: [#link("https://docs.docker.com/ai/sandboxes/install/")[Docker Sandboxes, Install] · #link("https://docs.docker.com/ai/sandboxes/get-started/")[Get started] · #link("https://docs.docker.com/ai/sandboxes/security/isolation/")[Isolation]],
+  note: _note,
+)
+
 = Annexe · Conteneurs graphiques
 
 == Conteneurs graphiques : possible, mais hors du cadre du cours

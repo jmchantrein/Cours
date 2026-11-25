@@ -13,6 +13,10 @@
 - [ ] Vérifier les adresses des sources des diapos Orchestration (docs.docker.com, kubernetes.io : inaccessibles lors de la rédaction) et les faits marqués « à vérifier » dans les notes de l’orateur
 - [ ] Essayer le manifeste Kubernetes de la diapo « pod, Deployment, Service » sur un cluster (kind, minikube ou k3s)
 
+### Docker Sandboxes (cours Conteneurisation et Virtualisation)
+- [ ] Rejouer les commandes `sbx` de la diapo « Docker Sandboxes » du cours Conteneurisation sur un Ubuntu 24.04 avec KVM et un compte Docker (`sbx` 0.54.1 lors de la rédaction), puis recopier les sorties
+- [ ] Relire la diapo à chaque évolution de `sbx` (version 0.x, une version par semaine) : commandes, prérequis, liste des concurrents
+
 ### Artefacts
 - [ ] Rejouer `conteneurisation/artefacts/cache-de-build/verifier-buildkit.js` sur Debian 13 (docker.io 26.1.5) : le modèle n’a été confronté qu’à BuildKit de Docker Engine 29.10
 
@@ -61,3 +65,4 @@
 - [x] 2026-11-23 — Artefact « cache de build » : lecteur de recette (étape précédente, lecture ou pause, étape suivante, quitter, rejouer) ; la pause fige le build en cours, le retour en arrière rétablit l’état mémorisé après chaque étape et annule une étape en cours
 - [x] 2026-11-24 — Artefact « cache de build » : modèle recalé sur BuildKit (CMD, ENTRYPOINT, LABEL, EXPOSE hors des clés ; casse, espaces et commentaires sans effet ; FROM fixe ; instructions non simulées signalées), vérifié par `verifier-buildkit.js` (140 builds, aucun écart) ; recettes en carte distincte, pause après chaque étape avec explication calculée et « Continuer », option sans pause, reprise en main à la fin sans quitter ; la règle passe dans le bandeau du titre
 - [x] 2026-11-24 — Artefact « cache de build » : la liste des étapes de la recette reste affichée pendant sa lecture (étapes faites cochées, étape expliquée surlignée, suivante repérée) ; panneau d’aide resserré sur les fenêtres basses
+- [x] 2026-11-25 — Docker Sandboxes dans les deux cours : Virtualisation, une diapo « Docker Sandboxes : une microVM par agent IA » (architecture, concurrents par technique d’isolation) et une puce au récapitulatif ; Conteneurisation, deux diapos en fin de « Utilisation avancée · Sécurité » (le besoin et l’annonce, puis la mise en place avec `sbx`) ; faits lus dans le dépôt source de la doc Docker (`docker/docs`, 25/11/2026)
