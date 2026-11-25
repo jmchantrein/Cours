@@ -21,7 +21,7 @@ version="alpine-${reference##*:}"
 # Python restent hors de l'image : l'image reste légère, et ces TP passent par le compagnon.
 paquets=(
   linux-virt bash bash-completion coreutils findutils grep sed gawk diffutils less file tree
-  nano vim git jq tmux ncurses-terminfo-base
+  nano vim git jq tmux tar ncurses-terminfo-base
 )
 
 command -v docker >/dev/null || { echo "construire-vm.sh : Docker est requis" >&2; exit 1; }

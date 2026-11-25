@@ -1379,7 +1379,7 @@
   note: [Un clic par mode. Même contenu, même parent, même auteur, même date (fixée par le relevé) : le commit refait a le même identifiant, fc5e14d, preuve qu’un identifiant ne dépend que du contenu de l’objet. Chez vous, la date change d’une seconde à l’autre, donc l’identifiant aussi. HEAD\~1 se recopie tel quel, contrairement à un identifiant. Sorties relevées par git/cm/rejouer.sh.],
 )
 
-== reflog : retrouver un commit « perdu »
+== reflog : retrouver un commit « perdu » <reflog>
 
 #anime(
   rang(

@@ -24,11 +24,13 @@
 // Contraste du texte d’en-tête (blanc ou encre, choisi selon la clarté) et du texte sur terminal : ≥ 4,5.
 // Clés : en-têtes des rôles ; invite / invite-clair (schémas) ; appli ; cadres de terminal hote-t, invite-t, imbrique-t ;
 // distant / distant-clair / distant-t : machine où l’on entre à distance (schéma, cadre de terminal) ;
-// branche : commits d’une autre branche dans un graphe de commits (orange, opposé au bleu de main dans toutes les visions).
-// Écarts des couleurs ajoutées à leurs voisines (ΔE simulé, minimum sur les variantes) : branche/notion 37 (achromatopsie),
-// distant/notion et invite 15 (achromatopsie), distant-clair/appli et invite-clair 11 (achromatopsie) ;
+// branche : commits d’une autre branche dans un graphe de commits (orange, opposé au bleu de main dans toutes les visions ;
+// en achromatopsie, un orange clair : main (notion ou hote-t) est plus foncé, la branche plus claire).
+// Écarts des couleurs ajoutées à leurs voisines (ΔE simulé, minimum sur les variantes) : branche/notion 48 et
+// branche/hote-t (couverture) 18 (achromatopsie) ;
+// distant/notion et invite 15 (achromatopsie), distant-clair/appli 17 (projection), invite-clair 11 (achromatopsie) ;
 // distant-t/hote-t, invite-t, imbrique-t 32 dans les dichromasies, 9 en achromatopsie (le trait mixte du cadre double
-// la clarté). Contrastes : texte sur branche 6,0 ; distant-t sur le fond nuit ≥ 4,5 ; distant sur distant-clair ≥ 4,6.
+// la clarté). Contrastes : texte sur branche ≥ 6,0 ; distant-t sur le fond nuit ≥ 4,5 ; distant sur distant-clair ≥ 4,6.
 #let palette-projection = (
   notion: rgb("#1F63C9"), pratique: rgb("#1E7A46"), question: rgb("#9BCCA9"), reponse: rgb("#004D1D"), retenir: rgb("#14213D"),
   precaution: rgb("#F2C94C"), avertissement: rgb("#B4530F"), danger: rgb("#B3123C"),
@@ -42,7 +44,9 @@
 // violet sombre, plus foncé que le bleu des notions.
 #let rouge-vert = (pratique: rgb("#006E7A"), question: rgb("#9CC9D0"), reponse: rgb("#004955"), danger: rgb("#7A0F2A"), invite: rgb("#7A5A00"),
   invite-clair: rgb("#EEDC9A"), invite-t: rgb("#E8C95A"), imbrique-t: rgb("#E8E8E8"),
-  distant: rgb("#3D0F6B"), distant-clair: rgb("#BFA8DE"), distant-t: rgb("#B47499"))
+  distant: rgb("#3D0F6B"), distant-clair: rgb("#BFA8DE"), distant-t: rgb("#B47499"),
+  // l’orange reste distinct du bleu de main : seul l’axe bleu/jaune compte
+  branche: rgb("#E08A1E"))
 #let palettes = (
   deuteranopie: rouge-vert,
   protanopie: rouge-vert,
@@ -50,15 +54,17 @@
   tritanopie: (pratique: rgb("#6B6B00"), question: rgb("#C9C389"), reponse: rgb("#414300"), danger: rgb("#C2002F"), invite: rgb("#8E2C8C"),
     invite-clair: rgb("#F4C6E6"), invite-t: rgb("#F29ACB"), imbrique-t: rgb("#E9E39A"),
     // le distant (turquoise, confondu avec le bleu) devient rouge brique
-    distant: rgb("#9E1C1C"), distant-clair: rgb("#F2B8A8"), distant-t: rgb("#E3573B")),
+    distant: rgb("#9E1C1C"), distant-clair: rgb("#F2B8A8"), distant-t: rgb("#E3573B"),
+    // l’orange reste distinct du bleu de main (ΔE 84 contre la notion)
+    branche: rgb("#E08A1E")),
   // Sans couleur : une échelle de clarté L* (en-têtes retenir 8, danger 18, notion 28, pratique 38,
   // avertissement 48 ; en-têtes clairs à texte foncé : réponse 60, question 74, précaution 90 ; cadres 58/76/91,
-  // cadre distant 67 ; schémas : distant 13, distant-clair 67 ; branche 66, contre notion 28).
+  // cadre distant 67 ; schémas : distant 13, distant-clair 67 ; branche 76, contre notion 28 et hote-t 58).
   achromatopsie: (retenir: rgb("#10172A"), danger: rgb("#620019"), notion: rgb("#1A4082"),
     avertissement: rgb("#A76034"), pratique: rgb("#2D6441"), question: rgb("#90C19E"), reponse: rgb("#729A7D"), precaution: rgb("#FFDF8A"),
     invite: rgb("#714793"), invite-clair: rgb("#CCBADC"), appli: rgb("#E0ECFC"),
     hote-t: rgb("#6C8DBF"), invite-t: rgb("#CAB1E8"), imbrique-t: rgb("#FFDAF4"),
-    distant: rgb("#16203A"), distant-clair: rgb("#9FA3AA"), distant-t: rgb("#A3A3A3")),
+    distant: rgb("#16203A"), distant-clair: rgb("#9FA3AA"), distant-t: rgb("#A3A3A3"), branche: rgb("#EDB06E")),
 )
 #let variantes = ("projection", "dyslexie") + palettes.keys()
 #let variante = sys.inputs.at("variante", default: "projection")
@@ -168,14 +174,16 @@
         if i == lignes.len() - 1 { h(px(12)); box(width: px(14), height: px(28), fill: c.fond) }
       })))
   } else if nom == "tunnel" {
-    // le poste (hôte) relié à une machine distante par un tunnel chiffré, à travers le réseau (gris)
+    // le poste (hôte) relié à une machine distante par un tunnel chiffré, à travers le réseau (gris) ;
+    // la machine distante a le trait mixte des cadres de terminal : sans couleur, elle se distingue du poste par le trait
     stack(spacing: px(16),
       grid(columns: (px(176), px(208), px(176)), align: horizon,
         box(width: px(176), height: px(160), fill: c.hote-t, radius: px(12)),
         box(width: px(208), height: px(56), fill: c.distant-t.transparentize(80%),
           stroke: (y: (paint: c.distant-t, thickness: px(3), dash: "dashed")),
           align(center + horizon, box(width: px(56), height: px(20), radius: px(10), fill: c.distant-t))),
-        box(width: px(176), height: px(160), fill: c.distant-t, radius: px(12)),
+        box(width: px(176), height: px(160), fill: c.distant-t.transparentize(70%), radius: px(12),
+          stroke: (paint: c.distant-t, thickness: px(5), dash: "dash-dotted")),
       ),
       box(width: px(560), height: px(56), fill: c.gris, radius: px(12)),
     )
@@ -190,7 +198,8 @@
         stack(spacing: px(16), ..(128, 96, 112, 80).map(l => box(width: px(l), height: px(16), radius: px(8),
           fill: color.mix((c.hote-t, 45%), (c.nuit, 55%)))))))
       for y in noeuds {
-        place(top + left, dx: px(384), dy: px(y), box(width: px(176), height: px(64), fill: c.distant-t, radius: px(12)))
+        place(top + left, dx: px(384), dy: px(y), box(width: px(176), height: px(64), radius: px(12),
+          fill: c.distant-t.transparentize(70%), stroke: (paint: c.distant-t, thickness: px(5), dash: "dash-dotted")))
       }
     })
   } else { panic("illustration inconnue : " + nom) }

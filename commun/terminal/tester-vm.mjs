@@ -9,7 +9,7 @@ const vendor = path.join(import.meta.dirname, "vendor");
 const { V86 } = createRequire(import.meta.url)(path.join(vendor, "libv86.js"));
 const manifeste = JSON.parse(readFileSync(path.join(vendor, "vm/manifeste.json"), "utf8"));
 const lire = f => { const b = readFileSync(path.join(vendor, f)); return b.buffer.slice(b.byteOffset, b.byteOffset + b.length); };
-const outils = process.argv.slice(2).length ? process.argv.slice(2) : ["bash", "git", "vim", "nano", "tmux", "jq", "gawk", "sed", "less", "tree"];
+const outils = process.argv.slice(2).length ? process.argv.slice(2) : ["bash", "git", "vim", "nano", "tmux", "jq", "gawk", "sed", "less", "tree", "tar", "find", "xargs"];
 
 const debut = Date.now();
 const secondes = () => ((Date.now() - debut) / 1000).toFixed(1);

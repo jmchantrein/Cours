@@ -331,6 +331,44 @@
   place(top + left, polygon(fill: couleur, (px(x2), px(y2)), (px(bx + nx), px(by + ny)), (px(bx - nx), px(by - ny))))
 }
 
+// Canevas : hauteur fixe, éléments posés par pose(…) et fleche-pose(…) en coordonnées de la maquette.
+#let canevas(hauteur, corps) = block(width: 100%, height: px(hauteur), corps)
+
+// Machine d’un schéma : le poste (`distant: false`, bleu) ou une machine où l’on entre à distance (turquoise), comme les
+// cadres de terminal. role : précision sous le nom ; le reste (puces, fichiers…) se place sous le nom, à la suite.
+// #machine(distant: false, role: [poste d’Ada])[client] ; #machine([serveur], [#puce[sshd] #puce[python3]]).
+#let machine(nom, role: none, distant: true, taille: px(28), ..contenu) = {
+  let couleur = if distant { c.distant } else { c.bleu }
+  block(width: 100%, fill: if distant { c.distant-clair } else { c.appli }, stroke: px(3) + couleur,
+    radius: px(12), inset: (x: px(12), y: px(10)), {
+      align(center, {
+        text(size: taille, weight: 600, fill: couleur, nom)
+        if role != none { linebreak(); text(size: px(20), fill: c.encre, role) }
+      })
+      if contenu.pos().len() > 0 { v(px(10)); contenu.pos().join(h(px(8))) }
+    })
+}
+
+// Flèche horizontale dans une grille (largeur de sa cellule), avec un libellé au-dessus et au-dessous.
+// vers : "droite" (défaut) ou "gauche". Hors grille, sur un canevas : fleche-pose.
+#let fleche(haut: none, bas: none, vers: "droite", couleur: c.gris, taille: px(20)) = {
+  let trait = layout(t => box(width: t.width, height: px(18), {
+    if vers == "droite" {
+      place(left + horizon, line(length: t.width - px(14), stroke: px(3) + couleur))
+      place(right + horizon, polygon(fill: couleur, (0pt, 0pt), (px(18), px(9)), (0pt, px(18))))
+    } else {
+      place(right + horizon, line(length: t.width - px(14), stroke: px(3) + couleur))
+      place(left + horizon, polygon(fill: couleur, (px(18), 0pt), (0pt, px(9)), (px(18), px(18))))
+    }
+  }))
+  stack(spacing: px(6),
+    ..(
+      if haut != none { align(center, text(size: taille, fill: couleur, haut)) },
+      trait,
+      if bas != none { align(center, text(size: taille, fill: couleur, bas)) },
+    ).filter(x => x != none))
+}
+
 // ---------- Couverture ----------
 // Illustrations de couverture (dessinées dans charte.typ) : « vm » (trois VM sur un hyperviseur, sur le matériel),
 // « couches » (les couches d’une image : trois en lecture seule, une en lecture/écriture au sommet),

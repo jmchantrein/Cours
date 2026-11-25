@@ -59,7 +59,8 @@ body.terminal-ouvert { padding-bottom: var(--terminal-hauteur); }
 
 /* Terminal xterm.js : fond et couleurs viennent de la charte (terminal.js), la barre de défilement aussi. */
 .terminal-ecran .xterm { height: 100%; }
-.terminal-ecran .xterm-viewport { scrollbar-color: var(--c-commentaire) var(--c-nuit); }
+/* xterm.css peint le défilement en noir : on le remet au fond du terminal. */
+.terminal-ecran .xterm .xterm-viewport { background-color: var(--c-nuit); scrollbar-color: var(--c-commentaire) var(--c-nuit); }
 
 [data-variante="dyslexie"] .terminal-volet { letter-spacing: .03em; }
 

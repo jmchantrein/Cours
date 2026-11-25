@@ -71,7 +71,7 @@ if [ "$mode" = "up" ]; then
     cp /etc/ansible/hello_world.yml .; git add hello_world.yml
     git commit -q -m "Premier playbook" && echo ACCEPTE-1
     cp /etc/ansible/write_hello_world_naif.yaml .; git add write_hello_world_naif.yaml
-    git commit -q -m naif 2> /dev/null && echo ACCEPTE-2 || echo REFUSE-2
+    git commit -q -m naif 2>&1 && echo ACCEPTE-2 || echo REFUSE-2
     git reset -q; printf "#!/bin/sh\necho \$1\n" > a.sh; git add a.sh
     git commit -q -m sh > /dev/null 2>&1 && echo ACCEPTE-3 || echo REFUSE-3'
   ctl bash -c "$crochet" > "$travail/crochet.log" 2>&1 || true

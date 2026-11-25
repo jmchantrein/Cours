@@ -12,40 +12,6 @@
   titre-court: [Accès distants : SSH, tmux, WireGuard],
 )
 
-// ---------- Schémas du cours ----------
-// Une machine : le poste d’Ada (client) en bleu, une machine où l’on entre à distance en turquoise (c.distant),
-// comme les cadres des terminaux (niveau 0 : poste local, niveau "distant" : session distante).
-#let machine(nom, role: none, distant: true, taille: px(28)) = {
-  let couleur = if distant { c.distant } else { c.bleu }
-  block(width: 100%, fill: if distant { c.distant-clair } else { c.appli }, stroke: px(3) + couleur,
-    radius: px(12), inset: (x: px(12), y: px(10)),
-    align(center, {
-      text(size: taille, weight: 600, fill: couleur, nom)
-      if role != none { linebreak(); text(size: px(20), fill: c.encre, role) }
-    }))
-}
-// Flèche horizontale, avec un libellé au-dessus et au-dessous.
-#let fleche(haut: none, bas: none, vers: "droite", couleur: c.gris, taille: px(20)) = {
-  let trait = layout(t => box(width: t.width, height: px(18), {
-    if vers == "droite" {
-      place(left + horizon, line(length: t.width - px(14), stroke: px(3) + couleur))
-      place(right + horizon, polygon(fill: couleur, (0pt, 0pt), (px(18), px(9)), (0pt, px(18))))
-    } else {
-      place(right + horizon, line(length: t.width - px(14), stroke: px(3) + couleur))
-      place(left + horizon, polygon(fill: couleur, (px(18), 0pt), (0pt, px(9)), (px(18), px(18))))
-    }
-  }))
-  stack(spacing: px(6),
-    ..(
-      if haut != none { align(center, text(size: taille, fill: couleur, haut)) },
-      trait,
-      if bas != none { align(center, text(size: taille, fill: couleur, bas)) },
-    ).filter(x => x != none))
-}
-// Une ligne de fichier dans un schéma : chemin en police mono, puis son rôle.
-#let fichier-cle(chemin, role) = block(width: 100%, fill: c.fond, radius: px(8), inset: (x: px(12), y: px(8)),
-  { text(font: mono, size: px(20), fill: c.bleu, chemin); linebreak(); text(size: px(21), role) })
-
 #couverture(illustration: "tunnel")[Accès distants][SSH, tmux, WireGuard][Jean-Mathieu Chantrein][25 novembre 2026]
 #speaker-note[Trois outils pour travailler sur des machines qu’on ne voit pas : SSH pour y entrer, tmux pour ne pas perdre son travail quand la connexion tombe, WireGuard pour relier des réseaux.]
 
@@ -116,20 +82,22 @@
 #slide(repeat: 4, self => {
   let (uncover,) = utils.methods(self)
   grid(columns: (px(560), 1fr, px(560)), column-gutter: px(24), align: horizon,
-    block(width: 100%, stroke: px(3) + c.bleu, radius: px(12), inset: px(14), fill: c.appli, stack(spacing: px(10),
-      align(center, text(size: px(30), weight: 600, fill: c.bleu)[client (Ada)]),
-      fichier-cle("~/.ssh/id_ed25519", [clé *privée* d’Ada : secrète, ne quitte jamais le poste]),
-      fichier-cle("~/.ssh/known_hosts", [clés *publiques* des serveurs déjà rencontrés]),
-    )),
+    machine([client (Ada)], distant: false, taille: px(30), {
+      set text(size: px(21))
+      stack(spacing: px(10),
+        fichier("~/.ssh/id_ed25519", taille: px(19))[clé *privée* d’Ada : secrète, ne quitte jamais le poste],
+        fichier("~/.ssh/known_hosts", taille: px(19))[clés *publiques* des serveurs déjà rencontrés])
+    }),
     stack(spacing: px(36),
       uncover("2-", fleche(vers: "gauche", couleur: c.distant, haut: [① le serveur prouve son identité], bas: [signature par sa clé d’hôte ; le client la compare à `known_hosts`])),
       uncover("3-", fleche(couleur: c.bleu, haut: [② Ada prouve qu’elle détient sa clé privée], bas: [signature de données propres à cette connexion ; vérifiée avec `authorized_keys`])),
     ),
-    block(width: 100%, stroke: px(3) + c.distant, radius: px(12), inset: px(14), fill: c.distant-clair, stack(spacing: px(10),
-      align(center, text(size: px(30), weight: 600, fill: c.distant)[bastion (serveur sshd)]),
-      fichier-cle("~/.ssh/authorized_keys", [clés *publiques* autorisées à entrer sur le compte `ada`]),
-      fichier-cle("/etc/ssh/ssh_host_ed25519_key", [clé *privée* d’hôte du serveur : secrète]),
-    )),
+    machine([bastion (serveur sshd)], taille: px(30), {
+      set text(size: px(21))
+      stack(spacing: px(10),
+        fichier("~/.ssh/authorized_keys", taille: px(19))[clés *publiques* autorisées à entrer sur le compte `ada`],
+        fichier("/etc/ssh/ssh_host_ed25519_key", taille: px(19))[clé *privée* d’hôte du serveur : secrète])
+    }),
   )
   v(px(32))
   uncover("4-", colonnes(bloc(role: "retenir", taille: px(26))[À retenir][
@@ -544,7 +512,7 @@
   note: [Prérequis : curl sur le poste et le serveur ; trois serveurs web de démonstration (python3 -m http.server) : supervision sur 127.0.0.1:8000 du serveur, wiki sur le port 80 du serveur, maquette sur 127.0.0.1:9000 du poste. Le premier curl échoue (code 7 : « Couldn’t connect to server ») : rien n’écoute encore sur 8080. Sans proxy, curl http://serveur/ échoue aussi depuis le poste (code 6 : « Could not resolve host »). --socks5-hostname confie la résolution du nom au proxy, donc au bastion ; --socks5 seul résoudrait le nom sur le poste. Les tunnels passent par le bastion grâce à ProxyJump (\~/.ssh/config). Sortie de curl coupée par […] ; texte complet : « Couldn't connect to server ». Le script de rejeu enchaîne chaque tunnel et sa vérification sur une même ligne : un tunnel qui passe par le bastion (ProxyJump) s’arrête avec le terminal qui l’a lancé.],
 )
 
-== Copier des fichiers : scp et rsync
+== Copier des fichiers : scp et rsync <scp-rsync>
 
 #slide(repeat: 5, self => {
   let (uncover,) = utils.methods(self)
@@ -899,7 +867,7 @@
   note: [tmux 3.4 ; à rejouer sur Debian 13 (tmux 3.5a). new est l’alias de new-session. Les dates de création viennent de l’horloge du serveur. Ces commandes, tapées hors de tmux, s’adressent au serveur tmux de l’utilisateur (socket /tmp/tmux-1000/default) ; tapées dans tmux, elles agissent sur la session courante.],
 )
 
-== Au clavier : le préfixe Ctrl+b
+== Au clavier : le préfixe Ctrl+b <tmux-clavier>
 
 #anime(
   rang(
@@ -1444,5 +1412,5 @@
   note: [Récapitulatif, une idée par clic, dans l’ordre du cours.],
 )
 
-#cloture(illustration: "vm")[Merci][Des questions ?][Jean-Mathieu Chantrein][Supports : github.com/jmchantrein/cours]
+#cloture(illustration: "tunnel")[Merci][Des questions ?][Jean-Mathieu Chantrein][Supports : github.com/jmchantrein/cours]
 #speaker-note[Page de clôture, dans le même design que la couverture.]

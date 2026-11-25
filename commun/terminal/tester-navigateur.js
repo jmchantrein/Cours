@@ -186,19 +186,22 @@ async function connecter(page, url) {
   const froid = Date.now() - t0;
   const telecharges = vmFichiers.length;
   ok(`VM, premier démarrage : prête en ${(froid / 1000).toFixed(1)} s, ${telecharges} fichiers téléchargés`);
+  // Avant les autres commandes, tant que la ligne est encore à l’écran : elle y figure une fois (pas d’écho double).
+  await attendreTexte(page, "printf 'a;1"); await attendre(500);
+  const lignes = (await ecran(page).innerText()).split("\n").filter(l => l.includes("printf 'a;1"));
+  verifier(lignes.length === 1, "VM : la commande mise en attente s’affiche une seule fois");
   for (const [debut, attendu] of [["awk", "Total : 3"], ["sed", "A;1"], ["git init", /^1$/m], ["printf 'été", /^4$/m] /* 3 lettres et la fin de ligne : l’UTF-8 passe */, ["echo un", "un deux"]]) {
     const avant = Date.now();
     await executer(page, debut).click();
     await attendreTexte(page, attendu);
     ok(`VM : « ${debut} » → ${attendu} (${Date.now() - avant} ms)`);
   }
-  const lignes = (await ecran(page).innerText()).split("\n").filter(l => l.includes("printf 'a;1"));
-  verifier(lignes.length === 1, "VM : la commande mise en attente s’affiche une seule fois");
   await page.selectOption("#variante", "achromatopsie");
   await attendre(200);
   const fonds = await page.evaluate(() => [getComputedStyle(document.querySelector(".terminal-ecran:not([hidden]) .xterm-viewport")).backgroundColor,
     getComputedStyle(document.documentElement).getPropertyValue("--c-nuit").trim()]);
-  ok(`VM : le terminal suit la variante (fond ${fonds[0]}, --c-nuit ${fonds[1]})`);
+  const hex = c => "#" + c.match(/\d+/g).slice(0, 3).map(n => (+n).toString(16).padStart(2, "0")).join("");
+  verifier(hex(fonds[0]) === fonds[1].toLowerCase(), `VM : le fond du terminal est celui de la charte en achromatopsie (${fonds[0]}, --c-nuit ${fonds[1]})`);
   await page.selectOption("#variante", "projection");
   for (const [largeur, hauteur] of [[1280, 650], [1920, 950]]) {
     await page.setViewportSize({ width: largeur, height: hauteur });

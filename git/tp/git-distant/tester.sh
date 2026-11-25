@@ -242,7 +242,7 @@ egal "$e : son auteur" "$(gc log -1 --format='%an <%ae>' main)" "Ada Lovelace <a
 egal "$e : identité locale au clone, rien dans la configuration globale" \
   "$(ga config --local user.name) / $(git config --global user.name || echo aucune)" "Ada Lovelace / aucune"
 egal "$e : main suit origin/main" "$(ga rev-parse --abbrev-ref 'main@{upstream}')" "origin/main"
-egal "$e : README.md" "$(cat "$collab/ada/README.md")" "# Site du club"$'\n\n'"Responsable : Ada."
+egal "$e : README.md" "$(cat "$collab/ada/README.md")" "Site du club"$'\n\n'"Responsable : Ada."
 egal "$e : ada, git status --porcelain vide" "$(ga status --porcelain)" ""
 afficher_si_echec "$e" "$n"
 
@@ -287,7 +287,7 @@ contient "$e" "git pull s'arrête sur un conflit" '^CONFLICT \(content\): Merge 
 contient "$e" "git status --short : UU" "^UU README.md$"
 contient "$e" "cat README.md montre les marqueurs" "^<<<<<<< HEAD$"
 egal "$e : commit de fusion à deux parents" "$(parents gc main)" "2"
-egal "$e : README.md résolu" "$(gc show main:README.md)" "# Site des clubs de lecture et de code"$'\n\n'"Responsable : Ada."$'\n'"Contact : grace@example.org"
+egal "$e : README.md résolu" "$(gc show main:README.md)" "Site des clubs de lecture et de code"$'\n\n'"Responsable : Ada."$'\n'"Contact : grace@example.org"
 alignes "$e"; propres "$e"
 afficher_si_echec "$e" "$n"
 

@@ -14,26 +14,17 @@
 )
 
 // ---------- Schéma du modèle d’Ansible (remplace AnsibleMap du site) ----------
-// Une puce de schéma : fond clair des applications (bleu), texte encre.
-#let puce-schema(t, trait: none) = box(fill: if trait == none { c.appli } else { none },
+// Une puce de schéma, dans une machine : fond de la page, texte encre.
+#let puce-schema(t, trait: none) = box(fill: if trait == none { c.fond } else { none },
   stroke: trait, radius: px(8), inset: (x: px(12), y: px(6)), text(size: px(22), weight: 600, t))
-#let machine(nom, couleur, ..puces) = block(width: 100%, stroke: px(3) + couleur, radius: px(12),
-  inset: px(14), fill: c.fond, stack(spacing: px(10),
-    text(size: px(24), weight: 600, fill: couleur, nom),
-    puces.pos().join(h(px(8))),
-  ))
-#let fleche-ssh = grid(columns: (1fr, auto), align: horizon,
-  line(length: 100%, stroke: px(5) + c.gris),
-  polygon(fill: c.gris, (0pt, 0pt), (px(26), px(14)), (0pt, px(28))))
 #let schema-ansible(uncover) = grid(columns: (px(620), 1fr, px(600)), align: horizon, column-gutter: px(16),
-  machine([Nœud de contrôle · control-node], c.bleu,
+  machine([Nœud de contrôle · control-node], distant: false, taille: px(24),
     puce-schema[ansible-core], puce-schema[ansible.cfg], puce-schema[inventaire],
     puce-schema[playbooks, rôles], puce-schema[clé SSH privée]),
   uncover("2-", stack(spacing: px(120),
-    ..range(2).map(_ => stack(spacing: px(6),
-      align(center, text(size: px(22), weight: 600, fill: c.gris)[SSH, port 22]), fleche-ssh)))),
+    ..range(2).map(_ => fleche(haut: [SSH, port 22], taille: px(22))))),
   uncover("2-", stack(spacing: px(24),
-    ..(1, 2).map(i => machine([Nœud géré · managed-node-#i], c.distant,
+    ..(1, 2).map(i => machine([Nœud géré · managed-node-#i], taille: px(24),
       puce-schema[sshd], puce-schema[python3],
       puce-schema(trait: (paint: c.gris, thickness: px(2), dash: "dashed"))[aucun agent])))),
 )
@@ -1057,5 +1048,5 @@
   note: [La documentation est la source à consulter en premier, au TP comme ici : chaque diapositive renvoie à sa page. Contenus relus dans les sources de la documentation (dépôt ansible/ansible-documentation, branche devel) : le site docs.ansible.com n’était pas joignable depuis la machine de préparation ; ouvrir chaque lien avant le cours.],
 )
 
-#cloture(illustration: "vm")[Merci][Des questions ?][Jean-Mathieu Chantrein][Supports : github.com/jmchantrein/cours]
+#cloture(illustration: "noeuds")[Merci][Des questions ?][Jean-Mathieu Chantrein][Supports : github.com/jmchantrein/cours]
 #speaker-note[Page de clôture, dans le même design que la couverture.]
