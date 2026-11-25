@@ -142,19 +142,16 @@ jobs:
             sudo systemctl daemon-reload
             /usr/local/lib/incus-gnu/dd --version | head -n 1
           fi
-          # Ubuntu restreint les espaces de noms utilisateur non privilégiés
-          # (kernel.apparmor_restrict_unprivileged_userns=1 ; Debian 13 ne pose
-          # pas cette restriction). Dans un conteneur système, le processus
-          # qu'un service de systemd 257 crée dans un nouvel espace de noms
-          # utilisateur, « (sd-mkuserns) » (userns_acquire), reçoit alors une
-          # autre étiquette AppArmor (« incus-…//&unconfined ») ; le profil du
-          # conteneur ne permet signal et ptrace que vers sa propre étiquette
-          # (signal peer=@{profile_name}) : systemd ne peut ni l'inspecter ni le
-          # tuer, et journald, networkd et resolved restent « activating ». Sans
-          # networkd, pas de DHCP : les conteneurs n'ont pas d'IPv4.
-          if sysctl -n kernel.apparmor_restrict_unprivileged_userns > /dev/null 2>&1; then
-            sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
-          fi
+          # Conteneurs système sur ce runner : le profil AppArmor d'un conteneur
+          # n'y permet signal et ptrace que vers sa propre étiquette (signal
+          # peer=@{profile_name}), et les processus que systemd 257 crée dans un
+          # espace de noms utilisateur, « (sd-mkuserns) » (userns_acquire), en
+          # portent une autre (« incus-…//&unconfined ») : systemd ne peut ni
+          # les inspecter ni les tuer, journald, networkd et resolved restent
+          # « activating », et sans networkd pas de DHCP. Le sysctl
+          # kernel.apparmor_restrict_unprivileged_userns=0 n'y change rien (run
+          # 45655426279) ; security.nesting=true, qui ajoute « ptrace, signal, »
+          # au profil, le lève : le harnais reçoit --nesting (étape suivante).
           # Le démon relit ses pilotes (qemu) à son démarrage.
           sudo systemctl restart incus
           echo "PATH du démon : $(sudo cat "/proc/$(pgrep -o -x incusd)/environ" | tr '\0' '\n' | sed -n 's/^PATH=//p')"
@@ -180,8 +177,14 @@ jobs:
         env:
           TP: ${{ matrix.tp }}
           DELAI: ${{ matrix.delai }}
+          INCUS: ${{ matrix.incus }}
         run: |
-          if ! timeout -k 3m "$((DELAI - 12))m" sudo --user "$USER" bash "$TP/tester.sh" --up; then
+          # Harnais qui exige Incus : --nesting contourne le refus d'AppArmor
+          # constaté sur ce runner (voir l'étape Incus et « tester.sh --help »).
+          options="--up"
+          if [ "$INCUS" = "true" ]; then options="--up --nesting"; fi
+          # shellcheck disable=SC2086 # options : plusieurs mots
+          if ! timeout -k 3m "$((DELAI - 12))m" sudo --user "$USER" bash "$TP/tester.sh" $options; then
             echo "::error file=$TP/tester.sh::$TP/tester.sh --up a échoué (bilan à la fin du journal)"
             exit 1
           fi

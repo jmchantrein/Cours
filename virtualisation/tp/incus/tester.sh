@@ -5,7 +5,7 @@
 # vérifie ce que l'énoncé annonce : un corrigé qui ne fonctionne plus fait
 # échouer le harnais.
 #
-# Usage : ./tester.sh [--lint | --up] [--only N] [--keep]
+# Usage : ./tester.sh [--lint | --up] [--only N] [--keep] [--nesting]
 #   --lint    (défaut) validation sans Incus : syntaxe, droits et shellcheck des
 #             scripts, validité des YAML (corrigé et squelette cloud-init),
 #             cohérence des fichiers que l'énoncé dit identiques.
@@ -15,6 +15,13 @@
 #             4 et 6 rejouent d'abord celles dont elles dépendent (la VM de
 #             l'étape 1, le site de l'étape 2).
 #   --keep    ne nettoie pas en fin de test (pour examiner un échec).
+#   --nesting pose security.nesting=true sur le profil default du projet de
+#             test. Contournement constaté nécessaire sur le runner Ubuntu
+#             26.04 de l'intégration continue : sans lui, le profil AppArmor
+#             d'un conteneur y refuse à systemd ptrace et signal vers les
+#             processus qu'il crée dans un espace de noms utilisateur ;
+#             journald et networkd ne démarrent pas, le conteneur n'a pas
+#             d'IPv4. L'énoncé ne le demande pas à l'étudiant.
 #
 # Ce que --up vérifie, étape par étape :
 #   1  vm1 est une machine virtuelle, un processus QEMU de l'hôte sous un compte
@@ -72,13 +79,14 @@ projet="tptest"
 pont="tptestbr0"
 marque="user.tptest"   # clé posée sur le projet et le pont que le harnais crée
 
-mode="lint"; seule=""; garder=""
+mode="lint"; seule=""; garder=""; nesting=""
 while [ $# -gt 0 ]; do
   case "$1" in
     --lint) mode="lint" ;;
     --up) mode="up" ;;
     --only) seule="${2:-}"; shift ;;
     --keep) garder="1" ;;
+    --nesting) nesting="1" ;;
     -h | --help) sed -n '2,/^set -euo/p' "$0" | sed '$d'; exit 0 ;;
     *) echo "Option inconnue : $1" >&2; exit 2 ;;
   esac
@@ -344,6 +352,11 @@ preparer() {
     || mourir "Profil default du projet $projet : ajout du disque racine impossible."
   incus profile device add default eth0 nic network="$pont" name=eth0 --project "$projet" > /dev/null \
     || mourir "Profil default du projet $projet : ajout de la carte réseau impossible."
+  if [ -n "$nesting" ]; then
+    incus profile set default security.nesting=true --project "$projet" > /dev/null \
+      || mourir "Profil default du projet $projet : security.nesting=true refusé."
+    info "--nesting : security.nesting=true sur le profil default du projet $projet (contournement, voir --help)"
+  fi
   export INCUS_PROJECT="$projet"
   info "projet $projet, pont $pont ($(incus network get "$pont" ipv4.address --project default 2>&1 || true))"
 }
@@ -517,17 +530,18 @@ diagnostic_reseau() { # $1 conteneur sans IPv4
     info "(tcpdump ou sudo sans mot de passe indisponible : pas de capture DHCP)"
   fi
 
-  # Témoins : la même image, sur incusbr0, puis sur $pont avec security.nesting
+  # Témoins (security.nesting explicite : --nesting le pose sur le profil) :
+  # la même image, sur incusbr0, puis sur $pont avec security.nesting
   # (systemd peut alors monter ce que l'AppArmor d'un conteneur lui refuse),
   # puis privilégié (pas d'espace de noms utilisateur).
   echo "------ témoins : la même image, autrement lancée (adresse attendue 90 s)"
   if incus network show incusbr0 --project default > /dev/null 2>&1 \
-    && incus launch images:debian/13 tptest-temoin-incusbr0 --network incusbr0 > /dev/null 2>&1; then
+    && incus launch images:debian/13 tptest-temoin-incusbr0 --network incusbr0 -c security.nesting=false > /dev/null 2>&1; then
     temoins+=(tptest-temoin-incusbr0)
   fi
   incus launch images:debian/13 tptest-temoin-nesting -c security.nesting=true > /dev/null 2>&1 \
     && temoins+=(tptest-temoin-nesting)
-  incus launch images:debian/13 tptest-temoin-privilegie -c security.privileged=true > /dev/null 2>&1 \
+  incus launch images:debian/13 tptest-temoin-privilegie -c security.privileged=true -c security.nesting=false > /dev/null 2>&1 \
     && temoins+=(tptest-temoin-privilegie)
   pendant 90 tous_adresses "${temoins[@]}" || true
   for t in "${temoins[@]}"; do
