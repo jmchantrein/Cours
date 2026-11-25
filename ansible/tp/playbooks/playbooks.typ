@@ -80,7 +80,7 @@ vous constatez l’idempotence, vous la cassez exprès, et vous la réparez
   Un playbook est une liste de plays (d’où le tiret initial) ; un play a un `hosts` et des `tasks` ; une tâche
   appelle un module par son nom complet : #d("playbook")[Le playbook : un play, des tâches]. Le module `debug` a un
   paramètre `msg`. Documentation :
-  #link("https://docs.ansible.com/ansible/latest/playbook_guide/playbooks_intro.html")[Ansible playbooks].
+  #link("https://docs.ansible.com/projects/ansible/latest/playbook_guide/playbooks_intro.html")[Ansible playbooks].
 ]
 
 #corrige[
@@ -133,7 +133,7 @@ vous constatez l’idempotence, vous la cassez exprès, et vous la réparez
 ]
 #indice(titre: [Indice : l’ordre des sources])[
   La documentation donne la liste complète :
-  #link("https://docs.ansible.com/ansible/latest/playbook_guide/playbooks_variables.html#understanding-variable-precedence")[Understanding variable precedence].
+  #link("https://docs.ansible.com/projects/ansible/latest/playbook_guide/playbooks_variables.html#understanding-variable-precedence")[Understanding variable precedence].
   Le cours en résume l’ordre : #d("precedence-variables")[Précédence : un ordre fixe de sources]. L’option
   `-e` (_extra vars_) de `ansible-playbook` déclare une variable en ligne de commande ; une valeur qui contient
   une espace s’écrit `-e 'variable="deux mots"'`. Pour rejouer la règle et la mettre en défaut :

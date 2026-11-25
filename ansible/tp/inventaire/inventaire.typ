@@ -173,7 +173,7 @@ avec `ssh-copy-id` ou à l’installation de la machine ; ici, vous l’écrivez
 ]
 
 #indice(titre: [Indice : la documentation])[
-  La page #link("https://docs.ansible.com/ansible/latest/reference_appendices/config.html")[Ansible Configuration Settings]
+  La page #link("https://docs.ansible.com/projects/ansible/latest/reference_appendices/config.html")[Ansible Configuration Settings]
   donne l’ordre de recherche des fichiers, et la liste des réglages avec leur clé INI : `inventory` et
   `interpreter_python` sont dans la section `[defaults]`. Le diaporama montre ce fichier :
   #d("labo")[Le labo du cours : trois conteneurs].
@@ -214,7 +214,7 @@ avec `ssh-copy-id` ou à l’installation de la machine ; ici, vous l’écrivez
 #indice(titre: [Indice : le format])[
   Le fichier est en YAML : #d("inventaire")[L’inventaire : les machines et leurs groupes]. Un groupe est une clé
   de premier niveau, sous laquelle `hosts:` liste ses membres ; un hôte peut figurer dans plusieurs groupes. La
-  documentation : #link("https://docs.ansible.com/ansible/latest/inventory_guide/intro_inventory.html")[How to build your inventory].
+  documentation : #link("https://docs.ansible.com/projects/ansible/latest/inventory_guide/intro_inventory.html")[How to build your inventory].
 ]
 #indice(titre: [Indice : la commande ad hoc])[
   `ansible <motif> -m <module>` : le motif désigne les hôtes, et peut être `all`, un hôte ou un groupe :
@@ -308,12 +308,12 @@ avec `ssh-copy-id` ou à l’installation de la machine ; ici, vous l’écrivez
 #indice(titre: [Indice : les facts])[
   `-a` passe les arguments au module : `-a "filter=ansible_distribution*"`. Les facts sont aussi des variables
   `ansible_*` dans les playbooks, à la séance suivante. La documentation :
-  #link("https://docs.ansible.com/ansible/latest/collections/ansible/builtin/setup_module.html")[ansible.builtin.setup].
+  #link("https://docs.ansible.com/projects/ansible/latest/collections/ansible/builtin/setup_module.html")[ansible.builtin.setup].
 ]
 #indice(titre: [Indice : le format de sortie])[
   Le format de la réponse est un réglage de la sortie standard d’Ansible (le *callback* `default`) : cherchez
   `result_format` dans la page
-  #link("https://docs.ansible.com/ansible/latest/collections/ansible/builtin/default_callback.html")[ansible.builtin.default].
+  #link("https://docs.ansible.com/projects/ansible/latest/collections/ansible/builtin/default_callback.html")[ansible.builtin.default].
   Une variable d’environnement le change pour une seule commande.
 ]
 #indice(titre: [Indice : le module file])[

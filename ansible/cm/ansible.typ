@@ -92,7 +92,7 @@
   rang(bloc(role: "retenir")[Déjà vu en Conteneurisation][
     L’« état désiré » d’un orchestrateur : même idée. L’orchestrateur et les agents GitOps (Argo CD, Flux) réconcilient en permanence ; *Ansible* agit quand on le lance, depuis une machine, *sans agent* sur les autres.
   ]),
-  source-de: [#link("https://docs.ansible.com/ansible/latest/getting_started/introduction.html")[docs.ansible.com, Introduction to Ansible] · #link("https://jmchantrein.github.io/Cours/conteneurisation/cm/conteneurisation-projection.pdf")[cours Conteneurisation, « Un orchestrateur maintient l’état désiré »]],
+  source-de: [#link("https://docs.ansible.com/projects/ansible/latest/getting_started/introduction.html")[docs.ansible.com, Introduction to Ansible] · #link("https://jmchantrein.github.io/Cours/conteneurisation/cm/conteneurisation-projection.pdf")[cours Conteneurisation, « Un orchestrateur maintient l’état désiré »]],
   note: _note,
 )
 
@@ -116,7 +116,7 @@
   rangee(poids: (1.6, 1),
     h => bloc-anime(b1, 3, uncover, hauteur: h),
     h => bloc-anime(b2, 5, uncover, hauteur: h))
-  source[#link("https://docs.ansible.com/ansible/latest/getting_started/index.html")[docs.ansible.com, Getting started] · #link("https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html")[Installation guide]]
+  source[#link("https://docs.ansible.com/projects/ansible/latest/getting_started/index.html")[docs.ansible.com, Getting started] · #link("https://docs.ansible.com/projects/ansible/latest/installation_guide/intro_installation.html")[Installation guide]]
   utils.speaker-note(self: self, _note)
 })
 
@@ -142,7 +142,7 @@
   rang(bloc(role: "retenir", taille: px(26))[À retenir][
     Chaque tâche ouvre des connexions SSH, dépose un petit programme Python (le *module*), l’exécute, lit sa réponse en JSON, puis l’efface : rien ne reste installé.
   ]),
-  source-de: [#link("https://docs.ansible.com/ansible/latest/dev_guide/developing_program_flow_modules.html")[docs.ansible.com, Ansible module architecture]],
+  source-de: [#link("https://docs.ansible.com/projects/ansible/latest/dev_guide/developing_program_flow_modules.html")[docs.ansible.com, Ansible module architecture]],
   note: _note,
 )
 
@@ -179,7 +179,7 @@
   rang(bloc(taille: px(25))[Prérequis][
     - Nœud de contrôle : `ansible-core`, un client SSH, une paire de clés ; nœuds gérés : `sshd`, `python3` (`python3-apt` pour le module `apt`)
   ]),
-  source-de: [#link("https://docs.ansible.com/ansible/latest/reference_appendices/config.html")[docs.ansible.com, Ansible Configuration Settings]],
+  source-de: [#link("https://docs.ansible.com/projects/ansible/latest/reference_appendices/config.html")[docs.ansible.com, Ansible Configuration Settings]],
   note: _note,
 )
 
@@ -223,7 +223,7 @@
       - `all` et `ungrouped` : toujours là, même non déclarés
     ],
   ),
-  source-de: [#link("https://docs.ansible.com/ansible/latest/inventory_guide/intro_inventory.html")[docs.ansible.com, How to build your inventory]],
+  source-de: [#link("https://docs.ansible.com/projects/ansible/latest/inventory_guide/intro_inventory.html")[docs.ansible.com, How to build your inventory]],
   note: _note,
 )
 
@@ -257,7 +257,7 @@
       - Un nom inconnu : aucun hôte, un simple avertissement
     ],
   ),
-  source-de: [#link("https://docs.ansible.com/ansible/latest/inventory_guide/intro_patterns.html")[docs.ansible.com, Patterns: targeting hosts and groups]],
+  source-de: [#link("https://docs.ansible.com/projects/ansible/latest/inventory_guide/intro_patterns.html")[docs.ansible.com, Patterns: targeting hosts and groups]],
   note: _note,
 )
 
@@ -348,7 +348,7 @@
     - *Module* : l’unité d’action, nommée par son nom complet (FQCN) : `ansible.builtin.apt`, `copy`, `service`, `template`… ; `ansible-doc <module>` le documente
     - *Facts* : ce qu’Ansible relève sur un nœud (distribution, adresses, mémoire), disponible en variables `ansible_*`
   ]),
-  source-de: [#link("https://docs.ansible.com/ansible/latest/command_guide/intro_adhoc.html")[docs.ansible.com, Introduction to ad hoc commands] · #link("https://docs.ansible.com/ansible/latest/collections/ansible/builtin/index.html")[ansible.builtin]],
+  source-de: [#link("https://docs.ansible.com/projects/ansible/latest/command_guide/intro_adhoc.html")[docs.ansible.com, Introduction to ad hoc commands] · #link("https://docs.ansible.com/projects/ansible/latest/collections/ansible/builtin/index.html")[ansible.builtin]],
   note: _note,
 )
 
@@ -399,7 +399,7 @@
       ]
     ],
   ),
-  source-de: [#link("https://docs.ansible.com/ansible/latest/playbook_guide/playbooks_intro.html")[docs.ansible.com, Ansible playbooks]],
+  source-de: [#link("https://docs.ansible.com/projects/ansible/latest/playbook_guide/playbooks_intro.html")[docs.ansible.com, Ansible playbooks]],
   note: _note,
 )
 
@@ -425,7 +425,7 @@
       ], 6, uncover),
     ),
   )
-  source[#link("https://docs.ansible.com/ansible/latest/reference_appendices/glossary.html")[docs.ansible.com, Glossary (Idempotency)]]
+  source[#link("https://docs.ansible.com/projects/ansible/latest/reference_appendices/glossary.html")[docs.ansible.com, Glossary (Idempotency)]]
   utils.speaker-note(self: self, _note)
 })
 
@@ -473,7 +473,7 @@
       ]
     ],
   ),
-  source-de: [#link("https://docs.ansible.com/ansible/latest/collections/ansible/builtin/apt_module.html")[docs.ansible.com, ansible.builtin.apt]],
+  source-de: [#link("https://docs.ansible.com/projects/ansible/latest/collections/ansible/builtin/apt_module.html")[docs.ansible.com, ansible.builtin.apt]],
   note: _note,
 )
 
@@ -523,7 +523,7 @@
       ]
     ],
   ),
-  source-de: [#link("https://docs.ansible.com/ansible/latest/collections/ansible/builtin/shell_module.html")[ansible.builtin.shell] · #link("https://docs.ansible.com/ansible/latest/collections/ansible/builtin/command_module.html")[ansible.builtin.command]],
+  source-de: [#link("https://docs.ansible.com/projects/ansible/latest/collections/ansible/builtin/shell_module.html")[ansible.builtin.shell] · #link("https://docs.ansible.com/projects/ansible/latest/collections/ansible/builtin/command_module.html")[ansible.builtin.command]],
   note: _note,
 )
 
@@ -572,7 +572,7 @@
       ]
     ],
   ),
-  source-de: [#link("https://docs.ansible.com/ansible/latest/collections/ansible/builtin/shell_module.html")[ansible.builtin.shell, paramètre creates] · #link("https://docs.ansible.com/ansible/latest/collections/ansible/builtin/lineinfile_module.html")[ansible.builtin.lineinfile]],
+  source-de: [#link("https://docs.ansible.com/projects/ansible/latest/collections/ansible/builtin/shell_module.html")[ansible.builtin.shell, paramètre creates] · #link("https://docs.ansible.com/projects/ansible/latest/collections/ansible/builtin/lineinfile_module.html")[ansible.builtin.lineinfile]],
   note: _note,
 )
 
@@ -664,7 +664,7 @@
       - `-e` (_extra vars_) : sur la ligne de commande
     ],
   ),
-  source-de: [#link("https://docs.ansible.com/ansible/latest/inventory_guide/intro_inventory.html")[docs.ansible.com, Organizing host and group variables]],
+  source-de: [#link("https://docs.ansible.com/projects/ansible/latest/inventory_guide/intro_inventory.html")[docs.ansible.com, Organizing host and group variables]],
   note: _note,
 )
 
@@ -701,7 +701,7 @@
     ),
   )
   uncover("4-", place(bottom + right, dy: px(-8), block(width: px(764), note(role: "precaution", taille: px(22))[« Le plus spécifique gagne » : vrai entre groupes d’une même source seulement : `group_vars/` bat les variables de groupe du fichier d’inventaire, et un `vars:` de play bat `host_vars`.])))
-  source[#link("https://docs.ansible.com/ansible/latest/playbook_guide/playbooks_variables.html#understanding-variable-precedence")[docs.ansible.com, Understanding variable precedence]]
+  source[#link("https://docs.ansible.com/projects/ansible/latest/playbook_guide/playbooks_variables.html#understanding-variable-precedence")[docs.ansible.com, Understanding variable precedence]]
   utils.speaker-note(self: self, _note)
 })
 
@@ -748,7 +748,7 @@
       ]
     ],
   ),
-  source-de: [#link("https://docs.ansible.com/ansible/latest/playbook_guide/playbooks_variables.html#understanding-variable-precedence")[docs.ansible.com, Understanding variable precedence]],
+  source-de: [#link("https://docs.ansible.com/projects/ansible/latest/playbook_guide/playbooks_variables.html#understanding-variable-precedence")[docs.ansible.com, Understanding variable precedence]],
   note: _note,
 )
 
@@ -784,7 +784,7 @@
       - L’hôte bat tous ses groupes
     ],
   ),
-  source-de: [#link("https://docs.ansible.com/ansible/latest/inventory_guide/intro_inventory.html#how-variables-are-merged")[docs.ansible.com, How variables are merged]],
+  source-de: [#link("https://docs.ansible.com/projects/ansible/latest/inventory_guide/intro_inventory.html#how-variables-are-merged")[docs.ansible.com, How variables are merged]],
   note: _note,
 )
 
@@ -878,7 +878,7 @@
       - Un seul gabarit, un port par environnement
     ],
   ),
-  source-de: [#link("https://docs.ansible.com/ansible/latest/collections/ansible/builtin/template_module.html")[ansible.builtin.template] · #link("https://jinja.palletsprojects.com/en/stable/templates/")[Jinja, Template Designer Documentation]],
+  source-de: [#link("https://docs.ansible.com/projects/ansible/latest/collections/ansible/builtin/template_module.html")[ansible.builtin.template] · #link("https://jinja.palletsprojects.com/en/stable/templates/")[Jinja, Template Designer Documentation]],
   note: _note,
 )
 
@@ -931,7 +931,7 @@
       ]
     ],
   ),
-  source-de: [#link("https://docs.ansible.com/ansible/latest/playbook_guide/playbooks_handlers.html")[docs.ansible.com, Handlers: running operations on change]],
+  source-de: [#link("https://docs.ansible.com/projects/ansible/latest/playbook_guide/playbooks_handlers.html")[docs.ansible.com, Handlers: running operations on change]],
   note: _note,
 )
 
@@ -979,7 +979,7 @@
       - *Ansible Galaxy* partage rôles et *collections* (rôles, modules, plugins versionnés ensemble)
     ],
   ),
-  source-de: [#link("https://docs.ansible.com/ansible/latest/playbook_guide/playbooks_reuse_roles.html")[docs.ansible.com, Roles] · #link("https://galaxy.ansible.com")[galaxy.ansible.com]],
+  source-de: [#link("https://docs.ansible.com/projects/ansible/latest/playbook_guide/playbooks_reuse_roles.html")[docs.ansible.com, Roles] · #link("https://galaxy.ansible.com")[galaxy.ansible.com]],
   note: _note,
 )
 
@@ -1023,7 +1023,7 @@
       ]
     ],
   ),
-  source-de: [#link("https://docs.ansible.com/ansible/latest/tips_tricks/ansible_tips_tricks.html")[docs.ansible.com, General tips] · #link("https://docs.ansible.com/projects/lint/rules/")[ansible-lint, Rules]],
+  source-de: [#link("https://docs.ansible.com/projects/ansible/latest/tips_tricks/ansible_tips_tricks.html")[docs.ansible.com, General tips] · #link("https://docs.ansible.com/projects/lint/rules/")[ansible-lint, Rules]],
   note: _note,
 )
 
@@ -1041,7 +1041,7 @@
       - Les secrets chiffrés par Ansible Vault
     ],
   ),
-  source-de: [#link("https://docs.ansible.com/ansible/latest/tips_tricks/ansible_tips_tricks.html")[docs.ansible.com, General tips] · #link("https://docs.ansible.com/projects/lint/rules/")[ansible-lint, Rules]],
+  source-de: [#link("https://docs.ansible.com/projects/ansible/latest/tips_tricks/ansible_tips_tricks.html")[docs.ansible.com, General tips] · #link("https://docs.ansible.com/projects/lint/rules/")[ansible-lint, Rules]],
   note: [Les bonnes pratiques de « General tips » que le cours a mises en œuvre : un nom et un module de nom complet par tâche, un état explicite, un module dédié plutôt que shell ou command (diapositives sur l’idempotence), Git et ansible-lint (TP, séance 2), --check --diff, second passage à changed=0. Ansible Vault sort du cadre du cours : les secrets s’y chiffrent, voir la documentation.],
 )
 
@@ -1065,9 +1065,9 @@
 == Sources
 #anime(
   rang(bloc(taille: px(24))[Documentation officielle (docs.ansible.com)][
-    - #link("https://docs.ansible.com/ansible/latest/getting_started/introduction.html")[Introduction to Ansible] ; #link("https://docs.ansible.com/ansible/latest/inventory_guide/intro_inventory.html")[How to build your inventory] ; #link("https://docs.ansible.com/ansible/latest/inventory_guide/intro_patterns.html")[Patterns]
-    - #link("https://docs.ansible.com/ansible/latest/command_guide/intro_adhoc.html")[Ad hoc commands] ; #link("https://docs.ansible.com/ansible/latest/playbook_guide/playbooks_intro.html")[Playbooks] ; #link("https://docs.ansible.com/ansible/latest/playbook_guide/playbooks_handlers.html")[Handlers] ; #link("https://docs.ansible.com/ansible/latest/playbook_guide/playbooks_reuse_roles.html")[Roles]
-    - #link("https://docs.ansible.com/ansible/latest/playbook_guide/playbooks_variables.html")[Using variables, Understanding variable precedence] ; #link("https://docs.ansible.com/ansible/latest/tips_tricks/ansible_tips_tricks.html")[General tips]
+    - #link("https://docs.ansible.com/projects/ansible/latest/getting_started/introduction.html")[Introduction to Ansible] ; #link("https://docs.ansible.com/projects/ansible/latest/inventory_guide/intro_inventory.html")[How to build your inventory] ; #link("https://docs.ansible.com/projects/ansible/latest/inventory_guide/intro_patterns.html")[Patterns]
+    - #link("https://docs.ansible.com/projects/ansible/latest/command_guide/intro_adhoc.html")[Ad hoc commands] ; #link("https://docs.ansible.com/projects/ansible/latest/playbook_guide/playbooks_intro.html")[Playbooks] ; #link("https://docs.ansible.com/projects/ansible/latest/playbook_guide/playbooks_handlers.html")[Handlers] ; #link("https://docs.ansible.com/projects/ansible/latest/playbook_guide/playbooks_reuse_roles.html")[Roles]
+    - #link("https://docs.ansible.com/projects/ansible/latest/playbook_guide/playbooks_variables.html")[Using variables, Understanding variable precedence] ; #link("https://docs.ansible.com/projects/ansible/latest/tips_tricks/ansible_tips_tricks.html")[General tips]
     - #link("https://docs.ansible.com/projects/lint/rules/")[ansible-lint, Rules] ; #link("https://jinja.palletsprojects.com/en/stable/templates/")[Jinja, Template Designer Documentation]
   ]),
   rang(bloc(role: "pratique", taille: px(24))[Pour pratiquer][

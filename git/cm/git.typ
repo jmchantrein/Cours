@@ -1521,7 +1521,7 @@
     ]),
   )
   uncover("7-", note(role: "retenir")[`main` ne reçoit que du travail relu, et passé par les tests automatiques ; personne n’y pousse directement. La forge peut l’imposer (branche protégée).])
-  source[#link("https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/about-pull-requests")[GitHub Docs, About pull requests] · #link("https://docs.gitlab.com/user/project/merge_requests/")[GitLab Docs, Merge requests]]
+  source[#link("https://docs.github.com/en/pull-requests/get-started/about-pull-requests")[GitHub Docs, About pull requests] · #link("https://docs.gitlab.com/user/project/merge_requests/")[GitLab Docs, Merge requests]]
   utils.speaker-note(self: self)[Une étape par clic ; le terminal montre les étapes 2 et 3 du fil rouge. La demande de fusion n’est pas une commande Git : c’est une fonction de la forge (GitHub, GitLab, Forgejo), qui montre les différences, recueille les commentaires et lance l’intégration continue (GitHub Actions, GitLab CI). Sur une forge, git push d’une nouvelle branche répond en général par un lien pour ouvrir la demande : sortie à rejouer sur une forge réelle, le relevé n’emploie qu’un dépôt nu. Ce flux est souvent appelé « GitHub flow ». Bonnes pratiques du cours d’origine : une branche par fonctionnalité ou correctif, git pull régulier, intégration continue.]
 })
 

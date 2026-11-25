@@ -135,7 +135,7 @@ et #link("../playbooks/index.html")[playbooks].
 #indice(titre: [Indice : la commande])[
   `ansible-galaxy role init --help` donne l’option qui choisit le dossier où créer le rôle (`--init-path`). Le
   nom du rôle est un identifiant : lettres, chiffres, soulignés. La structure complète est décrite par
-  #link("https://docs.ansible.com/ansible/latest/playbook_guide/playbooks_reuse_roles.html")[Roles] dans la
+  #link("https://docs.ansible.com/projects/ansible/latest/playbook_guide/playbooks_reuse_roles.html")[Roles] dans la
   documentation, et par #d("roles")[Rôles : ranger un service, le réutiliser].
 ]
 
@@ -229,7 +229,7 @@ et #link("../playbooks/index.html")[playbooks].
   seule fois, après toutes les tâches du play :
   #d("handlers")[Handlers : redémarrer seulement si besoin]. Le nom dans `notify` doit être exactement celui du
   handler. Documentation :
-  #link("https://docs.ansible.com/ansible/latest/playbook_guide/playbooks_handlers.html")[Handlers: running operations on change].
+  #link("https://docs.ansible.com/projects/ansible/latest/playbook_guide/playbooks_handlers.html")[Handlers: running operations on change].
 ]
 #indice(titre: [Indice : les modules])[
   `ansible-doc ansible.builtin.apt`, `ansible.builtin.copy`, `ansible.builtin.template`, `ansible.builtin.service` :
@@ -336,7 +336,7 @@ et #link("../playbooks/index.html")[playbooks].
 ]
 
 #indice(titre: [Indice : la liste de la documentation])[
-  #link("https://docs.ansible.com/ansible/latest/playbook_guide/playbooks_variables.html#understanding-variable-precedence")[Understanding variable precedence]
+  #link("https://docs.ansible.com/projects/ansible/latest/playbook_guide/playbooks_variables.html#understanding-variable-precedence")[Understanding variable precedence]
   numérote les sources du plus faible au plus fort ; le cours en donne un résumé :
   #d("precedence-variables")[Précédence : un ordre fixe de sources]. Cherchez-y `defaults`, `inventory group_vars`
   et `extra vars`.
@@ -470,5 +470,5 @@ et #link("../playbooks/index.html")[playbooks].
   un `requirements.yml` liste ce qu’un projet en emprunte, et `ansible-galaxy install -r requirements.yml` les
   installe. Lire le code d’un rôle éprouvé est un bon exercice. Pour tester un rôle dans des instances jetables,
   voir #link("https://ansible.readthedocs.io/projects/molecule/")[Molecule]. Pour chiffrer des secrets dans le dépôt :
-  #link("https://docs.ansible.com/ansible/latest/vault_guide/index.html")[Ansible Vault].
+  #link("https://docs.ansible.com/projects/ansible/latest/vault_guide/index.html")[Ansible Vault].
 ]

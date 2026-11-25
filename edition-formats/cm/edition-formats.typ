@@ -291,7 +291,7 @@
   rang(bloc(role: "precaution", taille: px(24))[Le motif est une expression régulière][
     - Le `.` y vaut n’importe quel caractère : `example.org` trouve aussi « exampleXorg ». Pour un point littéral : `example\.org`
   ]),
-  source-de: link("https://vimhelp.org/change.txt.html#:substitute")[Vim, `:help :substitute`],
+  source-de: link("https://vimhelp.org/change.txt.html#%3Asubstitute")[Vim, `:help :substitute`],
   note: [Les lignes qui suivent chaque commande sont le début du fichier obtenu (relevé après :wq ; Vim 9.1.1230, Debian 13). Ce terminal montre la ligne de commande de Vim (« : »), pas celle du shell. Avec le drapeau c, Vim demande pour chaque occurrence : y (oui), n (non), a (toutes), q (quitter). & répète la dernière substitution sur la ligne courante.],
 )
 
@@ -867,7 +867,7 @@
   rang(bloc(role: "retenir", taille: px(24))[En pratique][
     - Du JSON se colle dans un fichier YAML. L’inverse est faux : commentaires et ancres n’ont pas d’équivalent JSON
   ]),
-  source-de: [#link("https://yaml.org/spec/1.2.2/#12-yaml-history")[YAML 1.2.2, § 1.2] · #link("https://www.rfc-editor.org/rfc/rfc8259#section-4")[RFC 8259, § 4]],
+  source-de: [#link("https://yaml.org/spec/1.2.2/#12-yaml-history")[YAML 1.2.2, § 1.2] · #link("https://www.rfc-editor.org/rfc/rfc8259.html#section-4")[RFC 8259, § 4]],
   note: [ruamel.yaml 0.18.10 refuse ce fichier (DuplicateKeyError) ; PyYAML garde la dernière valeur sans rien dire. La trace de PyYAML est abrégée (« \# … ») : elle se termine par yaml.scanner.ScannerError, while scanning for the next token. Sorties réelles, conteneur Debian 13, PyYAML 6.0.2 et ruamel.yaml 0.18.10 (python3-yaml et python3-ruamel.yaml). Le cours d’origine renvoie à l’article JSON::XS « JSON and YAML » sur les cas limites ; le site disait « pas tout à fait » sans préciser : la réponse dépend de l’analyseur, pas seulement de la version de YAML. Relevés pour la tabulation : le chargeur Python pur de PyYAML (yaml.safe_load, yamllint) la refuse ; son chargeur C (CSafeLoader, celui de yq 3.4.3) la lit ; ruamel.yaml la lit, avec ou sans directive %YAML 1.1 (typ safe, pure ou non, aller-retour) ; le yq Go aussi. C’est donc une limite de l’analyseur Python de PyYAML, non un refus que la version 1.1 imposerait.],
 )
 
@@ -886,7 +886,7 @@
     ([date], [`2024-01-15`], [pas dans le schéma de base ; ruamel.yaml en fait pourtant une date, hors schéma]),
     ([chaîne], [tout le reste : `web01`, `1.2.3`, `"1984"`], [tout le reste, dont `yes`, `NO`, `22:22`]),
   ))),
-  source-de: [#link("https://yaml.org/type/bool.html")[YAML 1.1, types] · #link("https://yaml.org/spec/1.2.2/#1023-core-schema")[YAML 1.2.2, § 10.2.3 Core Schema]],
+  source-de: [#link("https://yaml.org/type/bool.html")[YAML 1.1, types] · #link("https://yaml.org/spec/1.2.2/#103-core-schema")[YAML 1.2.2, § 10.3 Core Schema]],
   note: [Le tableau résume les relevés des deux diapositives suivantes. La spécification 1.1 inclut aussi y, Y, n, N parmi les booléens ; PyYAML ne les applique pas (y reste une chaîne, relevé). Le schéma de base 1.2 n’a pas de type date ; ruamel.yaml (typ safe, 1.2 par défaut) en construit pourtant une, hors schéma (PyYAML, lui, la tient de la spécification 1.1) ; yq (Go) l’étiquette !!timestamp mais l’écrit en chaîne. Une directive %YAML 1.1 en tête de document fait lire ruamel.yaml en 1.1 avec YAML(typ="safe", pure=True) (relevé : False pour no), mais pas avec YAML(typ="safe") seul, qui garde la chaîne « no » (ruamel.yaml 0.18.10) ; PyYAML ignore %YAML 1.2 et reste en 1.1 (relevé). JSON a les mêmes types, sans date.],
 )
 
@@ -963,7 +963,7 @@
     - `1.10` devenue `1.1`, en YAML 1.1 comme en 1.2
     - Une date que `json.dumps` refuse (`TypeError`), en 1.1 (PyYAML) et avec ruamel.yaml (1.2). Guillemets !
   ]),
-  source-de: [#link("https://yaml.org/type/int.html")[YAML 1.1, int] · #link("https://yaml.org/spec/1.2.2/#1023-core-schema")[YAML 1.2.2, Core Schema] · #link("https://docs.docker.com/reference/compose-file/services/#ports")[Compose, ports]],
+  source-de: [#link("https://yaml.org/type/int.html")[YAML 1.1, int] · #link("https://yaml.org/spec/1.2.2/#103-core-schema")[YAML 1.2.2, Core Schema] · #link("https://docs.docker.com/reference/compose-file/workload-spec/#ports")[Compose, ports]],
   note: [Relevés réels, conteneur Debian 13 : PyYAML 6.0.2 (yaml.safe\_load), ruamel.yaml 0.18.10 (YAML(typ="safe"), 1.2 par défaut), tous deux paquets Debian ; yq Go v4.44.3 (yq -o=json), binaire amont, absent de Debian (rejouer.sh) ; yq Debian 3.4.3 (yq -c .), le yq du cours : il lit 0644 et 0o644 comme 420 (octal, comme PyYAML pour 0644), mais 22:22 et la date comme des chaînes. 0644 en 1.1 : octal, soit 420 ; en 1.2, l’octal s’écrit 0o644, et 0644 est un entier décimal. 22:22 en 1.1 : 22 × 60 + 22 = 1342 (entier sexagésimal) ; la documentation de Compose recommande de mettre les ports entre guillemets pour cette raison. 1.10 est un flottant dans les deux versions : une version s’écrit entre guillemets. La date : PyYAML rend un datetime.date, que le module json ne sait pas écrire. 1984 sans guillemets : un entier, d’où les guillemets du titre dans l’exercice.],
 )
 

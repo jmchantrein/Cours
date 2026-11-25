@@ -473,7 +473,7 @@
 
 == Les opérateurs de test
 
-#let _note = [#versions Tous viennent du cours d’origine. -a et -o sont marqués obsolescents par POSIX (ambigus selon le nombre d’arguments) ; Bash les accepte encore, comme le montre l’exemple.]
+#let _note = [#versions Tous viennent du cours d’origine. -a et -o étaient obsolescents dans POSIX.1-2018 (ambigus selon le nombre d’arguments) et ont été retirés de POSIX.1-2024 (Issue 8, défaut 1330) ; Bash les accepte encore, comme le montre l’exemple.]
 #anime(
   rang(
     bloc(taille: px(24))[Fichiers][
@@ -500,12 +500,12 @@
       $ annee=1843
       $ [ "$annee" -lt 1900 ] && echo "XIXe siècle"
       XIXe siècle
-      # -a (et), -o (ou) : obsolescents selon POSIX (norme des shells Unix)
+      # -a (et), -o (ou) : retirés de POSIX.1-2024 (norme des shells Unix)
       $ [ "$annee" -lt 1900 -a -f pionnieres.csv ] && echo "les deux"
       les deux
       ```]
   ]),
-  source-de: link("https://pubs.opengroup.org/onlinepubs/9699919799/utilities/test.html")[POSIX, test],
+  source-de: link("https://pubs.opengroup.org/onlinepubs/9799919799/utilities/test.html")[POSIX, test],
   note: _note,
 )
 

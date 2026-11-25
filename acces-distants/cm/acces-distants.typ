@@ -103,7 +103,7 @@
   uncover("4-", colonnes(bloc(role: "retenir", taille: px(26))[À retenir][
     Chacun garde sa clé privée ; seules des *signatures* traversent le réseau. Une clé publique volée ne permet pas d’entrer : elle sert seulement à vérifier.
   ]))
-  source[#link("https://man.openbsd.org/ssh#AUTHENTICATION")[man ssh, AUTHENTICATION] · #link("https://www.rfc-editor.org/rfc/rfc4252#section-7")[RFC 4252, § 7] · #link("https://www.rfc-editor.org/rfc/rfc4253#section-8")[RFC 4253, § 8]]
+  source[#link("https://man.openbsd.org/ssh#AUTHENTICATION")[man ssh, AUTHENTICATION] · #link("https://www.rfc-editor.org/rfc/rfc4252.html#section-7")[RFC 4252, § 7] · #link("https://www.rfc-editor.org/rfc/rfc4253.html#section-8")[RFC 4253, § 8]]
   utils.speaker-note(self: self)[Un clic par étape. Ordre réel du protocole : d’abord l’échange de clés, où le serveur signe avec sa clé d’hôte (RFC 4253, § 8) ; le client vérifie cette clé contre known\_hosts. Ensuite l’authentification de l’utilisateur (RFC 4252, § 7) : le client signe des données qui contiennent l’identifiant de session, propre à cette connexion ; le serveur vérifie la signature avec la clé publique trouvée dans authorized\_keys. Le cours d’origine parlait d’un « défi cryptographique que seule la clé privée peut résoudre » : c’est l’idée, la signature de données propres à la session en est la forme exacte (man ssh : « The client proves that it has access to the private key and the server checks that the corresponding public key is authorized »). Diapo de référence pour le TP SSH.]
 })
 
@@ -205,7 +205,7 @@
       + La clé publique est ajoutée à `~/.ssh/authorized_keys` sur le bastion
     ],
   ),
-  source-de: link("https://man.openbsd.org/ssh-copy-id")[man ssh-copy-id],
+  source-de: link("https://man7.org/linux/man-pages/man1/ssh-copy-id.1.html")[man ssh-copy-id],
   note: [Sortie réelle (OpenSSH 10.0, Debian 13) ; deux lignes INFO trop longues sont coupées et signalées par […] : « attempting to log in with the new key(s), to filter out any that are already installed » et « 1 key(s) remain to be installed -- if you are prompted now it is to install the new keys ». ssh-copy-id suppose que le mot de passe est encore accepté : c’est l’amorçage. Sans ssh-copy-id : copier le contenu de id\_ed25519.pub à la fin de \~/.ssh/authorized\_keys sur le serveur, avec les droits 700 sur \~/.ssh et 600 sur le fichier.],
 )
 
@@ -1048,7 +1048,7 @@
     bloc(taille: px(25))[Ce que c’est][
       - Un VPN conçu pour être *simple* : une interface, une paire de clés par pair, quelques lignes de configuration
       - *Dans le noyau Linux* depuis la version 5.6 (2020) ; aussi sur Windows, macOS, Android, iOS
-      - Peu de code (environ 4 000 lignes à sa publication) : plus facile à relire et à auditer qu’OpenVPN ou IPsec
+      - Peu de code (moins de 4 000 lignes à sa publication, primitives cryptographiques exclues) : plus facile à relire et à auditer qu’OpenVPN ou IPsec
     ],
     bloc(taille: px(25))[Une cryptographie fixée][
       - Des algorithmes récents et *non négociables* : Curve25519, ChaCha20-Poly1305, BLAKE2s
@@ -1059,7 +1059,7 @@
     Les clés, les `AllowedIPs`, le pare-feu et l’adressage restent à régler ; une erreur y ouvre ou coupe le tunnel.
   ]),
   source-de: [#link("https://www.wireguard.com/")[wireguard.com] · #link("https://www.wireguard.com/protocol/")[wireguard.com/protocol] · #link("https://www.wireguard.com/papers/wireguard.pdf")[J. Donenfeld, « WireGuard », NDSS 2017]],
-  note: [Intégration au noyau 5.6 (mars 2020 ; TODO.Debian du paquet wireguard de Debian 13 : « wireguard metapackage should accept a 5.6 (or later) kernel instead of a module »). Primitives, lues dans les sources du noyau (paquet linux-source-6.12 de Debian 13, drivers/net/wireguard) : la poignée de main y est nommée « Noise\_IKpsk2\_25519\_ChaChaPoly\_BLAKE2s » (noise.c), avec HKDF (noise.c) et SipHash (peerlookup.c, ratelimiter.c) ; le Kconfig sélectionne CRYPTO\_LIB\_CURVE25519 et CRYPTO\_LIB\_CHACHA20POLY1305. Taille : « environ 4 000 lignes » est le chiffre du papier de 2017 pour la première version ; dans Linux 6.12, drivers/net/wireguard compte 6 067 lignes de C (.c et .h), environ 4 650 sans lignes vides ni commentaires. Le cours d’origine parlait d’un outil « audité par des cryptographes » : aucune source accessible depuis l’environnement de rédaction, à préciser avant de le réaffirmer. Le site disait « pas de mauvaise configuration possible » : faux, d’où l’encadré.],
+  note: [Intégration au noyau 5.6 (mars 2020 ; TODO.Debian du paquet wireguard de Debian 13 : « wireguard metapackage should accept a 5.6 (or later) kernel instead of a module »). Primitives, lues dans les sources du noyau (paquet linux-source-6.12 de Debian 13, drivers/net/wireguard) : la poignée de main y est nommée « Noise\_IKpsk2\_25519\_ChaChaPoly\_BLAKE2s » (noise.c), avec HKDF (noise.c) et SipHash (peerlookup.c, ratelimiter.c) ; le Kconfig sélectionne CRYPTO\_LIB\_CURVE25519 et CRYPTO\_LIB\_CHACHA20POLY1305. Taille : « moins de 4 000 lignes (hors primitives cryptographiques) » est le chiffre du papier de 2017 (résumé et conclusion) pour la première version ; dans Linux 6.12, drivers/net/wireguard compte 6 067 lignes de C (.c et .h), environ 4 650 sans lignes vides ni commentaires. Le cours d’origine parlait d’un outil « audité par des cryptographes » : wireguard.com ne dit pas « audité » mais que WireGuard « has been reviewed by cryptographers » et qu’il est conçu pour être « easily auditable » (page d’accueil) ; sa page « Formal Verification » recense des preuves du protocole (Tamarin, ProVerif, modèles eCK et ACCE) et une implémentation vérifiée de Curve25519. D’où « relire et auditer » (code auditable) sur la diapo, et non « audité ». Primitives citées par la page « Protocol \& Cryptography » : ChaCha20-Poly1305, Curve25519, BLAKE2s, SipHash24, HKDF, dans la poignée de main Noise\_IK. Le site disait « pas de mauvaise configuration possible » : faux, d’où l’encadré.],
 )
 
 == Le modèle : des pairs, des clés, une interface <wireguard-modele>
