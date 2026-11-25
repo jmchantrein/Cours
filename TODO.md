@@ -39,6 +39,7 @@ Qt (licence à régler avec Vincent Barichard), ia-apprentissage, intro-ordinate
 - [ ] Vérifier la première compilation complète du site par la CI après fusion dans `main` (`compilation-cours.yml` ne tourne que sur `main` : construction de l’image de la VM, binaires du compagnon, sept cours, seize TP)
 - [ ] Sur un Debian 13 réel (libvirt 11.3, AppArmor) : démarrer une VM dont le disque est déclaré `<disk type="volume">`, pour savoir si le refus AppArmor constaté sur Ubuntu 24.04 (libvirt 10.0) s’y produit aussi, puis ajuster le commentaire de `vm-exemple.xml` et la note de la diapo « Pools et volumes »
 - [ ] Le runner GitHub dispose de `/dev/kvm` : décider si le harnais libvirt démarre aussi le domaine en `type="kvm"` (aujourd’hui il force TCG, le XML KVM n’est validé que par son schéma)
+- [ ] Accès distants, à décider par l’auteur (relecture de fond du 2026-11-25) — points du support d’origine absents des diapos : « une paire de clés par environnement (ne fait pas consensus) », « clés plus longues, force brute impraticable », l’argument « performance » de WireGuard, la question sed sur le changement de port ; faits WireGuard : « audité » et le chiffre « environ 4 000 lignes » de 2017 restent sans source vérifiée (Linux 6.12 : 6 067 lignes dans `drivers/net/wireguard`, environ 4 650 hors commentaires)
 
 ## Fait
 
