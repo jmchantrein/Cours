@@ -372,7 +372,7 @@
     ],
     bloc(taille: px(25))[Lire la sortie][
       - Le plus récent en haut ; un identifiant de 40 chiffres hexadécimaux par commit
-      - `--oneline` : 7 premiers chiffres, assez pour désigner un commit sans ambiguïté
+      - `--oneline` : un préfixe de l’identifiant (7 chiffres dans un petit dépôt, plus s’il le faut), assez pour désigner un commit sans ambiguïté
       - `(HEAD -> main)` : la branche courante et le commit où elle se trouve, expliqués plus loin
     ],
   ),
@@ -554,7 +554,7 @@
   )
   uncover("4-", note(role: "retenir")[L’historique n’est pas une liste mais un graphe orienté sans cycle ; les flèches vont toujours du plus récent vers le plus ancien.])
   source[#link("https://git-scm.com/book/en/v2/Git-Branching-Branches-in-a-Nutshell")[Pro Git, § 3.1 Branches in a Nutshell]]
-  utils.speaker-note(self: self)[Lettres à la place des identifiants, pour la lisibilité. Le sens des flèches suit les données : un commit contient l’identifiant de son parent (diapositive « Trois objets ») ; un parent ne connaît pas ses enfants. git log -\-graph dessine ce graphe en mode texte, de haut (récent) en bas (ancien), comme on le verra avec les fusions. E est en vert : un commit d’une autre branche que main, convention gardée dans tout le cours.]
+  utils.speaker-note(self: self)[Lettres à la place des identifiants, pour la lisibilité. Le sens des flèches suit les données : un commit contient l’identifiant de son parent (diapositive « Trois objets ») ; un parent ne connaît pas ses enfants. git log -\-graph dessine ce graphe en mode texte, de haut (récent) en bas (ancien), comme on le verra avec les fusions. E est en orange : un commit d’une autre branche que main, convention gardée dans tout le cours.]
 })
 
 == Branches et HEAD : de simples pointeurs <pointeurs>
@@ -1043,7 +1043,7 @@
     ([`pull`], [`fetch`, puis intègre `origin/main` dans `main` (fusion ou rebasage)]),
     ([`push`], [envoie vos commits ; refusé si le distant a des commits que vous n’avez pas]),
   )
-  uncover("6-", note(role: "retenir")[`origin/main` est une branche de suivi : la dernière position connue de `main` sur `origin`. Seuls `fetch`, `pull` et `push` parlent au réseau.])
+  uncover("6-", note(role: "retenir")[`origin/main` est une branche de suivi : la dernière position connue de `main` sur `origin`. Seuls `clone`, `fetch`, `pull` et `push` parlent au réseau.])
   source[#link("https://git-scm.com/book/en/v2/Git-Branching-Remote-Branches")[Pro Git, § 3.5 Remote Branches] · #link("https://git-scm.com/docs/git-fetch")[git-fetch(1)] · #link("https://git-scm.com/docs/git-pull")[git-pull(1)]]
   utils.speaker-note(self: self)[Un élément par clic. origin est le nom donné par défaut au dépôt cloné. Un dépôt nu (bare) n’a pas de répertoire de travail : c’est la forme d’un dépôt sur un serveur, et ce qu’on emploie ici pour simuler une forge sans réseau (diapositive suivante). git pull rapatrie puis intègre : avance rapide si possible ; si les deux côtés ont divergé, Git 2.47 exige de choisir fusion ou rebasage (diapositive « Pull sur une histoire divergente »).]
 })
@@ -1115,7 +1115,7 @@
          1 file changed, 1 insertion(+)
          create mode 100644 README
         $ git push
-        # … (4 lignes de progression)
+        # … (6 lignes de progression)
         To /tmp/git-cours/ada/depot-central.git
            07dafe9..885281c  main -> main
         ```
@@ -1158,6 +1158,7 @@
       | * 885281c (origin/main) Ajout du README
       |/
       * 07dafe9 Première réponse
+      * 1754732 Ajout de la FAQ
       ```],
     ),
     (
@@ -1308,7 +1309,7 @@
 == reset : trois modes <reset-modes>
 
 #anime(
-  rang(bloc(taille: px(25))[`git reset <commit>` : la branche courante recule jusqu’à `<commit>`, puis…][
+  rang(bloc(taille: px(25))[`git reset <commit>` : la branche courante va sur `<commit>`, puis…][
     #tableau((0.9fr, 1fr, 1fr, 1.6fr), inset: (x: px(10), y: px(8)),
       ([Mode], [Index], [Répertoire de travail], [Les modifications des commits défaits]),
       [`--soft`], [inchangé], [inchangé], [restent indexées : prêtes pour un nouveau commit],

@@ -213,7 +213,7 @@ Chaque étape reprend une notion du cours : #d("distants")[Un dépôt distant et
 ]
 
 #indice(titre: [Indice : ce qui parle au réseau])[
-  Seuls `fetch`, `pull` et `push` parlent au dépôt distant : #d("distants")[Un dépôt distant et ses branches de suivi].
+  Seuls `clone`, `fetch`, `pull` et `push` parlent au dépôt distant : #d("distants")[Un dépôt distant et ses branches de suivi].
   `git commit -a` enregistre les fichiers déjà suivis sans passer par `git add`.
 ]
 
@@ -326,7 +326,7 @@ Chaque étape reprend une notion du cours : #d("distants")[Un dépôt distant et
    1 file changed, 1 insertion(+)
    create mode 100644 horaires.md
   $ git push
-  # … (1 lignes de progression)
+  # … (1 ligne de progression)
   To /root/collab/depot-central.git
      461c264..bf8773c  main -> main
   $ cd ~/collab/grace
@@ -460,7 +460,7 @@ Chaque étape reprend une notion du cours : #d("distants")[Un dépôt distant et
   ```]
   Le dépôt central a un commit que le clone d’Ada n’a pas : le publier tel quel le ferait disparaître, Git refuse
   (`rejected … (fetch first)`). Après `git fetch`, le graphe montre la divergence : un commit de chaque côté de
-  `Horaires d’ouverture`, et `git status` le dit en mots (`have diverged`). `git pull` s’arrête : depuis Git 2.27,
+  `Horaires d’ouverture`, et `git status` le dit en mots (`have diverged`). `git pull` s’arrête : depuis Git 2.33.1,
   il exige de choisir. `--no-rebase` fusionne : le commit de fusion a deux parents, celui d’Ada et celui de Grace ;
   rien n’est perdu. Les deux commits portent sur deux fichiers différents, donc aucun conflit. Le chemin du dépôt
   central dans le message de fusion (`of /root/collab/depot-central`) est celui d’ici ; sur une forge, ce serait son adresse.
@@ -648,7 +648,7 @@ Chaque étape reprend une notion du cours : #d("distants")[Un dépôt distant et
   |\
   ```]
   Git retire le commit d’Ada, avance sur `origin/main`, puis le rejoue au-dessus : l’historique reste une ligne droite,
-  sans commit de fusion. Le commit a un nouvel identifiant (`7648e07` à l’enregistrement, `e6156f1` après le
+  sans commit de fusion. Le commit a un nouvel identifiant (`d091dab` à l’enregistrement, `90e0701` après le
   rebasage, dans le relevé) : même contenu, même message, mais un autre parent, donc une autre empreinte. Le push
   qui suit est une avance rapide. Un rebasage qui rencontre un conflit s’arrête sur le commit en cause : on résout,
   `git add`, puis `git rebase --continue` (ou `git rebase --abort`).
