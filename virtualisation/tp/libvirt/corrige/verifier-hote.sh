@@ -4,13 +4,23 @@
 #   1. le processeur expose la virtualisation matérielle (vmx = Intel VT-x,
 #      svm = AMD-V) ;
 #   2. le module kvm est chargé : /dev/kvm existe ;
-#   3. votre compte peut ouvrir /dev/kvm (groupe kvm) ;
+#   3. votre compte peut ouvrir /dev/kvm (groupe kvm) : un simple avertissement,
+#      car avec qemu:///system c'est QEMU, lancé par libvirt sous le compte
+#      libvirt-qemu, qui ouvre /dev/kvm, pas vous. Le groupe kvm ne sert qu'à
+#      lancer QEMU soi-même, comme dans le mini TP ;
 #   4. libvirt répond sur la connexion qemu:///system (groupe libvirt).
-# Le script constate, il ne corrige rien. Code de sortie 0 : tout est prêt.
+# Le script constate, il ne corrige rien. Code de sortie 0 : tout est prêt
+# (un avertissement n'empêche pas d'utiliser libvirt) ; 1 sinon.
 set -uo pipefail
 
 connexion="qemu:///system"
 pret=0
+
+# virsh version interroge le démon : c'est le test qui compte, quel que soit
+# le nom du service (libvirtd, ou virtqemud sur les distributions qui ont
+# adopté les démons modulaires).
+libvirt_repond=0
+virsh --connect "$connexion" version > /dev/null 2>&1 && libvirt_repond=1
 
 nb_processeurs="$(grep -cE 'vmx|svm' /proc/cpuinfo)"
 if [ "$nb_processeurs" -gt 0 ]; then
@@ -26,9 +36,9 @@ if [ -c /dev/kvm ]; then
   if [ -r /dev/kvm ] && [ -w /dev/kvm ]; then
     echo "OK     droits : votre compte peut ouvrir /dev/kvm"
   else
-    echo "ÉCHEC  droits : /dev/kvm appartient au groupe $(stat -c %G /dev/kvm), dont vous n'êtes pas membre"
-    echo "       → sudo adduser \"\$USER\" kvm, puis fermer et rouvrir la session"
-    pret=1
+    echo "AVERT  droits : votre compte ne peut pas ouvrir /dev/kvm (groupe $(stat -c %G /dev/kvm))"
+    echo "       → sans conséquence tant que $connexion répond (contrôle suivant) : libvirt lance QEMU sous un autre compte."
+    echo "         Pour lancer QEMU vous-même (mini TP) : sudo adduser \"\$USER\" kvm, puis rouvrir la session"
   fi
 else
   echo "ÉCHEC  noyau : /dev/kvm absent"
@@ -36,10 +46,7 @@ else
   pret=1
 fi
 
-# virsh version interroge le démon : c'est le test qui compte, quel que soit
-# le nom du service (libvirtd, ou virtqemud sur les distributions qui ont
-# adopté les démons modulaires).
-if virsh --connect "$connexion" version > /dev/null 2>&1; then
+if [ "$libvirt_repond" -eq 1 ]; then
   echo "OK     libvirt : $connexion répond"
 else
   echo "ÉCHEC  libvirt : $connexion ne répond pas"

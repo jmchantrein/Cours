@@ -39,13 +39,14 @@
         disques deviennent incohérents (#diapo(pdf, "qcow2-backing")[le danger]).], "danger-base"),
     ([Trois étages : `base`, `vm1` (`0xbb` en grappe 1), `vm2` (`0xcc` en grappe 2). Qui fournit les grappes 0, 1 et 2 à
       `vm2` ? Que fait `qemu-img commit vm2.qcow2` ?],
-      [`vm2` fournit la 2, `vm1` la 1, `base` la 0 : la recherche descend la chaîne. `commit` reverse les grappes de
-        `vm2` dans sa base immédiate `vm1` et vide `vm2` : elle lit la même chose, mais depuis `vm1`
-        (#diapo(pdf, "qcow2-backing")[la chaîne]). QEMU 8.2 la réécrit : 256 Kio.], "chaine-commit"),
+      [`vm2` fournit la 2, `vm1` la 1, `base` la 0 : la recherche descend la chaîne
+        (#diapo(pdf, "qcow2-backing")[le modèle]). `qemu-img commit` reverse les grappes propres de `vm2` dans sa base
+        immédiate `vm1` et vide `vm2` : elle lit la même chose, mais depuis `vm1`. QEMU 8.2 la réécrit : 256 Kio.], "chaine-commit"),
     ([Même chaîne : `qemu-img rebase -b base.qcow2` sur `vm2`, sans passer par `vm1`. Que copie qemu-img dans `vm2` ?
       Puis `rebase` sur aucune base ?],
-      [Il copie la grappe 1 (`bb`) de `vm1` dans `vm2` : `base` fournirait `aa`, et `vm2` doit lire le même contenu.
-        Sur aucune base, il copie toutes les grappes lues dans `base` : `vm2` devient autonome, à taille pleine. `rebase` ne change pas ce qu’on lit (#diapo(pdf, "qcow2-backing")[`rebase`]).],
+      [`qemu-img rebase` change l’image de base d’une image. Ici il copie la grappe 1 (`bb`) de `vm1` dans `vm2` : `base`
+        fournirait `aa`, et `vm2` doit lire le même contenu. Sur aucune base, il copie toutes les grappes lues dans
+        `base` : `vm2` devient autonome, à taille pleine. `rebase` ne change pas ce qu’on lit.],
       "rebase"),
   )
 ]

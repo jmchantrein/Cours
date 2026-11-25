@@ -13,7 +13,8 @@
 #
 # Ce que --up vérifie :
 #   verifier-hote.sh  son code de sortie dit si l'hôte est prêt (processeur,
-#                     /dev/kvm, connexion qemu:///system) ;
+#                     /dev/kvm présent, connexion qemu:///system) ; ne pas
+#                     pouvoir ouvrir /dev/kvm soi-même n'est qu'un avertissement ;
 #   reseau-default.xml et labo.xml, renommés : net-define, net-start, le pont
 #                     existe sur l'hôte ;
 #   vm-exemple.xml    (nom, chemin du disque dans le pool et réseau renommés) : define, l'état est
@@ -58,7 +59,7 @@ for argument in "$@"; do
     --lint) mode="lint" ;;
     --up) mode="up" ;;
     --keep) garder="1" ;;
-    -h | --help) sed -n '2,45p' "$0"; exit 0 ;;
+    -h | --help) sed -n '2,46p' "$0"; exit 0 ;;
     *) echo "Option inconnue : $argument" >&2; exit 2 ;;
   esac
 done
@@ -220,14 +221,20 @@ volume_existe() { virsh vol-key --pool "$pool" "$1" > /dev/null 2>&1; }
 # ------------------------------------------------------------- verifier-hote.sh
 
 titre "verifier-hote.sh"
+# Un /dev/kvm que le compte ne peut pas ouvrir n'est qu'un avertissement tant que qemu:///system répond :
+# c'est QEMU, sous le compte libvirt-qemu, qui l'ouvre.
 attendu=0
 grep -qE 'vmx|svm' /proc/cpuinfo || attendu=1
-{ [ -c /dev/kvm ] && [ -r /dev/kvm ] && [ -w /dev/kvm ]; } || attendu=1
+[ -c /dev/kvm ] || attendu=1
 virsh --connect "$connexion" version > /dev/null 2>&1 || attendu=1
 "$corrige/verifier-hote.sh" > "$travail/verifier-hote.log" 2>&1; obtenu=$?
 sed 's/^/       /' "$travail/verifier-hote.log"
 if [ "$obtenu" -eq "$attendu" ]; then ok "verifier-hote.sh : code de sortie $obtenu, conforme à cet hôte"
 else ko "verifier-hote.sh : code de sortie $obtenu, $attendu attendu"; fi
+if [ -c /dev/kvm ] && ! { [ -r /dev/kvm ] && [ -w /dev/kvm ]; }; then
+  if grep -q '^AVERT  droits' "$travail/verifier-hote.log"; then ok "verifier-hote.sh : /dev/kvm inaccessible à ce compte, signalé par un avertissement"
+  else ko "verifier-hote.sh : /dev/kvm inaccessible à ce compte, mais aucun avertissement"; fi
+fi
 
 # --------------------------------------------------------------------- réseaux
 

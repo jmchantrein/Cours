@@ -22,7 +22,7 @@
   ([Introduction], [Machine physique, système d’exploitation, machine virtuelle]),
   ([Concepts], [Émulation et virtualisation, assistance matérielle, types d’hyperviseur, paravirtualisation, QEMU et KVM]),
   ([Usages], [Bilan, migration à chaud, virtualisation imbriquée, image ISO et empreintes, mini TP]),
-  ([Administrer avec libvirt], [XML, connexions, cycle de vie, réseaux, stockage et qcow2, instantanés]),
+  ([Administrer avec libvirt], [XML, connexions, cycle de vie, réseaux, stockage et qcow2, instantanés, virt-manager]),
   ([Pour aller plus loin], [Outils de gestion, microVM, VM et conteneurs ; pour rappel]),
 )
 
@@ -695,7 +695,7 @@
     ],
   ),
   source-de: [#link("https://libvirt.org/uri.html")[libvirt.org, Connection URIs] · #link("https://libvirt.org/drvqemu.html")[libvirt.org, QEMU/KVM driver]],
-  note: [Sorties de virsh (libvirt 10.0.0) : virsh uri vaut qemu:\/\/\/session pour un compte ordinaire, même membre du groupe libvirt, et qemu:\/\/\/system pour root ; Debian 13 (libvirt 11.3) répond de même. Ubuntu 24.04 fait exception : son paquet libvirt-clients installe /etc/profile.d/libvirt-uri.sh, qui exporte LIBVIRT\_DEFAULT\_URI=qemu:\/\/\/system dans les shells de connexion. Le groupe libvirt n’ouvre que qemu:\/\/\/system : sans -c qemu:\/\/\/system ou LIBVIRT\_DEFAULT\_URI, virsh et virt-install d’un compte ordinaire créent leurs VM dans la session, où le réseau default et le pool default n’existent pas. Autre réglage possible : uri\_default dans \~/.config/libvirt/libvirt.conf. Le cours et le TP travaillent en qemu:\/\/\/system, sans sudo, grâce au groupe libvirt. Le réseau en mode utilisateur de la session (SLIRP ou passt) donne l’accès sortant, mais aucune VM n’y est joignable depuis l’hôte sans redirection de port.],
+  note: [Sorties de virsh (libvirt 10.0.0), rejouées par virtualisation/cm/rejouer-libvirt.sh : lancé par sudo, il rejoue virsh uri sous le compte qui a lancé sudo (SUDO_USER, sinon COMPTE_ORDINAIRE), d’où qemu:\/\/\/session ; le reste du script tourne en root, sur qemu:\/\/\/system. virsh uri vaut qemu:\/\/\/session pour un compte ordinaire, même membre du groupe libvirt, et qemu:\/\/\/system pour root ; Debian 13 (libvirt 11.3) répond de même. Ubuntu 24.04 fait exception : son paquet libvirt-clients installe /etc/profile.d/libvirt-uri.sh, qui exporte LIBVIRT\_DEFAULT\_URI=qemu:\/\/\/system dans les shells de connexion. Le groupe libvirt n’ouvre que qemu:\/\/\/system : sans -c qemu:\/\/\/system ou LIBVIRT\_DEFAULT\_URI, virsh et virt-install d’un compte ordinaire créent leurs VM dans la session, où le réseau default et le pool default n’existent pas. Autre réglage possible : uri\_default dans \~/.config/libvirt/libvirt.conf. Le cours et le TP travaillent en qemu:\/\/\/system, sans sudo, grâce au groupe libvirt. Le réseau en mode utilisateur de la session (SLIRP ou passt) donne l’accès sortant, mais aucune VM n’y est joignable depuis l’hôte sans redirection de port.],
 )
 
 == Créer une VM : virt-install, puis virsh <virt-install>
@@ -703,18 +703,21 @@
 #anime(
   rang(
     bloc(role: "pratique", poids: 1.35)[Démonstration][
-      #terminal(taille: px(20))[
+      #terminal(taille: px(18))[
         ```
-        $ sudo apt install qemu-system-x86 \
+        $ sudo apt install qemu-system-x86 acl \
           libvirt-daemon-system virtinst virt-viewer
         # accès à qemu:///system ; puis fermer et rouvrir la session
         $ sudo adduser "$USER" libvirt
         $ export LIBVIRT_DEFAULT_URI=qemu:///system
+        # QEMU (compte libvirt-qemu) doit traverser le dossier
+        # personnel (mode 0700) : une ACL lui donne ce seul droit
+        $ image_iso="$HOME/iso-debian/debian-13.7.0-amd64-netinst.iso"
+        $ setfacl -m u:libvirt-qemu:x "$HOME" "$(dirname "$image_iso")"
         # VM : 2 Gio de mémoire, 2 processeurs, disque de 10 Gio
         $ virt-install --name ma-premiere-vm --memory 2048 \
           --vcpus 2 --disk size=10 --osinfo debian13 \
-          --network network=default \
-          --cdrom debian-13.7.0-amd64-netinst.iso
+          --network network=default --cdrom "$image_iso"
         # virt-viewer ouvre la console : on y fait l’installation
         # toutes les VM, même arrêtées
         $ virsh list --all
@@ -727,11 +730,11 @@
     bloc(role: "retenir")[À retenir][
       - virt-install crée la VM, virsh la gère : tous deux passent par libvirt
       - virt-viewer affiche la console graphique de l’installateur
-      - Prérequis : un hôte prêt (questions 1 et 2 du mini TP) et le groupe `libvirt` ; le groupe `kvm` ne sert qu’à lancer QEMU soi-même
+      - Prérequis : un hôte prêt (questions 1 et 2 du mini TP), le groupe `libvirt` et le paquet `acl` ; le groupe `kvm` ne sert qu’à lancer QEMU soi-même
     ],
   ),
   source-de: [#link("https://libvirt.org/docs.html")[libvirt.org] · #link("https://github.com/virt-manager/virt-manager/blob/main/man/virt-install.rst")[virt-install(1)]],
-  note: [L’ISO est celle téléchargée et vérifiée à la diapositive « Télécharger l’ISO, puis la vérifier ». Piège : sur qemu:\/\/\/system, QEMU tourne sous le compte libvirt-qemu, et le dossier personnel de Debian 13 est en mode 0700 ; une ISO rangée sous \~ donne « Permission denied » au démarrage (libvirt change le propriétaire du fichier, pas les droits des dossiers parents). Remède : setfacl -m u:libvirt-qemu:x ~ ~/iso-debian, ou ranger l’ISO hors du dossier personnel. Les disques créés par virt-install vont dans le pool default, déjà lisible. Commandes pour Debian/Ubuntu ; --osinfo existe depuis virt-install 4.0 ; debian13 règle le matériel virtuel pour Debian 13 (bus virtio, machine q35). On le nomme parce que la base osinfo-db de Debian 13 et d’Ubuntu 24.04 (0.20250606) ne reconnaît pas l’ISO finale 13.x, dont elle ne connaît que les versions rc : avec --osinfo detect=on, virt-install avertit (« Using --osinfo generic ») et crée un disque IDE et une carte e1000 ; --disk size=10 s’exprime en Gio et crée le volume ma-premiere-vm.qcow2 dans le pool default, que virt-install crée lui-même s’il n’existe pas. --network network=default passe par le réseau libvirt plutôt que de nommer son pont (virbr0). Le micrologiciel reste le BIOS : virt-install (4.1 et 5.0) ne choisit l’UEFI pour un invité x86 que si l’OS l’exige, ce qui garde possibles les instantanés internes (plus loin). Par défaut virt-install choisit un affichage graphique (SPICE ou VNC) et lance virt-viewer (--autoconsole graphical) ; sans virt-viewer, aucune console ne s’ouvre et l’installation interactive est impossible. Alternative en mode texte : --graphics none avec une console série (virsh console). virsh list --all : identifiant (numéro attribué à chaque démarrage, - si la VM est arrêtée), nom, état. Sortie de virsh 10.0.0, en anglais (LC\_ALL=C), rejouée par virtualisation/cm/rejouer-libvirt.sh sur une VM sans système ; à rejouer sur un poste avec KVM et l’ISO.],
+  note: [L’ISO est celle téléchargée et vérifiée à la diapositive « Télécharger l’ISO, puis la vérifier ». Piège : sur qemu:\/\/\/system, QEMU tourne sous le compte libvirt-qemu, et le dossier personnel de Debian 13 est en mode 0700 ; une ISO rangée sous \~ donne « Permission denied » au démarrage (libvirt change le propriétaire du fichier, pas les droits des dossiers parents). Remède, affiché sur la diapositive et repris tel quel par corrige/premiere-vm.sh du TP : setfacl -m u:libvirt-qemu:x "\$HOME" "\$(dirname "\$image_iso")" (le paquet acl fournit setfacl), ou ranger l’ISO hors du dossier personnel. Les disques créés par virt-install vont dans le pool default, déjà lisible. Commandes pour Debian/Ubuntu ; --osinfo existe depuis virt-install 4.0 ; debian13 règle le matériel virtuel pour Debian 13 (bus virtio, machine q35). On le nomme parce que la base osinfo-db de Debian 13 et d’Ubuntu 24.04 (0.20250606) ne reconnaît pas l’ISO finale 13.x, dont elle ne connaît que les versions rc : avec --osinfo detect=on, virt-install avertit (« Using --osinfo generic ») et crée un disque IDE et une carte e1000 ; --disk size=10 s’exprime en Gio et crée le volume ma-premiere-vm.qcow2 dans le pool default, que virt-install crée lui-même s’il n’existe pas. --network network=default passe par le réseau libvirt plutôt que de nommer son pont (virbr0). Le micrologiciel reste le BIOS : virt-install (4.1 et 5.0) ne choisit l’UEFI pour un invité x86 que si l’OS l’exige, ce qui garde possibles les instantanés internes (plus loin). Par défaut virt-install choisit un affichage graphique (SPICE ou VNC) et lance virt-viewer (--autoconsole graphical) ; sans virt-viewer, aucune console ne s’ouvre et l’installation interactive est impossible. Alternative en mode texte : --graphics none avec une console série (virsh console). virsh list --all : identifiant (numéro attribué à chaque démarrage, - si la VM est arrêtée), nom, état. Sortie de virsh 10.0.0, en anglais (LC\_ALL=C), rejouée par virtualisation/cm/rejouer-libvirt.sh sur une VM sans système ; à rejouer sur un poste avec KVM et l’ISO.],
 )
 
 == Le cycle de vie d’un domaine <cycle-de-vie>
@@ -768,19 +771,22 @@
 #anime(
   rang(
     bloc(role: "pratique", poids: 1.2, taille: px(24))[Démonstration][
-      #terminal(titre: none, taille: px(20))[
+      #terminal(titre: none, taille: px(18))[
         ```
         # demande à l’invité de s’éteindre
         $ virsh shutdown ma-premiere-vm
         Domain 'ma-premiere-vm' is being shutdown
-        # arrêt immédiat du processus QEMU
+        # quelques secondes plus tard
+        $ virsh domstate ma-premiere-vm
+        shut off
+        # VM relancée : arrêt immédiat du processus QEMU
+        $ virsh start ma-premiere-vm
+        Domain 'ma-premiere-vm' started
         $ virsh destroy ma-premiere-vm
         Domain 'ma-premiere-vm' destroyed
-        $ virsh list --all
-         Id   Name             State
-        ---------------------------------
-         -    ma-premiere-vm   shut off
-        ```
+        $ virsh domstate ma-premiere-vm
+        shut off
+      ```
       ]
     ],
     bloc(taille: px(23), taille-titre: px(26))[Trois commandes, trois effets][
@@ -798,7 +804,7 @@
     ],
   ),
   source-de: [#link("https://libvirt.org/manpages/virsh.html")[virsh(1)]],
-  note: [Sorties de virsh 10.0.0, sur une VM sans système : shutdown n’y a aucun effet (aucun invité n’écoute l’ACPI), d’où le destroy ; sur une VM Debian installée, shutdown l’éteint en quelques secondes. Le domaine doit déclarer \<acpi/> dans ses features (virt-install le fait). --remove-all-storage ne supprime que les volumes connus d’un pool (diapositive « Pools et volumes ») ; un disque posé ailleurs reste en place. Les notes d’origine du cours écrivaient virsh undefined : la commande est undefine.],
+  note: [Sorties de virsh 10.0.0, en TCG, rejouées par virtualisation/cm/rejouer-libvirt.sh sur une VM dont l’invité écoute l’ACPI : un noyau et un initramfs Alpine minimaux, construits par virtualisation/cm/invite-acpi.sh, où acpid éteint la machine au bouton d’alimentation (sur une VM Debian installée, shutdown l’éteint de même en quelques secondes). Deux temps, car destroy sur une VM déjà arrêtée répond « error: Requested operation is not valid: domain is not running » : la démonstration relance donc la VM entre les deux. Sur une VM sans système (disque vide), aucun invité n’écoute l’ACPI et shutdown n’éteint rien. Le domaine doit déclarer \<acpi/> dans ses features (virt-install le fait). --remove-all-storage ne supprime que les volumes connus d’un pool (diapositive « Pools et volumes ») ; un disque posé ailleurs reste en place. Les notes d’origine du cours écrivaient virsh undefined : la commande est undefine.],
 )
 
 == Trois façons de brancher une VM <reseaux-libvirt>

@@ -3,8 +3,16 @@
 # pour recopier dans les diapositives des sorties réelles, avec les noms du fil rouge.
 # Usage : sudo ./rejouer-libvirt.sh > sorties-libvirt.txt
 #
-# La VM ma-premiere-vm est créée sans système (disque vide) : elle démarre, mais aucun invité
-# n'écoute « virsh shutdown ». Avec /dev/kvm, le domaine est de type kvm ; sans, de type qemu (TCG).
+# Le script tourne en root (qemu:///system), mais la diapositive « Deux connexions » montre la sortie
+# d'un compte ordinaire (qemu:///session) : il la rejoue sous le compte qui a lancé sudo ($SUDO_USER),
+# ou sous celui de COMPTE_ORDINAIRE=nom si la variable est posée. Sans compte ordinaire, il le dit
+# et saute cette commande.
+#
+# La VM ma-premiere-vm est créée sans système (disque vide). Pour que « virsh shutdown » ait un effet,
+# elle peut démarrer un invité minimal qui écoute l'ACPI : ./invite-acpi.sh /var/lib/libvirt/invite-acpi,
+# puis sudo INVITE_ACPI=/var/lib/libvirt/invite-acpi ./rejouer-libvirt.sh. Sans INVITE_ACPI, aucun invité
+# n'écoute : shutdown n'éteint rien, et le script le signale (la sortie de la diapositive est alors « à rejouer »).
+# Avec /dev/kvm, le domaine est de type kvm ; sans, de type qemu (TCG).
 # Le script refuse de tourner si un des objets qu'il crée existe déjà, et les efface tous en fin.
 set -u
 export LIBVIRT_DEFAULT_URI=qemu:///system
@@ -19,6 +27,10 @@ done
 if virsh net-info labo > /dev/null 2>&1; then echo "Le réseau labo existe déjà : rien n'est fait." >&2; exit 1; fi
 type_virt=qemu
 [ -w /dev/kvm ] && type_virt=kvm
+amorce=""   # noyau et initramfs de l'invité ACPI, s'il est fourni
+if [ -n "${INVITE_ACPI:-}" ]; then
+  amorce="--boot kernel=$INVITE_ACPI/vmlinuz-virt,initrd=$INVITE_ACPI/initrd.gz,cmdline=console=ttyS0"
+fi
 
 nettoyer() {
   for vm in "${vms[@]}"; do
@@ -37,7 +49,14 @@ run 'virt-install --version'
 run 'qemu-img --version | head -1'
 
 # Connexions
-run 'env -u LIBVIRT_DEFAULT_URI virsh uri'
+compte="${SUDO_USER:-${COMPTE_ORDINAIRE:-}}"
+if [ -n "$compte" ] && [ "$compte" != root ]; then
+  printf '\n$ virsh uri   # compte ordinaire %s, LIBVIRT_DEFAULT_URI non définie\n' "$compte"
+  runuser -u "$compte" -- env -u LIBVIRT_DEFAULT_URI HOME="$(getent passwd "$compte" | cut -d: -f6)" virsh uri 2>&1
+else
+  printf '\n# virsh uri sous un compte ordinaire : non rejoué (lancer par sudo depuis ce compte, ou COMPTE_ORDINAIRE=nom)\n'
+fi
+run 'env -u LIBVIRT_DEFAULT_URI virsh uri   # root'
 run 'virsh uri'
 
 # Réseau default, pool default
@@ -48,14 +67,29 @@ run 'virsh pool-list --all'
 
 # Création (sans ISO : --import d'un disque vide), cycle de vie
 run "virt-install --name ma-premiere-vm --memory 2048 --vcpus 2 --disk size=10 --osinfo debian12 \
-  --network network=default --import --virt-type $type_virt --noautoconsole --graphics vnc"
+  --network network=default --import --virt-type $type_virt --noautoconsole --graphics vnc $amorce"
 run 'virsh pool-list'
 run 'virsh vol-list default'
 run 'virsh list --all'
 run 'virsh dumpxml ma-premiere-vm | head -12'
 run 'virsh dominfo ma-premiere-vm'
-run 'virsh shutdown ma-premiere-vm; sleep 10; virsh domstate ma-premiere-vm'
+# shutdown : l'invité reçoit le bouton d'alimentation ACPI. En TCG il lui faut quelques secondes pour démarrer
+# avant de l'entendre, et pour s'éteindre ensuite.
+[ -n "$amorce" ] && sleep 20
+run 'virsh shutdown ma-premiere-vm'
+for _ in $(seq 1 60); do
+  [ "$(virsh domstate ma-premiere-vm)" = "shut off" ] && break
+  sleep 1
+done
+run 'virsh domstate ma-premiere-vm'
+if [ "$(virsh domstate ma-premiere-vm)" = "shut off" ]; then
+  # destroy : un second temps, sur la VM relancée (sur une VM arrêtée, destroy répondrait : domain is not running)
+  run 'virsh start ma-premiere-vm'
+else
+  echo "# shutdown n'a rien éteint : aucun invité n'écoute l'ACPI (voir invite-acpi.sh)"
+fi
 run 'virsh destroy ma-premiere-vm'
+run 'virsh domstate ma-premiere-vm'
 run 'virsh list --all'
 
 # Instantanés

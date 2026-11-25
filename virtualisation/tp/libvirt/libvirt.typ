@@ -35,7 +35,9 @@ les VM à libvirt, qui les décrit en XML, les démarre, les arrête, gère leur
 l’installateur, par une copie complète, puis par un disque en copie sur écriture.
 
 #bloc(role: "pratique")[Prérequis][
-  - Un PC sous Debian 13 dont le processeur expose VT-x ou AMD-V, avec 15 Gio de disque libre.
+  - Un PC sous Debian 13 dont le processeur expose VT-x ou AMD-V, avec 15 Gio de disque libre et 8 Gio de mémoire
+    vive : à l’étape 9, trois VM de 2 Gio tournent ensemble (6 Gio), et l’hôte garde le reste. Avec moins, réduisez
+    l’option `--memory` de l’étape 3, ou arrêtez une VM avant d’en démarrer une autre.
   - L’image netinst de Debian, téléchargée et vérifiée (signature, puis empreinte) :
     #d("iso-verifier")[Télécharger l’ISO, puis la vérifier]. Le TP la suppose dans `~/iso-debian/`, et le paquet `acl` (`setfacl`) doit être installé : `sudo apt install acl`.
   - Un dossier de travail pour les fichiers du TP (XML, scripts).
@@ -78,6 +80,7 @@ l’installateur, par une copie complète, puis par un disque en copie sur écri
   - Faites de `qemu:///system` la connexion par défaut de `virsh` et de `virt-install`, pour ce terminal et les
     suivants. Vérifiez avec `virsh uri`.
   - Écrivez un script `verifier-hote.sh` qui contrôle tout cela et dont le code de sortie vaut 0 si l’hôte est prêt.
+    Votre compte n’a pas besoin d’ouvrir `/dev/kvm` lui-même : c’est QEMU, lancé par libvirt, qui l’ouvre.
 ]
 
 #indice(titre: [Indice : les paquets et le groupe])[
@@ -103,7 +106,12 @@ l’installateur, par une copie complète, puis par un disque en copie sur écri
   $ ./verifier-hote.sh
   ```]
   Le script interroge libvirt par `virsh version` plutôt que de tester le nom d’un service : selon la
-  distribution, le démon s’appelle `libvirtd` ou `virtqemud`.
+  distribution, le démon s’appelle `libvirtd` ou `virtqemud`. Il échoue si le processeur n’expose pas la
+  virtualisation, si `/dev/kvm` est absent ou si `qemu:///system` ne répond pas. Il ne fait qu’avertir
+  (`AVERT`) quand votre compte ne peut pas ouvrir `/dev/kvm` : avec `qemu:///system`, QEMU tourne sous le compte
+  `libvirt-qemu`, et le groupe `kvm` ne sert qu’à lancer QEMU soi-même, comme au mini TP. Sur Debian 13,
+  `/dev/kvm` appartient au groupe `kvm` avec une ACL pour la session locale seulement : une connexion SSH ne
+  l’ouvre pas, et libvirt fonctionne quand même.
   #f("verifier-hote.sh")
 ]
 

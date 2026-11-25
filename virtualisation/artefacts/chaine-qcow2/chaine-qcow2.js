@@ -244,7 +244,7 @@
     });
     return el("div", { class: `image c-${couleur(i.nom)}${i.nom === choix.image ? " selectionnee" : ""}`, "data-image": i.nom },
       el("button", { type: "button", class: "nom", disabled: moteur.fige() && "", "aria-pressed": String(i.nom === choix.image), onclick: () => { choix.image = i.nom; dessiner(); } },
-        el("code", {}, i.nom), el("small", {}, i.base ? `s'appuie sur ${i.base}` : "image de base")),
+        el("code", {}, i.nom), el("small", {}, i.base ? `s'appuie sur ${i.base}` : descendants(sim, i.nom).length ? "image de base" : "image autonome")),
       el("p", { class: "taille" }, el("b", {}, kio(cible ?? occupation(sim, i.nom))), el("small", {}, `${n} propre${n > 1 ? "s" : ""}`)),
       el("div", { class: "cases" }, ...cases));
   }
