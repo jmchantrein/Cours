@@ -36,6 +36,8 @@ l’organisation et la compilation dans [`README.md`](README.md).
 - Fais tenir un artefact dans la fenêtre sans défilement de la page : vérifie de 1280 × 650 à 1920 × 950 px,
   chaque réponse ouverte, que rien n’est rogné.
 - Donne à chaque expérience d’un artefact une recette jouable, et vérifie qu’elle aboutit au résultat de sa réponse.
+- Écris les recettes d’un artefact avec `recettes({…})`, `el` et `bouton` de `commun/artefact.js` (style : `commun/artefact.css`) :
+  l’artefact ne contient que son simulateur, son interface et la déclaration de ses recettes.
 - Vérifie chaque commande d’une recette : continuer, pause au milieu d’une étape, reprise, revenir (y compris
   pendant une étape), enchaînement sans pause, reprise en main à la fin.
 - Calcule chaque explication d’un artefact à partir du résultat de la simulation ; pour un cas que le simulateur

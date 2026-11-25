@@ -130,9 +130,31 @@ Un artefact est un petit logiciel interactif qui fait manipuler un concept : `<c
 - Sur un écran d’ordinateur, la page d’atelier prend exactement la hauteur de la fenêtre : le texte grossit
   avec elle, et ce qui peut grandir défile dans son cadre. Rien n’est rogné à 1280 × 650 px utiles, toutes
   réponses ouvertes.
-- `<nom>.js` : construit l’interface dans l’élément `#artefact`, sans bibliothèque externe.
+- `<nom>.js` : construit l’interface dans l’élément `#artefact`, sans bibliothèque externe. Il garde son simulateur,
+  son interface et la déclaration de ses recettes ; le reste vient de `commun/artefact.js` (voir ci-dessous).
 - `<nom>.css` : n’emploie que les variables CSS de la charte (`--c-*`, `--<rôle>-entete`…), pour suivre la variante choisie.
+  Les sections, les boutons et les recettes sont déjà mis en forme par `commun/artefact.css`.
 - Un état se lit dans le texte (« CACHED », « DONE ») ; la couleur ne fait que le doubler.
+
+### Le moteur de recettes (`commun/artefact.js`)
+`artefact(…)` embarque `artefact.css` et `artefact.js` avant le script de l’artefact, qui y prend `Artefact` :
+`const { el, bouton, recettes } = Artefact;`. `el(balise, attributs, ...enfants)` crée un élément (`onclick` : un
+écouteur ; `false` ou `null` : rien) ; `bouton(texte, action, attributs)` crée un bouton.
+`recettes({…})` fait le reste : cartes des expériences, étapes, commandes du lecteur (continuer, pause au milieu
+d’une étape, reprise, revenir, enchaînement sans pause, rejouer, reprise en main). L’artefact lui donne :
+- `recettes` : `{ nom: [[titre, action], …] }`. `nom` est le troisième élément d’une expérience ; `titre` dit
+  l’action (« Reconstruire. »), jamais son résultat ; `action` est une fonction `async` qui agit sur la simulation
+  et rend le tableau de phrases qui expliquent ce qu’elle vient de faire, calculées à partir du résultat.
+- `depart` (phrases affichées avant la première étape), `titreLibre` (titre de l’explication quand le lecteur a
+  repris la main, « Votre build ») et `pause` (`() → ms`, le temps de lecture entre deux étapes qui s’enchaînent).
+- `remettre()` : remet la simulation à son départ ; `capturer()` : son état complet, pour y revenir
+  (`structuredClone`) ; `retablir(état)` : le rétablit, l’affiche et abandonne l’étape en cours d’exécution ;
+  `afficher()` : redessine les commandes, qui se bloquent pendant une recette (`moteur.fige()`).
+
+Il rend `moteur` : `fige()` (une recette n’est pas finie : le lecteur regarde), `libre(phrases)` (le lecteur a
+modifié quelque chose à la fin d’une recette : ces phrases l’expliquent), `fermer()`, et `attendre(ms, suivi)`
+(une attente que la pause d’une recette gèle ; `suivi(écoulé)` rend vrai pour l’interrompre). Une étape qui dure
+dans le temps attend par `moteur.attendre`, jamais par `setTimeout` seul.
 
 ## Pages web : terminal
 Une page déclare son terminal : `page-web(…, terminal: ("compagnon",))` pour un TP Docker ou libvirt, qui ne

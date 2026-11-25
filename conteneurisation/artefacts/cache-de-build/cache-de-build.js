@@ -10,8 +10,10 @@
 // de répondre. Les explications sont calculées à partir du résultat du build, jamais écrites d’avance.
 //
 // Le build se déroule dans le temps : une étape en cache est immédiate, une étape exécutée fait attendre.
-// Des recettes rejouent, pas à pas, les manipulations des expériences de la page.
+// Des recettes rejouent, pas à pas, les manipulations des expériences de la page ; le moteur de recettes et
+// la création d’éléments sont communs aux artefacts (commun/artefact.js).
 (() => {
+  const { el, bouton, recettes } = Artefact;
   const racine = document.getElementById("artefact");
   const ACCELERATION = 10;   // 38 s simulées durent 3,8 s réelles
   const ATTENTE_MIN = 250;   // en ms : même une copie de 0,1 s se voit passer
@@ -38,11 +40,6 @@
   let echec = null;          // { genre: "erreur" (Docker échouerait) | "limite" (le simulateur ne sait pas), message }
   let enCours = false, presser = false, sansAttente = false;
   let tour = 0;              // numéro du build lancé : un build annulé (retour en arrière) s’y reconnaît
-  // La recette ouverte : { nom, pas (étapes faites), etats et explications (après chaque étape), occupe (une étape
-  // s’exécute), gel (elle est en pause), lecture (les étapes s’enchaînent), libre (le lecteur a repris la main) }.
-  let recette = null;
-  let continu = false;       // les recettes s’enchaînent-elles sans pause entre deux étapes ?
-
   // Empreinte courte (FNV-1a, 32 bits) : elle tient lieu du hash que calcule BuildKit.
   const empreinte = texte => {
     let h = 0x811c9dc5;
@@ -157,20 +154,12 @@
     const reel = sansAttente ? 0 : Math.max(ATTENTE_MIN, e.cout * 1000 / ACCELERATION);
     const li = racine.querySelectorAll(".dockerfile li")[i];
     const statut = li.querySelector(".statut");
-    let ecoule = 0, avant = performance.now();
-    return new Promise(fini => {
-      const tic = () => {
-        const maintenant = performance.now();
-        if (!recette?.gel) ecoule += maintenant - avant;
-        avant = maintenant;
-        if (presser || ecoule >= reel) return fini();
-        const simule = e.cout * ecoule / reel;
-        statut.textContent = simule.toFixed(1) + "s …";
-        li.style.setProperty("--avance", (100 * ecoule / reel).toFixed(1) + "%");
-        suivi(simule);
-        setTimeout(tic, 60);
-      };
-      tic();
+    return moteur.attendre(reel, ecoule => {
+      if (presser) return true;
+      const simule = e.cout * ecoule / reel;
+      statut.textContent = simule.toFixed(1) + "s …";
+      li.style.setProperty("--avance", (100 * ecoule / reel).toFixed(1) + "%");
+      suivi(simule);
     });
   }
   // La barre de progression du build : le temps simulé écoulé sur le temps à passer.
@@ -269,12 +258,12 @@
       ["Reconstruire avec --no-cache.", build(true)],
     ],
   };
-  const etapesDe = r => RECETTES[r.nom];
-  const finie = r => r.pas >= etapesDe(r).length && !r.occupe;
+  const PHRASES_DEPART = ["Départ : le Dockerfile et les fichiers d’origine ; le cache est vide."];
 
   // L’état complet de la simulation : mémorisé après chaque étape d’une recette, pour pouvoir y revenir.
   const capturer = () => structuredClone({ instructions, fichiers, cache: [...cache], historique, dernier, affiche, echec });
   function retablir(etat) {
+    tour++; presser = true;   // un build en cours d’exécution est abandonné
     const e = structuredClone(etat);
     ({ instructions, fichiers, dernier, affiche, echec } = e);
     cache.clear(); for (const [cle, couche] of e.cache) cache.set(cle, couche);
@@ -282,139 +271,19 @@
     enCours = false;
     dessiner();
   }
-  // Abandonne l’étape en cours d’exécution et revient à l’état qui la précédait.
-  function annuler(r) {
-    r.jeton++; tour++; presser = true; r.occupe = false; r.gel = false;
-    retablir(r.etats[r.pas]);
-  }
-  function ouvrir(nom) {
-    if (recette) fermer();
-    remettreAZero();
-    recette = { nom, pas: 0, etats: [capturer()], explications: [["Départ : le Dockerfile et les fichiers d’origine ; le cache est vide."]],
-      occupe: false, gel: false, lecture: continu, libre: null, jeton: 0, enBoucle: false };
-    dessiner(); majRecettes();
-    continu ? defiler(recette) : executer(recette);
-  }
-  // Ferme la recette en laissant la simulation dans l’état où elle est.
-  function fermer() {
-    if (recette.occupe) annuler(recette);
-    recette = null;
-    dessiner(); majRecettes();
-  }
-  // Exécute l’étape suivante, puis mémorise l’état obtenu et son explication.
-  async function executer(r) {
-    const i = r.pas, jeton = ++r.jeton;
-    r.occupe = true; r.libre = null; presser = false;
-    dessiner(); majRecettes();
-    const explication = await etapesDe(r)[i][1]();
-    if (recette !== r || r.jeton !== jeton) return;   // étape annulée par un retour en arrière
-    r.pas = i + 1; r.etats[r.pas] = capturer(); r.explications[r.pas] = explication; r.occupe = false; r.gel = false;
-    dessiner(); majRecettes();
-  }
-  // Enchaînement sans pause : une étape, le temps de lire, la suivante… tant que la lecture n’est pas suspendue.
-  async function defiler(r) {
-    const dormir = ms => new Promise(fini => setTimeout(fini, ms));
-    r.enBoucle = true;
-    while (recette === r && r.lecture) {
-      if (r.occupe) { await dormir(80); continue; }   // une étape lancée à la main se termine d’abord
-      if (r.pas >= etapesDe(r).length) { r.lecture = false; break; }
-      if (r.pas > 0) for (let reste = sansAttente ? 80 : PAUSE; reste > 0 && recette === r && r.lecture; reste -= 60) await dormir(60);
-      if (recette !== r || !r.lecture || r.occupe) continue;
-      await executer(r);
-    }
-    r.enBoucle = false;
-    if (recette === r) { dessiner(); majRecettes(); }
-  }
-  // Le bouton principal : continuer, suspendre ou reprendre, rejouer — selon l’état de la recette.
-  function avancerRecette() {
-    const r = recette;
-    if (r.occupe) { r.gel = !r.gel; r.lecture = continu && !r.gel; }               // pause ou reprise, au milieu de l’étape
-    else if (r.pas >= etapesDe(r).length) { r.pas = 0; r.libre = null; retablir(r.etats[0]); r.lecture = continu; continu ? defiler(r) : executer(r); }
-    else if (continu) { r.lecture = !r.lecture; if (r.lecture && !r.enBoucle) defiler(r); }
-    else executer(r);
-    majRecettes();
-  }
-  function reculerRecette() {
-    const r = recette;
-    r.lecture = false; r.libre = null;
-    if (r.occupe) annuler(r);                                                        // revient avant l’étape en cours
-    else if (r.pas > 0) { r.pas--; retablir(r.etats[r.pas]); }
-    majRecettes();
-  }
-  function basculerContinu(coche) {
-    continu = coche;
-    const r = recette;
-    if (!r) return;
-    r.lecture = continu && !r.gel && !finie(r);
-    if (r.lecture && !r.enBoucle) defiler(r);
-    majRecettes();
-  }
+  const moteur = recettes({ recettes: RECETTES, depart: PHRASES_DEPART, titreLibre: "Votre build",
+    pause: () => sansAttente ? 80 : PAUSE, remettre: remettreAZero, capturer, retablir, afficher: dessiner });
   // Après un build : si le lecteur a repris la main à la fin d’une recette, celle-ci lui explique son build.
-  function apresBuild() {
-    if (recette && !recette.occupe) { recette.libre = expliquerBuild(); majRecettes(); }
-  }
-
-  // Chaque expérience de la page qui nomme une recette reçoit sa carte : ses étapes, puis son lecteur.
-  const cartes = [...document.querySelectorAll(".experience[data-recette]")].filter(c => RECETTES[c.dataset.recette]);
-  function majRecettes() {
-    for (const carte of cartes) {
-      const nom = carte.dataset.recette, r = recette?.nom === nom ? recette : null, etapes = RECETTES[nom], n = etapes.length;
-      let bloc = carte.querySelector(".recette");
-      if (!bloc) { bloc = el("div", { class: "recette" }); carte.querySelector("details").before(bloc); }
-      bloc.classList.toggle("ouverte", !!r);
-      bloc.dataset.etat = !r ? "fermee" : finie(r) ? "terminee" : "encours";
-      const sansPause = el("label", { class: "sans-pause" },
-        el("input", { type: "checkbox", checked: continu && "", onchange: ev => basculerContinu(ev.target.checked) }), "sans pause entre les étapes");
-      if (!r) {
-        bloc.replaceChildren(
-          el("div", { class: "recette-entete" }, el("span", { class: "recette-titre" }, "Recette"), el("span", {}, `${n} étapes`)),
-          el("ol", { class: "recette-etapes" }, ...etapes.map(([titre]) => el("li", {}, titre))),
-          el("div", { class: "lecteur" }, bouton("▶ Jouer la recette", () => ouvrir(nom), { class: "jouer" }), sansPause));
-        continue;
-      }
-      const fin = finie(r);
-      const rang = r.occupe ? r.pas + 1 : r.pas;
-      const action = rang === 0 ? "Avant la première étape" : `Étape ${rang} sur ${n}` + (fin ? " — terminée : à vous" : "");
-      // La recette reste sous les yeux : étapes faites, étape en cours ou qui vient d’être expliquée, étape suivante.
-      const etat = i => i === r.pas ? (r.occupe ? "courante" : "prochaine") : i > r.pas ? ""
-        : i === r.pas - 1 && !r.occupe && !r.libre ? "faite expliquee" : "faite";
-      const explication = r.occupe ? [r.gel ? "En pause, au milieu de l’étape." : "En cours…"] : r.libre ?? r.explications[r.pas];
-      const principal = r.occupe ? (r.gel ? "▶ Reprendre" : "❚❚ Pause") : fin ? "↻ Rejouer"
-        : continu && r.lecture ? "❚❚ Pause" : r.pas === 0 ? "Commencer ▶" : "Continuer ▶";
-      bloc.replaceChildren(
-        el("div", { class: "recette-entete" }, el("span", { class: "recette-titre" }, "Recette"), el("span", { class: "recette-rang" }, action),
-          bouton("✕", fermer, { class: "fermer", "aria-label": "Fermer la recette", title: "Fermer la recette" })),
-        el("ol", { class: "recette-etapes" }, ...etapes.map(([titre], i) =>
-          el("li", { class: etat(i), "aria-current": i === (r.occupe ? r.pas : r.pas - 1) ? "step" : false }, titre))),
-        el("div", { class: "explication", role: "status", "aria-live": "polite" },
-          el("p", { class: "explication-titre" }, r.occupe ? "Ce qui se passe" : r.libre ? "Votre build" : "Ce qui vient de se passer"),
-          ...explication.map(phrase => el("p", {}, phrase))),
-        el("div", { class: "lecteur" },
-          bouton("◀ Revenir", reculerRecette, { "aria-label": "Revenir à l’étape précédente", disabled: (r.pas === 0 && !r.occupe) && "" }),
-          bouton(principal, avancerRecette, { class: "jouer" }), sansPause));
-    }
-  }
-  // Changer d’expérience ferme la recette ouverte : sa carte ne serait plus visible.
-  new MutationObserver(() => { if (recette && cartes.find(c => c.dataset.recette === recette.nom)?.hidden) fermer(); })
-    .observe(document.querySelector(".experiences") ?? document.body, { subtree: true, attributes: true, attributeFilter: ["hidden"] });
+  const apresBuild = () => moteur.libre(expliquerBuild());
 
   // ---------- Interface ----------
-  const el = (balise, attributs = {}, ...enfants) => {
-    const e = document.createElement(balise);
-    for (const [k, v] of Object.entries(attributs)) {
-      if (k.startsWith("on")) e.addEventListener(k.slice(2), v); else if (v !== false && v != null) e.setAttribute(k, v);
-    }
-    e.append(...enfants);
-    return e;
-  };
-  const bouton = (texte, action, attributs = {}) => el("button", { type: "button", onclick: action, ...attributs }, texte);
   const PERIME = "Dockerfile, fichier ou cache modifié : reconstruisez.";
   function remettreAZero() {
     ({ instructions, fichiers } = depart());
     cache.clear(); historique.length = 0; dernier = null; affiche = false; echec = null;
   }
   // Le lecteur a modifié quelque chose à la main : une recette terminée le lui signale.
-  const aLaMain = () => { if (recette) { recette.libre = [A_VOUS]; majRecettes(); } };
+  const aLaMain = () => moteur.libre([A_VOUS]);
   // Toute modification rend le résultat caduc : il s’efface jusqu’au prochain build.
   const modifier = action => { action(); affiche = false; echec = null; dessiner(); aLaMain(); };
   // Pendant la saisie, le résultat s’efface sur place : redessiner retirerait le champ des mains du lecteur.
@@ -469,7 +338,7 @@
 
   function dessiner() {
     // Pendant un build ou une recette en cours, le lecteur regarde ; une recette terminée lui rend la main.
-    const fige = enCours || (!!recette && !finie(recette));
+    const fige = enCours || moteur.fige();
     const numerotees = instructions.map((x, i) => ["from", "run", "copy"].includes(analyser(x, i).genre));
     const total = numerotees.filter(Boolean).length;
     let k = 0;
@@ -504,7 +373,7 @@
       el("label", { class: "sans-attente" },
         el("input", { type: "checkbox", checked: sansAttente && "", onchange: ev => { sansAttente = ev.target.checked; } }), "sans attente"),
     );
-    const zero = bouton("Remettre à zéro", () => { if (recette) fermer(); remettreAZero(); dessiner(); }, { class: "zero", disabled: enCours && "" });
+    const zero = bouton("Remettre à zéro", () => { moteur.fermer(); remettreAZero(); dessiner(); }, { class: "zero", disabled: enCours && "" });
 
     const h = historique.at(-1);
     const gain = h ? h.complet - h.duree : 0;
@@ -546,5 +415,4 @@
     dessinerCache();
   }
   dessiner();
-  majRecettes();
 })();

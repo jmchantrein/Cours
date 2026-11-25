@@ -219,13 +219,16 @@
 // Un artefact est un petit logiciel interactif, dans <cours>/artefacts/<nom>/ : une page `<nom>.typ`
 // (`page-web(atelier: true, …)`) et un script qui construit son interface dans l’élément `#artefact`.
 // `#artefact(read("<nom>.js"), style: read("<nom>.css"))[aide]` : l’aide (la règle, les expériences) s’affiche
-// à côté. Le style emploie les variables CSS de la charte.
+// à côté. Le style emploie les variables CSS de la charte. La page embarque d’abord ce que tous les artefacts
+// partagent : `artefact.css`, et `artefact.js` (`Artefact` : création d’éléments et moteur de recettes).
 #let artefact(script, style: none, aide) = {
+  _el("style", read("artefact.css"))
   if style != none { _el("style", style) }
   _el("div", class: "plan-atelier")[
     #_el("div", _el("p", [Cet artefact a besoin de JavaScript.]), id: "artefact")
     #_el("aside", class: "aide", aide)
   ]
+  _el("script", read("artefact.js"))
   _el("script", script)
 }
 // Expériences guidées : `#experiences(([question], [réponse]), …)`. tp.js en montre une à la fois.

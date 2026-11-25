@@ -4,13 +4,11 @@
    hauteur de la fenêtre ; ce qui déborde défile dans son cadre.
    Chaque mot de l’argv garde la couleur de ce qui l’a fourni, toujours doublée de son nom (ENTRYPOINT, CMD…). */
 #artefact { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) minmax(0, 1fr); gap: .6rem .8rem; align-content: start; }
-#artefact section { min-width: 0; }
 #artefact .zone-dockerfile { grid-column: 1 / 3; }
 #artefact .zone-run { grid-column: 3; }
 #artefact .zone-explication { grid-column: 1 / -1; }
 #artefact h2 { margin: 0 0 .3rem; padding: 0; border: 0; font-size: .75rem; color: var(--c-gris);
   letter-spacing: .08em; text-transform: uppercase; }
-[data-variante="dyslexie"] #artefact h2 { text-transform: none; }
 #artefact .cadre { display: flex; flex-direction: column; padding: .5rem .7rem .55rem; background: #fff;
   border: 1px solid var(--c-filet); border-radius: .6rem; box-shadow: 0 1px 2px rgb(15 30 51 / .05); }
 #artefact .cadre > h2 { flex: none; }
@@ -34,8 +32,6 @@
 #artefact select:disabled, #artefact input:disabled { opacity: .75; }
 #artefact button { padding: .25rem .7rem; border: 1px solid var(--c-ardoise); border-radius: .3rem; background: #fff;
   color: var(--c-encre); font: inherit; font-size: .8rem; cursor: pointer; }
-#artefact button:hover:not(:disabled) { background: var(--c-bleu-clair); }
-#artefact button:disabled { opacity: .3; cursor: default; }
 .titre-zone { min-height: 1.75rem; display: flex; align-items: baseline; justify-content: space-between; gap: .5rem; }
 #artefact button.zero { margin-bottom: .3rem; padding: .1rem .6rem; font-size: .75rem; }
 /* Ce qu’une recette vient de modifier clignote brièvement. */
@@ -75,52 +71,6 @@
 .explication-texte p { margin: .1rem 0; }
 .explication-texte .erreur { font-size: inherit; }
 .zone-explication, .zone-inspect, .zone-argv, .zone-pid1 { overflow-y: auto; }
-
-/* Recettes : dans chaque expérience, une carte à part — bandeau sombre, comme le terminal du Dockerfile.
-   Fermée, elle liste ses étapes ; ouverte, elle explique ce qui vient de se passer et attend « Continuer ». */
-.recette { margin: .5rem 0 0; border: 2px solid var(--c-nuit); border-radius: .6rem; background: var(--c-espace); overflow: hidden; }
-.recette-entete { display: flex; align-items: baseline; gap: .6rem; padding: .25rem .7rem; background: var(--c-nuit); color: var(--c-texte-term); font-size: .8rem; }
-.recette-titre { color: var(--c-prompt); font-size: .72rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
-[data-variante="dyslexie"] .recette-titre { text-transform: none; }
-.recette-rang { flex: 1; min-width: 0; font-weight: 600; }
-.recette .fermer { margin-left: auto; padding: 0 .35rem; border: 0; background: none; color: var(--c-texte-term); font: inherit; cursor: pointer; }
-.recette .fermer:hover { color: var(--c-prompt); }
-.recette-etapes { margin: .4rem .7rem 0; padding-left: 1.5rem; color: var(--c-ardoise); font-size: .92em; line-height: 1.3; }
-.recette-etapes li { padding-left: .15rem; border-radius: .25rem; }
-.recette-etapes .faite { color: var(--c-gris); }
-.recette-etapes .faite::marker { content: "✓ "; }
-.recette-etapes .expliquee { color: var(--c-encre); font-weight: 600; background: #fff; }
-.recette-etapes .courante { color: var(--c-encre); font-weight: 600; background: var(--precaution-fond); }
-.recette-etapes .prochaine { color: var(--c-encre); }
-.recette-etapes .prochaine::marker { content: "▸ "; }
-.explication { margin: .4rem .7rem 0; padding: .35rem .7rem .4rem; border-left: .3rem solid var(--notion-entete); border-radius: 0 .4rem .4rem 0; background: #fff; }
-.explication p { margin: .15rem 0; line-height: 1.38; }
-.explication .explication-titre { margin-top: 0; color: var(--notion-accent); font-size: .72rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
-[data-variante="dyslexie"] .explication-titre { text-transform: none; }
-.lecteur { display: flex; flex-wrap: wrap; align-items: center; gap: .3rem .5rem; padding: .45rem .7rem .55rem; }
-.lecteur button { padding: .22rem .7rem; border: 1px solid var(--c-ardoise); border-radius: .4rem; background: #fff;
-  color: var(--c-encre); font: inherit; font-size: .82rem; font-weight: 600; cursor: pointer; white-space: nowrap; }
-.lecteur button:hover:not(:disabled) { background: var(--c-bleu-clair); }
-.lecteur button:disabled { opacity: .35; cursor: default; }
-.lecteur button.jouer { border-color: var(--notion-entete); background: var(--notion-entete); color: var(--notion-texte); }
-.lecteur button.jouer:hover:not(:disabled) { background: var(--c-encre); border-color: var(--c-encre); }
-.sans-pause { display: inline-flex; align-items: center; gap: .3rem; color: var(--c-ardoise); font-size: .78rem; }
-
-/* Fenêtre basse (petit portable) : le panneau d’aide se resserre pour que recette et réponse tiennent ensemble. */
-@media (min-width: 60rem) and (max-height: 46rem) {
-  .aide { font-size: .82rem; line-height: 1.4; }
-  .experiences-nav { margin-bottom: .25rem; }
-  .experience { padding: .4rem .7rem .5rem; }
-  .experience .question > p { margin: .1rem 0; }
-  .recette { margin-top: .35rem; }
-  .recette-etapes { margin-top: .3rem; line-height: 1.25; }
-  .explication { margin-top: .3rem; padding: .25rem .6rem .3rem; }
-  .explication p { margin: .08rem 0; line-height: 1.32; }
-  .lecteur { padding: .35rem .7rem .4rem; }
-  .experience details { margin-top: .35rem; }
-  .experience details > summary { padding: .22rem .8rem; }
-  .experience .repli { padding: .35rem .8rem .4rem; }
-}
 
 /* Écran d’ordinateur : l’artefact prend la hauteur disponible ; les cadres du bas s’étirent. */
 @media (min-width: 60rem) and (min-height: 36rem) {
