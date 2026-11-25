@@ -13,8 +13,8 @@
 // seulement qu'il l'affiche, et on en donne le nombre.
 //
 // Prérequis : Docker, Node.js. L'image artefact-ty-analyseurs (debian:13-slim + les deux paquets) est construite au
-// premier lancement ; derrière un proxy HTTPS qui réécrit TLS, HTTPS_PROXY et le certificat /root/.ccr/ca-bundle.crt
-// (ou TPTEST_CA) sont passés à `docker build --network host`.
+// premier lancement ; derrière un proxy HTTPS qui réécrit TLS, HTTPS_PROXY et le certificat TPTEST_CA=/chemin/ca.crt
+// sont passés à `docker build --network host` (convention du dépôt, voir README.md).
 //   node edition-formats/artefacts/typage-yaml/verifier-analyseurs.js [--graine N] [--hasard N] [--liste]
 // Il ne touche qu'à son conteneur (artefact-ty-*) et à son image (artefact-ty-analyseurs) ; aucun prune.
 const { spawnSync } = require("child_process");
@@ -31,7 +31,7 @@ const docker = (args, options = {}) => spawnSync("docker", args, { encoding: "ut
 function image() {
   if (docker(["image", "inspect", IMAGE]).status === 0) return;
   const dossier = fs.mkdtempSync(path.join(os.tmpdir(), "verifier-analyseurs-"));
-  const ca = [process.env.TPTEST_CA, "/root/.ccr/ca-bundle.crt"].find(c => c && fs.existsSync(c));
+  const ca = [process.env.TPTEST_CA].find(c => c && fs.existsSync(c));
   const proxy = process.env.HTTPS_PROXY || "";
   const reseau = ca && proxy;
   if (reseau) fs.copyFileSync(ca, path.join(dossier, "ca-hote.crt")); else fs.writeFileSync(path.join(dossier, "ca-hote.crt"), "");
@@ -224,7 +224,9 @@ function comparer(c, reel, v) {
 
 try { image(); } catch (e) { console.error("ÉCHEC :", e.message); process.exit(2); }
 const reels = analyseursReels(cas);
-const [paquetYaml, paquetRuamel, interprete] = versions();
+const lignesVersions = versions(), interprete = lignesVersions.at(-1);
+const paquet = nom => lignesVersions.find(l => l.startsWith(nom + " "));
+const paquetYaml = paquet("python3-yaml"), paquetRuamel = paquet("python3-ruamel.yaml");
 let ecarts = 0, comparaisons = 0, limites = 0, nLimites = new Set();
 const parGroupe = { liste: 0, hasard: 0 };
 cas.forEach((c, i) => {

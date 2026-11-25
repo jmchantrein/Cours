@@ -46,6 +46,7 @@ Sept cours, à lire dans l’ordre de la page : les outils de l’administrateur
       bouton(principal: true, [Diapositives], pdf("edition-formats", "projection")),
       bouton([TP : Dojo Vim], "edition-formats/tp/vim/"),
       bouton([TP : Décrire des livres en YAML et en JSON], "edition-formats/tp/yaml-json/"),
+      bouton([Artefact : Le typage des scalaires YAML], "edition-formats/artefacts/typage-yaml/"),
     )
     #rendus("edition-formats")
   ],

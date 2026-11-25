@@ -229,6 +229,9 @@ Le paquet de Debian 13 est la 3.4.3 (celui d’Ubuntu 24.04, la 3.1.0) ; les sor
 
 #f("fichiers/pieges.yaml")
 
+Pour voir comment chaque version de YAML type un scalaire et ce que JSON en fait, essayez
+#link("../../artefacts/typage-yaml/")[l’artefact « Le typage des scalaires YAML »] (mode document : `pieges.yaml`).
+
 #indice(titre: [Indice : deux versions de YAML])[
   PyYAML suit YAML 1.1, où `yes`, `no`, `on`, `off` sont des booléens, où un nombre qui commence par 0 est en
   octal et où `7:30` est un nombre en base 60 : #d("yaml-norvege")[Le problème de la Norvège] et
