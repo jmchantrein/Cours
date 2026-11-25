@@ -859,7 +859,7 @@
       $ incus exec v1 -- nproc
       # 2 processeurs : la VM continue de tourner
       $ incus config set v1 limits.cpu=2
-      # plus de mémoire qu’au démarrage : VM arrêtée
+      # plus de mémoire qu’au démarrage (6.0.4) : VM arrêtée
       $ incus stop v1
       $ incus config set v1 limits.memory=2GiB
       $ incus start v1
@@ -874,14 +874,14 @@
   bloc(taille: px(25))[Ce qui change à chaud][
     - Une instance se règle par des *clés* de configuration : `limits.cpu`, `limits.memory`…
     - *Conteneur système* : processeurs et mémoire changent aussitôt ; ce sont des limites posées par le noyau de l’hôte
-    - *VM* : processeurs ajoutés à chaud ; mémoire seulement *réduite* à chaud, l’invité rendant des pages à l’hôte
+    - *VM* : processeurs ajoutés à chaud ; mémoire seulement *réduite* à chaud (Incus 6.0.4), l’invité rendant des pages
   ],
   bloc(role: "precaution", taille: px(25))[Sans limite, un conteneur système voit tout l’hôte][
     Il partage le noyau de l’hôte : tous ses processeurs, toute sa mémoire. Une VM reçoit toujours une quantité fixée.
   ],
   poids: (1.1, 1),
   source-de: [Incus 6.0.4 : #doc-incus("reference/instance_options.md")[options d’une instance] · #doc-incus("howto/instances_configure.md")[configurer une instance]],
-  note: [Unités d’Incus : GiB et MiB sont les Gio et Mio (puissances de 2) ; GB et MB, les puissances de 10. Valeurs par défaut d’une VM : limits.cpu 1, limits.memory 1GiB (documentation des options). incus config show v1 n’affiche que la configuration propre à l’instance ; --expanded y ajoute ce qui vient des profils (diapositive suivante). Conteneur système : les limites sont celles des groupes de contrôle (cgroups) du noyau de l’hôte, modifiables à tout moment ; nproc et free les reflètent dans le conteneur. VM, en 6.0.4 : limits.cpu se change à chaud quand c’est un nombre de processeurs (branchement à chaud ; selon le système invité, il faut parfois mettre les nouveaux processeurs en ligne ou redémarrer) ; limits.memory se réduit à chaud par le ballon mémoire (l’invité rend des pages, lentement et parfois incomplètement), mais ne peut pas dépasser la mémoire du démarrage tant que la VM tourne : incus config set répond « Cannot increase memory size beyond boot time size when VM is running », d’où l’arrêt dans la démonstration. L’ajout de mémoire à chaud est venu après la LTS 6.0, avec Incus 6.12 (extension d’API memory\_hotplug) : la LTS 7.0 (7.0.2 dans trixie-backports) l’accepte, dans la limite d’un maximum fixé au démarrage (clé limits.memory.hotplug). Avec QEMU seul : -smp et -m se fixent au lancement ; les changer demande de relancer la commande. #_non-execute],
+  note: [Unités d’Incus : GiB et MiB sont les Gio et Mio (puissances de 2) ; GB et MB, les puissances de 10. Valeurs par défaut d’une VM : limits.cpu 1, limits.memory 1GiB (documentation des options). incus config show v1 n’affiche que la configuration propre à l’instance ; --expanded y ajoute ce qui vient des profils (diapositive suivante). Conteneur système : les limites sont celles des groupes de contrôle (cgroups) du noyau de l’hôte, modifiables à tout moment ; nproc et free les reflètent dans le conteneur. VM, en 6.0.4 : limits.cpu se change à chaud quand c’est un nombre de processeurs (branchement à chaud ; selon le système invité, il faut parfois mettre les nouveaux processeurs en ligne ou redémarrer) ; limits.memory se réduit à chaud par le ballon mémoire (l’invité rend des pages, lentement et parfois incomplètement), mais ne peut pas dépasser la mémoire du démarrage tant que la VM tourne : incus config set répond « Cannot increase memory size beyond boot time size when VM is running », d’où l’arrêt dans la démonstration. L’ajout de mémoire à chaud est venu avec Incus 6.12 (extension d’API memory\_hotplug), et la LTS 6.0 l’a reçu avec la 6.0.5 (updateMemoryLimit, driver\_qemu.go) : en 6.0.5 comme en 7.0 (7.0.2 dans trixie-backports), incus config set accepte et Incus branche à chaud une barrette de mémoire, dans la limite d’un maximum fixé au démarrage de QEMU (par défaut la mémoire de l’hôte ; clé limits.memory.hotplug, false pour refuser) ; la 6.0.4 de Debian 13 refuse. Avec QEMU seul : -smp et -m se fixent au lancement ; les changer demande de relancer la commande. #_non-execute],
 )
 
 == Profils : une configuration réutilisable <incus-profils-commandes>
