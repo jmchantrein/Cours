@@ -572,7 +572,7 @@
             "1.2": "booléen du schéma de base 1.2 : seulement true et false, en minuscules, capitalisés ou en capitales" },
     null: { "1.1": "null : null, Null, NULL, ~ ou rien", "1.2": "null : null, Null, NULL, ~ ou rien" },
     timestamp: { "1.1": "date : AAAA-MM-JJ, avec une heure et un fuseau facultatifs",
-                  "1.2": "date, hors du schéma de base 1.2 (il n’a pas de type date ; ruamel.yaml en construit une) : AAAA-MM-JJ, avec une heure et un fuseau facultatifs" },
+                  "1.2": "date, hors schéma de base (ruamel.yaml) : AAAA-MM-JJ, avec une heure et un fuseau facultatifs" },
   };
   const BRANCHES_INT = {
     zero: "entier : zéro", decimal: "entier décimal : des chiffres, zéros initiaux compris",
@@ -623,7 +623,7 @@
     if (r12?.ok && r12.regle.tag === "int" && (r12.regle.branche === "binaire" || /_/.test(texte)))
       notes.push("ruamel.yaml accepte ici 0b… et les soulignés (_), que le schéma de base de YAML 1.2 ne prévoit pas : le simulateur suit ruamel.yaml.");
     if (r12?.ok && r12.regle.tag === "timestamp")
-      notes.push("En 1.2, cette date ne vient pas du schéma de base, qui n’a pas de type date : c’est ruamel.yaml qui en construit une, hors schéma (en 1.1, la date est dans le schéma).");
+      notes.push("Les deux lectures donnent la même date, mais en 1.2 elle vient de ruamel.yaml, non du schéma de base, qui n’a pas de type date.");
     return notes;
   }
   const conseil = texte => `Pour une chaîne dans toutes les versions : "${texte.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}".`;
@@ -666,7 +666,10 @@
         else p.push(`${SCHEMA_NOM(res.version)} : la forme du texte est reconnue, mais la conversion échoue (${res.erreur.classe} : ${res.erreur.message}).`);
       }
       if (a.ok && b.ok) {
-        if (a.noeud.t === b.noeud.t && a.repr === b.repr) p.push("Les deux versions lisent la même chose : ce texte ne dépend pas de la spécification.");
+        if (a.noeud.t === b.noeud.t && a.repr === b.repr) {
+          // une date lue pareil par les deux n’est pas « indépendante de la spécification » : la note ci-dessous le dit
+          if (b.regle.tag !== "timestamp") p.push("Les deux versions lisent la même chose : ce texte ne dépend pas de la spécification.");
+        }
         else p.push(`Elles divergent : ${valeurTexte(a)} en 1.1, ${valeurTexte(b)} en 1.2. ${conseil(l.texte)}`);
       } else if (a.ok !== b.ok) p.push(`Elles divergent : l’une lit le texte, l’autre le refuse. ${conseil(l.texte)}`);
       else p.push("Les deux versions échouent, chacune à sa façon.");
