@@ -3,8 +3,8 @@
 # commandes de l’étape 2, passées par docker compose exec. Une paire de clés ed25519 sur
 # control-node (gardée si elle existe), la clé publique dans authorized_keys de chaque nœud,
 # leurs empreintes dans known_hosts. Rejouable : à relancer après chaque docker compose down.
-# À lancer depuis le dossier du labo (ansible/cm/labo), avec COMPOSE_PROJECT_NAME et
-# ANSIBLE_PROJET exportés comme à l’étape 1.
+# À lancer depuis le dossier du labo (ansible/cm/labo), avec ANSIBLE_PROJET exporté comme à
+# l’étape 1 (et COMPOSE_PROJECT_NAME, si l’on a nommé le projet Compose).
 set -euo pipefail
 
 noeuds=(managed-node-1 managed-node-2)

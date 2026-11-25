@@ -3,7 +3,7 @@
 # construit les trois conteneurs, câble SSH, puis lance chaque commande montrée,
 # dans l’ordre des diapos, en affichant sa sortie (à comparer aux diapos).
 # Usage : rejouer.sh [--keep]   (--keep laisse le labo en marche)
-# Derrière un proxy qui réécrit TLS : CA_PIP=/chemin/vers/ca.crt rejouer.sh
+# Derrière un proxy HTTPS : exporter LABO_APT_PROXY, LABO_CA et LABO_RESEAU_BUILD avant (voir labo/compose.yaml).
 # Les scripts entre apostrophes s’exécutent dans le conteneur : pas d’expansion ici.
 # shellcheck disable=SC2016
 set -euo pipefail
