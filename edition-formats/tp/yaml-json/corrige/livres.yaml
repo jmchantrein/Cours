@@ -1,5 +1,5 @@
 ---
-# Exercice 2 : les trois livres, une séquence de mappings sous la clé livres.
+# Étape 2 : les trois livres, une séquence de mappings sous la clé livres.
 livres:
   - titre: "1984"
     auteur: George Orwell

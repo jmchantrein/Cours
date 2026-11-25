@@ -240,7 +240,7 @@
       essai([`/1.2.3` #touche[Entrée] `cW2.0.0` #touche[Échap]], [change le MOT sous le curseur], [  version: 2.0.0]),
       essai([`/1.2.3` #touche[Entrée] `cw2.0.0` #touche[Échap]], [`w` s’arrête au point : seul « 1 » change], [  version: 2.0.0.2.3]),
       essai([`/nom` #touche[Entrée] `yyp`], [copie la ligne, la colle en dessous], [  nom: MonApplication (deux fois)]),
-      essai([`/environ` #touche[Entrée] `d2j`], [supprime cette ligne et les deux suivantes], [environnements et production disparaissent]),
+      essai([`/environ` #touche[Entrée] `d2j`], [supprime cette ligne et les deux suivantes], [environnements, production et son url disparaissent]),
       essai([`/production` #touche[Entrée] `dG`], [supprime jusqu’à la fin du fichier], [il reste les cinq premières lignes]),
       essai([`/version` #touche[Entrée] `dd` `.`], [supprime une ligne, puis répète], [version et environnements disparaissent]),
       essai([`jdd` `u` #touche[Ctrl+r]], [supprime, annule, rétablit], [la ligne application: est supprimée]),
@@ -365,7 +365,7 @@
 
 == À vous : corrigé
 
-#corriges(note: [Séquences jouées dans Vim (vim -s) : le fichier obtenu contient bien set number puis set tabstop=4, puis set tabstop=2 après la seconde séquence (rejouer.sh, Vim 9.1.1230 de Debian 13). Question 3 : la configuration est lue au démarrage, d’où les numéros de ligne dès la réouverture. Question 5 : :set tabstop? affiche la valeur ; :set tabstop (sans ?) ne marcherait pas pour une option numérique.],
+#corriges(note: [Séquences jouées dans Vim (vim -s) : le fichier obtenu contient bien set number puis set tabstop=4, puis set tabstop=2 après la seconde séquence (rejouer.sh, Vim 9.1.1230 de Debian 13). Question 3 : la configuration est lue au démarrage, d’où les numéros de ligne dès la réouverture. Question 5 : :set tabstop? affiche la valeur ; :set tabstop (sans ?) l’affiche aussi pour une option numérique, mais :set number (sans ?) active l’option booléenne au lieu de l’afficher : le ? vaut pour toutes (:help :set).],
   ("1-2", [Créez `~/.vimrc` (`set number`, `set tabstop=4`), enregistrez et quittez],
     reponse(terminal(titre: none, taille: px(20))[```
     $ vim ~/.vimrc
@@ -573,11 +573,11 @@
     bloc(taille: px(25))[Lire la commande][
       - `-f` (_from_) : format d’entrée ; `-t` (_to_) : format de sortie
       - `-s` : document autonome, avec en-tête ; une page HTML exige un titre (`--metadata title=…`)
-      - Le PDF passe par LaTeX : prérequis `texlive-latex-base` et `texlive-latex-recommended`
+      - Le PDF passe par LaTeX : prérequis `texlive-latex-base`, `texlive-latex-recommended` et `lmodern`
     ],
   ),
   source-de: link("https://pandoc.org/MANUAL.html")[pandoc, manuel],
-  note: [doc.md est le fichier de l’exercice suivant (corrigé). Sorties réelles, pandoc 3.1.11.1 du paquet Debian 13 (rejouer.sh). Sans --metadata title, pandoc -s avertit « [WARNING] This document format requires a nonempty \<title> element. Defaulting to 'doc' as the title » et prend le nom du fichier. L’erreur PDF est voulue : elle montre le prérequis ; les paquets texlive sont ceux du cours d’origine. pandoc -o doc.odt et -o doc.docx marchent sans LaTeX.],
+  note: [doc.md est le fichier de l’exercice suivant (corrigé). Sorties réelles, pandoc 3.1.11.1 du paquet Debian 13 (rejouer.sh). Sans --metadata title, pandoc -s avertit « [WARNING] This document format requires a nonempty \<title> element. Defaulting to 'doc' as the title » et prend le nom du fichier. L’erreur PDF est voulue : elle montre le prérequis ; les paquets texlive sont ceux du cours d’origine ; sans lmodern, pandoc échoue (« LaTeX Error: File lmodern.sty not found »), relevé sur Debian 13 (texlive 2024.20250309). pandoc -o doc.odt et -o doc.docx marchent sans LaTeX.],
 )
 
 == À vous : documenter une commande <markdown-exercice>
@@ -887,7 +887,7 @@
     ],
   ),
   source-de: [#link("https://yaml.org/type/bool.html")[YAML 1.1, bool] · #link("https://yamllint.readthedocs.io/en/stable/rules.html#module-yamllint.rules.truthy")[yamllint, truthy]],
-  note: [Sorties réelles, conteneur Debian 13, paquets Debian : PyYAML 6.0.2, ruamel.yaml 0.18.10, yamllint 1.37.1. yamllint s’appuie lui-même sur PyYAML. Ansible lit ses fichiers avec PyYAML : un yes y est un booléen (documentation Ansible, YAML Syntax) — à vérifier sur la version d’ansible-core du cours Ansible. Le yq de Debian (version Python, 3.4.3) ne suit ni l’un ni l’autre exactement : il lit NO et yes comme des chaînes (comme ruamel.yaml), mais 0644 comme l’entier 420 (comme PyYAML) ; 22:22 reste une chaîne.],
+  note: [Sorties réelles, conteneur Debian 13, paquets Debian : PyYAML 6.0.2, ruamel.yaml 0.18.10, yamllint 1.37.1. yamllint s’appuie lui-même sur PyYAML. Ansible lit ses fichiers avec PyYAML : un yes y est un booléen (documentation Ansible, YAML Syntax) ; relevé avec ansible-core 2.19.4, celui du cours Ansible : AnsibleLoader lit NO comme False et yes comme True. Le yq de Debian (version Python, 3.4.3) ne suit ni l’un ni l’autre exactement : il lit NO et yes comme des chaînes (comme ruamel.yaml), mais 0644 comme l’entier 420 (comme PyYAML) ; 22:22 reste une chaîne.],
 )
 
 == Autres pièges : octal, base 60, versions, dates <yaml-pieges>

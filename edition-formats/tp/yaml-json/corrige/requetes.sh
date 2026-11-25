@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Exercice 5 : interroger livres.yaml avec yq, livres.json avec jq, puis modifier livres.yaml en place.
+# Étape 7 : interroger livres.yaml avec yq, livres.json avec jq, puis modifier livres.yaml en place.
 # yq est ici celui du paquet yq de Debian 13 (yq 3.4.3, en Python) : il passe le JSON à jq,
 # les filtres sont ceux de jq.
 set -euo pipefail

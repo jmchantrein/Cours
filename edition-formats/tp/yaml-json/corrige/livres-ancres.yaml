@@ -1,5 +1,5 @@
 ---
-# Exercice 4 : l'auteur par défaut est défini une fois (ancre &), réutilisé
+# Étape 6 : l'auteur par défaut est défini une fois (ancre &), réutilisé
 # tel quel (alias *), ou recopié puis surchargé (clé de fusion <<).
 # L'année de naissance est typée explicitement comme un entier (!!int).
 auteur_defaut: &auteur_defaut
