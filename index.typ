@@ -56,6 +56,7 @@ Sept cours, à lire dans l’ordre de la page : les outils de l’administrateur
       bouton(principal: true, [Diapositives], pdf("git", "projection")),
       bouton([TP : Git en local], "git/tp/git-local/"),
       bouton([TP : Git à plusieurs, sans forge], "git/tp/git-distant/"),
+      bouton([Artefact : Le graphe des commits], "git/artefacts/graphe-git/"),
     )
     #rendus("git")
   ],

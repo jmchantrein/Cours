@@ -590,6 +590,7 @@ Chaque étape reprend une notion du cours : #d("distants")[Un dépôt distant et
   `git pull --rebase` fait `fetch`, puis rejoue vos commits locaux au-dessus de `origin/main` :
   #d("rebasage")[Rebaser : rejouer ses commits ailleurs]. Le commit d’Ada n’a jamais quitté son clone : la
   règle de #d("fusionner-ou-rebaser")[Fusionner ou rebaser ?] (ne jamais rebaser ce qui est publié) est respectée.
+  L’artefact #link("../../artefacts/graphe-git/")[Le graphe des commits] montre les commits rejoués, et les anciens qui disparaissent.
 ]
 
 #corrige[

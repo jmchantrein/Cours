@@ -353,6 +353,7 @@ défaites votre travail de toutes les façons que Git connaît. Chaque étape re
 #indice(titre: [Indice : les commandes])[
   `git switch -c` crée une branche et s’y place : #d("pointeurs")[Branches et HEAD : de simples pointeurs].
   `git branch`, puis `git log --oneline --graph --all` : #d("log-graph")[Une branche se voit dans git log --graph].
+  L’artefact #link("../../artefacts/graphe-git/")[Le graphe des commits] dessine le graphe et les pointeurs à chaque commande.
 ]
 
 #corrige[
@@ -403,6 +404,7 @@ défaites votre travail de toutes les façons que Git connaît. Chaque étape re
   Avance rapide quand la branche courante est un ancêtre de l’autre, commit de fusion sinon :
   #d("fusion")[Fusionner : avance rapide ou commit de fusion]. `git commit -am` indexe d’abord les fichiers déjà
   suivis ; `git merge -m` donne le message du commit de fusion ; `git branch -d` supprime une branche fusionnée.
+  Les deux fusions se manipulent dans l’artefact #link("../../artefacts/graphe-git/")[Le graphe des commits].
 ]
 
 #corrige[
@@ -659,7 +661,7 @@ quoi ?].
 #indice(titre: [Indice : les trois modes])[
   Les trois modes déplacent la branche ; ils diffèrent par les zones qu’ils remettent à l’état du commit visé :
   #d("reset-modes")[reset : trois modes]. `HEAD~1` est le parent de `HEAD` ; `tail -n 1` affiche la dernière
-  ligne d’un fichier.
+  ligne d’un fichier. L’artefact #link("../../artefacts/graphe-git/")[Le graphe des commits] montre où va la branche, et ce que chaque mode fait de l’index et du répertoire.
 ]
 
 #corrige[
