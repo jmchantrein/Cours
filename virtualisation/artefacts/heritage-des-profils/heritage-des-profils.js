@@ -32,18 +32,21 @@
   const depart = () => {
     let n = 0;
     const lignes = (...textes) => textes.map(t => ({ id: ++n, t }));
+    // L’exemple des diapos : `incus launch images:debian/13 v2 --vm --profile default --profile moyen --config limits.cpu=4`.
+    // S’y ajoutent une seconde instance qui partage le profil moyen, et un profil que personne n’a encore.
     const e = {
       profils: {
         default: { config: [], devices: lignes("eth0 nic network=incusbr0 name=eth0", "root disk path=/ pool=default") },
-        wordpress: { config: lignes("limits.cpu=2", "limits.memory=1GiB"), devices: [] },
-        petit: { config: lignes("limits.memory=512MiB"), devices: [] },
+        moyen: { config: lignes("limits.cpu=2", "limits.memory=2GiB"), devices: lignes("root disk path=/ pool=default size=20GiB") },
+        petit: { config: lignes("limits.cpu=1", "limits.memory=1GiB"), devices: [] },
       },
       instances: {
-        "wp-vm": { profils: ["default", "wordpress"], config: [], devices: [] },
-        "wp-ct": { profils: ["default", "wordpress"], config: [], devices: [] },
+        v2: { profils: ["default", "moyen"], config: lignes("limits.cpu=4"), devices: [] },
+        v3: { profils: ["default", "moyen"], config: [], devices: [] },
       },
-      courante: "wp-vm",   // l’instance affichée
-      journal: [],          // { argv, erreur } : les commandes incus équivalentes aux manipulations
+      courante: "v2",       // l’instance affichée
+      journal: [],          // { n, argv, erreur } : les commandes incus équivalentes aux manipulations, numérotées
+      commandes: 0,         // nombre de commandes écrites depuis le départ
       bilan: null,          // l’explication de la dernière manipulation
     };
     e.suivant = n;
@@ -136,17 +139,23 @@
   const perdues = d => (d.remplace.length ? Object.entries(d.remplace[0].cles).filter(([k]) => !(k in d.cles)) : []);
   const estRacine = cles => cles.type === "disk" && cles.path === "/" && !cles.source;   // IsRootDiskDevice
 
-  // Ce qu’Incus contrôlerait et que le simulateur ne contrôle pas : dit pour chaque instance, d’après son résultat.
-  function limites(e, nom) {
-    const ext = etendre(e, nom), sortie = [];
-    for (const [n, d] of ext.devices) {
-      const p = perdues(d), autres = Object.keys(d.cles).filter(k => k !== "type");
-      if (d.cles.type === "none" && autres.length) sortie.push(`Limitation du simulateur : il ne valide pas les clés d’un périphérique. Le type none n’en accepte aucune ; ${n} porte ${enumerer(autres)}.`);
-      else if (d.cles.type !== "none" && p.length) sortie.push(`Limitation du simulateur : il ne sait pas si ${n}, ${du(d.source)}, reste complet sans ${enumerer(p.map(([k]) => k))}. Incus refuse un périphérique auquel manque une clé obligatoire.`);
+  // Ce qu’Incus contrôlerait et que le simulateur ne contrôle pas : dit d’après le résultat, une fois pour toutes les instances.
+  function limites(e) {
+    const sortie = new Set(), sans = [], plusieurs = [];
+    for (const nom of Object.keys(e.instances)) {
+      const ext = etendre(e, nom);
+      for (const [n, d] of ext.devices) {
+        const p = perdues(d), autres = Object.keys(d.cles).filter(k => k !== "type");
+        if (d.cles.type === "none" && autres.length) sortie.add(`Limitation du simulateur : il ne valide pas les clés d’un périphérique. Le type none n’en accepte aucune ; ${n}, ${du(d.source)}, porte ${enumerer(autres)}.`);
+        else if (d.cles.type !== "none" && p.length) sortie.add(`Limitation du simulateur : il ne sait pas si ${n}, ${du(d.source)}, reste valide sans ${enumerer(p.map(([k]) => k))} ; Incus refuse un périphérique incomplet.`);
+      }
+      const racines = [...ext.devices.values()].filter(d => estRacine(d.cles)).length;
+      if (racines !== 1) (racines ? plusieurs : sans).push(nom);
     }
-    const racines = [...ext.devices.values()].filter(d => estRacine(d.cles)).length;
-    if (racines !== 1) sortie.push(`Limitation du simulateur : ${nom} ${racines ? "a plusieurs disques racine" : "n’a plus de disque racine"} (périphérique disk dont path vaut /). Incus signale alors une erreur ; le simulateur montre quand même ce que donne la règle.`);
-    return sortie;
+    const suite = "(disk, path=/) : Incus signalerait une erreur.";
+    if (sans.length) sortie.add(`Limitation du simulateur : ${enumerer(sans)} ${sans.length > 1 ? "n’ont" : "n’a"} plus de disque racine ${suite}`);
+    if (plusieurs.length) sortie.add(`Limitation du simulateur : ${enumerer(plusieurs)} ${plusieurs.length > 1 ? "ont" : "a"} plusieurs disques racine ${suite}`);
+    return [...sortie];
   }
 
   // ---------- Les commandes incus équivalentes ----------
@@ -307,19 +316,20 @@
       + (b.cles.type === "none" ? " De type none, il ne crée rien dans l’instance." : "");
   }
   // Ce qu’une manipulation a changé à la configuration étendue de chaque instance, en phrases.
+  // Deux instances à qui il arrive la même chose partagent leur paragraphe.
   function expliquer(a, b) {
-    const phrases = [], noms = [b.courante, ...Object.keys(b.instances).filter(n => n !== b.courante)];
+    const dits = new Map(), noms = [b.courante, ...Object.keys(b.instances).filter(n => n !== b.courante)];
     for (const n of noms) {
       const A = etendre(a, n), B = etendre(b, n), p = [];
-      const liste = pareil(A.profils, B.profils) ? "" : B.profils.length ? `Ses profils sont maintenant ${enumerer(B.profils)}, dans cet ordre. ` : "Elle n’a plus aucun profil. ";
+      const liste = pareil(A.profils, B.profils) ? "" : B.profils.length ? `Les profils sont maintenant ${enumerer(B.profils)}, dans cet ordre. ` : "Plus aucun profil. ";
       for (const k of trier(new Set([...A.config.keys(), ...B.config.keys()]))) p.push(expliquerCle(k, A.config.get(k), B.config.get(k)));
       for (const k of trier(new Set([...A.devices.keys(), ...B.devices.keys()]))) p.push(expliquerPeripherique(k, A.devices.get(k), B.devices.get(k)));
       const dites = p.filter(Boolean);
-      if (dites.length) phrases.push(`${n} — ${liste}${dites.join(" ")}`);
-      else if (!pareil(couchesDe(a, n), couchesDe(b, n))) phrases.push(`${n} — ${liste}Sa configuration étendue ne change pas.`);
-      const deja = limites(a, n);
-      phrases.push(...limites(b, n).filter(l => !deja.includes(l)));
+      const texte = dites.length ? liste + dites.join(" ") : pareil(couchesDe(a, n), couchesDe(b, n)) ? null : liste + "La configuration étendue ne change pas.";
+      if (texte) dits.set(texte, [...(dits.get(texte) ?? []), n]);
     }
+    const deja = limites(a);
+    const phrases = [...[...dits].map(([texte, qui]) => `${enumerer(qui)} — ${texte}`), ...limites(b).filter(l => !deja.includes(l))];
     return phrases.length ? phrases : ["Aucune configuration étendue ne change."];
   }
   const couchesDe = (e, n) => [e.instances[n].profils.map(p => [p, [...lireConfig(e.profils[p])], [...lireDevices(e.profils[p])]]),
@@ -336,14 +346,14 @@
 
   // Une phrase d’explication, en paragraphe : le nom de l’instance qu’elle concerne ressort, une limitation se signale.
   function paragraphe(phrase) {
-    const [, nom, reste] = phrase.match(/^(\S+) — (.*)$/s) ?? [];
+    const [, nom, reste] = phrase.match(/^(.+?) — (.*)$/s) ?? [];
     return el("p", { class: phrase.startsWith("Limitation") ? "limite" : phrase.startsWith("Incus refuse") ? "erreur" : false },
       ...(nom ? [el("strong", {}, nom), " — " + reste] : [phrase]));
   }
   // Termine une manipulation faite sur la copie `b` de l’état `a` : journal, explication, ce qui doit clignoter.
   function conclure(a, b, r) {
-    for (const argv of r.commandes ?? []) b.journal.push({ argv });
-    if (r.echec?.genre === "erreur" && r.tentative) b.journal.push({ argv: r.tentative, erreur: r.echec.message });
+    for (const argv of r.commandes ?? []) b.journal.push({ n: ++b.commandes, argv });
+    if (r.echec?.genre === "erreur" && r.tentative) b.journal.push({ n: ++b.commandes, argv: r.tentative, erreur: r.echec.message });
     b.journal = b.journal.slice(-JOURNAL_MAX);
     const phrases = r.phrases ?? (r.echec?.genre === "erreur" ? [`Incus refuse la commande : « ${r.echec.message} ».`, r.pourquoi ?? "Rien n’est modifié : la ligne refusée reste à corriger."]
       : r.echec ? [`Limitation du simulateur : ${r.echec.message}.`, "Rien n’est modifié."]
@@ -401,37 +411,31 @@
     });
   }
   // Les titres disent l’action que la recette va faire, pas son résultat : celui-ci est expliqué après coup.
-  const ADRESSE = "ipv4.address=10.0.0.10";
   const RECETTES = {
-    "deux-profils": { instance: "wp-ct", etapes: [
-      ["Ajouter le profil petit à wp-ct, en fin de liste.", etape(ajouterProfil("wp-ct", "petit"))],
-      ["Monter petit avant wordpress.", etape(deplacerProfil("wp-ct", "petit", -1))],
-      ["Retirer limits.memory du profil wordpress.", etape(definir(P("wordpress"), "limits.memory", ""))],
+    "cles": { instance: "v2", etapes: [
+      ["Ajouter le profil petit à v2, en fin de liste.", etape(ajouterProfil("v2", "petit"))],
+      ["Monter petit avant moyen.", etape(deplacerProfil("v2", "petit", -1))],
+      ["Retirer limits.cpu de l’instance v2.", etape(definir(I("v2"), "limits.cpu", ""))],
     ] },
-    "instance-dabord": { instance: "wp-ct", etapes: [
-      ["Définir limits.memory=2GiB dans l’instance wp-ct.", etape(definir(I("wp-ct"), "limits.memory", "2GiB"))],
-      ["Ajouter le profil petit, en fin de liste.", etape(ajouterProfil("wp-ct", "petit"))],
-      ["Retirer la clé de l’instance.", etape(definir(I("wp-ct"), "limits.memory", ""))],
+    "profil-partage": { instance: "v2", etapes: [
+      ["Dans le profil moyen, passer limits.memory à 4GiB.", etape(definir(P("moyen"), "limits.memory", "4GiB"))],
+      ["Dans le profil moyen, passer limits.cpu à 8.", etape(definir(P("moyen"), "limits.cpu", "8"))],
+      ["Afficher l’autre instance, v3.", etape(montrer("v3"))],
     ] },
-    "profil-partage": { instance: "wp-ct", etapes: [
-      ["Définir limits.memory=2GiB dans l’instance wp-ct.", etape(definir(I("wp-ct"), "limits.memory", "2GiB"))],
-      ["Dans le profil wordpress, passer limits.cpu à 4.", etape(definir(P("wordpress"), "limits.cpu", "4"))],
-      ["Dans le profil wordpress, passer limits.memory à 4GiB.", etape(definir(P("wordpress"), "limits.memory", "4GiB"))],
-      ["Afficher l’autre instance, wp-vm.", etape(montrer("wp-vm"))],
+    "peripherique-entier": { instance: "v2", etapes: [
+      ["Dans le profil moyen, réduire root à size=20GiB.", etape(peripherique(P("moyen"), "root disk size=20GiB"))],
+      ["Lui rendre path=/ et pool=default.", etape(peripherique(P("moyen"), "root disk size=20GiB path=/ pool=default"))],
+      ["Donner à v2 un root réduit à size=30GiB.", etape(peripherique(I("v2"), "root disk size=30GiB"))],
     ] },
-    "peripherique-entier": { instance: "wp-vm", etapes: [
-      ["Ajouter à wp-vm un eth0 qui ne porte que l’adresse.", etape(peripherique(I("wp-vm"), `eth0 nic ${ADRESSE}`))],
-      ["Lui rendre le réseau : network=incusbr0.", etape(peripherique(I("wp-vm"), `eth0 nic ${ADRESSE} network=incusbr0`))],
+    "override": { instance: "v2", etapes: [
+      ["Surcharger root dans v2 : bouton « override ».", etape(surcharger("v2", "root"))],
+      ["Dans la copie, passer size à 30GiB.", etape(peripherique(I("v2"), "root disk path=/ pool=default size=30GiB"))],
+      ["Dans le profil moyen, passer size à 40GiB.", etape(peripherique(P("moyen"), "root disk path=/ pool=default size=40GiB"))],
     ] },
-    "override": { instance: "wp-vm", etapes: [
-      ["Surcharger eth0 dans wp-vm : bouton « override ».", etape(surcharger("wp-vm", "eth0"))],
-      ["Ajouter l’adresse à la copie.", etape(peripherique(I("wp-vm"), `eth0 nic network=incusbr0 name=eth0 ${ADRESSE}`))],
-      ["Dans le profil default, changer le réseau d’eth0.", etape(peripherique(P("default"), "eth0 nic network=incusbr1 name=eth0"))],
-    ] },
-    "none": { instance: "wp-ct", etapes: [
-      ["Essayer de retirer eth0 de wp-ct.", etape(retirerHerite("wp-ct", "eth0"))],
-      ["Ajouter à wp-ct un eth0 de type none : bouton « none ».", etape(masquer("wp-ct", "eth0"))],
-      ["Afficher l’autre instance, wp-vm.", etape(montrer("wp-vm"))],
+    "none": { instance: "v3", etapes: [
+      ["Essayer de retirer eth0 de v3.", etape(retirerHerite("v3", "eth0"))],
+      ["Ajouter à v3 un eth0 de type none : bouton « none ».", etape(masquer("v3", "eth0"))],
+      ["Afficher l’autre instance, v2.", etape(montrer("v2"))],
     ] },
   };
   const etapesDe = r => RECETTES[r.nom].etapes;
@@ -584,7 +588,7 @@
   // La sortie de `incus config show <instance> --expanded`, ligne à ligne ; chaque ligne sait d’où elle vient.
   function sortie(ext) {
     // Une vraie instance porte aussi des clés volatile.* et image.*, qu’Incus tient lui-même : elles ne sont pas simulées.
-    const lignes = [{ y: ext.config.size ? "config:" : "config: {}" }, { note: "  # non montrées : volatile.*, image.*", hors: true }];
+    const lignes = [{ y: ext.config.size ? "config:" : "config: {}" }, { note: "  # + clés volatile.*, image.*", hors: true }];
     for (const [k, c] of ext.config) {
       lignes.push({ y: `  ${scalaire(k)}: ${scalaire(c.valeur)}`, source: c.source, signal: "config:" + k });
       c.remplace.forEach((r, i) => lignes.push({ note: `${i ? "et" : "remplace"} ${r.valeur}, ${du(r.source)}` }));
@@ -593,7 +597,7 @@
     for (const [n, d] of ext.devices) {
       const p = perdues(d);
       lignes.push({ y: `  ${scalaire(n)}:`, source: d.source, signal: "devices:" + n });
-      d.remplace.forEach((r, i) => lignes.push({ note: `${i ? "qui remplaçait" : "remplace en entier"} celui ${du(r.source)}${i || p.length ? "" : " ; aucune clé perdue"}` }));
+      d.remplace.forEach((r, i) => lignes.push({ note: `${i ? "qui remplaçait" : "remplace en entier"} celui ${du(r.source)}` }));
       for (const k of trier(Object.keys(d.cles))) lignes.push({ y: `    ${scalaire(k)}: ${scalaire(d.cles[k])}`, groupe: d.source, signal: "devices:" + n });
       for (const [k, v] of p) lignes.push({ perdue: `    ${scalaire(k)}: ${scalaire(v)}` });
     }
@@ -620,35 +624,38 @@
     const actif = racine.contains(document.activeElement) ? document.activeElement : null;
     const garde = actif && { id: actif.dataset.id, debut: actif.selectionStart, fin: actif.selectionEnd };
 
-    // Une couche se modifie ligne à ligne. Sous une ligne recouverte, ce qui la remplace ; sous une saisie refusée, le refus.
-    const editeur = cible => ["config", "devices"].flatMap(sorte => {
-      const ent = entite(etat, cible), quoi = sorte === "config" ? "clé" : "périphérique";
+    // Une couche se modifie ligne à ligne : ses clés, puis ses périphériques. Une ligne que la configuration
+    // étendue ne retient pas est barrée et le dit ; une saisie refusée garde son refus sous elle.
+    const editeur = cible => {
+      const ent = entite(etat, cible), a = cible.genre === "profil" ? "au profil" : "à l’instance";
+      const ligneDe = (sorte, ligne, i) => {
+        const quoi = sorte === "config" ? "Clé" : "Périphérique";
+        const texte = ligne.b ?? ligne.t, lu = !ligne.t ? null : sorte === "config" ? lireCle(ligne.t).cle : lirePeripherique(ligne.t).nom;
+        const gagnante = lu === null ? null : ext[sorte].get(lu).source, recouverte = gagnante && !meme(gagnante, cible);
+        const champ = el("textarea", { rows: "1", spellcheck: "false", autocomplete: "off", disabled: fige && "", "data-id": "l" + ligne.id,
+          placeholder: sorte === "config" ? "clé=valeur" : "nom type clé=valeur…", "aria-label": `${quoi} ${i + 1} ${du(cible)}`,
+          "aria-invalid": ligne.e ? "true" : false, class: signaux.has("l" + ligne.id) ? "signale" : false,
+          onkeydown: ev => {
+            if (ev.key === "Enter") { ev.preventDefault(); champ.valider(); }
+            if (ev.key === "Escape") agir(e => abandonner(e, cible, sorte, ligne.id));
+          },
+          oninput: () => ajuster(champ),
+          onchange: () => setTimeout(() => champ.valider(), 0) }, texte);   // après le déplacement du curseur : le dessin le suit
+        champ.valider = () => { if (g === generation && (champ.value !== texte || !ligne.t)) agir(e => poser[sorte](e, cible, ligne.id, champ.value)); };
+        return el("li", { class: ligne.e ? "refusee" : recouverte ? "recouverte" : false },
+          champ,
+          recouverte && !ligne.e ? el("span", { class: "sort", title: `${sorte === "config" ? "Remplacée" : "Remplacé en entier"} par ${nomDe(gagnante)}` },
+            sorte === "config" ? "remplacée" : "remplacé") : "",
+          bouton("✕", () => agir(e => oter(e, cible, sorte, ligne.id)), { disabled: fige && "", "data-id": "oter/" + ligne.id, "aria-label": `Retirer ${lu ?? "la ligne"} ${du(cible)}` }),
+          ligne.e ? el("span", { class: "refus" }, ligne.e.genre === "erreur" ? ligne.e.message : "Limitation du simulateur : " + ligne.e.message) : "");
+      };
+      const plus = (sorte, texte, quoi) => bouton(texte, () => agir(e => nouvelleLigne(e, cible, sorte)),
+        { class: "plus", disabled: fige && "", "data-id": `plus/${cible.nom}/${sorte}`, "aria-label": `Ajouter ${quoi} ${a} ${cible.nom}` });
       return [
-        el("div", { class: "rubrique" }, el("span", { class: "rubrique-nom" }, sorte),
-          ent[sorte].length ? "" : el("span", { class: "vide" }, "vide"),
-          bouton("+ " + quoi, () => agir(e => nouvelleLigne(e, cible, sorte)), { class: "plus", disabled: fige && "", "data-id": `plus/${cible.nom}/${sorte}`,
-            "aria-label": `Ajouter ${sorte === "config" ? "une clé" : "un périphérique"} ${cible.genre === "profil" ? "au profil" : "à l’instance"} ${cible.nom}` })),
-        el("ul", { class: "lignes" }, ...ent[sorte].map((ligne, i) => {
-          const texte = ligne.b ?? ligne.t, lu = !ligne.t ? null : sorte === "config" ? lireCle(ligne.t).cle : lirePeripherique(ligne.t).nom;
-          const gagnante = lu === null ? null : ext[sorte].get(lu).source, recouverte = gagnante && !meme(gagnante, cible);
-          const champ = el("textarea", { rows: "1", spellcheck: "false", autocomplete: "off", disabled: fige && "", "data-id": "l" + ligne.id,
-            placeholder: sorte === "config" ? "clé=valeur" : "nom type clé=valeur…", "aria-label": `${quoi[0].toUpperCase() + quoi.slice(1)} ${i + 1} ${du(cible)}`,
-            "aria-invalid": ligne.e ? "true" : false, class: signaux.has("l" + ligne.id) ? "signale" : false,
-            onkeydown: ev => {
-              if (ev.key === "Enter") { ev.preventDefault(); champ.valider(); }
-              if (ev.key === "Escape") agir(e => abandonner(e, cible, sorte, ligne.id));
-            },
-            oninput: () => ajuster(champ),
-            onchange: () => setTimeout(() => champ.valider(), 0) }, texte);   // après le déplacement du curseur : le dessin le suit
-          champ.valider = () => { if (g === generation && (champ.value !== texte || !ligne.t)) agir(e => poser[sorte](e, cible, ligne.id, champ.value)); };
-          return el("li", { class: ligne.e ? "refusee" : recouverte ? "recouverte" : false },
-            champ,
-            bouton("✕", () => agir(e => oter(e, cible, sorte, ligne.id)), { disabled: fige && "", "data-id": "oter/" + ligne.id, "aria-label": `Retirer ${lu ?? "la ligne"} ${du(cible)}` }),
-            ligne.e ? el("span", { class: "sort" }, ligne.e.genre === "erreur" ? ligne.e.message : "Limitation du simulateur : " + ligne.e.message)
-              : recouverte ? el("span", { class: "sort" }, `↳ ${sorte === "config" ? "remplacée" : "remplacé en entier"} par ${nomDe(gagnante)}`) : "");
-        })),
+        el("ul", { class: "lignes" }, ...ent.config.map((l, i) => ligneDe("config", l, i)), ...ent.devices.map((l, i) => ligneDe("devices", l, i))),
+        el("div", { class: "ajouts" }, el("span", {}, "config"), plus("config", "+ clé", "une clé"), el("span", {}, "devices"), plus("devices", "+ périphérique", "un périphérique")),
       ];
-    });
+    };
 
     const autres = Object.keys(etat.profils).filter(p => !inst.profils.includes(p));
     const zoneProfils = el("section", { class: "zone-profils cadre" },
@@ -676,36 +683,37 @@
       el("div", { class: "couche instance" },
         el("div", { class: "couche-entete" }, el("span", { class: "rang" }, String(inst.profils.length + 1)), el("code", { class: "nom" }, n), el("span", { class: "partage" }, "sa configuration propre")),
         ...editeur(I(n))),
-      herites.length ? el("div", { class: "rubrique" }, el("span", { class: "rubrique-nom" }, "hérités d’un profil")) : "",
+      herites.length ? el("p", { class: "herites-titre" }, "Périphériques hérités d’un profil") : "",
       el("ul", { class: "herites" }, ...herites.map(([nom, d]) => el("li", {}, el("code", {}, nom), el("span", { class: "origine" }, d.source.nom),
         bouton("override", () => agir(surcharger(n, nom)), { disabled: fige && "", "data-id": "override/" + nom, "aria-label": `Surcharger ${nom} dans ${n}`, title: enCommande(["config", "device", "override", n, nom]) }),
         bouton("none", () => agir(masquer(n, nom)), { disabled: fige && "", "data-id": "none/" + nom, "aria-label": `Remplacer ${nom} par un périphérique none dans ${n}`, title: enCommande(["config", "device", "add", n, nom, "none"]) }),
         bouton("✕", () => agir(retirerHerite(n, nom)), { disabled: fige && "", "data-id": "retirer-herite/" + nom, "aria-label": `Retirer ${nom} de ${n}`, title: enCommande(["config", "device", "remove", n, nom]) })))));
 
+    // Le terminal : les commandes équivalentes aux manipulations, puis la configuration étendue qu’Incus afficherait.
     const origine = s => (s.genre === "instance" ? "← instance" : "← " + s.nom);
-    const zoneEtendue = el("section", { class: "zone-etendue" },
+    const zoneTerminal = el("section", { class: "zone-terminal" },
       el("h2", {}, "Configuration étendue"),
-      el("div", { class: "etendue" },
-        el("p", { class: "commande" }, el("span", { class: "invite" }, "$ "), enCommande(["config", "show", n, "--expanded"])),
-        el("ol", { class: "yaml-lignes" }, ...sortie(ext).map(l => l.hors ? el("li", { class: "hors" }, l.note) : l.note ? el("li", { class: "glose" }, "↳ " + l.note)
-          : l.perdue ? el("li", { class: "perdue" }, el("code", {}, l.perdue), el("span", { class: "origine" }, "clé perdue"))
-          : el("li", { class: [(l.source ?? l.groupe)?.genre ?? "", l.source ? "entree" : "", signaux.has(l.signal) ? "signale" : ""].join(" ").trim() || false },
-            el("code", { class: "yaml" }, l.y), l.source ? el("span", { class: "origine" }, origine(l.source)) : "")))));
+      el("div", { class: "terminal-incus" },
+        el("ol", { class: "journal", "aria-label": "Commandes incus équivalentes aux manipulations" },
+          ...(etat.journal.length ? etat.journal.flatMap(c => [el("li", { "data-n": c.n, "data-argv": JSON.stringify(c.argv), "data-erreur": c.erreur ?? false }, el("span", { class: "invite" }, "$ "), enCommande(c.argv)),
+            ...(c.erreur ? [el("li", { class: "erreur" }, c.erreur)] : [])]) : [el("li", { class: "vide" }, "# chaque manipulation s’écrit ici en commandes incus")])),
+        el("div", { class: "etendue" },
+          el("p", { class: "commande" }, el("span", { class: "invite" }, "$ "), enCommande(["config", "show", n, "--expanded"])),
+          el("ol", { class: "yaml-lignes" }, ...sortie(ext).map(l => l.hors ? el("li", { class: "hors" }, l.note) : l.note ? el("li", { class: "glose" }, "↳ " + l.note)
+            : l.perdue ? el("li", { class: "perdue" }, el("code", {}, l.perdue), el("span", { class: "origine" }, "clé perdue"))
+            : el("li", { class: [(l.source ?? l.groupe)?.genre ?? "", l.source ? "entree" : "", signaux.has(l.signal) ? "signale" : ""].join(" ").trim() || false },
+              el("code", { class: "yaml" }, l.y), l.source ? el("span", { class: "origine" }, origine(l.source)) : ""))))));
 
-    const alertes = limites(etat, n);
-    const zoneJournal = el("section", { class: "zone-journal cadre" },
-      el("h2", {}, "Commandes incus équivalentes"),
+    const alertes = limites(etat);
+    const zoneBilan = el("section", { class: "zone-bilan cadre" },
+      el("h2", {}, "Ce que la dernière manipulation a changé"),
       bouton("Remettre à zéro", () => { if (recette) fermer(); etat = depart(); dessiner(); }, { class: "zero", "data-id": "zero" }),
-      el("ol", { class: "journal", "aria-label": "Commandes incus équivalentes aux manipulations" },
-        ...(etat.journal.length ? etat.journal.flatMap(c => [el("li", { "data-argv": JSON.stringify(c.argv), "data-erreur": c.erreur ?? false }, el("span", { class: "invite" }, "$ "), enCommande(c.argv)),
-          ...(c.erreur ? [el("li", { class: "erreur" }, c.erreur)] : [])]) : [el("li", { class: "vide" }, "# chaque manipulation s’écrit ici en commandes incus")])),
       el("div", { class: "bilan", role: "status", "aria-live": "polite" },
-        ...(etat.bilan ?? ["Modifiez un profil ou l’instance, puis validez par Entrée : l’effet sur la configuration étendue s’explique ici."])
-          .map(paragraphe),
-        ...alertes.filter(a => !etat.bilan?.includes(a)).map(a => el("p", { class: "limite" }, a))),
+        ...(etat.bilan ?? ["Modifiez une ligne et validez par Entrée, ou servez-vous des boutons : l’effet sur la configuration étendue s’explique ici."]).map(paragraphe),
+        ...alertes.filter(a => !etat.bilan?.includes(a)).map(paragraphe)),
       el("p", { class: "mention" }, "Limitations du simulateur : il ne valide ni les noms de clés ni leurs valeurs, et ne dit pas si une clé prend effet à chaud ou au redémarrage."));
 
-    racine.replaceChildren(zoneProfils, zoneInstance, zoneEtendue, zoneJournal);
+    racine.replaceChildren(zoneProfils, zoneInstance, zoneTerminal, zoneBilan);
     racine.dataset.modele = JSON.stringify(modele());
     racine.querySelectorAll("textarea").forEach(ajuster);
     const journal = racine.querySelector(".journal");

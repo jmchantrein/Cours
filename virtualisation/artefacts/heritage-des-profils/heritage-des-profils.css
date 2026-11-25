@@ -1,14 +1,20 @@
 /* heritage-des-profils.css — mise en forme de l’artefact ; les couleurs sont celles de la charte (variables CSS).
-   En haut, trois colonnes dans l’ordre de la règle : les profils empilés, puis l’instance, puis la configuration
-   étendue qui en résulte. En bas, les commandes incus équivalentes et l’explication de la dernière manipulation.
+   Trois colonnes, dans l’ordre de la règle : les profils empilés, puis l’instance, puis le terminal, où s’écrivent
+   les commandes incus équivalentes aux manipulations et la configuration étendue qui en résulte. Sous les deux
+   premières, l’explication de la dernière manipulation.
    Sur un écran d’ordinateur, l’ensemble occupe la hauteur de la fenêtre : chaque cadre défile en lui-même.
    Deux couleurs portent le sens, toujours doublées d’un mot : ce qui vient d’un profil (--profil : « ← » et son nom)
    et ce qui vient de l’instance (--instance, la couleur de l’invité dans les schémas : « ← instance »). */
 #artefact { --profil: var(--c-bleu); --profil-t: var(--c-prompt); --instance: var(--c-invite); --instance-t: var(--c-invite-t);
   --perte: var(--precaution-entete);
-  display: grid; grid-template-columns: minmax(0, 1.28fr) minmax(0, .92fr) minmax(0, 1.15fr); gap: .5rem .6rem; }
+  display: grid; grid-template-columns: minmax(0, 1.38fr) minmax(0, .87fr) minmax(0, 1.05fr); gap: .5rem .6rem;
+  grid-template-areas: "profils instance terminal" "bilan bilan terminal"; }
 #artefact section { min-width: 0; }
-#artefact h2 { margin: 0 0 .22rem; padding: 0; border: 0; font-size: .75rem; color: var(--c-gris);
+#artefact .zone-profils { grid-area: profils; }
+#artefact .zone-instance { grid-area: instance; }
+#artefact .zone-terminal { grid-area: terminal; }
+#artefact .zone-bilan { grid-area: bilan; }
+#artefact h2 { margin: 0 0 .22rem; padding: 0; border: 0; font-size: .75rem; line-height: 1.3; color: var(--c-gris);
   letter-spacing: .08em; text-transform: uppercase; }
 [data-variante="dyslexie"] #artefact h2 { text-transform: none; letter-spacing: .02em; }
 #artefact .cadre { display: flex; flex-direction: column; padding: .35rem .55rem .4rem; background: #fff;
@@ -17,9 +23,10 @@
 #artefact textarea { display: block; width: 100%; min-width: 0; margin: 0; padding: .08rem .3rem; border: 1px solid var(--c-filet); border-radius: .3rem;
   background: #fff; color: var(--c-encre); font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: .72rem; line-height: 1.35;
   letter-spacing: 0; word-spacing: 0; resize: none; overflow: hidden; overflow-wrap: anywhere; }
+#artefact textarea:focus-visible { outline: 3px solid var(--c-prompt); outline-offset: 1px; }
 #artefact textarea:disabled { opacity: .85; }
 #artefact button { padding: .1rem .45rem; border: 1px solid var(--c-ardoise); border-radius: .3rem; background: #fff;
-  color: var(--c-encre); font: inherit; font-size: .72rem; line-height: 1.35; cursor: pointer; white-space: nowrap; }
+  color: var(--c-encre); font: inherit; font-size: .72rem; line-height: 1.35; letter-spacing: 0; word-spacing: 0; cursor: pointer; white-space: nowrap; }
 #artefact button:hover:not(:disabled) { background: var(--c-bleu-clair); }
 #artefact button:disabled { opacity: .3; cursor: default; }
 #artefact code { padding: 0; background: none; }
@@ -33,27 +40,31 @@
 /* Une couche : un profil, ou la configuration propre de l’instance. Son rang dit quand elle est appliquée. */
 .pile { margin: 0; padding: 0; list-style: none; }
 .pile > :last-child { margin-bottom: 0; }
-.couche { margin: 0 0 .25rem; padding: .18rem .35rem .22rem .4rem; border: 1px solid var(--c-filet); border-left: .3rem solid var(--profil);
+.couche { margin: 0 0 .25rem; padding: .18rem .35rem .2rem .4rem; border: 1px solid var(--c-filet); border-left: .3rem solid var(--profil);
   border-radius: .2rem .45rem .45rem .2rem; background: var(--c-fond); }
 .couche.instance { border-left-color: var(--instance); }
 .couche-entete { display: flex; align-items: center; gap: .3rem; }
 .couche .rang { flex: none; width: 1.15rem; height: 1.15rem; border-radius: 50%; background: var(--profil); color: var(--notion-texte);
-  font-size: .7rem; font-weight: 700; line-height: 1.15rem; text-align: center; }
+  font-size: .7rem; font-weight: 700; line-height: 1.15rem; text-align: center; letter-spacing: 0; }
 .couche.instance .rang { background: var(--instance); color: var(--c-fond); }
 .couche .nom, .autres .nom { font-size: .8rem; font-weight: 600; }
 .couche .partage { flex: 1; min-width: 0; color: var(--c-gris); font-size: .68rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.rubrique { display: flex; align-items: baseline; gap: .4rem; margin-top: .12rem; line-height: 1.2; }
-.rubrique-nom { color: var(--c-ardoise); font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: .7rem; }
-.rubrique .vide { flex: 1; }
-#artefact .rubrique .plus { margin-left: auto; padding: 0 .4rem; border-color: var(--c-filet); color: var(--c-ardoise); font-size: .68rem; }
-/* Une ligne par clé (clé=valeur) ou par périphérique (nom type clé=valeur…) ; dessous, ce qui lui arrive. */
+/* Une ligne par clé (clé=valeur), puis par périphérique (nom type clé=valeur…). Une ligne que la configuration
+   étendue ne retient pas est barrée, et le dit : « remplacée ». */
 .lignes { margin: 0; padding: 0; list-style: none; }
-.lignes li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0 .2rem; align-items: start; margin-top: .08rem; }
+.lignes li { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 0 .2rem; align-items: start; margin-top: .1rem; }
+.lignes li > button { grid-column: 3; }
 #artefact .lignes button { padding: 0 .32rem; border-color: var(--c-filet); color: var(--c-ardoise); }
-.lignes .sort { grid-column: 1 / -1; padding-left: .3rem; color: var(--c-ardoise); font-size: .68rem; line-height: 1.25; }
+.lignes .sort { grid-column: 2; align-self: center; color: var(--c-ardoise); font-size: .66rem; font-style: italic; }
+[data-variante="dyslexie"] .lignes .sort { font-style: normal; }
 #artefact .recouverte textarea { color: var(--c-gris); text-decoration: line-through; background: var(--c-espace); }
 #artefact .refusee textarea { border-color: var(--danger-accent); }
-.refusee .sort { color: var(--danger-accent); font-weight: 600; }
+.lignes .refus { grid-column: 1 / -1; padding-left: .3rem; color: var(--danger-accent); font-size: .68rem; font-weight: 600; line-height: 1.25; }
+/* Sous les lignes d’une couche : de quoi en ajouter, sous le nom de la rubrique où Incus les range. */
+.ajouts { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 .3rem; margin-top: .14rem; color: var(--c-ardoise);
+  font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: .68rem; line-height: 1.2; }
+.ajouts button + span { margin-left: .5rem; }
+#artefact .ajouts .plus { padding: 0 .4rem; border-color: var(--c-filet); color: var(--c-ardoise); font-family: "IBM Plex Sans", system-ui, sans-serif; font-size: .68rem; }
 
 /* Les profils que l’instance n’a pas : une ligne chacun, avec de quoi l’ajouter. */
 .autres { margin: .3rem 0 0; padding: .25rem 0 0; list-style: none; border-top: 1px dashed var(--c-filet); }
@@ -62,50 +73,51 @@
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 /* L’instance : laquelle est affichée, sa configuration propre, puis les périphériques qu’elle tient d’un profil. */
-.onglets { display: flex; gap: .3rem; margin-bottom: .35rem; }
-#artefact .onglets button { flex: 1; padding: .12rem .4rem; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: .76rem; font-weight: 600; }
+.onglets { display: flex; gap: .3rem; margin-bottom: .3rem; }
+#artefact .onglets button { flex: 1; padding: .1rem .4rem; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: .76rem; font-weight: 600; }
 #artefact .onglets button[aria-pressed="true"] { background: var(--instance); border-color: var(--instance); color: var(--c-fond); opacity: 1; }
+.herites-titre { margin: .2rem 0 0; color: var(--c-ardoise); font-size: .68rem; line-height: 1.25; }
 .herites { margin: 0; padding: 0; list-style: none; }
-.herites li { display: flex; align-items: center; gap: .2rem; margin-top: .14rem; font-size: .74rem; }
+.herites li { display: flex; flex-wrap: wrap; align-items: center; gap: .1rem .2rem; margin-top: .14rem; font-size: .74rem; }
 #artefact .herites button { padding: .05rem .3rem; font-size: .7rem; }
 .herites .origine { flex: 1; min-width: 0; color: var(--c-gris); font-size: .68rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .herites .origine::before { content: "← "; }
 
-/* La configuration étendue : la sortie d’Incus, sur fond de terminal ; à droite de chaque entrée, d’où elle vient. */
-.zone-etendue { display: flex; flex-direction: column; }
-.etendue { flex: 1; min-height: 0; padding: .4rem .55rem .5rem; overflow-y: auto; border-radius: .6rem; background: var(--c-nuit); color: var(--c-texte-term);
-  font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: .74rem; line-height: 1.32; }
-.etendue .commande { margin: 0 0 .25rem; padding-bottom: .2rem; border-bottom: 1px solid var(--c-encart); overflow-wrap: anywhere; }
+/* Le terminal : en haut, les commandes équivalentes aux manipulations (les dernières restent visibles) ; dessous,
+   la sortie d’Incus, et à droite de chaque entrée, d’où elle vient. */
+.zone-terminal { display: flex; flex-direction: column; }
+.terminal-incus { flex: 1; min-height: 0; display: flex; flex-direction: column; padding: .35rem .55rem .45rem; border-radius: .6rem;
+  background: var(--c-nuit); color: var(--c-texte-term); font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: .72rem; line-height: 1.3;
+  letter-spacing: 0; word-spacing: 0; }
 .invite { color: var(--c-prompt); user-select: none; }
+.journal { flex: none; height: 3.9em; margin: 0 0 .25rem; padding: 0 0 .2rem; list-style: none; overflow-y: auto; border-bottom: 1px solid var(--c-encart); }
+.journal li { white-space: pre-wrap; overflow-wrap: anywhere; }
+.journal .vide, .journal .erreur { color: var(--c-commentaire); }
+.journal .frappe::after { content: "▌"; color: var(--c-prompt); }
+.etendue { flex: 1; min-height: 0; overflow-y: auto; }
+.etendue .commande { margin: 0; overflow-wrap: anywhere; }
 .yaml-lignes { margin: 0; padding: 0; list-style: none; }
 .yaml-lignes li { display: flex; flex-wrap: wrap; gap: 0 .5rem; padding-left: .3rem; border-left: .22rem solid transparent; }
 .yaml-lignes code { color: inherit; font-size: inherit; white-space: pre-wrap; overflow-wrap: anywhere; }
-.yaml-lignes .origine { margin-left: auto; font-family: "IBM Plex Sans", system-ui, sans-serif; font-size: .7rem; font-weight: 600; white-space: nowrap; }
+.yaml-lignes .origine { margin-left: auto; font-family: "IBM Plex Sans", system-ui, sans-serif; font-size: .68rem; font-weight: 600; white-space: nowrap; }
 .yaml-lignes .profil { border-left-color: var(--profil-t); }
 .yaml-lignes .profil .origine { color: var(--profil-t); }
 .yaml-lignes .instance { border-left-color: var(--instance-t); }
 .yaml-lignes .instance .origine { color: var(--instance-t); }
-.yaml-lignes .glose { padding-left: 1.5rem; color: var(--c-commentaire); font-family: "IBM Plex Sans", system-ui, sans-serif; font-size: .68rem; }
-.yaml-lignes .hors { color: var(--c-commentaire); white-space: pre; }
+.yaml-lignes .glose { padding-left: 1.5rem; color: var(--c-commentaire); font-family: "IBM Plex Sans", system-ui, sans-serif; font-size: .66rem; }
+.yaml-lignes .hors { color: var(--c-commentaire); white-space: pre-wrap; }
 .yaml-lignes .perdue code { color: var(--c-commentaire); text-decoration: line-through; }
 .yaml-lignes .perdue .origine { color: var(--perte); }
 .yaml-lignes .signale { animation: signal-ligne 1.6s ease-out; }
 
-/* En bas : le journal des commandes, sur fond de terminal, et l’explication de la dernière manipulation. */
-#artefact .zone-journal { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); gap: 0 .8rem; align-items: start; }
-#artefact .zone-journal .zero { justify-self: end; margin-bottom: .25rem; }
-.journal, .bilan { height: 3.7rem; overflow-y: auto; }
-.journal { margin: 0; padding: .3rem .55rem; list-style: none; border-radius: .45rem; background: var(--c-nuit); color: var(--c-texte-term);
-  font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: .74rem; line-height: 1.38; }
-.journal li { white-space: pre-wrap; overflow-wrap: anywhere; }
-.journal .vide, .journal .erreur { color: var(--c-commentaire); }
-.journal .erreur { padding-left: 1.2em; }
-.journal .frappe::after { content: "▌"; color: var(--c-prompt); }
-.bilan { font-size: .78rem; line-height: 1.36; }
-.bilan p { margin: 0 0 .25rem; }
+/* Sous les profils et l’instance : l’explication de la dernière manipulation, calculée d’après son résultat. */
+#artefact .zone-bilan { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0 .8rem; align-items: start; }
+#artefact .zone-bilan .zero { padding: 0 .5rem; }
+.bilan { grid-column: 1 / -1; height: 4.3rem; overflow-y: auto; font-size: .78rem; line-height: 1.34; }
+.bilan p { margin: 0 0 .2rem; }
 .bilan .erreur, .explication .erreur { color: var(--danger-accent); font-weight: 600; }
 .bilan .limite, .explication .limite { color: var(--avertissement-accent); }
-.zone-journal .mention { grid-column: 1 / -1; }
+.zone-bilan .mention { grid-column: 1 / -1; }
 
 /* Recettes : dans chaque expérience, une carte à part — bandeau sombre, comme le terminal.
    Fermée, elle liste ses étapes ; ouverte, elle explique ce qui vient de se passer et attend « Continuer ». */
@@ -154,19 +166,17 @@
   .experience .repli { padding: .35rem .8rem .4rem; }
 }
 
-/* Écran d’ordinateur : l’artefact prend la hauteur disponible ; les trois colonnes s’étirent. */
+/* Écran d’ordinateur : l’artefact prend la hauteur disponible ; profils, instance et terminal s’étirent. */
 @media (min-width: 60rem) and (min-height: 36rem) {
   #artefact { height: 100%; grid-template-rows: minmax(0, 1fr) auto; }
   /* Un cadre trop petit pour son contenu défile : rien ne devient inaccessible. */
   #artefact .cadre { min-height: 0; overflow-y: auto; }
-  #artefact .zone-etendue { min-height: 0; }
+  #artefact .zone-terminal { min-height: 0; }
 }
 @media (max-width: 60rem) {
-  #artefact { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
-  #artefact .zone-etendue { grid-column: 1 / -1; }
-  .etendue { max-height: 22rem; }
+  #artefact { grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); grid-template-areas: "profils instance" "bilan bilan" "terminal terminal"; }
+  .etendue { max-height: 24rem; }
 }
 @media (max-width: 44rem) {
-  #artefact, #artefact .zone-journal { grid-template-columns: minmax(0, 1fr); }
-  #artefact .zone-journal .zero { justify-self: start; }
+  #artefact { grid-template-columns: minmax(0, 1fr); grid-template-areas: "profils" "instance" "bilan" "terminal"; }
 }
