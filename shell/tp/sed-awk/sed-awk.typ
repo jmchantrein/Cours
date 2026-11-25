@@ -123,10 +123,10 @@ $ printf '%s\n' '# This is the sshd server system-wide configuration file.  See'
   > sshd_config
 $ printf 'Subsystem\tsftp\t/usr/lib/openssh/sftp-server\n' >> sshd_config
 $ wc -l pionnieres.csv services.conf sshd_config
-  9 pionnieres.csv
- 15 services.conf
- 28 sshd_config
- 52 total
+   9 pionnieres.csv
+  15 services.conf
+  28 sshd_config
+  52 total
 ```]
 
 #note[`printf '%s\n'` écrit chacun de ses arguments suivi d’un saut de ligne ; l’antislash en fin de ligne

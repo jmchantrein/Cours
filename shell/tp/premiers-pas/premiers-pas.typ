@@ -52,7 +52,8 @@ présentée en cours : #d("ligne-de-commande")[Lire une ligne de commande].
   Les messages et les dates suivent la langue du système. Les sorties montrées sont en anglais (locale
   `C.UTF-8`) ; sur un système en français, `No such file or directory` devient « Aucun fichier ou dossier de ce
   nom » et `Sep  1` devient `sept.  1`. L’ordre de `ls` peut aussi changer : en français, il ignore le point
-  initial des fichiers cachés.
+  initial des fichiers cachés. Dans le terminal de cette page, les fichiers sont en mémoire : la taille d’un
+  dossier dans `ls -l` (`80` au lieu de `4096`) et la ligne `total` diffèrent de celles montrées.
 ]
 
 = Étape 1 : le dossier de travail <etape-1>
@@ -76,7 +77,8 @@ Pour y entrer : cd /home/ada/atelier
 ```]
 #note(role: "pratique")[
   Sans `wget`, `curl -O` suivi de la même adresse télécharge aussi le fichier. Pour repartir de zéro plus tard :
-  `rm -r ~/atelier`, puis `bash preparer.sh` à nouveau. Le script, en entier :
+  `rm -r ~/atelier`, puis `bash preparer.sh` à nouveau. Dans le terminal de cette page, sans réseau, `wget` et
+  `curl` livrent le même fichier, que l’image de la VM embarque. Le script, en entier :
 ]
 #fichier("preparer.sh", read("preparer.sh"))
 
@@ -194,8 +196,9 @@ ligne de commande], bloc « Se documenter »).
 ]
 
 #note(role: "precaution")[
-  Le terminal de cette page n’a pas de manuel : `man` y est introuvable. Utilisez-y `ls --help` et `help cd`.
-  Sur Debian, `man` vient du paquet `man-db`, installé avec le système, mais absent des images de conteneur.
+  Le terminal de cette page a `man` (mandoc) pour les commandes de ces TP, mais pas pour toutes. Sur Debian, `man`
+  vient du paquet `man-db`, installé avec le système, mais absent des images de conteneur : sans lui, utilisez
+  `ls --help` et `help cd`.
 ]
 
 #indice(titre: [Indice : les options])[

@@ -3,15 +3,26 @@
 # construit les trois conteneurs, câble SSH, puis lance chaque commande montrée,
 # dans l’ordre des diapos, en affichant sa sortie (à comparer aux diapos).
 # Usage : rejouer.sh [--keep]   (--keep laisse le labo en marche)
-# Derrière un proxy HTTPS : exporter LABO_APT_PROXY, LABO_CA et LABO_RESEAU_BUILD avant (voir labo/compose.yaml).
+# Derrière un proxy HTTPS qui réécrit TLS (facultatif) : TPTEST_CA=/chemin/ca.crt HTTPS_PROXY=http://hôte:port
+# (voir labo/proxy.sh et README.md). Sans TPTEST_CA, le script ignore HTTPS_PROXY.
 # Les scripts entre apostrophes s’exécutent dans le conteneur : pas d’expansion ici.
 # shellcheck disable=SC2016
 set -euo pipefail
 cd "$(dirname "$0")/labo"
 
 keep="${1:-}"
-nettoyer() { [ "$keep" = "--keep" ] || docker compose down -t 1 >/dev/null 2>&1 || true; }
+travail="$(mktemp -d "${TMPDIR:-/tmp}/rejeu-ansible.XXXXXX")"
+nettoyer() {
+  [ "$keep" = "--keep" ] && return 0
+  docker compose down -t 1 >/dev/null 2>&1 || true
+  docker image rm "$COMPOSE_PROJECT_NAME-base" >/dev/null 2>&1 || true
+  rm -rf -- "$travail"
+}
 trap nettoyer EXIT
+export COMPOSE_PROJECT_NAME="${COMPOSE_PROJECT_NAME:-ansible-cm}"
+# shellcheck source=/dev/null
+. ./proxy.sh
+labo_proxy "$COMPOSE_PROJECT_NAME" "$travail"
 
 ctl() { docker compose exec -T control-node "$@"; }
 titre() { printf '\n===== %s\n' "$*"; }

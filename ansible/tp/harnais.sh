@@ -7,9 +7,11 @@
 # copie les corrigés. Il ne crée et ne supprime que ces ressources : conteneurs, réseau et
 # images du projet, dossier temporaire.
 #
-# Accommodement facultatif, pour construire derrière un proxy HTTPS : les variables du labo
-# LABO_APT_PROXY, LABO_CA et LABO_RESEAU_BUILD (voir ansible/cm/labo/compose.yaml) passent
-# telles quelles à Compose. Sans elles, rien ne change.
+# Proxy HTTPS qui réécrit TLS (facultatif, absent en CI) : convention du dépôt (README.md),
+#   TPTEST_CA=/chemin/ca.crt HTTPS_PROXY=http://hôte:port ./tester.sh --up
+# Le harnais construit alors, par ansible/cm/labo/proxy.sh, une base debian:13-slim qui passe
+# par ce proxy et la substitue à debian:13-slim, sans toucher aux fichiers du labo. Sans
+# TPTEST_CA, il ignore HTTPS_PROXY et se comporte comme en CI.
 
 : "${ici:?ici : dossier de la séance}" "${seance:?seance : nom de la séance}"
 mode="lint"; garder=""
@@ -35,6 +37,8 @@ cabler_ssh="$(cd "$ici/../inventaire/corrige" && pwd)/cabler-ssh.sh"
 projet="$(mktemp -d "${TMPDIR:-/tmp}/tptest-ansible-projet.XXXXXX")"
 travail="$(mktemp -d "${TMPDIR:-/tmp}/tptest-ansible-journaux.XXXXXX")"
 export COMPOSE_FILE="$labo/compose.yaml" COMPOSE_PROJECT_NAME="tptest-ansible-$seance" ANSIBLE_PROJET="$projet"
+# shellcheck source=/dev/null
+. "$labo/proxy.sh"
 
 # ---------------------------------------------------------------- comptes rendus
 
@@ -66,9 +70,11 @@ nettoyer() {
     silencieux docker compose run --rm --no-deps -T control-node find /etc/ansible -mindepth 1 -delete
   fi
   silencieux docker compose down --volumes --remove-orphans --rmi local -t 1
+  silencieux docker image rm "$COMPOSE_PROJECT_NAME-base"
   rm -rf -- "${projet:?}" "${travail:?}"
 }
 trap nettoyer EXIT
+labo_proxy "$COMPOSE_PROJECT_NAME" "$travail"
 
 # ------------------------------------------------------------- outils du labo
 

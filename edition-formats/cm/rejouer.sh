@@ -1,17 +1,69 @@
 #!/usr/bin/env bash
 # Rejoue les commandes du cours « Éditer et structurer du texte » et relève les versions.
-# Prérequis (Debian 13) : sudo apt install vim jq yq yamllint pandoc python3-yaml python3-ruamel.yaml script
-# Facultatif : le yq écrit en Go (mikefarah), installé sous le nom yq-go, pour la diapo « Deux outils nommés yq ».
+# Environnement de référence : Debian 13 (conteneur debian:13-slim, paquets Debian). Lancé sur l'hôte, le script
+# construit ce conteneur (nom rejeu-edition-formats-…), y installe vim, jq, yq, yamllint, pandoc, python3-yaml,
+# python3-ruamel.yaml, bsdutils (commande script) et les locales, puis s'y rejoue lui-même. Il a donc besoin de Docker et d'un accès
+# aux dépôts Debian. Le yq écrit en Go (mikefarah, pour la diapo « Deux outils nommés yq ») n'existe pas dans Debian :
+# le script télécharge le binaire amont (amd64), en version et SHA-256 fixés ; sans accès à GitHub, ses commandes sont sautées.
+# Derrière un proxy HTTPS qui réécrit TLS : TPTEST_CA=/chemin/ca.crt HTTPS_PROXY=http://hôte:port ./rejouer.sh
+# (voir le README.md du dépôt). Sans TPTEST_CA, HTTPS_PROXY est ignoré, comme en CI.
 # Usage : ./rejouer.sh > sorties-edition-formats.txt 2>&1
-# Tout est créé dans un dossier temporaire ; un outil absent est signalé, et ses commandes sont sautées.
+# Dans le conteneur (REJEU_INTERNE=1) ou sur une Debian 13 qui a déjà les paquets : tout est créé dans un dossier
+# temporaire ; un outil absent est signalé, et ses commandes sont sautées.
 set -u
+YQ_GO_VERSION=v4.44.3
+YQ_GO_SHA256=a2c097180dd884a8d50c956ee16a9cec070f30a7947cf4ebf87d5f36213e9ed7
+
+if [ -z "${REJEU_INTERNE:-}" ]; then
+  ici="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+  docker info > /dev/null 2>&1 || { echo "Le démon Docker ne répond pas (docker info)." >&2; exit 1; }
+  reseau=(); apt_https=""
+  if [ -n "${TPTEST_CA:-}" ]; then
+    : "${HTTPS_PROXY:?TPTEST_CA demande aussi HTTPS_PROXY}"
+    reseau+=(--network host --env "HTTPS_PROXY=$HTTPS_PROXY" --env "SSL_CERT_FILE=/run/ca-hote.crt"
+      --volume "$TPTEST_CA:/run/ca-hote.crt:ro"); apt_https="1"
+  fi
+  nom="rejeu-edition-formats-$$"
+  trap 'docker container rm -f "$nom" > /dev/null 2>&1' EXIT
+  # Un conteneur Debian n'a souvent aucun éditeur : on le vérifie avant d'installer quoi que ce soit.
+  for image in debian:13-slim debian:13; do
+    printf '\n$ docker container run --rm %s sh -c "command -v vi nano vim || echo aucun éditeur"\n' "$image"
+    docker container run --rm "$image" sh -c 'command -v vi nano vim || echo aucun éditeur' 2>&1
+  done
+  docker container run --rm --name "$nom" "${reseau[@]}" --env "APT_HTTPS=$apt_https" --env REJEU_INTERNE=1 \
+    --env "YQ_GO_VERSION=$YQ_GO_VERSION" --env "YQ_GO_SHA256=$YQ_GO_SHA256" \
+    --volume "$ici/rejouer.sh:/rejouer.sh:ro" debian:13-slim bash -euc '
+      if [ -n "$APT_HTTPS" ]; then
+        sed -i "s|http://deb.debian.org|https://deb.debian.org|g" /etc/apt/sources.list.d/debian.sources
+        printf "Acquire::https::Proxy \"%s\";\nAcquire::https::CAInfo \"/run/ca-hote.crt\";\n" "$HTTPS_PROXY" \
+          > /etc/apt/apt.conf.d/99mandataire
+      fi
+      apt-get update -qq > /dev/null
+      printf "\n$ apt-cache policy vim-tiny vim ; apt-cache show vim-tiny | grep -E \"^(Package|Version|Priority|Essential):\"\n"
+      apt-cache policy vim-tiny vim | grep -E "^[a-z]|Candidate"
+      apt-cache show vim-tiny | grep -E "^(Package|Version|Priority|Essential):"
+      printf "\n$ dpkg -l | grep -c vim\n%s\n" "$(dpkg -l | grep -c vim || true)"
+      DEBIAN_FRONTEND=noninteractive apt-get install -y -qq --no-install-recommends \
+        vim jq yq yamllint pandoc python3-yaml python3-ruamel.yaml bsdutils util-linux locales ca-certificates curl > /dev/null
+      sed -i "s/^# *fr_FR.UTF-8/fr_FR.UTF-8/" /etc/locale.gen; locale-gen > /dev/null
+      if [ "$(dpkg --print-architecture)" = amd64 ] && curl -fsSL -o /usr/local/bin/yq-go \
+        "https://github.com/mikefarah/yq/releases/download/$YQ_GO_VERSION/yq_linux_amd64" 2> /dev/null \
+        && [ "$(sha256sum /usr/local/bin/yq-go | cut -d" " -f1)" = "$YQ_GO_SHA256" ]; then
+        chmod +x /usr/local/bin/yq-go
+      else
+        rm -f /usr/local/bin/yq-go
+      fi
+      bash /rejouer.sh'
+  exit $?
+fi
 run() { printf '\n$ %s\n' "$1"; bash -c "$1" 2>&1; printf '(code de retour : %s)\n' "$?"; }
 a() { command -v "$1" >/dev/null 2>&1 || { printf '\n# %s absent : commandes sautées\n' "$1"; return 1; }; }
 D=$(mktemp -d); cd "$D" || exit 1
 echo "# $(date -I) · $(uname -srm) · $(cat /etc/debian_version 2>/dev/null) · $D"
 
 # ---------------------------------------------------------------- versions
-a vim && run 'vim --version | head -1'
+a dpkg-query && run "dpkg-query -W -f '\${Package} \${Version}\n' vim vim-runtime jq yq yamllint pandoc python3-yaml python3-ruamel.yaml"
+a vim && run 'vim --version | sed -n "1p;2p"'
 a jq && run 'jq --version'
 a yq && run 'yq --version'
 a yq-go && run 'yq-go --version'
@@ -68,8 +120,6 @@ if a vim && a script; then
   vim -u vimrc-complet -N -i NONE -es -c 'e config.yaml' -c 'redir! > opts' \
     -c 'set tabstop? shiftwidth? expandtab?' -c 'redir END' -c 'q' >/dev/null; tr -s ' \n' ' ' < opts; echo
 fi
-# Un conteneur Debian n'a souvent aucun éditeur.
-a docker && run 'docker container run --rm debian:13 sh -c "command -v vi nano vim || echo aucun éditeur"'
 
 # ---------------------------------------------------------------- Markdown
 cat > tableau.md <<'EOF'
@@ -100,6 +150,8 @@ if a pandoc; then
   run 'pandoc -f gfm -t html doc.md | head -3'
   run 'pandoc -f gfm -s --metadata title="ls" doc.md -o doc.html && ls doc.html'
   run 'pandoc doc.md -o doc.pdf'
+  run 'pandoc -f gfm -s doc.md -o sans-titre.html; ls sans-titre.html'
+  run 'pandoc doc.md -o doc.odt && pandoc doc.md -o doc.docx && ls doc.odt doc.docx'
 fi
 
 # ---------------------------------------------------------------- YAML et JSON
@@ -151,6 +203,42 @@ objet2: *defaut
 EOF
 printf '{\t"a": 1}\n' > tabulation.json
 printf '{"a": 1, "a": 2}\n' > doublon.json
+cat > matrice.yaml <<'EOF'
+t: true
+T: True
+Y: yes
+YY: YES
+n: no
+nn: No
+o: on
+f: off
+y: y
+N: n
+nul: null
+til: ~
+vide:
+int: 42
+oct11: 0644
+oct12: 0o644
+hex: 0x1F
+sex: 22:22
+fl: 3.14
+fl2: 1.10
+inf: .inf
+date: 2024-01-15
+str: web01
+v: 1.2.3
+q: "1984"
+EOF
+cat > matrice.py <<'EOF'
+import yaml
+from ruamel.yaml import YAML
+a = yaml.safe_load(open("matrice.yaml"))
+b = YAML(typ="safe").load(open("matrice.yaml"))
+print("%-6s %-28s %s" % ("cle", "PyYAML", "ruamel.yaml (typ safe)"))
+for k in a:
+    print("%-6s %-28r %r" % (k, a[k], b[k]))
+EOF
 # Les commandes Python du cours, sur deux lignes comme dans les diapos.
 PY11=$'import sys, yaml\nprint(yaml.safe_load(sys.stdin))'
 PY12=$'from ruamel.yaml import YAML; import sys\nprint(YAML(typ="safe").load(sys.stdin))'
@@ -165,6 +253,13 @@ if a python3; then
   run "python3 -c '$PY11' < tabulation.json 2>&1 | tail -2"
   run "python3 -c '$PY12' < tabulation.json"
   run "python3 -c '$PY12' < doublon.json 2>&1 | grep -m1 -i duplicate"
+fi
+if a python3; then
+  run 'python3 matrice.py'
+  # une directive %YAML en tête de document
+  run 'printf -- "%%YAML 1.1\n---\na: no\n" | python3 -c "import sys; from ruamel.yaml import YAML; print(YAML(typ=\"safe\").load(sys.stdin))"'
+  run 'printf -- "%%YAML 1.1\n---\na: no\n" | python3 -c "import sys; from ruamel.yaml import YAML; print(YAML(typ=\"safe\", pure=True).load(sys.stdin))"'
+  run 'printf -- "%%YAML 1.2\n---\na: no\n" | python3 -c "import sys, yaml; print(yaml.safe_load(sys.stdin))"'
 fi
 if a jq; then
   run 'echo "{\"a\": 1} # commentaire" | jq .'
@@ -182,11 +277,22 @@ if a yq; then
   run 'yq -c .application.environnements commente.yaml'
   run 'yq . livre.yaml > livre.json && cat livre.json'
   run 'yq -c "[.titre, .annee_publication] | map(type)" livre.yaml'
+  run 'printf "titre: 1984\n" | yq -c ".titre | type"'
+  run 'yq -c . matrice.yaml'
+  run 'yq -c . norvege.yaml'
+  run 'yq -c . typage.yaml'
+  run 'yq eval ".a" config.yaml'
+  run 'yq -Y . commente.yaml'
+  run 'printf -- "---\ncommand:\n  - bash\n  - -c\n  - |\n    echo hello world\n" > commande.yaml; yq -c . commande.yaml'
+  run 'echo "{personne: {nom: John Doe, age: 30, hobbies: [lecture, course]}}" | yq -c .'
 fi
 if a yq-go; then
   run 'yq-go ".application.environnements.production.url" config.yaml'
   run 'cp config.yaml g.yaml; yq-go -i ".application.version = \"1.2.4\"" g.yaml && grep version g.yaml'
   run 'yq-go -o=json -I=0 . typage.yaml'
+  run 'yq-go ".[] | key + \" \" + tag" matrice.yaml | paste -sd";"'
+  run 'yq-go -i ".application.version = \"1.2.4\"" commente.yaml && cat commente.yaml'
+  run 'yq-go -o=json -I=0 . norvege.yaml'
 fi
 if a yamllint; then
   run 'yamllint livre.yaml config.yaml ancres.yaml'

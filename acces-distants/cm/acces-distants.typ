@@ -53,7 +53,7 @@
     machine(role: [la machine à administrer])[serveur],
   ),
   source-de: [#link("https://man.openbsd.org/ssh")[man.openbsd.org/ssh] · #link("https://man.openbsd.org/sshd")[man.openbsd.org/sshd]],
-  note: [Pour les démonstrations, client, bastion et serveur sont des conteneurs jetables reliés par deux réseaux (public, privé) : un laboratoire. Le cours Conteneurisation enseigne de ne pas faire tourner sshd dans un conteneur en production ; ici, les conteneurs jouent le rôle de machines. Toutes les sorties viennent de `acces-distants/cm/rejouer.sh`, rejoué le 25 novembre 2026 avec OpenSSH 9.6p1 (Ubuntu 24.04 : les miroirs Debian étaient inaccessibles depuis l’environnement de rédaction). À rejouer sur Debian 13 (OpenSSH 10.0p1) : les messages peuvent changer légèrement.],
+  note: [Pour les démonstrations, client, bastion et serveur sont des conteneurs jetables reliés par deux réseaux (public, privé) : un laboratoire. Le cours Conteneurisation enseigne de ne pas faire tourner sshd dans un conteneur en production ; ici, les conteneurs jouent le rôle de machines. Toutes les sorties viennent de `acces-distants/cm/rejouer.sh`, rejoué le 25 novembre 2026 sur Debian 13 (image debian:13-slim, paquets openssh-client et openssh-server 1:10.0p1-7+deb13u4 ; ssh -V affiche OpenSSH_10.0p2 Debian-7+deb13u4, le p2 vient des correctifs de sécurité du paquet Debian ; tmux 3.5a ; wireguard-tools 1.0.20210914). Les empreintes, dates, ports et numéros de processus changent à chaque rejeu : seule leur forme compte.],
 )
 
 == Le mot de passe, maillon faible
@@ -118,17 +118,17 @@
         Generating public/private ed25519 key pair.
         Enter file in which to save the key (/home/ada/.ssh/id_ed25519):
         Created directory '/home/ada/.ssh'.
-        Enter passphrase (empty for no passphrase):
+        Enter passphrase for "/home/ada/.ssh/id_ed25519" (empty for no passphrase):
         Enter same passphrase again:
         Your identification has been saved in /home/ada/.ssh/id_ed25519
         Your public key has been saved in /home/ada/.ssh/id_ed25519.pub
         The key fingerprint is:
-        SHA256:+Zy9p3f5oJM7JE3rg1LrKHzZJXqTK9GBy7zIdV2/P6E ada@client
+        SHA256:hypuhgF2oTSkA47o1l6na0GMzC8DsNIWbDX9rWhyCHs ada@client
         # … puis le dessin de l’empreinte (randomart, 11 lignes)
         $ ls -l ~/.ssh
         total 8
-        -rw------- 1 ada ada 399 Nov 25 10:17 id_ed25519
-        -rw-r--r-- 1 ada ada  92 Nov 25 10:17 id_ed25519.pub
+        -rw------- 1 ada ada 399 Nov 25 15:33 id_ed25519
+        -rw-r--r-- 1 ada ada  92 Nov 25 15:33 id_ed25519.pub
         ```
       ]
     ],
@@ -142,7 +142,7 @@
   ),
   note(role: "precaution", taille: px(22))[*Ed25519 plutôt que RSA 4096* : la version d’origine de ce cours conseillait `ssh-keygen -t rsa -b 4096`. OpenSSH crée aujourd’hui une clé Ed25519 par défaut : courte, rapide, sans taille à choisir. RSA reste pour un très vieux serveur qui ignore Ed25519.],
   source-de: link("https://man.openbsd.org/ssh-keygen")[man ssh-keygen],
-  note: [OpenSSH 9.6p1 (Ubuntu 24.04) ; à rejouer sur Debian 13 (OpenSSH 10.0p1). man ssh-keygen : « If invoked without any arguments, ssh-keygen will generate an Ed25519 key ». Les trois Entrée : emplacement par défaut, puis passphrase vide deux fois. Le commentaire ada\@client est rempli par défaut avec utilisateur\@machine. Le dessin (randomart) sert à comparer deux empreintes d’un coup d’œil ; il est omis faute de place.],
+  note: [OpenSSH 10.0 (Debian 13). man ssh-keygen : « If invoked without any arguments, ssh-keygen will generate an Ed25519 key ». Les trois Entrée : emplacement par défaut, puis passphrase vide deux fois. Le commentaire ada\@client est rempli par défaut avec utilisateur\@machine. Le dessin (randomart) sert à comparer deux empreintes d’un coup d’œil ; il est omis faute de place.],
 )
 
 == Protéger la clé privée : passphrase, agent <agent-ssh>
@@ -159,13 +159,13 @@
         ```
         # démarre l’agent et exporte son adresse
         $ eval "$(ssh-agent)"
-        Agent pid 253
+        Agent pid 254
         # confie la clé à l’agent (passphrase demandée s’il y en a une)
         $ ssh-add
         Identity added: /home/ada/.ssh/id_ed25519 (ada@client)
         # clés détenues par l’agent
         $ ssh-add -l
-        256 SHA256:+Zy9p3f5oJM7JE3rg1LrKHzZJXqTK9GBy7zIdV2/P6E ada@client (ED25519)
+        256 SHA256:hypuhgF2oTSkA47o1l6na0GMzC8DsNIWbDX9rWhyCHs ada@client (ED25519)
         ```
       ]
       `ssh` demande ensuite chaque signature à l’agent, sans relire la clé.
@@ -185,7 +185,7 @@
         $ ssh-copy-id ada@bastion
         /usr/bin/ssh-copy-id: INFO: Source of key(s) to be installed: "/home/ada/.ssh/id_ed25519.pub"
         The authenticity of host 'bastion (172.18.0.3)' can't be established.
-        ED25519 key fingerprint is SHA256:tyfoZhF/lIT3fCB704iqukU924CaAI+Nb5t24lT8nlY.
+        ED25519 key fingerprint is SHA256:TZgV2SI1WZKCLBfogARlWWMuaAMhBvMzy/vhPuc27Y8.
         This key is not known by any other names.
         Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
         /usr/bin/ssh-copy-id: INFO: attempting to log in with the new key(s), […]
@@ -194,7 +194,7 @@
 
         Number of key(s) added: 1
 
-        Now try logging into the machine, with:   "ssh 'ada@bastion'"
+        Now try logging into the machine, with: "ssh 'ada@bastion'"
         and check to make sure that only the key(s) you wanted were added.
         ```
       ]
@@ -206,7 +206,7 @@
     ],
   ),
   source-de: link("https://man.openbsd.org/ssh-copy-id")[man ssh-copy-id],
-  note: [Sortie réelle (OpenSSH 9.6p1) ; deux lignes INFO trop longues sont coupées et signalées par […] : « attempting to log in with the new key(s), to filter out any that are already installed » et « 1 key(s) remain to be installed -- if you are prompted now it is to install the new keys ». ssh-copy-id suppose que le mot de passe est encore accepté : c’est l’amorçage. Sans ssh-copy-id : copier le contenu de id\_ed25519.pub à la fin de \~/.ssh/authorized\_keys sur le serveur, avec les droits 700 sur \~/.ssh et 600 sur le fichier.],
+  note: [Sortie réelle (OpenSSH 10.0, Debian 13) ; deux lignes INFO trop longues sont coupées et signalées par […] : « attempting to log in with the new key(s), to filter out any that are already installed » et « 1 key(s) remain to be installed -- if you are prompted now it is to install the new keys ». ssh-copy-id suppose que le mot de passe est encore accepté : c’est l’amorçage. Sans ssh-copy-id : copier le contenu de id\_ed25519.pub à la fin de \~/.ssh/authorized\_keys sur le serveur, avec les droits 700 sur \~/.ssh et 600 sur le fichier.],
 )
 
 == Première connexion : vérifier l’empreinte <empreinte-serveur>
@@ -217,19 +217,19 @@
       #terminal(titre: [client · ada], taille: px(18))[
         ```
         # affichée par ssh à la première connexion :
-        ED25519 key fingerprint is SHA256:tyfoZhF/lIT3fCB704iqukU924CaAI+Nb5t24lT8nlY.
+        ED25519 key fingerprint is SHA256:TZgV2SI1WZKCLBfogARlWWMuaAMhBvMzy/vhPuc27Y8.
         ```
         #cadre([bastion · root, sur la console de la machine], niveau: "distant")[
           ```
           # empreinte de la clé d’hôte, lue sur le bastion lui-même
           $ ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub
-          256 SHA256:tyfoZhF/lIT3fCB704iqukU924CaAI+Nb5t24lT8nlY root@bastion (ED25519)
+          256 SHA256:TZgV2SI1WZKCLBfogARlWWMuaAMhBvMzy/vhPuc27Y8 root@bastion (ED25519)
           ```
         ]
         ```
         # après « yes », la clé est mémorisée (nom de machine haché)
         $ head -c 60 ~/.ssh/known_hosts; echo
-        |1|3vM/QS8QmAyORGoq59+mzDxAGbI=|i/M3rqCSxUPxrQFBa3zPCPPJDzM=
+        |1|MpexreULGNi9Pb/dUBaSoCuOb3M=|b7xVKBaur1VaDjema+GMeYFMnqg=
         ```
       ]
     ],
@@ -258,7 +258,7 @@
         Someone could be eavesdropping on you right now (man-in-the-middle attack)!
         It is also possible that a host key has just been changed.
         The fingerprint for the ED25519 key sent by the remote host is
-        SHA256:h4HoJFT7dBBfeO/aR7fU5kSOAPPT5AWgu4syDqR2ZAc.
+        SHA256:bzgSuF9ZNzqBdkAux4n98DltQlayYOHZyxgA84YIZeo.
         Please contact your system administrator.
         Add correct host key in /home/ada/.ssh/known_hosts to get rid of this message.
         Offending ECDSA key in /home/ada/.ssh/known_hosts:3
@@ -277,7 +277,7 @@
     ],
   ),
   source-de: link("https://man.openbsd.org/ssh-keygen")[man ssh-keygen, option -R],
-  note: [Démonstration : les clés d’hôte du bastion ont été régénérées (ssh-keygen -A), comme après une réinstallation. ssh refuse la connexion (code de retour 255) : la vérification stricte de la clé d’hôte est un refus, pas un avertissement. man ssh : si l’identification change, ssh avertit et désactive l’authentification par mot de passe, pour empêcher une usurpation du serveur. Après ssh-keygen -R bastion (trois lignes retirées : une par type de clé, Ed25519, RSA, ECDSA), la connexion suivante redemande l’empreinte SHA256:h4HoJ…ZAc, comme à la première connexion.],
+  note: [Démonstration : les clés d’hôte du bastion ont été régénérées (ssh-keygen -A), comme après une réinstallation. ssh refuse la connexion (code de retour 255) : la vérification stricte de la clé d’hôte est un refus, pas un avertissement. man ssh : si l’identification change, ssh avertit et désactive l’authentification par mot de passe, pour empêcher une usurpation du serveur. Après ssh-keygen -R bastion (trois lignes retirées : une par type de clé, Ed25519, RSA, ECDSA), la connexion suivante redemande l’empreinte SHA256:bzgSu…Zeo, comme à la première connexion.],
 )
 
 == Plus de mot de passe… si les droits sont stricts <strictmodes>
@@ -290,8 +290,8 @@
           ```
           $ ls -l ~/.ssh; cat ~/.ssh/authorized_keys
           total 4
-          -rw------- 1 ada ada 92 Nov 25 10:17 authorized_keys
-          ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJyuEKPbuNSr8gX…
+          -rw------- 1 ada ada 92 Nov 25 15:33 authorized_keys
+          ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBga+LXXjimi1Tk…
           ```
         ]
         ```
@@ -307,7 +307,7 @@
         #cadre([bastion · ada], niveau: "distant")[
           ```
           $ ls -l ~/.ssh/authorized_keys
-          -rw-----w- 1 ada ada 92 Nov 25 10:17 /home/ada/.ssh/authorized_keys
+          -rw-----w- 1 ada ada 92 Nov 25 15:33 /home/ada/.ssh/authorized_keys
           ```
         ]
         ```
@@ -387,7 +387,7 @@
         serveur
         # d’où le serveur voit-il venir la connexion ?
         $ ssh -J ada@bastion ada@serveur 'echo $SSH_CONNECTION'
-        172.19.0.2 40466 172.19.0.3 22
+        172.19.0.2 43740 172.19.0.3 22
         # avec ProxyJump dans ~/.ssh/config
         $ ssh serveur hostname
         serveur
@@ -418,12 +418,12 @@
           ```
           # la socket de l’agent d’Ada, relayée sur le bastion
           $ ls -d /tmp/ssh-*/agent.*
-          /tmp/ssh-RH2Z8T2ZHK/agent.216
+          /tmp/ssh-NafJFAXPet/agent.190
           $ export SSH_AUTH_SOCK=$(ls /tmp/ssh-*/agent.*)
           $ whoami
           root
           $ ssh-add -l
-          256 SHA256:+Zy9p3f5oJM7JE3rg1LrKHzZJXqTK9GBy7zIdV2/P6E ada@client (ED25519)
+          256 SHA256:hypuhgF2oTSkA47o1l6na0GMzC8DsNIWbDX9rWhyCHs ada@client (ED25519)
           $ ssh -o StrictHostKeyChecking=accept-new ada@serveur hostname
           Warning: Permanently added 'serveur' (ED25519) to the list of known hosts.
           serveur
@@ -528,7 +528,7 @@
     h => terminal(titre: [client · ada], taille: px(18), hauteur: h)[
       ```
       $ scp rapport.txt serveur:/tmp/
-      rapport.txt                     100%    8    38.3KB/s   00:00
+      rapport.txt                     100%    8    13.8KB/s   00:00
       # la barre finale de site/ : « le contenu de site »
       $ rsync -av site/ serveur:site/
       sending incremental file list
@@ -537,14 +537,14 @@
       contact.html
       index.html
 
-      sent 205 bytes  received 84 bytes  578.00 bytes/sec
-      total size is 16  speedup is 0.06
+      sent 208 bytes  received 84 bytes  584.00 bytes/sec
+      total size is 16  speedup is 0.05
       # index.html modifié, puis on recommence
       $ rsync -av site/ serveur:site/
       sending incremental file list
       index.html
 
-      sent 157 bytes  received 41 bytes  396.00 bytes/sec
+      sent 158 bytes  received 41 bytes  398.00 bytes/sec
       total size is 17  speedup is 0.09
       ```
     ],
@@ -590,7 +590,7 @@
     ],
   ),
   source-de: link("https://man.openbsd.org/sshd_config")[man sshd_config],
-  note: [man sshd\_config (paquet Ubuntu 24.04, mêmes lignes dans Debian) : « Unless noted otherwise, for each keyword, the first obtained value will be used » et « /etc/ssh/sshd\_config.d/\*.conf files are included at the start of the configuration file, so options set there will override those in /etc/ssh/sshd\_config ». Le fichier 50-cloud-init.conf est créé ici pour l’exemple ; cloud-init en pose un de ce nom sur des images cloud (à vérifier sur l’image utilisée). Le cours d’origine modifiait sshd\_config avec sed et demandait : « Que manque-t-il à la commande ? » (l’option -i, pour écrire dans le fichier) ; même corrigée, elle se heurte à ce piège. permitrootlogin without-password est l’ancien nom de prohibit-password : root n’entre que par clé.],
+  note: [man sshd\_config (paquet openssh-server 10.0p1 de Debian 13) : « Unless noted otherwise, for each keyword, the first obtained value will be used » et « /etc/ssh/sshd\_config.d/\*.conf files are included at the start of the configuration file, so options set there will override those in /etc/ssh/sshd\_config ». Le fichier 50-cloud-init.conf est créé ici pour l’exemple ; cloud-init (paquet Debian 13, version 25.1.4) écrit lui aussi ses réglages d’authentification dans /etc/ssh/sshd_config.d/50-cloud-init.conf dès que sshd\_config contient la ligne Include (ssh\_util.py de cloud-init) : le piège est donc réel sur une image cloud Debian 13. Le sshd\_config d’origine de Debian 13 n’a qu’une ligne active utile en tête, Include, et le dossier sshd\_config.d est vide. Le cours d’origine modifiait sshd\_config avec sed et demandait : « Que manque-t-il à la commande ? » (l’option -i, pour écrire dans le fichier) ; même corrigée, elle se heurte à ce piège. permitrootlogin without-password est l’ancien nom de prohibit-password : root n’entre que par clé.],
 )
 
 == Interdire le mot de passe, proprement <durcir-sshd>
@@ -629,7 +629,7 @@
     ],
   ),
   source-de: [#link("https://man.openbsd.org/sshd_config#PasswordAuthentication")[man sshd_config] · #link("https://man.openbsd.org/sshd#t")[man sshd, -t et -T]],
-  note: [Le service s’appelle ssh.service sur Debian et Ubuntu (alias sshd.service, lu dans le fichier d’unité d’Ubuntu 24.04 ; à vérifier sur Debian 13) ; l’unité lance elle-même sshd -t avant de démarrer. Dans le laboratoire, sans systemd, sshd relit sa configuration sur le signal SIGHUP. Après rechargement, le serveur ne propose plus que publickey : « Permission denied (publickey) ». Une session ouverte n’est pas coupée par le rechargement, d’où le filet de sécurité. Le cours d’origine : « À voir en fonction de l’usage du serveur, ce n’est pas toujours possible… Mais toujours encourager les utilisateurs à utiliser une connexion par clé ».],
+  note: [Le service s’appelle ssh.service sur Debian et Ubuntu (alias sshd.service : Alias=sshd.service dans le fichier d’unité du paquet openssh-server 10.0p1 de Debian 13) ; l’unité lance elle-même sshd -t avant de démarrer. Dans le laboratoire, sans systemd, sshd relit sa configuration sur le signal SIGHUP. Après rechargement, le serveur ne propose plus que publickey : « Permission denied (publickey) ». Une session ouverte n’est pas coupée par le rechargement, d’où le filet de sécurité. Le cours d’origine : « À voir en fonction de l’usage du serveur, ce n’est pas toujours possible… Mais toujours encourager les utilisateurs à utiliser une connexion par clé ».],
 )
 
 == Durcir encore : filtrer, bannir, double facteur
@@ -670,7 +670,7 @@
 == À vous : SSH, corrigé (1/2)
 
 #corriges(
-  note: [Sorties réelles (OpenSSH 9.6p1), sur un poste sans réseau : ssh -G ne se connecte pas. La question reste affichée ; un clic par réponse.],
+  note: [Sorties réelles (OpenSSH 10.0, Debian 13), sur un poste sans réseau : ssh -G ne se connecte pas. La question reste affichée ; un clic par réponse.],
   (1, [Entrée `bastion` : `bastion.example.org`, compte `admin`, port 2222 ; et sans le fichier ?],
     reponse(stack(spacing: px(8), fichier([\~/.ssh/config], taille: px(19))[```
   Host bastion
@@ -696,7 +696,7 @@
 == À vous : SSH, corrigé (2/2)
 
 #corriges(
-  note: [Question 4 : ssh -G vérifie que la redirection est comprise ([localhost]:3000, résolu côté base) ; la vraie commande est ssh -f -N -L 3000:localhost:3000 base, puis ouvrir http://localhost:3000 sur le poste. Question 5 : la clé publique, elle, peut circuler librement. Sorties réelles (OpenSSH 9.6p1).],
+  note: [Question 4 : ssh -G vérifie que la redirection est comprise ([localhost]:3000, résolu côté base) ; la vraie commande est ssh -f -N -L 3000:localhost:3000 base, puis ouvrir http://localhost:3000 sur le poste. Question 5 : la clé publique, elle, peut circuler librement. Sorties réelles (OpenSSH 10.0, Debian 13).],
   (3, [Vérifiez ces deux entrées sans vous connecter],
     reponse(terminal(titre: none, taille: px(19))[```
   $ ssh -G bastion | grep -E '^(hostname|user|port) '
@@ -735,7 +735,7 @@
         #cadre([serveur · ada, dans une autre fenêtre], niveau: "distant")[
           ```
           $ pgrep -afx "sleep 600"
-          289 sleep 600
+          252 sleep 600
           ```
         ]
         ```
@@ -778,9 +778,9 @@
         # le terminal du client se ferme brutalement
         $ pkill -KILL -f "^ssh -t serveur"
         $ ssh serveur tmux ls
-        maj: 1 windows (created Wed Nov 25 10:18:34 2026)
+        maj: 1 windows (created Wed Nov 25 15:34:24 2026)
         $ ssh serveur 'pgrep -afx "sleep 600"'
-        317 sleep 600
+        276 sleep 600
         # pour reprendre la main : ssh -t serveur tmux attach -t maj
         ```
       ]
@@ -790,7 +790,7 @@
     Sur un serveur, ouvrir tmux *avant* de lancer quoi que ce soit de long : un processus déjà lancé ne se rapatrie pas dans tmux.
   ]),
   source-de: link("https://man.openbsd.org/tmux#DESCRIPTION")[man tmux, DESCRIPTION],
-  note: [man tmux : « Each session is persistent and will survive accidental disconnection (such as ssh(1) connection timeout) or intentional detaching ». « all sessions are managed by a single server. The server and each client are separate processes which communicate through a socket in /tmp ». tmux 3.4 (Ubuntu 24.04) ; à rejouer sur Debian 13 (tmux 3.5a). La session reste jusqu’à la fin de sleep 600, ou jusqu’à tmux kill-session -t maj. Réponse au cours d’origine (digression tmux de la partie SSH) : « sessions persistantes, multiplexage des terminaux, organisation, travail collaboratif ».],
+  note: [man tmux : « Each session is persistent and will survive accidental disconnection (such as ssh(1) connection timeout) or intentional detaching ». « all sessions are managed by a single server. The server and each client are separate processes which communicate through a socket in /tmp ». tmux 3.5a (Debian 13). La session reste jusqu’à la fin de sleep 600, ou jusqu’à tmux kill-session -t maj. Réponse au cours d’origine (digression tmux de la partie SSH) : « sessions persistantes, multiplexage des terminaux, organisation, travail collaboratif ».],
 )
 
 == Serveur, session, fenêtre, panneau <tmux-hierarchie>
@@ -845,8 +845,8 @@
           $ tmux new-window -t admin -n journaux
           $ tmux new -d -s perso
           $ tmux ls
-          admin: 2 windows (created Wed Nov 25 10:18:42 2026)
-          perso: 1 windows (created Wed Nov 25 10:18:42 2026)
+          admin: 2 windows (created Wed Nov 25 15:34:30 2026)
+          perso: 1 windows (created Wed Nov 25 15:34:30 2026)
           $ tmux list-panes -a -F '#{session_name}:#{window_index}.#{pane_index} #{window_name}'
           admin:0.0 edition
           admin:0.1 edition
@@ -864,7 +864,7 @@
     ],
   ),
   source-de: link("https://man.openbsd.org/tmux#COMMANDS")[man tmux, COMMANDS],
-  note: [tmux 3.4 ; à rejouer sur Debian 13 (tmux 3.5a). new est l’alias de new-session. Les dates de création viennent de l’horloge du serveur. Ces commandes, tapées hors de tmux, s’adressent au serveur tmux de l’utilisateur (socket /tmp/tmux-1000/default) ; tapées dans tmux, elles agissent sur la session courante.],
+  note: [tmux 3.5a (Debian 13). new est l’alias de new-session. Les dates de création viennent de l’horloge du serveur. Ces commandes, tapées hors de tmux, s’adressent au serveur tmux de l’utilisateur (socket /tmp/tmux-1000/default) ; tapées dans tmux, elles agissent sur la session courante.],
 )
 
 == Au clavier : le préfixe Ctrl+b <tmux-clavier>
@@ -887,7 +887,7 @@
     ],
   ),
   source-de: link("https://man.openbsd.org/tmux#DEFAULT_KEY_BINDINGS")[man tmux, DEFAULT KEY BINDINGS],
-  note: [Touches relevées dans la section DEFAULT KEY BINDINGS de man tmux 3.4. Attention à une confusion fréquente : % coupe en deux panneaux côte à côte (gauche et droite), " en deux panneaux superposés (haut et bas). Préfixe : puis une commande ouvre l’invite de tmux : chaque touche a sa commande longue (split-window -h pour %). Partage : deux personnes connectées au même compte s’attachent à la même session et voient la même chose ; -r est un alias de -f read-only,ignore-size : seules les touches de détachement agissent (man tmux, attach-session).],
+  note: [Touches relevées dans la section DEFAULT KEY BINDINGS de man tmux 3.5a ; les touches ont aussi été relues avec tmux list-keys (Debian 13). Attention à une confusion fréquente : % coupe en deux panneaux côte à côte (gauche et droite), " en deux panneaux superposés (haut et bas). Préfixe : puis une commande ouvre l’invite de tmux : chaque touche a sa commande longue (split-window -h pour %). Partage : deux personnes connectées au même compte s’attachent à la même session et voient la même chose ; -r est un alias de -f read-only,ignore-size : seules les touches de détachement agissent (man tmux, attach-session).],
 )
 
 == Piloter tmux par script : send-keys, capture-pane <tmux-script>
@@ -917,7 +917,7 @@
     ],
   ),
   source-de: link("https://man.openbsd.org/tmux#send-keys")[man tmux, send-keys et capture-pane],
-  note: [Sortie réelle (tmux 3.4). capture-pane -p : « the output goes to stdout » ; sans -p, le contenu va dans un tampon de tmux. -J recolle les lignes qu’un panneau étroit a coupées (corrigé de l’exercice). Ces deux commandes permettent aussi de tester un TP tmux sans terminal attaché.],
+  note: [Sortie réelle (tmux 3.5a). capture-pane -p : « the output goes to stdout » ; sans -p, le contenu va dans un tampon de tmux. -J recolle les lignes qu’un panneau étroit a coupées (corrigé de l’exercice). Ces deux commandes permettent aussi de tester un TP tmux sans terminal attaché.],
 )
 
 == Configurer tmux : \~/.tmux.conf <tmux-conf>
@@ -958,7 +958,7 @@
     ],
   ),
   source-de: link("https://man.openbsd.org/tmux#OPTIONS")[man tmux, OPTIONS et WINDOW AND PANE COMMANDS],
-  note: [Lu au démarrage du serveur tmux ; à chaud : préfixe : puis source-file \~/.tmux.conf. Sortie réelle (tmux 3.4) ; show -g mouse affiche aussi « mouse on » (omis ici, dans le script de rejeu). Touches du mode copie en mode vi d’après man tmux : begin-selection (Espace), copy-selection-and-cancel (Entrée), search-forward (/), cancel (q) ; v ne sélectionne pas, il bascule la sélection rectangulaire : le commentaire du fichier du site (« v to select, y to yank ») était faux. « \_ » plutôt que « - » : la touche - est déjà liée par défaut (supprimer le dernier tampon copié). Aller plus loin (hors cadre) : tmuxp décrit une session complète dans un fichier YAML.],
+  note: [Lu au démarrage du serveur tmux ; à chaud : préfixe : puis source-file \~/.tmux.conf. Sortie réelle (tmux 3.5a) ; show -g mouse affiche aussi « mouse on » (omis ici, dans le script de rejeu). Touches du mode copie en mode vi d’après man tmux : begin-selection (Espace), copy-pipe-and-cancel (Entrée : c’est la commande que list-keys -T copy-mode-vi montre dans tmux 3.5a, le tableau du manuel écrit encore copy-selection-and-cancel ; sans commande de tube, option copy-command vide, elle copie dans le tampon de tmux), search-forward (/), cancel (q) ; v ne sélectionne pas, il bascule la sélection rectangulaire : le commentaire du fichier du site (« v to select, y to yank ») était faux. « \_ » plutôt que « - » : la touche - est déjà liée par défaut (supprimer le dernier tampon copié). Aller plus loin (hors cadre) : tmuxp décrit une session complète dans un fichier YAML.],
 )
 
 == À vous : tmux <exercice-tmux>
@@ -978,7 +978,7 @@
 == À vous : tmux, corrigé (1/2)
 
 #corriges(
-  note: [Sorties réelles (tmux 3.4). -s de list-panes : tous les panneaux de la session ciblée. pane\_current\_command : le programme au premier plan du panneau. La question reste affichée ; un clic par réponse.],
+  note: [Sorties réelles (tmux 3.5a). -s de list-panes : tous les panneaux de la session ciblée. pane\_current\_command : le programme au premier plan du panneau. La question reste affichée ; un clic par réponse.],
   (1, [Session `atelier`, fenêtre `edition` coupée en deux côte à côte],
     reponse(terminal(titre: none, taille: px(19))[```
   $ tmux new -d -s atelier -n edition
@@ -1000,7 +1000,7 @@
 == À vous : tmux, corrigé (2/2)
 
 #corriges(
-  note: [Sortie réelle (tmux 3.4). Sans -J, la ligne de commande, plus large que le panneau (40 colonnes), apparaît coupée en deux. Question 5 : la session survit à la fermeture du terminal (diapositive « tmux : un serveur qui garde les terminaux ») ; top tourne toujours.],
+  note: [Sortie réelle (tmux 3.5a). Sans -J, la ligne de commande, plus large que le panneau (40 colonnes), apparaît coupée en deux. Question 5 : la session survit à la fermeture du terminal (diapositive « tmux : un serveur qui garde les terminaux ») ; top tourne toujours.],
   (4, [Taper une commande dans le panneau de droite d’`edition`, puis lire ce qu’il affiche],
     reponse(terminal(titre: none, taille: px(19))[```
   $ tmux send-keys -t atelier:edition.1 'echo bonjour depuis le panneau de droite' Enter
@@ -1014,7 +1014,7 @@
     reponse(terminal(titre: none, taille: px(19))[```
   # tout : la session et ses programmes appartiennent au serveur tmux
   $ tmux ls
-  atelier: 2 windows (created Wed Nov 25 10:18:46 2026)
+  atelier: 2 windows (created Wed Nov 25 15:34:35 2026)
   $ tmux attach -t atelier
   ```])),
 )
@@ -1101,10 +1101,10 @@
         $ wg genkey | tee prive.key | wg pubkey > public.key
         $ ls -l
         total 8
-        -rw------- 1 root root 45 Nov 25 10:18 prive.key
-        -rw------- 1 root root 45 Nov 25 10:18 public.key
+        -rw------- 1 root root 45 Nov 25 15:34 prive.key
+        -rw------- 1 root root 45 Nov 25 15:34 public.key
         $ cat public.key
-        tEh1d84TszzWv5aYCs4D1Teirirh0uzqMtMnwGUXsQk=
+        yKZAYmt8/s4QXb06DtHzV1Ljr3jmjbk9YQ8FUPHC9Fs=
         ```
       ]
     ],
@@ -1116,7 +1116,7 @@
     ],
   ),
   source-de: link("https://git.zx2c4.com/wireguard-tools/about/src/man/wg.8")[man wg, genkey et pubkey],
-  note: [Commande donnée par man wg : « umask 077 ; wg genkey | tee private.key | wg pubkey > public.key » (noms de fichiers francisés ici). Sortie réelle (wireguard-tools v1.0.20210914) ; le script de rejeu enchaîne ces commandes sur une ligne, sur pair-a, pair-b et pair-c. Clés publiques : pair-a tEh1…sQk=, pair-b v0uv…tQ4=, pair-c di89…M2Bg=. Les pairs sont des conteneurs jetables avec la capacité NET\_ADMIN (créer des interfaces réseau) : un laboratoire, pas une architecture de production.],
+  note: [Commande donnée par man wg : « umask 077 ; wg genkey | tee private.key | wg pubkey > public.key » (noms de fichiers francisés ici). Sortie réelle (wireguard-tools v1.0.20210914) ; le script de rejeu enchaîne ces commandes sur une ligne, sur pair-a, pair-b et pair-c. Clés publiques : pair-a yKZA…9Fs=, pair-b DCMV…TAE=, pair-c BLaE…P1w=. Les pairs sont des conteneurs jetables avec la capacité NET\_ADMIN (créer des interfaces réseau) : un laboratoire, pas une architecture de production.],
 )
 
 == wg0.conf et wg-quick : monter le tunnel <wireguard-labo>
@@ -1134,7 +1134,7 @@
 
         [Peer]
         # pair-b
-        PublicKey = v0uvY9+JmEna+DIQ8fnrtecWYgPrCwONSVoE2K/YtQ4=
+        PublicKey = DCMV3EWgkUgLciZZZgny9ScGYFmbpPcuUPcjfdisTAE=
         AllowedIPs = 10.9.9.2/32
         Endpoint = 172.20.0.3:51820
         $ wg-quick up wg0
@@ -1154,7 +1154,7 @@
     ],
   ),
   source-de: [#link("https://git.zx2c4.com/wireguard-tools/about/src/man/wg-quick.8")[man wg-quick] · #link("https://www.wireguard.com/quickstart/")[wireguard.com/quickstart]],
-  note: [Clé privée masquée à l’affichage (le script lit le fichier avec sed). Le noyau de la machine de rédaction n’a pas le module WireGuard : wg-quick l’a signalé (« Missing WireGuard kernel module. Falling back to slow userspace implementation ») et a lancé wireguard-go 0.0.20230223, implémentation en espace utilisateur, qui s’emploie avec les mêmes commandes wg. Lignes omises : « Error: Unknown device type », l’avertissement, « [\#] wireguard-go wg0 » et le bandeau de wireguard-go. Sur Debian 13 avec le module : à rejouer (la commande ip link add réussit, sans repli). man wg-quick : Address, DNS, MTU, Table, PreUp/PostUp… sont propres à wg-quick ; le reste passe à wg setconf. Le cours d’origine ne montait pas de tunnel (« il faudrait que chaque étudiant ait une machine root avec une adresse IP publique ») : deux machines qui se joignent en UDP suffisent, comme ici.],
+  note: [Clé privée masquée à l’affichage (le script lit le fichier avec sed). Le noyau de la machine de rejeu (Linux 6.18, CONFIG\_WIREGUARD non activé) n’a pas le module WireGuard : wg-quick l’a signalé (« Missing WireGuard kernel module. Falling back to slow userspace implementation ») et a lancé wireguard-go 0.0.20231211 (paquet Debian 13 0.0.20231211-1+b9), implémentation en espace utilisateur, qui s’emploie avec les mêmes commandes wg. Lignes omises : « Error: Unknown device type », l’avertissement, « [\#] wireguard-go wg0 » et le bandeau de wireguard-go. Sur une machine avec le module : à rejouer (la commande ip link add réussirait, sans repli) ; impossible ici, le module manque. man wg-quick : Address, DNS, MTU, Table, PreUp/PostUp… sont propres à wg-quick ; le reste passe à wg setconf. Le cours d’origine ne montait pas de tunnel (« il faudrait que chaque étudiant ait une machine root avec une adresse IP publique ») : deux machines qui se joignent en UDP suffisent, comme ici.],
 )
 
 == Le tunnel fonctionne, et ce que voit le réseau <wireguard-tunnel>
@@ -1166,12 +1166,12 @@
         ```
         $ ping -c 3 10.9.9.2
         PING 10.9.9.2 (10.9.9.2) 56(84) bytes of data.
-        64 bytes from 10.9.9.2: icmp_seq=1 ttl=64 time=9.03 ms
+        64 bytes from 10.9.9.2: icmp_seq=1 ttl=64 time=5.60 ms
         # … deux réponses de plus
-        3 packets transmitted, 3 received, 0% packet loss, time 2004ms
+        3 packets transmitted, 3 received, 0% packet loss, time 2036ms
         $ wg show
         # … (clés et port d’écoute)
-        peer: v0uvY9+JmEna+DIQ8fnrtecWYgPrCwONSVoE2K/YtQ4=
+        peer: DCMV3EWgkUgLciZZZgny9ScGYFmbpPcuUPcjfdisTAE=
           endpoint: 172.20.0.3:51820
           allowed ips: 10.9.9.2/32
           latest handshake: 3 seconds ago
@@ -1179,9 +1179,9 @@
         ```
         #cadre([pair-b · root : tcpdump -lni eth0 -c 6 udp, pendant le ping], niveau: "distant")[
           ```
-          10:18:57.240756 IP 172.20.0.2.51820 > 172.20.0.3.51820: UDP, length 148
-          10:18:57.241505 IP 172.20.0.3.51820 > 172.20.0.2.51820: UDP, length 92
-          10:18:57.241924 IP 172.20.0.2.51820 > 172.20.0.3.51820: UDP, length 128
+          15:34:46.194020 IP 172.20.0.2.51820 > 172.20.0.3.51820: UDP, length 148
+          15:34:46.194661 IP 172.20.0.3.51820 > 172.20.0.2.51820: UDP, length 92
+          15:34:46.195102 IP 172.20.0.2.51820 > 172.20.0.3.51820: UDP, length 128
           # … trois datagrammes de 128 octets de plus
           ```
         ]
@@ -1239,14 +1239,14 @@
     bloc(role: "pratique", taille: px(24))[Sortant : pair-b ne couvre plus 10.9.9.2][
       #terminal(titre: [pair-a · root], taille: px(18))[
         ```
-        # clé publique de pair-b abrégée : v0uv…tQ4=
-        $ wg set wg0 peer v0uv…tQ4= allowed-ips 10.9.9.3/32
+        # clé publique de pair-b abrégée : DCMV…TAE=
+        $ wg set wg0 peer DCMV…TAE= allowed-ips 10.9.9.3/32
         $ ping -c 2 -W 1 10.9.9.2
         PING 10.9.9.2 (10.9.9.2) 56(84) bytes of data.
 
         --- 10.9.9.2 ping statistics ---
-        2 packets transmitted, 0 received, 100% packet loss, time 1003ms
-        $ wg set wg0 peer v0uv…tQ4= allowed-ips 10.9.9.2/32
+        2 packets transmitted, 0 received, 100% packet loss, time 1031ms
+        $ wg set wg0 peer DCMV…TAE= allowed-ips 10.9.9.2/32
         ```
       ]
       Aucun pair pour 10.9.9.2 : rien ne part.
@@ -1254,11 +1254,11 @@
     bloc(role: "pratique", taille: px(24))[Entrant : pair-b refuse la source 10.9.9.1][
       #terminal(titre: [pair-b · root], taille: px(18))[
         ```
-        # clé publique de pair-a abrégée : tEh1…sQk=
-        $ wg set wg0 peer tEh1…sQk= allowed-ips 10.9.9.100/32
+        # clé publique de pair-a abrégée : yKZA…9Fs=
+        $ wg set wg0 peer yKZA…9Fs= allowed-ips 10.9.9.100/32
         # octets reçus, puis envoyés, pour pair-a
         $ wg show wg0 transfer
-        tEh1…sQk=    532    476
+        yKZA…9Fs=    532    476
         ```
         #cadre([pair-a · root], niveau: "distant")[
           ```
@@ -1271,14 +1271,14 @@
         ]
         ```
         $ wg show wg0 transfer
-        tEh1…sQk=    788    476
+        yKZA…9Fs=    788    476
         ```
       ]
       256 octets reçus (deux paquets), aucune réponse : jetés.
     ],
   ),
   source-de: link("https://git.zx2c4.com/wireguard-tools/about/src/man/wg.8")[man wg, set et show],
-  note: [Sorties réelles ; clés publiques abrégées, tabulations remplacées par des espaces. Les commandes wg set modifient l’interface en marche, sans toucher au fichier. À gauche : avec le module noyau, ping affiche en plus « ping: sendmsg: Required key not available » (à rejouer sur Debian 13) ; wireguard-go jette le paquet sans message. Après rétablissement des AllowedIPs, le ping repasse : « 1 packets transmitted, 1 received ».],
+  note: [Sorties réelles ; clés publiques abrégées, tabulations remplacées par des espaces. Les commandes wg set modifient l’interface en marche, sans toucher au fichier. À gauche : avec le module noyau, ping affiche en plus « ping: sendmsg: Required key not available » (à rejouer : message du noyau, le noyau de la machine de rejeu n’a pas le module) ; wireguard-go jette le paquet sans message. Après rétablissement des AllowedIPs, le ping repasse : « 1 packets transmitted, 1 received ».],
 )
 
 == Limites, et bonnes pratiques
@@ -1326,16 +1326,16 @@
 == À vous : WireGuard, corrigé (1/3)
 
 #corriges(
-  note: [Sorties réelles (wireguard-go, voir la diapositive wg-quick) ; clés abrégées, tabulations remplacées par des espaces. Colonnes de wg show wg0 transfer : octets reçus, octets envoyés. Question 1 : pour pair-c, 276 octets envoyés (poignée de main de 148 + paquet de 128) et 92 reçus (réponse de la poignée de main) ; pair-c n’a pas de route vers 192.168.50.7, il ne répond pas. Question 2 : une route existe (le /24 de wg0), mais aucun pair : paquet rejeté ; avec le module noyau, ping afficherait « Required key not available » (à rejouer). Une route vers 192.168.50.0/24 a été ajoutée à la main (ip route add 192.168.50.0/24 dev wg0) : wg-quick ne l’ajoute qu’au démarrage.],
+  note: [Sorties réelles (wireguard-go, voir la diapositive wg-quick) ; clés abrégées, tabulations remplacées par des espaces. Colonnes de wg show wg0 transfer : octets reçus, octets envoyés. Question 1 : pour pair-c, 276 octets envoyés (poignée de main de 148 + paquet de 128) et 92 reçus (réponse de la poignée de main) ; pair-c n’a pas de route vers 192.168.50.7, il ne répond pas. Question 2 : une route existe (le /24 de wg0), mais aucun pair : paquet rejeté ; avec le module noyau, ping afficherait « Required key not available » (à rejouer : il faut le module noyau, absent de la machine de rejeu). Une route vers 192.168.50.0/24 a été ajoutée à la main (ip route add 192.168.50.0/24 dev wg0) : wg-quick ne l’ajoute qu’au démarrage.],
   (1, [Un paquet pour `192.168.50.7` : quel pair le reçoit ?],
     reponse(terminal(titre: none, taille: px(19))[```
-  # avant : pair-b (v0uv…) puis pair-c (di89…)
+  # avant : pair-b (DCMV…) puis pair-c (BLaE…)
   $ wg show wg0 transfer
-  v0uv…tQ4=    604    916
-  di89…M2Bg=   0      0
+  DCMV…TAE=    604    916
+  BLaE…P1w=    0      0
   $ ping -c 1 -W 1 192.168.50.7 >/dev/null; wg show wg0 transfer
-  v0uv…tQ4=    604    916
-  di89…M2Bg=   92     276
+  DCMV…TAE=    604    916
+  BLaE…P1w=    92     276
   # → pair-c : seul son compteur a bougé
   ```])),
   (2, [Et un paquet pour `10.9.9.4` ?],
@@ -1358,21 +1358,21 @@
   ```]
       #encart([pair-a])[```
   $ wg show wg0 transfer
-  v0uv…tQ4=    732    916
-  di89…M2Bg=   92     276
+  DCMV…TAE=    732    916
+  BLaE…P1w=    92     276
   # → reçu de pair-b (604 → 732), puis jeté : source hors de ses AllowedIPs
   ```]])),
   (4, [pair-b reçoit `10.9.9.0/24` : où partent `10.9.9.3` et `10.9.9.5` ?],
     reponse(terminal(titre: none, taille: px(19))[```
-  $ wg set wg0 peer v0uv…tQ4= allowed-ips 10.9.9.0/24
+  $ wg set wg0 peer DCMV…TAE= allowed-ips 10.9.9.0/24
   $ ping -c 1 -W 1 10.9.9.3 | grep received; wg show wg0 transfer
   1 packets transmitted, 1 received, 0% packet loss, time 0ms
-  v0uv…tQ4=    732    916
-  di89…M2Bg=   220    404
+  DCMV…TAE=    732    916
+  BLaE…P1w=    220    404
   $ ping -c 1 -W 1 10.9.9.5 | grep received; wg show wg0 transfer
   1 packets transmitted, 0 received, 100% packet loss, time 0ms
-  v0uv…tQ4=    732    1044
-  di89…M2Bg=   220    404
+  DCMV…TAE=    732    1044
+  BLaE…P1w=    220    404
   # → 10.9.9.3 : pair-c (/32, plus précis) ; 10.9.9.5 : pair-b
   ```])),
 )
@@ -1389,7 +1389,7 @@
   0
   # l’adresse de pair-a, apprise
   $ wg show wg0 endpoints
-  tEh1…sQk=    172.20.0.2:51820
+  yKZA…9Fs=    172.20.0.2:51820
   ```]
       text(size: px(23))[Il ne l’a pas fait : pair-a a parlé le premier. pair-b a *appris* l’adresse de pair-a au premier paquet authentifié. Il suffit qu’un des deux sache où joindre l’autre.]
     })),

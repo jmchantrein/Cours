@@ -38,8 +38,9 @@ sont supposés connus. Il part d’un nouveau dossier d’exemples, `~/fichiers`
 #bloc(role: "pratique")[Prérequis][
   - Un terminal Bash, sous un *compte ordinaire* : root passe outre les droits de lecture et d’écriture, et les
     refus que ce TP fait constater ne se produiraient pas. L’invite doit finir par `$`.
-  - De préférence un Debian ou un Ubuntu : le terminal de cette page fonctionne en root, et ses fichiers
-    sont en mémoire.
+  - De préférence un Debian ou un Ubuntu. Le terminal de cette page ouvre le compte ordinaire `ada` (groupes `ada`
+    et `etudiants`), mais ses fichiers sont en mémoire : la taille d’un dossier dans `ls -l` (`40` ou `80` au lieu
+    de `4096`) et les numéros d’inode ne sont pas ceux d’un disque.
 ]
 
 #bloc[Indices et corrigés][
@@ -70,6 +71,8 @@ $ bash preparer.sh
 Dossier de travail prêt : /home/ada/fichiers
 Pour y entrer : cd /home/ada/fichiers
 ```]
+#note(role: "pratique")[Dans le terminal de cette page, sans réseau, `wget` livre le même fichier, que l’image de la
+  VM embarque.]
 #fichier("preparer.sh", read("preparer.sh"))
 
 #indice(titre: [Indice : lire les droits])[

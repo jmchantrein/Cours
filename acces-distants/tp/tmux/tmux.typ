@@ -47,7 +47,7 @@ la retrouvez, et vous la faites reconstruire par un script.
 
 #bloc[Indices et corrigés][
   Chaque étape propose des indices, puis un corrigé, repliés. Les corrigés sont des fichiers réels, vérifiés
-  automatiquement à chaque modification, sur Debian 13 (tmux 3.4) : `tmux.conf` est chargé sans erreur et
+  automatiquement à chaque modification, sur Debian 13 (tmux 3.5a) : `tmux.conf` est chargé sans erreur et
   chaque réglage a l’effet annoncé ; les touches de l’énoncé sont envoyées à un vrai client tmux attaché à un
   pseudo-terminal ; la session survit à la mort de ce client ; le script construit les fenêtres et panneaux attendus.
 ]

@@ -144,6 +144,19 @@ réserve la hauteur.
 - Mode `vm` : une VM Alpine Linux x86 dans l’onglet (v86), sans réseau ni installation. L’image se télécharge
   au clic sur « Démarrer la VM », avec sa progression, puis se range dans Cache Storage, sous une clé qui porte
   sa version (`cours-terminal-vm-<version>`) : une visite suivante ne télécharge rien.
+  Le shell est celui du compte ordinaire `ada` (uid 1000, groupes `ada` et `etudiants`, umask 002 : comme dans les
+  corrigés Debian des TP), pas celui de root. L’image a Bash, coreutils, findutils, grep, sed, gawk, git, vim et
+  vimtutor, nano, tmux, jq, tree, `procps-ng` (le `ps` complet), `bats`, et `man` (mandoc, avec les pages de
+  coreutils, Bash, less, grep et tmux : 0,4 Mo compressés). Elle n’a ni `shellcheck` (introuvable pour Alpine x86),
+  ni Python, `yq`, Docker, SSH : un TP qui en demande déclare `("compagnon",)`, ou dit à l’endroit voulu que
+  l’étape demande le compagnon. Ses fichiers sont en mémoire : la taille d’un dossier dans `ls -l` n’est pas celle d’un disque.
+- Fichiers de départ d’un TP en mode `vm` (`preparer.sh`, `dojo/`…) : ils restent dans le dossier du TP, hors de
+  `corrige/`. `construire-vm.sh` embarque, de chaque TP dont l’énoncé déclare `"vm"`, ses fichiers hors `corrige/`,
+  `tester.sh`, `*.typ` et `index.html`, sous `/usr/share/cours/Cours-main/<chemin du dépôt>/`. Sans réseau, le
+  `wget` et le `curl` de la VM (`vm/telecharger`) servent ces fichiers aux adresses que les énoncés emploient
+  (`https://jmchantrein.github.io/Cours/<chemin>` et l’archive `…/archive/refs/heads/main.tar.gz`) : la première
+  étape d’un énoncé (« téléchargez `preparer.sh` ») se clique telle quelle. Aucune copie n’est à maintenir dans
+  `commun/terminal/`.
 - Mode `compagnon` : le vrai shell de l’étudiant, par l’exécutable `iadmin-terminal` (`terminal/compagnon/`, en Go),
   qui écoute sur `127.0.0.1` avec un jeton à usage unique, une liste d’origines et un seul client. La page
   [`terminal/compagnon.typ`](terminal/compagnon.typ) (publiée en `commun/terminal/`) explique son téléchargement.
@@ -161,7 +174,8 @@ Fichiers de `terminal/` :
 `vendor/` et `compagnon/dist/` ne sont pas versionnés : la CI les construit et les publie avec le site.
 Tester, depuis la racine du dépôt, après `preparer.sh --vm` et `compagnon/construire.sh` :
 
-    node commun/terminal/tester-vm.mjs               # démarre la VM dans Node, vérifie ses outils
+    node commun/terminal/tester-vm.mjs               # démarre la VM dans Node, vérifie ses outils, puis rejoue
+                                                     # chaque TP en mode vm (fichiers de départ, commandes de l’énoncé)
     python3 -I commun/terminal/compagnon/tester.py   # protocole, jeton, origine, un seul client
     node commun/terminal/tester-navigateur.js        # Chromium : clics, deux modes, cache, refus, captures
 

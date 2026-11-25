@@ -1,24 +1,14 @@
 # Nœud de contrôle du labo (cours et TP Ansible) : ansible-core et ansible-lint (pip, versions
 # figées), un client SSH, et les outils du TP (git, vim, shellcheck, tree, curl). Ansible n’a
 # besoin que de SSH pour agir.
-# Derrière un proxy HTTPS (facultatif) : argument LABO_APT_PROXY et secret « ca » (son
-# certificat d’autorité, servi aussi à pip), employés pendant la construction seulement.
+# Derrière un proxy HTTPS (facultatif) : voir proxy.sh, qui substitue la base debian:13-slim.
 FROM debian:13-slim
-ARG LABO_APT_PROXY=
-RUN --mount=type=secret,id=ca,required=false,mode=0444 \
-    set -e; o=""; \
-    if [ -n "$LABO_APT_PROXY" ]; then \
-      sed -i 's#http://deb.debian.org#https://deb.debian.org#' /etc/apt/sources.list.d/debian.sources; \
-      o="-o Acquire::https::Proxy=$LABO_APT_PROXY -o Acquire::https::CAInfo=/run/secrets/ca"; \
-    fi; \
-    apt-get $o update; \
-    DEBIAN_FRONTEND=noninteractive apt-get $o install -y --no-install-recommends \
-      python3-venv openssh-client curl ca-certificates tree git vim shellcheck; \
-    sed -i 's#https://deb.debian.org#http://deb.debian.org#' /etc/apt/sources.list.d/debian.sources; \
-    rm -rf /var/lib/apt/lists/*
-RUN --mount=type=secret,id=ca,required=false,mode=0444 \
-    python3 -m venv /opt/ansible \
-    && if [ -s /run/secrets/ca ]; then export PIP_CERT=/run/secrets/ca; fi \
+RUN apt-get update \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+      python3-venv openssh-client curl ca-certificates tree git vim shellcheck \
+    && rm -rf /var/lib/apt/lists/*
+RUN python3 -m venv /opt/ansible \
+    && if [ -f /usr/local/share/ca-certificates/proxy.crt ]; then export PIP_CERT=/usr/local/share/ca-certificates/proxy.crt; fi \
     && /opt/ansible/bin/pip install -q "ansible-core==2.19.4" "ansible-lint==26.11.0"
 ENV PATH=/opt/ansible/bin:$PATH LANG=C.UTF-8
 CMD ["sleep", "infinity"]

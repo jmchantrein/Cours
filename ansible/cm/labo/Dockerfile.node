@@ -3,20 +3,11 @@
 # pour installer sans update_cache ; les paquets que le cours et le TP installent (htop, ncdu,
 # vim, tree, nginx) sont téléchargés d’avance dans le cache d’apt : le labo construit
 # fonctionne sans réseau, et chaque nœud installe les mêmes versions.
-# Derrière un proxy HTTPS (facultatif) : argument LABO_APT_PROXY et secret « ca » (son
-# certificat d’autorité), employés pendant la construction seulement.
+# Derrière un proxy HTTPS (facultatif) : voir proxy.sh, qui substitue la base debian:13-slim.
 FROM debian:13-slim
-ARG LABO_APT_PROXY=
-RUN --mount=type=secret,id=ca,required=false,mode=0444 \
-    set -e; o=""; \
-    if [ -n "$LABO_APT_PROXY" ]; then \
-      sed -i 's#http://deb.debian.org#https://deb.debian.org#' /etc/apt/sources.list.d/debian.sources; \
-      o="-o Acquire::https::Proxy=$LABO_APT_PROXY -o Acquire::https::CAInfo=/run/secrets/ca"; \
-    fi; \
-    apt-get $o update; \
-    DEBIAN_FRONTEND=noninteractive apt-get $o install -y openssh-server python3 python3-apt procps; \
-    rm /etc/apt/apt.conf.d/docker-clean; \
-    apt-get $o install -y --download-only htop ncdu vim tree nginx; \
-    sed -i 's#https://deb.debian.org#http://deb.debian.org#' /etc/apt/sources.list.d/debian.sources; \
-    mkdir -p /run/sshd
+RUN apt-get update \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y openssh-server python3 python3-apt procps \
+    && rm /etc/apt/apt.conf.d/docker-clean \
+    && apt-get install -y --download-only htop ncdu vim tree nginx \
+    && mkdir -p /run/sshd
 CMD ["/usr/sbin/sshd", "-D"]

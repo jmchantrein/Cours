@@ -56,8 +56,8 @@ $ ls dojo
 ```]
 
 #note(role: "precaution")[Le terminal de cette page, quand il tourne dans une VM du navigateur, n’a pas de réseau :
-si `curl` échoue, travaillez dans votre propre terminal, ou téléchargez les fichiers un à un depuis le lien
-« Fichiers du dojo ».]
+son `curl` livre pourtant ces fichiers, que l’image de la VM embarque. Si `curl` échoue ailleurs, travaillez dans
+votre propre terminal, ou téléchargez les fichiers un à un depuis le lien « Fichiers du dojo ».]
 
 #bloc[La méthode, pour chaque kata][
   + Copiez le fichier de départ, ouvrez la copie dans Vim, transformez-la, enregistrez et quittez (`:wq`).

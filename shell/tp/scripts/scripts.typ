@@ -41,7 +41,8 @@ même chose.
 
 #bloc(role: "pratique")[Prérequis][
   - Un terminal Bash : celui de la page, ou le vôtre (Debian, Ubuntu, WSL). Les étapes 6 à 8 demandent les paquets
-    `shellcheck` et `bats` : `sudo apt install shellcheck bats` sous Debian ou Ubuntu.
+    `shellcheck` et `bats` : `sudo apt install shellcheck bats` sous Debian ou Ubuntu. Dans le terminal de cette
+    page, `bats` est installé ; `shellcheck` n’existe pas pour la VM (Alpine x86) : il demande le compagnon.
   - Un éditeur de texte pour écrire les scripts : `nano`, `vim`, ou celui de votre choix.
 ]
 
@@ -329,6 +330,10 @@ $ touch "mes documents/rapport.txt" "mes documents/notes de cours.txt"
 $ ./a-relire.sh "mes documents"
 $ shellcheck a-relire.sh
 ```]
+
+#note(role: "precaution")[Les commandes `shellcheck` de cette étape et des deux suivantes demandent le terminal
+  en mode compagnon (ou le vôtre) : la VM de la page n’a pas ShellCheck. Le reste du TP, `bats` compris, s’y
+  exécute.]
 
 #indice(titre: [Indice : lire le rapport])[
   Chaque avertissement a un code (SC2045, SC2086…) et une page d’explication sur shellcheck.net. SC2045 :

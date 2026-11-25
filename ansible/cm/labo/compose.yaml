@@ -3,16 +3,10 @@
 # Le dossier de travail est monté dans /etc/ansible du nœud de contrôle : ANSIBLE_PROJET
 # (chemin absolu), ou projet/, les fichiers des diapos. Nom du projet Compose : -p ou
 # COMPOSE_PROJECT_NAME, sinon ansible-cm ; les images en prennent le nom.
-# Derrière un proxy HTTPS (facultatif, construction seulement) : LABO_APT_PROXY (adresse du
-# proxy), LABO_CA (son certificat d’autorité), LABO_RESEAU_BUILD=host si le proxy écoute sur
-# l’hôte.
+# Derrière un proxy HTTPS (facultatif) : voir proxy.sh (TPTEST_CA et HTTPS_PROXY).
 name: ansible-cm
 x-construction: &construction
   context: .
-  network: ${LABO_RESEAU_BUILD:-default}
-  args:
-    LABO_APT_PROXY: ${LABO_APT_PROXY:-}
-  secrets: [ca]
 services:
   control-node:
     build:
@@ -32,6 +26,3 @@ services:
       <<: *construction
       dockerfile: Dockerfile.node
     hostname: managed-node-2
-secrets:
-  ca:
-    file: ${LABO_CA:-/dev/null}

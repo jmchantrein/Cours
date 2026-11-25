@@ -98,7 +98,7 @@
     - Pas toujours là : l’image `debian:13` d’un conteneur n’a ni `vi`, ni `nano`, ni `vim` ; installez le paquet `vim` pour la version complète
   ]),
   source-de: [#link("https://pubs.opengroup.org/onlinepubs/9699919799/utilities/vi.html")[POSIX, vi] · #link("https://www.vim.org/")[vim.org]],
-  note: [Vi : Bill Joy, 1976 ; Vim : Bram Moolenaar, 1991, maintenu par la communauté depuis 2023. Le cadre en trait mixte est la session ouverte sur web01 par la commande ssh au-dessus (l’accès distant est le sujet du cours Accès distants). Le conteneur sans éditeur : docker container run --rm debian:13 sh -c "command -v vi nano vim || echo aucun éditeur" répond « aucun éditeur » (rejouer.sh). Sur Debian, la commande vi est souvent fournie par vim-tiny, version réduite (ni coloration, ni vimtutor) : à vérifier sur une installation Debian 13 minimale ; sur Ubuntu 24.04, vim-tiny est de priorité « important », vim « optional ». Nano est l’éditeur par défaut (commande editor) de Debian et d’Ubuntu.],
+  note: [Vi : Bill Joy, 1976 ; Vim : Bram Moolenaar, 1991, maintenu par la communauté depuis 2023. Le cadre en trait mixte est la session ouverte sur web01 par la commande ssh au-dessus (l’accès distant est le sujet du cours Accès distants). Le conteneur sans éditeur : docker container run --rm debian:13 sh -c "command -v vi nano vim || echo aucun éditeur" répond « aucun éditeur » (rejouer.sh). Sur Debian 13, la commande vi vient de vim-tiny, version réduite (compilée sans coloration syntaxique ; vimtutor est dans vim-runtime). vim-tiny est de priorité « important » (apt-cache show vim-tiny) : une installation standard le contient, pas les images de conteneur (debian:13 et debian:13-slim : aucun paquet vim, ni nano). vim et vim-runtime sont « optional » ; nano est « important » comme vim-tiny. Nano est l’éditeur par défaut (commande editor) de Debian et d’Ubuntu.],
 )
 
 == Les modes de Vim et leurs transitions <vim-modes>
@@ -178,7 +178,7 @@
     - Vim répond : `E37: Modifications non enregistrées (ajoutez ! pour passer outre)`. Il protège le travail : `:w` pour garder, `:q!` pour jeter
   ]),
   source-de: link("https://vimhelp.org/editing.txt.html#write-quit")[Vim, `:help write-quit`],
-  note: [La séquence de touches a été jouée dans Vim (vim -s, sans configuration) : le fichier contient « Hello World ! ». Message E37 en français (LANG=fr\_FR.UTF-8), Vim 9.1.0016 (Ubuntu 24.04, faute d’accès aux miroirs Debian ici) : à rejouer sur Debian 13 avec rejouer.sh. ZZ (mode normal) équivaut à :x, qui n’enregistre que si le fichier a changé.],
+  note: [La séquence de touches a été jouée dans Vim (vim -s, sans configuration) : le fichier contient « Hello World ! ». Message E37 en français (LANG=fr\_FR.UTF-8), Vim 9.1.1230 (paquet vim de Debian 13, rejouer.sh). ZZ (mode normal) équivaut à :x, qui n’enregistre que si le fichier a changé.],
 )
 
 == Se déplacer en mode normal <vim-deplacer>
@@ -241,7 +241,7 @@
       essai([`/1.2.3` #touche[Entrée] `cw2.0.0` #touche[Échap]], [`w` s’arrête au point : seul « 1 » change], [  version: 2.0.0.2.3]),
       essai([`/nom` #touche[Entrée] `yyp`], [copie la ligne, la colle en dessous], [  nom: MonApplication (deux fois)]),
       essai([`/environ` #touche[Entrée] `d2j`], [supprime cette ligne et les deux suivantes], [environnements et production disparaissent]),
-      essai([`/production` #touche[Entrée] `dG`], [supprime jusqu’à la fin du fichier], [il reste les quatre premières lignes]),
+      essai([`/production` #touche[Entrée] `dG`], [supprime jusqu’à la fin du fichier], [il reste les cinq premières lignes]),
       essai([`/version` #touche[Entrée] `dd` `.`], [supprime une ligne, puis répète], [version et environnements disparaissent]),
       essai([`jdd` `u` #touche[Ctrl+r]], [supprime, annule, rétablit], [la ligne application: est supprimée]),
     )
@@ -251,7 +251,7 @@
       ..([Touches], [Effet], [Résultat]).map(t => text(size: px(22), weight: 600, fill: c.bleu, t)),
       ..ls.enumerate().map(((i, l)) => l.map(x => u(str(d + i) + "-", x))).flatten())
   }),
-  note: [Chaque ligne part du config.yaml d’origine (avec la ligne --- en tête), le curseur en début de fichier. Toutes les séquences ont été jouées dans Vim sans configuration (vim -u NONE -s fichier-de-touches) et les résultats relevés dans le fichier (rejouer.sh, Vim 9.1.0016 ; à rejouer sur Debian 13). Après /1.2.3, le curseur est sur le « 1 » ; c’est un mot de Vim, distinct du « . » qui suit. Note : dans /1.2.3, le point est un métacaractère de l’expression régulière (n’importe quel caractère) : il trouve aussi « 1x2y3 ».],
+  note: [Chaque ligne part du config.yaml d’origine (avec la ligne --- en tête), le curseur en début de fichier. Toutes les séquences ont été jouées dans Vim sans configuration (vim -u NONE -s fichier-de-touches) et les résultats relevés dans le fichier (rejouer.sh, Vim 9.1.1230 de Debian 13). Après /1.2.3, le curseur est sur le « 1 » ; c’est un mot de Vim, distinct du « . » qui suit. Note : dans /1.2.3, le point est un métacaractère de l’expression régulière (n’importe quel caractère) : il trouve aussi « 1x2y3 ».],
 )
 
 == Rechercher et remplacer : `:s` <vim-substituer>
@@ -287,7 +287,7 @@
     - Le `.` y vaut n’importe quel caractère : `example.org` trouve aussi « exampleXorg ». Pour un point littéral : `example\.org`
   ]),
   source-de: link("https://vimhelp.org/change.txt.html#:substitute")[Vim, `:help :substitute`],
-  note: [Les lignes qui suivent chaque commande sont le début du fichier obtenu (relevé après :wq ; Vim 9.1.0016, à rejouer sur Debian 13). Ce terminal montre la ligne de commande de Vim (« : »), pas celle du shell. Avec le drapeau c, Vim demande pour chaque occurrence : y (oui), n (non), a (toutes), q (quitter). & répète la dernière substitution sur la ligne courante.],
+  note: [Les lignes qui suivent chaque commande sont le début du fichier obtenu (relevé après :wq ; Vim 9.1.1230, Debian 13). Ce terminal montre la ligne de commande de Vim (« : »), pas celle du shell. Avec le drapeau c, Vim demande pour chaque occurrence : y (oui), n (non), a (toutes), q (quitter). & répète la dernière substitution sur la ligne courante.],
 )
 
 == Les modes visuels : commenter un bloc <vim-visuel>
@@ -347,7 +347,7 @@
     ],
   ),
   source-de: link("https://vimhelp.org/starting.txt.html#vimrc")[Vim, `:help vimrc`],
-  note: [Sortie réelle de :set sur config.yaml avec ce .vimrc (Vim 9.1.0016, à rejouer sur Debian 13). Les réglages YAML viennent du greffon de type de fichier livré avec Vim (ftplugin/yaml.vim : expandtab, shiftwidth=2, softtabstop=2). Le cours d’origine donne tabstop=2 sur la diapositive et 4 dans l’exercice : la diapositive suit l’exercice. Sans ~/.vimrc, Vim charge defaults.vim, qui active déjà la coloration et les types de fichier ; dès qu’un ~/.vimrc existe, defaults.vim n’est plus chargé, d’où les deux dernières lignes.],
+  note: [Sortie réelle de :set sur config.yaml avec ce .vimrc (Vim 9.1.1230, Debian 13). Les réglages YAML viennent du greffon de type de fichier livré avec Vim (ftplugin/yaml.vim : expandtab, shiftwidth=2, softtabstop=2). Le cours d’origine donne tabstop=2 sur la diapositive et 4 dans l’exercice : la diapositive suit l’exercice. Sans ~/.vimrc, Vim charge defaults.vim, qui active déjà la coloration et les types de fichier ; dès qu’un ~/.vimrc existe, defaults.vim n’est plus chargé, d’où les deux dernières lignes.],
 )
 
 == À vous : votre `~/.vimrc` <vim-exercice>
@@ -365,7 +365,7 @@
 
 == À vous : corrigé
 
-#corriges(note: [Séquences jouées dans Vim (vim -s) : le fichier obtenu contient bien set number puis set tabstop=4, puis set tabstop=2 après la seconde séquence (rejouer.sh, Vim 9.1.0016 ; à rejouer sur Debian 13). Question 3 : la configuration est lue au démarrage, d’où les numéros de ligne dès la réouverture. Question 5 : :set tabstop? affiche la valeur ; :set tabstop (sans ?) ne marcherait pas pour une option numérique.],
+#corriges(note: [Séquences jouées dans Vim (vim -s) : le fichier obtenu contient bien set number puis set tabstop=4, puis set tabstop=2 après la seconde séquence (rejouer.sh, Vim 9.1.1230 de Debian 13). Question 3 : la configuration est lue au démarrage, d’où les numéros de ligne dès la réouverture. Question 5 : :set tabstop? affiche la valeur ; :set tabstop (sans ?) ne marcherait pas pour une option numérique.],
   ("1-2", [Créez `~/.vimrc` (`set number`, `set tabstop=4`), enregistrez et quittez],
     reponse(terminal(titre: none, taille: px(20))[```
     $ vim ~/.vimrc
@@ -546,7 +546,7 @@
     - Tableaux, cases à cocher, texte barré : des extensions. Vérifiez ce que comprend le destinataire avant de vous en servir
   ]),
   source-de: [#link("https://github.github.com/gfm/#tables-extension-")[GFM, Tables (extension)] · #link("https://pandoc.org/MANUAL.html#tables")[pandoc, Tables]],
-  note: [Sorties réelles de pandoc 3.1.11.1 (binaire officiel, dans un conteneur Debian 13 ; à rejouer avec le paquet pandoc de Debian 13). Le deuxième résultat est tronqué : la ligne « \# … » remplace l’en-tête Effet et la ligne du corps (\<tbody>…\</tbody>). Le format par défaut de pandoc (-f markdown, « Pandoc’s Markdown ») comprend aussi les tableaux. Le cours d’origine (dépôt Markdown) montre qu’on n’est pas obligé d’aligner les barres verticales : seule la ligne de tirets compte.],
+  note: [Sorties réelles de pandoc 3.1.11.1 (paquet pandoc de Debian 13, 3.1.11.1+ds-2 ; rejouer.sh). Le deuxième résultat est tronqué : la ligne « \# … » remplace l’en-tête Effet et la ligne du corps (\<tbody>…\</tbody>). Le format par défaut de pandoc (-f markdown, « Pandoc’s Markdown ») comprend aussi les tableaux. Le cours d’origine (dépôt Markdown) montre qu’on n’est pas obligé d’aligner les barres verticales : seule la ligne de tirets compte.],
 )
 
 == Un source, plusieurs formats : pandoc
@@ -566,7 +566,7 @@
         $ pandoc -f gfm -s --metadata title="ls" doc.md -o doc.html
         # le format de sortie se déduit de l’extension : .odt, .docx, .pdf
         $ pandoc doc.md -o doc.pdf
-        pdflatex not found. Please select a different --pdf-engine or install pdflatex
+        pdflatex not found. Please select a different --pdf-engine or install pdflatex -- see also /usr/share/doc/pandoc/README.Debian
         ```
       ]
     ],
@@ -577,7 +577,7 @@
     ],
   ),
   source-de: link("https://pandoc.org/MANUAL.html")[pandoc, manuel],
-  note: [doc.md est le fichier de l’exercice suivant (corrigé). Sorties réelles, pandoc 3.1.11.1 dans un conteneur Debian 13 (binaire officiel : les miroirs Debian n’étaient pas joignables ; à rejouer avec le paquet pandoc de Debian 13, rejouer.sh). Sans --metadata title, pandoc -s avertit « This document format requires a nonempty \<title> element » et prend le nom du fichier. L’erreur PDF est voulue : elle montre le prérequis ; les paquets texlive sont ceux du cours d’origine. pandoc -o doc.odt et -o doc.docx marchent sans LaTeX.],
+  note: [doc.md est le fichier de l’exercice suivant (corrigé). Sorties réelles, pandoc 3.1.11.1 du paquet Debian 13 (rejouer.sh). Sans --metadata title, pandoc -s avertit « [WARNING] This document format requires a nonempty \<title> element. Defaulting to 'doc' as the title » et prend le nom du fichier. L’erreur PDF est voulue : elle montre le prérequis ; les paquets texlive sont ceux du cours d’origine. pandoc -o doc.odt et -o doc.docx marchent sans LaTeX.],
 )
 
 == À vous : documenter une commande <markdown-exercice>
@@ -701,7 +701,7 @@
     - Le format des échanges entre programmes : API web, journaux structurés, sorties `--json` ou `-j` des commandes (`ip -j addr`, `lsblk -J`)
   ]),
   source-de: [#link("https://www.rfc-editor.org/rfc/rfc8259")[RFC 8259] · #link("https://jqlang.org/manual/")[jq, manuel]],
-  note: [jq 1.7.1 (binaire officiel, conteneur Debian 13 ; à rejouer avec le paquet jq de Debian 13). Ordre des sorties : jq écrit l’erreur sur la sortie d’erreur, l’objet sur la sortie standard ; le terminal les mêle dans l’ordre de leur arrivée. RFC 8259 (2017) : « The names within an object SHOULD be unique » ; le doublon est traité deux diapositives plus loin. Le cours d’origine classe JSON parmi les formats de données et YAML parmi les langages ; la comparaison reste pertinente, car les deux servent aux mêmes usages (configuration, sérialisation, transfert).],
+  note: [jq du paquet Debian 13 (1.7.1-6+deb13u4 ; jq --version affiche « jq-1.7 »). Ordre des sorties : jq écrit l’erreur sur la sortie d’erreur, l’objet sur la sortie standard ; le terminal les mêle dans l’ordre de leur arrivée. RFC 8259 (2017) : « The names within an object SHOULD be unique » ; le doublon est traité deux diapositives plus loin. Le cours d’origine classe JSON parmi les formats de données et YAML parmi les langages ; la comparaison reste pertinente, car les deux servent aux mêmes usages (configuration, sérialisation, transfert).],
 )
 
 == YAML : la hiérarchie par l’indentation <yaml-syntaxe>
@@ -793,7 +793,7 @@
     ],
   ),
   source-de: [#link("https://pyyaml.org/wiki/PyYAMLDocumentation")[PyYAML] · #link("https://github.com/kislyuk/yq")[yq (Python)] · #link("https://jqlang.org/manual/")[jq]],
-  note: [Sorties réelles dans un conteneur Debian 13 : Python 3.13, PyYAML 6.0.4, yq 4.4.5 (version Python), jq 1.7.1, installés depuis PyPI et les binaires officiels faute d’accès aux miroirs Debian : à rejouer avec les paquets Debian 13 (python3-yaml, yq, jq). La sortie Python est tronquée (« \# … ») : elle est identique à celle de yq. Le yq employé ici est celui qu’installe sudo apt install yq : diapositive « Deux outils nommés yq ». yaml.load sans Loader sûr peut construire des objets Python arbitraires : toujours safe\_load pour un fichier reçu.],
+  note: [Sorties réelles dans un conteneur Debian 13, paquets Debian : python3-yaml 6.0.2 (PyYAML), yq 3.4.3 (version Python), jq 1.7.1. La sortie Python est tronquée (« \# … ») : elle est identique à celle de yq. Le yq employé ici est celui qu’installe sudo apt install yq : diapositive « Deux outils nommés yq ». yaml.load sans Loader sûr peut construire des objets Python arbitraires : toujours safe\_load pour un fichier reçu.],
 )
 
 == JSON est-il du YAML ?
@@ -830,7 +830,7 @@
     - Du JSON se colle dans un fichier YAML. L’inverse est faux : commentaires et ancres n’ont pas d’équivalent JSON
   ]),
   source-de: [#link("https://yaml.org/spec/1.2.2/#12-yaml-history")[YAML 1.2.2, § 1.2] · #link("https://www.rfc-editor.org/rfc/rfc8259#section-4")[RFC 8259, § 4]],
-  note: [ruamel.yaml 0.19.1 refuse ce fichier (DuplicateKeyError) ; PyYAML garde la dernière valeur sans rien dire. La trace de PyYAML est abrégée (« \# … ») : elle se termine par yaml.scanner.ScannerError, while scanning for the next token. Sorties réelles, conteneur Debian 13, PyYAML 6.0.4 et ruamel.yaml 0.19.1 (PyPI ; à rejouer avec python3-yaml et python3-ruamel.yaml de Debian 13). Le cours d’origine renvoie à l’article JSON::XS « JSON and YAML » sur les cas limites ; le site disait « pas tout à fait » sans préciser : la réponse dépend de la version de YAML que suit l’analyseur.],
+  note: [ruamel.yaml 0.18.10 refuse ce fichier (DuplicateKeyError) ; PyYAML garde la dernière valeur sans rien dire. La trace de PyYAML est abrégée (« \# … ») : elle se termine par yaml.scanner.ScannerError, while scanning for the next token. Sorties réelles, conteneur Debian 13, PyYAML 6.0.2 et ruamel.yaml 0.18.10 (python3-yaml et python3-ruamel.yaml). Le cours d’origine renvoie à l’article JSON::XS « JSON and YAML » sur les cas limites ; le site disait « pas tout à fait » sans préciser : la réponse dépend de la version de YAML que suit l’analyseur.],
 )
 
 == Le typage implicite des scalaires <yaml-typage>
@@ -849,7 +849,7 @@
     ([chaîne], [tout le reste : `web01`, `1.2.3`, `"1984"`], [tout le reste, dont `yes`, `NO`, `22:22`]),
   ))),
   source-de: [#link("https://yaml.org/type/bool.html")[YAML 1.1, types] · #link("https://yaml.org/spec/1.2.2/#1023-core-schema")[YAML 1.2.2, § 10.2.3 Core Schema]],
-  note: [Le tableau résume les relevés des deux diapositives suivantes. La spécification 1.1 inclut aussi y, Y, n, N parmi les booléens ; PyYAML ne les applique pas (y reste une chaîne, relevé). Le schéma de base 1.2 n’a pas de type date ; ruamel.yaml (typ safe, 1.2 par défaut) en reconnaît pourtant, comme PyYAML ; yq (Go) l’étiquette !!timestamp mais l’écrit en chaîne. Une directive %YAML 1.1 en tête de document fait lire ruamel.yaml en 1.1 ; PyYAML ignore %YAML 1.2 et reste en 1.1 (relevé). JSON a les mêmes types, sans date.],
+  note: [Le tableau résume les relevés des deux diapositives suivantes. La spécification 1.1 inclut aussi y, Y, n, N parmi les booléens ; PyYAML ne les applique pas (y reste une chaîne, relevé). Le schéma de base 1.2 n’a pas de type date ; ruamel.yaml (typ safe, 1.2 par défaut) en reconnaît pourtant, comme PyYAML ; yq (Go) l’étiquette !!timestamp mais l’écrit en chaîne. Une directive %YAML 1.1 en tête de document fait lire ruamel.yaml en 1.1 avec YAML(typ="safe", pure=True) (relevé : False pour no), mais pas avec YAML(typ="safe") seul, qui garde la chaîne « no » (ruamel.yaml 0.18.10) ; PyYAML ignore %YAML 1.2 et reste en 1.1 (relevé). JSON a les mêmes types, sans date.],
 )
 
 == Le problème de la Norvège : `NO` vaut `false` <yaml-norvege>
@@ -887,7 +887,7 @@
     ],
   ),
   source-de: [#link("https://yaml.org/type/bool.html")[YAML 1.1, bool] · #link("https://yamllint.readthedocs.io/en/stable/rules.html#module-yamllint.rules.truthy")[yamllint, truthy]],
-  note: [Sorties réelles, conteneur Debian 13 : PyYAML 6.0.4, ruamel.yaml 0.19.1, yamllint 1.38.0 (PyPI ; à rejouer avec les paquets Debian 13). yamllint s’appuie lui-même sur PyYAML. Ansible lit ses fichiers avec PyYAML : un yes y est un booléen (documentation Ansible, YAML Syntax) — à vérifier sur la version d’ansible-core du cours Ansible. Le yq de Debian (version Python) ne suit ni l’un ni l’autre exactement : yq 4.4.5 lit NO et yes comme des chaînes.],
+  note: [Sorties réelles, conteneur Debian 13, paquets Debian : PyYAML 6.0.2, ruamel.yaml 0.18.10, yamllint 1.37.1. yamllint s’appuie lui-même sur PyYAML. Ansible lit ses fichiers avec PyYAML : un yes y est un booléen (documentation Ansible, YAML Syntax) — à vérifier sur la version d’ansible-core du cours Ansible. Le yq de Debian (version Python, 3.4.3) ne suit ni l’un ni l’autre exactement : il lit NO et yes comme des chaînes (comme ruamel.yaml), mais 0644 comme l’entier 420 (comme PyYAML) ; 22:22 reste une chaîne.],
 )
 
 == Autres pièges : octal, base 60, versions, dates <yaml-pieges>
@@ -923,7 +923,7 @@
     - Des droits `0644` lus en décimal ; un `22:22` (port de Compose) lu en base 60 ; une version `1.10` devenue `1.1` ; une date que `json.dumps` refuse (`TypeError: Object of type date is not JSON serializable`). Guillemets !
   ]),
   source-de: [#link("https://yaml.org/type/int.html")[YAML 1.1, int] · #link("https://yaml.org/spec/1.2.2/#1023-core-schema")[YAML 1.2.2, Core Schema] · #link("https://docs.docker.com/reference/compose-file/services/#ports")[Compose, ports]],
-  note: [Relevés réels, conteneur Debian 13 : PyYAML 6.0.4 (yaml.safe\_load), ruamel.yaml 0.19.1 (YAML(typ="safe"), 1.2 par défaut), yq Go v4.44.3 (yq -o=json) ; à rejouer avec rejouer.sh. 0644 en 1.1 : octal, soit 420 ; en 1.2, l’octal s’écrit 0o644, et 0644 est un entier décimal. 22:22 en 1.1 : 22 × 60 + 22 = 1342 (entier sexagésimal) ; la documentation de Compose recommande de mettre les ports entre guillemets pour cette raison. 1.10 est un flottant dans les deux versions : une version s’écrit entre guillemets. La date : PyYAML rend un datetime.date, que le module json ne sait pas écrire. 1984 sans guillemets : un entier, d’où les guillemets du titre dans l’exercice.],
+  note: [Relevés réels, conteneur Debian 13 : PyYAML 6.0.2 (yaml.safe\_load), ruamel.yaml 0.18.10 (YAML(typ="safe"), 1.2 par défaut), tous deux paquets Debian ; yq Go v4.44.3 (yq -o=json), binaire amont, absent de Debian (rejouer.sh). 0644 en 1.1 : octal, soit 420 ; en 1.2, l’octal s’écrit 0o644, et 0644 est un entier décimal. 22:22 en 1.1 : 22 × 60 + 22 = 1342 (entier sexagésimal) ; la documentation de Compose recommande de mettre les ports entre guillemets pour cette raison. 1.10 est un flottant dans les deux versions : une version s’écrit entre guillemets. La date : PyYAML rend un datetime.date, que le module json ne sait pas écrire. 1984 sans guillemets : un entier, d’où les guillemets du titre dans l’exercice.],
 )
 
 == Chaînes sur plusieurs lignes : `|` garde, `>` replie
@@ -966,7 +966,7 @@
     - Les styles `|` et `>` sont les mêmes en YAML 1.1 et 1.2 ; l’indentation du bloc fixe ce qui appartient à la chaîne. Usage typique : un script dans un fichier de configuration
   ]),
   source-de: link("https://yaml.org/spec/1.2.2/#81-block-scalar-styles")[YAML 1.2.2, § 8.1 Block Scalar Styles],
-  note: [Sortie réelle, PyYAML 6.0.4 (conteneur Debian 13). ruamel.yaml donne les mêmes chaînes. Le réglage de fin (_chomping_) : « clip » par défaut (un seul retour à la ligne final), « strip » avec -, « keep » avec +.],
+  note: [Sortie réelle, PyYAML 6.0.2 (paquet Debian 13). ruamel.yaml donne les mêmes chaînes. Le réglage de fin (_chomping_) : « clip » par défaut (un seul retour à la ligne final), « strip » avec -, « keep » avec +.],
 )
 
 == Ancres, alias et clé de fusion <yaml-ancres>
@@ -1002,7 +1002,7 @@
     - `<<` est un type du dépôt de YAML 1.1, absent de la spécification 1.2 ; PyYAML, ruamel.yaml et yq l’appliquent tout de même. Ancres et alias, eux, font partie des deux versions
   ]),
   source-de: [#link("https://yaml.org/type/merge.html")[YAML 1.1, Merge Key] · #link("https://yaml.org/spec/1.2.2/#71-alias-nodes")[YAML 1.2.2, § 7.1 Alias Nodes]],
-  note: [Exemple du cours d’origine (par défaut, objet1, objet2), clé « par défaut » renommée defaut (une clé sans espace). Sortie réelle, yq 4.4.5 (Python) ; yq -c . ancres.yaml affiche aussi defaut, sur une seule ligne trop longue pour la diapositive. PyYAML 6.0.4, ruamel.yaml 0.19.1 et yq Go v4.44.3 (explode) donnent le même arbre. En JSON, il n’y a plus d’ancre : objet2 est une copie.],
+  note: [Exemple du cours d’origine (par défaut, objet1, objet2), clé « par défaut » renommée defaut (une clé sans espace). Sortie réelle, yq 3.4.3 (Python, paquet Debian 13) ; yq -c . ancres.yaml affiche aussi defaut, sur une seule ligne trop longue pour la diapositive. PyYAML 6.0.2, ruamel.yaml 0.18.10 et yq Go v4.44.3 (explode) donnent le même arbre. En JSON, il n’y a plus d’ancre : objet2 est une copie.],
 )
 
 == Valider avant d’appliquer : yamllint <yamllint>
@@ -1046,7 +1046,7 @@
   ),
   encadre(role: "notion", libelle: [Lire le verdict :], taille: px(22))[`ligne:colonne`, niveau, message, (règle). `error` : ce n’est pas du YAML, code de retour 1 ; `warning` : du YAML, mais une règle de style ou de prudence n’est pas suivie. Avant de pousser une configuration sur un serveur : yamllint, puis l’outil lui-même.],
   source-de: link("https://yamllint.readthedocs.io/en/stable/")[yamllint, documentation],
-  note: [Sorties réelles, yamllint 1.38.0 (PyPI, conteneur Debian 13 ; à rejouer avec le paquet yamllint de Debian 13). tabulation.yaml : la ligne 5 commence par une tabulation. indentation.yaml : « version » est indenté de trois espaces sous « nom » (deux) : l’analyseur y voit la suite de la valeur MonApplication, puis bute sur les deux-points. La configuration de yamllint se règle par un fichier .yamllint (règles activées, niveaux).],
+  note: [Sorties réelles, yamllint 1.37.1 (paquet Debian 13). tabulation.yaml : la ligne 5 commence par une tabulation. indentation.yaml : « version » est indenté de trois espaces sous « nom » (deux) : l’analyseur y voit la suite de la valeur MonApplication, puis bute sur les deux-points. La configuration de yamllint se règle par un fichier .yamllint (règles activées, niveaux).],
 )
 
 == Interroger et modifier : jq et yq <yq-jq>
@@ -1061,7 +1061,7 @@
         https://prod.example.org
         # modifier le fichier : -i (en place) exige -y (sortie YAML)
         $ yq -i '.application.version = "1.2.4"' config.yaml
-        yq: -i/--in-place can only be used with -y/-Y/-t/-T/-x
+        yq: -i/--in-place can only be used with -y/-Y/-t/-x
         $ yq -yi '.application.version = "1.2.4"' config.yaml
         $ grep version config.yaml
           version: 1.2.4
@@ -1078,7 +1078,7 @@
     ],
   ),
   source-de: [#link("https://github.com/kislyuk/yq")[yq (Python)] · #link("https://jqlang.org/manual/")[jq, manuel]],
-  note: [Sorties réelles, yq 4.4.5 (Python) et jq 1.7.1, conteneur Debian 13 ; la dernière commande porte sur le config.yaml dont l’environnement de développement a été mis en commentaire avec Ctrl+v (diapositive « Les modes visuels »). Le site affirmait que -i sans -y réécrit le fichier en JSON : yq 4.4.5 (et yq 3.1.0 d’Ubuntu 24.04) refusent, avec le message ci-dessus ; à rejouer avec le yq de Debian 13. -yi réécrit le fichier : les commentaires et la mise en forme d’origine sont perdus (-Y les garde en partie).],
+  note: [Sorties réelles, yq 3.4.3 (Python) et jq 1.7.1, paquets Debian 13 ; la dernière commande porte sur le config.yaml dont l’environnement de développement a été mis en commentaire avec Ctrl+v (diapositive « Les modes visuels »). Le site affirmait que -i sans -y réécrit le fichier en JSON : yq 3.4.3 (Debian 13) refuse, avec le message ci-dessus. -yi réécrit le fichier : les commentaires et la mise en forme d’origine sont perdus ; -Y non plus ne garde pas les commentaires (il conserve les étiquettes et les styles YAML).],
 )
 
 == Deux outils nommés yq <deux-yq>
@@ -1100,10 +1100,10 @@
     bloc(role: "pratique", poids: 1.2, taille: px(23))[Lequel est installé ?][
       #terminal(titre: none, taille: px(19))[
         ```
+        # le yq du paquet Debian 13 (Python)
         $ yq --version
-        yq 4.4.5
-        jq-1.7.1
-        # le yq Go, ici sous le nom yq-go
+        yq 3.4.3
+        # yq Go (binaire amont) : yq-go
         $ yq-go --version
         yq (https://github.com/mikefarah/yq/) version v4.44.3
         ```
@@ -1111,10 +1111,10 @@
     ],
   ),
   rang(bloc(role: "avertissement", taille: px(23))[Une commande copiée d’un tutoriel peut viser l’autre yq][
-    - `yq eval '.a' f.yaml` (Go) échoue avec le yq Python : `jq: error: eval/0 is not defined`. Vérifiez d’abord `yq --version`
+    - `yq eval '.a' f.yaml` (Go) échoue avec le yq Python : `yq: error: argument files: can't open '.a'` (il lit `eval` comme le filtre et `.a` comme un fichier). Vérifiez d’abord `yq --version`
   ]),
   source-de: [#link("https://github.com/kislyuk/yq")[github.com/kislyuk/yq] · #link("https://mikefarah.gitbook.io/yq/")[mikefarah.gitbook.io/yq]],
-  note: [Les deux yq ont été installés côte à côte dans le conteneur Debian 13 (le Go sous le nom yq-go). Sorties réelles. Le yq Python affiche sa version et celle de jq ; le paquet yq de Debian et d’Ubuntu est la version Python (Ubuntu 24.04 : 3.1.0, qui s’annonce « yq 0.0.0 ») : version du paquet Debian 13 à relever. Les deux lisent les scalaires différemment de PyYAML (diapositive « Autres pièges ») : on ne présume pas du typage, on le vérifie.],
+  note: [Les deux yq ont été installés côte à côte dans le conteneur Debian 13 (rejouer.sh), le Go sous le nom yq-go. Sorties réelles. Le yq Python est le paquet Debian 13 yq 3.4.3 (Ubuntu 24.04 : 3.1.0) ; le yq Go est le binaire amont v4.44.3, sans paquet Debian : il se télécharge sur la page des versions du projet, avec sa somme SHA-256 vérifiée. Les deux lisent les scalaires différemment de PyYAML (diapositive « Autres pièges ») : on ne présume pas du typage, on le vérifie.],
 )
 
 == Vers l’infrastructure as code
@@ -1143,7 +1143,7 @@
       - Compose (cours _Conteneurisation_), Ansible (cours à venir) : du YAML, lu avec les règles de cette partie
     ],
   ),
-  note: [Exemple du cours d’origine, corrigé : l’original est un YAML invalide (le contenu du bloc | n’était pas indenté sous le tiret, et l’option était écrite c au lieu de -c). Sortie réelle, yq 4.4.5. L’infrastructure as code (IaC) : décrire l’infrastructure dans des fichiers versionnés, plutôt que de la configurer à la main.],
+  note: [Exemple du cours d’origine, corrigé : l’original est un YAML invalide (le contenu du bloc | n’était pas indenté sous le tiret, et l’option était écrite c au lieu de -c). Sortie réelle, yq 3.4.3. L’infrastructure as code (IaC) : décrire l’infrastructure dans des fichiers versionnés, plutôt que de la configurer à la main.],
 )
 
 == À vous : un livre en YAML, puis en JSON <yaml-exercice>
@@ -1192,7 +1192,7 @@
     $ echo $?
     0
     ```])))
-  utils.speaker-note(self: self)[Corrigé du site (fichier réel), relu : yamllint 1.38.0 n’affiche rien et rend 0. Les clés sans accent ni espace (annee\_publication, mots\_cles) évitent les guillemets et les surprises d’encodage ; le cours d’origine déconseille les espaces dans les clés.]
+  utils.speaker-note(self: self)[Corrigé du site (fichier réel), relu : yamllint 1.37.1 n’affiche rien et rend 0. Les clés sans accent ni espace (annee\_publication, mots\_cles) évitent les guillemets et les surprises d’encodage ; le cours d’origine déconseille les espaces dans les clés.]
 })
 
 == À vous : corrigé (2/2)
@@ -1224,7 +1224,7 @@
     $ printf 'titre: 1984\n' | yq -c '.titre | type'
     "number"
     ```])))
-  utils.speaker-note(self: self)[Sorties réelles, yq 4.4.5 (Python) et jq 1.7.1, conteneur Debian 13. type est une fonction de jq. Le titre « 1984 » sans guillemets serait l’entier 1984 : le piège du typage implicite, identique en YAML 1.1 et 1.2.]
+  utils.speaker-note(self: self)[Sorties réelles, yq 3.4.3 (Python) et jq 1.7.1, paquets Debian 13. type est une fonction de jq. Le titre « 1984 » sans guillemets serait l’entier 1984 : le piège du typage implicite, identique en YAML 1.1 et 1.2.]
 })
 
 // ======================================================================

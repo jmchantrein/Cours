@@ -26,6 +26,9 @@ l’organisation et la compilation dans [`README.md`](README.md).
 - Déclare le terminal d’une page par `page-web(terminal: …)` : `("compagnon",)` pour Docker ou libvirt, `("vm", "compagnon")`
   pour un TP shell. Ses dépendances tierces sont fixées en version et en SHA-256 (`commun/terminal/dependances.txt`,
   `go.sum`), téléchargées par la CI et servies par le site : ni CDN, ni fichier tiers dans git.
+- Range les fichiers de départ d’un TP en mode `vm` (`preparer.sh`, `dojo/`…) dans son dossier, hors de `corrige/` :
+  `construire-vm.sh` les embarque dans l’image, le `wget` et le `curl` de la VM les servent, et `tester-vm.mjs` rejoue le TP ;
+  ne les copie jamais dans `commun/terminal/`.
 - Après une modification du terminal, lance `commun/terminal/tester-vm.mjs`, `compagnon/tester.py` et
   `tester-navigateur.js` (voir `commun/README.md`).
 - Fais reposer un artefact sur le modèle énoncé dans le cours, et relie-le à la diapo et au TP concernés.

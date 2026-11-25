@@ -44,18 +44,34 @@
     s.className = classe; s.textContent = texte;
     return s;
   }
-  // Les commandes d’un terminal : les lignes `$ …`, et leurs suites quand elles finissent par `\`.
-  // Chaque commande donne son texte et le rang de sa dernière ligne.
+  // Les commandes d’un terminal : les lignes `$ …`, et leurs suites tant que la commande n’est pas finie :
+  // ligne qui finit par `\`, ou guillemet ouvert (programme awk ou sed sur plusieurs lignes). Chaque commande
+  // donne son texte et le rang de sa dernière ligne.
   function commandes(lignes) {
     const sortie = [];
     let suite = false;
     lignes.forEach((ligne, i) => {
-      if (ligne.startsWith("$ ")) sortie.push({ texte: ligne.slice(2), fin: i });
-      else if (suite) Object.assign(sortie.at(-1), { texte: sortie.at(-1).texte + "\n" + ligne, fin: i });
+      if (suite) Object.assign(sortie.at(-1), { texte: sortie.at(-1).texte + "\n" + ligne, fin: i });
+      else if (ligne.startsWith("$ ")) sortie.push({ texte: ligne.slice(2), fin: i });
       else return;
-      suite = ligne.endsWith("\\");
+      suite = inacheve(sortie.at(-1).texte);
     });
     return sortie;
+  }
+  // Vrai si le texte attend une suite : il finit par `\`, ou un guillemet reste ouvert (un `#` en début de mot
+  // commence un commentaire, jusqu’à la fin de la ligne).
+  function inacheve(texte) {
+    if (texte.endsWith("\\")) return true;
+    let guillemet = null;
+    for (let i = 0; i < texte.length; i++) {
+      const c = texte[i];
+      if (guillemet === "'") { if (c === "'") guillemet = null; }
+      else if (guillemet === '"') { if (c === "\\") i++; else if (c === '"') guillemet = null; }
+      else if (c === "\\") i++;
+      else if (c === "'" || c === '"') guillemet = c;
+      else if (c === "#" && (i === 0 || /\s/.test(texte[i - 1]))) while (i < texte.length && texte[i] !== "\n") i++;
+    }
+    return guillemet !== null;
   }
 
   // Bouton « Copier » : les commandes d’un terminal, ou le fichier entier.

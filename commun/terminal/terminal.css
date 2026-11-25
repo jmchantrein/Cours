@@ -13,7 +13,7 @@
 /* Bouton « Exécuter » d’une commande (posé par tp.js) */
 .terminal .executer { margin-left: .8em; padding: 0 .45em; border: 1px solid var(--c-prompt); border-radius: .25rem;
   background: transparent; color: var(--c-prompt); font: inherit; font-size: .78em; line-height: 1.5; vertical-align: .05em;
-  cursor: pointer; user-select: none; }
+  cursor: pointer; user-select: none; position: relative; z-index: 1; /* au-dessus de « Copier » quand la première ligne est longue */ }
 .terminal .executer::before { content: "▶ "; font-size: .85em; }
 .terminal .executer:hover { background: var(--c-prompt); color: var(--c-nuit); }
 .terminal .executer[aria-disabled="true"] { border-color: var(--c-commentaire); color: var(--c-commentaire); background: transparent; }
