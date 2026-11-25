@@ -643,7 +643,7 @@
     return [...groupes].map(([phrase, versions]) => `JSON, ${versions.length > 1 ? "lectures 1.1 et 1.2" : "lecture " + versions[0]} : ${phrase}.`);
   }
 
-  function expliquerScalaire(r) {
+  function expliquerScalaire(r, bref = false) {
     const p = [], texte = r.entree.texte;
     if (r.limites.length) return r.limites.map(l => `Limitation du simulateur : ${l}.`);
     if (r.erreurSyntaxe) {
@@ -653,27 +653,29 @@
     }
     const a = r.versions["1.1"], b = r.versions["1.2"];
     const l = r.lecture;
-    p.push(l.style === "nu" && !l.etiquette
+    if (!bref) p.push(l.style === "nu" && !l.etiquette
       ? "Sans guillemets, YAML essaie les motifs du schéma dans l’ordre (booléen, flottant, entier, null, date) : le premier qui reconnaît le texte décide du type."
       : l.etiquette ? `Avec l’étiquette !!${l.etiquette}, le type est imposé : le texte est converti, sans chercher quel motif lui irait.`
         : `Entre guillemets ${l.style === "simples" ? "simples" : "doubles"}, le texte est une chaîne : aucun motif n’est essayé.`);
-    for (const res of [a, b]) {
-      if (res.ok) p.push(`${SCHEMA_NOM(res.version)} : ${phraseRegle(res)} → ${valeurTexte(res)}.`);
-      else p.push(`${SCHEMA_NOM(res.version)} : ${res.regle ? "" : "le motif reconnaît le texte, mais "}la conversion échoue (${res.erreur.classe} : ${res.erreur.message}).`);
+    if (!a.ok && !b.ok && a.erreur.classe === b.erreur.classe && a.erreur.message === b.erreur.message) {
+      p.push(`Les deux versions : la forme du texte est reconnue, mais la conversion échoue (${a.erreur.classe} : ${a.erreur.message}) ; il n’y a aucune valeur à rendre.`);
+    } else {
+      for (const res of [a, b]) {
+        if (res.ok) p.push(`${SCHEMA_NOM(res.version)} : ${bref ? regleCourte(res) : phraseRegle(res)} → ${valeurTexte(res)}.`);
+        else p.push(`${SCHEMA_NOM(res.version)} : la forme du texte est reconnue, mais la conversion échoue (${res.erreur.classe} : ${res.erreur.message}).`);
+      }
+      if (a.ok && b.ok) {
+        if (a.noeud.t === b.noeud.t && a.repr === b.repr) p.push("Les deux versions lisent la même chose : ce texte ne dépend pas de la spécification.");
+        else p.push(`Elles divergent : ${valeurTexte(a)} en 1.1, ${valeurTexte(b)} en 1.2. ${conseil(l.texte)}`);
+      } else if (a.ok !== b.ok) p.push(`Elles divergent : l’une lit le texte, l’autre le refuse. ${conseil(l.texte)}`);
+      else p.push("Les deux versions échouent, chacune à sa façon.");
     }
-    if (a.ok && b.ok) {
-      if (JSON.stringify(a.arbre) === JSON.stringify(b.arbre) && a.noeud.t === b.noeud.t) p.push("Les deux versions lisent la même chose : ce texte ne dépend pas de la spécification.");
-      else if (a.noeud.t !== b.noeud.t || a.repr !== b.repr)
-        p.push(`Elles divergent : ${valeurTexte(a)} en 1.1, ${valeurTexte(b)} en 1.2. ${conseil(l.texte)}`);
-    } else if (a.ok !== b.ok) {
-      p.push(`Elles divergent : l’une lit le texte, l’autre le refuse. ${conseil(l.texte)}`);
-    } else p.push("Les deux versions échouent de la même façon : le motif reconnaît la forme du texte, la conversion n’a pas de valeur à rendre.");
     p.push(...ecartsDeSpecification(l.texte, r.versions));
     p.push(...phrasesJson(r.versions));
     return p;
   }
 
-  function expliquerDocument(r) {
+  function expliquerDocument(r, bref = false) {
     if (r.limites.length) return r.limites.map(l => `Limitation du simulateur : ${l}.`);
     const p = [];
     if (r.erreurSyntaxe) {
@@ -698,7 +700,7 @@
       if (!diffs.length) p.push("Les deux versions lisent le même arbre : ce document ne dépend pas de la spécification.");
       else {
         p.push(`Les deux versions divergent en ${diffs.length} endroit${diffs.length > 1 ? "s" : ""} : ${diffs.slice(0, 3).join(" ; ")}${diffs.length > 3 ? " ; …" : ""}.`);
-        p.push("Des guillemets gardent une chaîne ; true ou false, un booléen.");
+        if (!bref) p.push("Des guillemets gardent une chaîne ; true ou false, un booléen.");
       }
       for (const res of [a, b]) {
         if (res.doublons?.length) p.push(`${SCHEMA_NOM(res.version)} : la clé ${reprNoeud(res.doublons[0])} est répétée ; la dernière valeur l’emporte.`);
@@ -709,7 +711,8 @@
     }
     return p;
   }
-  const expliquer = r => r.entree.mode === "document" ? expliquerDocument(r) : expliquerScalaire(r);
+  // `bref` : l'explication d'une recette, qui s'ajoute à celle du cadre du bas et laisse de côté le rappel du modèle.
+  const expliquer = (r, bref = false) => r.entree.mode === "document" ? expliquerDocument(r, bref) : expliquerScalaire(r, bref);
 
   // Les exemples de la liste déroulante et les documents du mode « document ».
   const EXEMPLES = [
@@ -809,7 +812,7 @@
 
   // ---------- Contrôles : créés une fois, relus par `appliquer` ----------
   const modifie = () => { phase = 3; appliquer(); dessinerResultats(); aLaMain(); };
-  const aLaMain = () => moteur.libre(expliquer(resultat()));
+  const aLaMain = () => moteur.libre(expliquer(resultat(), true));
   function batir() {
     const champTexte = el("input", { type: "text", spellcheck: "false", autocomplete: "off", "aria-label": "Le scalaire, tel qu’il est écrit après « clé: »", "data-cle": "texte",
       placeholder: "ex. NO ou \"NO\"", oninput: ev => { etat.texte = ev.target.value; modifie(); } });
@@ -874,7 +877,7 @@
       phase = p; dessinerResultats();
     }
     for (const c of racine.querySelectorAll(".signale")) c.classList.remove("signale");
-    return [...(decrits.length ? [decrits.join(" ")] : []), ...expliquer(resultat())];
+    return [...(decrits.length ? [decrits.join(" ")] : []), ...expliquer(resultat(), true)];
   };
   const S = texte => regler({ mode: "scalaire", texte });
   const PIEGES_CORRIGE = "---\npays: [FR, \"NO\", SE]\nactif: true";

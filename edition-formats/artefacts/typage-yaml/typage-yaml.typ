@@ -35,13 +35,13 @@
     ([`22:22` (un port de Compose), puis `1:30` : que lit chaque version ? Et `"22:22"` ?],
       [En 1.1, `22:22` est un entier en base 60 : 22 × 60 + 22 = 1342, et `1:30` vaut 90. En 1.2, ce sont des chaînes.
         Entre guillemets, `"22:22"` est une chaîne partout.], "base-60"),
-    ([`2026-11-25` : de quel type est-ce, et que devient-il en JSON ? Et `"2026-11-25"` ? Et `2026-13-45` ?],
-      [Une date dans les deux versions ; JSON n’a pas de date : `json.dumps` échoue (_TypeError_). Entre guillemets, la chaîne
-        `"2026-11-25"` s’écrit sans difficulté. `2026-13-45` a la forme d’une date mais pas de valeur : l’analyseur refuse
-        le document (_ValueError : month must be in 1..12_).], "date-json"),
-    ([Mode document : `norvege.yaml`, puis sa version corrigée (`"NO"`, `true`), puis avec `mode: 0644`. Où les deux versions divergent-elles ?],
-      [`norvege.yaml` donne deux JSON différents (`false` ou `"NO"` ; `true` ou `"yes"`). Corrigé, les deux versions lisent le même arbre.
-        Ajouter `mode: 0644` les fait diverger de nouveau (420 ou 644) : en YAML, un texte que seul un nombre ou un
-        booléen ressemble se règle par les guillemets (#diapo(pdf, "yaml-json-correspondance")[l’arbre commun]).], "document-json"),
+    ([`2026-11-25` : quel type, et que devient-il en JSON ? Et `"2026-11-25"` ? Et `2026-13-45` ?],
+      [Une date dans les deux versions ; JSON n’a pas de date : `json.dumps` échoue (_TypeError_). Entre guillemets, c’est une
+        chaîne, qui s’écrit sans difficulté. `2026-13-45` a la forme d’une date, pas la valeur : le document est refusé
+        (_ValueError : month must be in 1..12_).], "date-json"),
+    ([Mode document : `norvege.yaml`, puis corrigé (`"NO"`, `true`), puis avec `mode: 0644`. Où les versions divergent-elles ?],
+      [`norvege.yaml` donne deux JSON différents (`false` ou `"NO"`, `true` ou `"yes"`). Corrigé, les deux versions lisent le
+        même arbre. `mode: 0644` les fait diverger de nouveau (420 ou 644)
+        (#diapo(pdf, "yaml-json-correspondance")[l’arbre commun]).], "document-json"),
   )
 ]
