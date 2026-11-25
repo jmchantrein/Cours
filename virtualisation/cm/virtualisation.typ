@@ -823,6 +823,8 @@
   bloc(role: "pratique")[Démonstration][
     #terminal(taille: px(21))[
       ```
+      # l’instantané fige le disque, pas le cache de l’invité
+      $ incus exec v1 -- sync
       # figer l’état de v1, sous le nom « propre »
       $ incus snapshot create v1 propre
       # les instantanés de v1
@@ -846,7 +848,7 @@
   ],
   poids: (1.1, 1),
   source-de: [Incus 6.0.4 : #doc-incus("howto/instances_backup.md")[sauvegarder une instance]],
-  note: [Usage type : un instantané avant une mise à jour ou une manipulation risquée. Sans nom, incus snapshot create numérote : snap0, snap1… Autres sous-commandes : rename, show. --stateful (create et restore) enregistre aussi l’état d’exécution d’une VM, à trois conditions (driver\_qemu.go) : la VM tourne ; sa clé migration.stateful vaut true, posée VM arrêtée (la clé ne change pas à chaud) ; le size.state de son disque root est au moins égal à limits.memory. Par défaut, size.state vaut 500 Mio et la mémoire 1 Gio : sans réglage, Incus refuse (« Stateful snapshot requires migration.stateful to be set to true », puis « Stateful stop and snapshots require that the instance limits.memory is less than size.state on the root disk device »). Pour un conteneur, la documentation dit --stateful incomplet (limites de CRIU). Coût d’un instantané : avec le pilote dir du pool default, une copie complète du disque ; avec ZFS ou Btrfs, seulement les blocs modifiés ensuite. Rappel du cours Conteneurisation (« Où faire tourner Docker : hôte ou VM ? ») : restaurer ramène tout le disque en arrière, données comprises. Avec QEMU seul : arrêter la VM, puis qemu-img snapshot -c propre debian.qcow2 ; avec libvirt : virsh snapshot-create-as. #_non-execute],
+  note: [Usage type : un instantané avant une mise à jour ou une manipulation risquée. Sur une VM en marche, l’instantané fige le disque, pas le cache de l’invité : incus exec v1 -- sync le vide avant (constaté en CI le 25 novembre 2026 : sans sync, une configuration écrite cinq secondes plus tôt manquait après la restauration). Sans nom, incus snapshot create numérote : snap0, snap1… Autres sous-commandes : rename, show. --stateful (create et restore) enregistre aussi l’état d’exécution d’une VM, à trois conditions (driver\_qemu.go) : la VM tourne ; sa clé migration.stateful vaut true, posée VM arrêtée (la clé ne change pas à chaud) ; le size.state de son disque root est au moins égal à limits.memory. Par défaut, size.state vaut 500 Mio et la mémoire 1 Gio : sans réglage, Incus refuse (« Stateful snapshot requires migration.stateful to be set to true », puis « Stateful stop and snapshots require that the instance limits.memory is less than size.state on the root disk device »). Pour un conteneur, la documentation dit --stateful incomplet (limites de CRIU). Coût d’un instantané : avec le pilote dir du pool default, une copie complète du disque ; avec ZFS ou Btrfs, seulement les blocs modifiés ensuite. Rappel du cours Conteneurisation (« Où faire tourner Docker : hôte ou VM ? ») : restaurer ramène tout le disque en arrière, données comprises. Avec QEMU seul : arrêter la VM, puis qemu-img snapshot -c propre debian.qcow2 ; avec libvirt : virsh snapshot-create-as. #_non-execute],
 )
 
 == Limites : à chaud, ou au redémarrage <incus-limites>
