@@ -6,8 +6,7 @@
    Deux couleurs portent le sens, toujours doublées d’un mot : ce qui vient d’un profil (--profil : « ← » et son nom)
    et ce qui vient de l’instance (--instance, la couleur de l’invité dans les schémas : « ← instance »). */
 #artefact { --profil: var(--c-bleu); --profil-t: var(--c-prompt); --instance: var(--c-invite); --instance-t: var(--c-invite-t);
-  --perte: var(--precaution-entete);
-  display: grid; grid-template-columns: minmax(0, 1.38fr) minmax(0, .87fr) minmax(0, 1.05fr); gap: .5rem .6rem;
+  display: grid; grid-template-columns: minmax(0, 1.365fr) minmax(0, .905fr) minmax(0, 1.005fr); gap: .5rem .6rem;
   grid-template-areas: "profils instance terminal" "bilan bilan terminal"; }
 #artefact section { min-width: 0; }
 #artefact .zone-profils { grid-area: profils; }
@@ -33,7 +32,7 @@
 .mention { margin: .25rem 0 0; color: var(--c-gris); font-size: .7rem; line-height: 1.3; }
 .vide { color: var(--c-gris); font-size: .72rem; }
 /* Ce qu’une manipulation vient de changer clignote brièvement. */
-@keyframes signal { from { box-shadow: 0 0 0 .22rem var(--perte); } to { box-shadow: 0 0 0 .22rem transparent; } }
+@keyframes signal { from { box-shadow: 0 0 0 .22rem var(--precaution-entete); } to { box-shadow: 0 0 0 .22rem transparent; } }
 @keyframes signal-ligne { from { background: var(--c-ardoise); } to { background: transparent; } }
 #artefact textarea.signale { animation: signal 1.6s ease-out; border-color: var(--precaution-accent); }
 
@@ -107,7 +106,7 @@
 .yaml-lignes .glose { padding-left: 1.5rem; color: var(--c-commentaire); font-family: "IBM Plex Sans", system-ui, sans-serif; font-size: .66rem; }
 .yaml-lignes .hors { color: var(--c-commentaire); white-space: pre-wrap; }
 .yaml-lignes .perdue code { color: var(--c-commentaire); text-decoration: line-through; }
-.yaml-lignes .perdue .origine { color: var(--perte); }
+.yaml-lignes .perdue .origine { color: var(--c-texte-term); }
 .yaml-lignes .signale { animation: signal-ligne 1.6s ease-out; }
 
 /* Sous les profils et l’instance : l’explication de la dernière manipulation, calculée d’après son résultat. */

@@ -143,16 +143,17 @@
   function limites(e) {
     const sortie = new Set(), sans = [], plusieurs = [];
     for (const nom of Object.keys(e.instances)) {
-      const ext = etendre(e, nom);
-      for (const [n, d] of ext.devices) {
-        const p = perdues(d), autres = Object.keys(d.cles).filter(k => k !== "type");
-        if (d.cles.type === "none" && autres.length) sortie.add(`Limitation du simulateur : il ne valide pas les clés d’un périphérique. Le type none n’en accepte aucune ; ${n}, ${du(d.source)}, porte ${enumerer(autres)}.`);
-        else if (d.cles.type !== "none" && p.length) sortie.add(`Limitation du simulateur : il ne sait pas si ${n}, ${du(d.source)}, reste valide sans ${enumerer(p.map(([k]) => k))} ; Incus refuse un périphérique incomplet.`);
-      }
-      const racines = [...ext.devices.values()].filter(d => estRacine(d.cles)).length;
+      const ext = etendre(e, nom), racines = [...ext.devices.values()].filter(d => estRacine(d.cles)).length;
       if (racines !== 1) (racines ? plusieurs : sans).push(nom);
+      for (const [n, d] of ext.devices) {
+        const p = perdues(d).map(([k]) => k), autres = Object.keys(d.cles).filter(k => k !== "type");
+        if (d.cles.type === "none" && autres.length) sortie.add(`Limitation du simulateur : il ne valide pas les clés d’un périphérique. Le type none n’en accepte aucune ; ${n}, ${du(d.source)}, porte ${enumerer(autres)}.`);
+        // Un disque qui a perdu path n’est plus le disque racine : la limitation suivante le dit, plus précisément.
+        else if (d.cles.type !== "none" && p.length && !(racines === 0 && d.cles.type === "disk" && p.includes("path")))
+          sortie.add(`Limitation du simulateur : il ne sait pas si ${n}, ${du(d.source)}, reste valide sans ${enumerer(p)} ; Incus refuse un périphérique incomplet.`);
+      }
     }
-    const suite = "(disk, path=/) : Incus signalerait une erreur.";
+    const suite = "(périphérique disk dont path vaut /) ; Incus signalerait une erreur, le simulateur montre quand même ce que donne la règle.";
     if (sans.length) sortie.add(`Limitation du simulateur : ${enumerer(sans)} ${sans.length > 1 ? "n’ont" : "n’a"} plus de disque racine ${suite}`);
     if (plusieurs.length) sortie.add(`Limitation du simulateur : ${enumerer(plusieurs)} ${plusieurs.length > 1 ? "ont" : "a"} plusieurs disques racine ${suite}`);
     return [...sortie];

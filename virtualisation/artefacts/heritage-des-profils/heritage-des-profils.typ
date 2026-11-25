@@ -40,7 +40,7 @@
         `size=20GiB` ?],
       [Non. Les périphériques ne fusionnent pas clé par clé : à nom égal, le dernier remplace l’autre en entier,
         entre profils comme entre l’instance et ses profils.
-        #diapo(pdf, "incus-profils")[Héritage des profils : deux régimes]], "peripherique-entier"),
+        #diapo(pdf, "incus-profils")[Héritage des profils]], "peripherique-entier"),
     ([À quoi sert `incus config device override` ?],
       [À modifier un périphérique hérité sans rien perdre : la commande le copie en entier dans l’instance, puis y
         pose les clés données. En une fois : `incus config device override v2 root size=30GiB`. Le revers : la
