@@ -5,3 +5,7 @@
 /*/tp/*/index.html
 /*/artefacts/*/index.html
 /index.html
+# Terminal des pages web : page compilée, et dépendances tierces et image de VM téléchargées ou construites
+# par commun/terminal/preparer.sh (publiées par la CI).
+/commun/terminal/index.html
+/commun/terminal/vendor/

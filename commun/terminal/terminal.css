@@ -1,0 +1,66 @@
+/* terminal.css — le terminal des pages web (commun/terminal/), ajouté par theme-tp.typ aux pages qui le
+   déclarent. N’emploie que les variables CSS de la charte : il suit la variante choisie.
+   Le volet s’ouvre en bas de la fenêtre ; la page lui réserve sa hauteur, rien de l’énoncé n’est masqué. */
+:root { --terminal-hauteur: clamp(13rem, 40vh, 26rem); }
+
+/* Bouton « Terminal » du bandeau */
+.terminal-lanceur { display: inline-flex; align-items: center; gap: .4rem; padding: .15rem .7rem; border: 1px solid var(--c-prompt);
+  border-radius: .3rem; background: transparent; color: var(--c-fond); font: inherit; font-weight: 600; cursor: pointer; }
+.terminal-lanceur::before { content: ">_"; font-family: "IBM Plex Mono", ui-monospace, monospace; color: var(--c-prompt); }
+.terminal-lanceur:hover, .terminal-lanceur[aria-expanded="true"] { background: var(--c-encart); }
+.terminal-lanceur[data-session="ouverte"]::after { content: "●"; color: var(--c-prompt); font-size: .7em; }
+
+/* Bouton « Exécuter » d’une commande (posé par tp.js) */
+.terminal .executer { margin-left: .8em; padding: 0 .45em; border: 1px solid var(--c-prompt); border-radius: .25rem;
+  background: transparent; color: var(--c-prompt); font: inherit; font-size: .78em; line-height: 1.5; vertical-align: .05em;
+  cursor: pointer; user-select: none; }
+.terminal .executer::before { content: "▶ "; font-size: .85em; }
+.terminal .executer:hover { background: var(--c-prompt); color: var(--c-nuit); }
+.terminal .executer[aria-disabled="true"] { border-color: var(--c-commentaire); color: var(--c-commentaire); background: transparent; }
+.terminal .executer[data-etat="envoyee"] { background: var(--c-prompt); color: var(--c-nuit); }
+
+/* Volet */
+body.terminal-ouvert { padding-bottom: var(--terminal-hauteur); }
+@media (min-width: 72rem) {
+  .avec-sommaire.terminal-ouvert nav[role="doc-toc"] { max-height: calc(100vh - 5.5rem - var(--terminal-hauteur)); }
+}
+.terminal-volet { position: fixed; z-index: 4; left: 0; right: 0; bottom: 0; height: var(--terminal-hauteur);
+  display: flex; flex-direction: column; background: var(--c-nuit); color: var(--c-texte-term);
+  border-top: 3px solid var(--c-prompt); box-shadow: 0 -4px 18px rgb(15 30 51 / .25); font-size: .85rem; }
+.terminal-volet[hidden] { display: none; }
+.terminal-entete { flex: none; display: flex; flex-wrap: wrap; align-items: center; gap: .3rem .9rem; padding: .3rem 1rem;
+  background: var(--c-encart); }
+.terminal-entete strong { color: var(--c-fond); }
+.terminal-modes { display: flex; gap: .3rem; }
+.terminal-volet button { padding: .1rem .6rem; border: 1px solid var(--c-commentaire); border-radius: .3rem; background: transparent;
+  color: var(--c-texte-term); font: inherit; cursor: pointer; }
+.terminal-volet button:hover:not(:disabled) { border-color: var(--c-prompt); }
+.terminal-volet button:disabled { opacity: .5; cursor: default; }
+.terminal-modes button[aria-pressed="true"] { border-color: var(--c-prompt); color: var(--c-fond); background: var(--c-nuit); font-weight: 600; }
+.terminal-etat { flex: 1; min-width: 10rem; color: var(--c-texte-term); }
+.terminal-etat progress { width: 8rem; margin-right: .5rem; vertical-align: middle; accent-color: var(--c-prompt); }
+.terminal-actions { display: flex; gap: .4rem; }
+.terminal-volet button.principal { border-color: var(--c-prompt); background: var(--c-prompt); color: var(--c-nuit); font-weight: 600; }
+
+.terminal-corps { flex: 1; min-height: 0; position: relative; }
+.terminal-ecran { position: absolute; inset: .35rem .2rem .2rem .8rem; }
+.terminal-ecran[hidden], .terminal-accueil[hidden] { display: none; }
+.terminal-accueil { height: 100%; overflow-y: auto; padding: .7rem 1rem; line-height: 1.5; }
+.terminal-accueil > :first-child { margin-top: 0; }
+.terminal-accueil p { margin: .4rem 0; max-width: 60rem; }
+.terminal-accueil a { color: var(--c-prompt); }
+.terminal-accueil code { background: var(--c-encart); color: var(--c-texte-term); }
+.terminal-accueil .note { margin: .4rem 0; max-width: 60rem; color: var(--c-encre); }
+.terminal-accueil .note a { color: var(--c-bleu); }
+.terminal-accueil .note code { background: transparent; color: inherit; }
+.terminal-appairage { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; margin: .5rem 0; }
+.terminal-appairage input { flex: 1 1 22rem; min-width: 0; max-width: 40rem; padding: .25rem .5rem; border: 1px solid var(--c-commentaire);
+  border-radius: .3rem; background: var(--c-nuit); color: var(--c-texte-term); font: inherit; font-family: "IBM Plex Mono", ui-monospace, monospace; }
+
+/* Terminal xterm.js : fond et couleurs viennent de la charte (terminal.js), la barre de défilement aussi. */
+.terminal-ecran .xterm { height: 100%; }
+.terminal-ecran .xterm-viewport { scrollbar-color: var(--c-commentaire) var(--c-nuit); }
+
+[data-variante="dyslexie"] .terminal-volet { letter-spacing: .03em; }
+
+@media print { .terminal-volet, .terminal-lanceur, .terminal .executer { display: none; } body.terminal-ouvert { padding-bottom: 0; } }

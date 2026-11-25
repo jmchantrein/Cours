@@ -17,16 +17,27 @@
     try { localStorage.setItem("variante", choix.value); } catch { /* stockage indisponible : choix non mémorisé */ }
   });
 
-  // Terminaux : l’invite `$ ` et les commentaires `# ` sont mis en évidence.
+  // Terminaux : l’invite `$ ` et les commentaires `# ` sont mis en évidence. Sur une page qui déclare un
+  // terminal (page-web(terminal: …)), chaque commande reçoit un bouton « Exécuter », que terminal.js relie.
+  const executable = Boolean(document.body.dataset.terminal);
   for (const code of document.querySelectorAll(".terminal pre code")) {
     const lignes = code.textContent.split("\n");
-    code.dataset.commandes = commandes(lignes);
+    const cmds = commandes(lignes);
+    code.dataset.commandes = cmds.map(c => c.texte).join("\n");
+    const finDe = new Map(cmds.map(c => [c.fin, c.texte]));
     code.replaceChildren(...lignes.flatMap((ligne, i) => {
       const fin = i < lignes.length - 1 ? "\n" : "";
-      if (ligne.startsWith("$ ")) return [span("invite", "$ "), ligne.slice(2) + fin];
+      const apres = executable && finDe.has(i) ? [executer(finDe.get(i)), fin] : [fin];
+      if (ligne.startsWith("$ ")) return [span("invite", "$ "), ligne.slice(2), ...apres];
       if (ligne.startsWith("# ")) return [span("commentaire", ligne + fin)];
-      return [ligne + fin];
+      return [ligne, ...apres];
     }));
+  }
+  function executer(commande) {
+    const b = document.createElement("button");
+    b.type = "button"; b.className = "executer"; b.textContent = "Exécuter";
+    b.dataset.commande = commande; b.setAttribute("aria-disabled", "true");
+    return b;
   }
   function span(classe, texte) {
     const s = document.createElement("span");
@@ -34,16 +45,17 @@
     return s;
   }
   // Les commandes d’un terminal : les lignes `$ …`, et leurs suites quand elles finissent par `\`.
+  // Chaque commande donne son texte et le rang de sa dernière ligne.
   function commandes(lignes) {
     const sortie = [];
     let suite = false;
-    for (const ligne of lignes) {
-      if (ligne.startsWith("$ ")) sortie.push(ligne.slice(2));
-      else if (suite) sortie.push(ligne);
-      else continue;
+    lignes.forEach((ligne, i) => {
+      if (ligne.startsWith("$ ")) sortie.push({ texte: ligne.slice(2), fin: i });
+      else if (suite) Object.assign(sortie.at(-1), { texte: sortie.at(-1).texte + "\n" + ligne, fin: i });
+      else return;
       suite = ligne.endsWith("\\");
-    }
-    return sortie.join("\n");
+    });
+    return sortie;
   }
 
   // Bouton « Copier » : les commandes d’un terminal, ou le fichier entier.

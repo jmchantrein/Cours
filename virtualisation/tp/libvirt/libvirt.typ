@@ -19,6 +19,7 @@
   auteur: [Jean-Mathieu Chantrein],
   date: [novembre 2026],
   illustration-couverture: "vm",
+  terminal: ("compagnon",),
   liens: (
     ([Diapos du cours], pdf),
     ([Corrigés], "https://github.com/jmchantrein/Cours/tree/main/virtualisation/tp/libvirt/corrige"),

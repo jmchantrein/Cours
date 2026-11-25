@@ -73,9 +73,15 @@
 // illustration-couverture : "vm" ou "couches", l’illustration de couverture du cours.
 // sommaire : affiche le sommaire des titres `=` (en colonne à gauche sur un écran large).
 // atelier : page d’artefact, compacte, qui tient sur un écran de portable sans défilement.
+// terminal : les modes du terminal de la page (commun/terminal/), par ordre de préférence : "vm" (VM Linux dans
+// le navigateur), "compagnon" (le vrai shell de l’étudiant). Par exemple ("compagnon",) pour un TP Docker,
+// ("vm", "compagnon") pour un TP shell. none : pas de terminal, la page reste telle quelle.
 #let depot = "https://github.com/jmchantrein/Cours"
 #let page-web(titre: none, surtitre: none, sous-titre: none, auteur: none, date: none, racine: "../../../",
-  liens: (), sommaire: true, illustration-couverture: none, atelier: false, corps) = {
+  liens: (), sommaire: true, illustration-couverture: none, atelier: false, terminal: none, corps) = {
+  let modes = if terminal == none { () } else if type(terminal) == str { (terminal,) } else { terminal }
+  assert(modes.len() > 0 or terminal == none, message: "terminal : au moins un mode, ou none")
+  assert(modes.all(m => m in ("vm", "compagnon")), message: "terminal : les modes sont \"vm\" et \"compagnon\"")
   let police(fichier, graisse, style) = (
     "@font-face{font-family:'IBM Plex " + (if "Mono" in fichier { "Mono" } else { "Sans" }) + "';src:url('"
     + racine + "commun/fonts/" + fichier + ".ttf');font-weight:" + graisse + ";font-style:" + style + ";font-display:swap}"
@@ -91,9 +97,10 @@
       #_el("meta", none, charset: "utf-8")
       #_el("meta", none, name: "viewport", content: "width=device-width, initial-scale=1")
       #_el("title", titre)
-      #_el("style", polices + _css-charte + read("tp.css"))
+      #_el("style", polices + _css-charte + read("tp.css") + if modes != () { read("terminal/terminal.css") })
     ]
-    #_el("body", class: if atelier { "atelier" } else if sommaire { "avec-sommaire" } else { "simple" })[
+    #_el("body", class: if atelier { "atelier" } else if sommaire { "avec-sommaire" } else { "simple" },
+      data: if modes != () { (terminal: modes.join(" "), racine: racine) } else { (:) })[
       #_el("header", class: "bandeau")[
         #_el("a", class: "accueil", href: racine + "index.html")[Cours]
         #_el("nav", liens.map(((t, a)) => _el("a", href: a, t)).join())
@@ -130,6 +137,7 @@
         #_el("p")[Contenus sous licence #_el("a", href: "https://creativecommons.org/licenses/by-nc-sa/4.0/deed.fr")[CC BY-NC-SA 4.0].]
       ]
       #_el("script", read("tp.js"))
+      #if modes != () { _el("script", read("terminal/terminal.js")) }
     ]
   ]
 }
