@@ -14,7 +14,8 @@ incus config device override vm1 eth0 ipv4.address="$adresse"
 hote="$(ip -4 route get 1.1.1.1 | sed -n 's/.* src \([0-9.]*\).*/\1/p')"
 
 # Le port 8080 est pris par le conteneur : la VM reçoit le 8081.
-incus config device add vm1 web proxy nat=true listen="tcp:$hote:8081" connect="tcp:$adresse:80"
+incus config device add vm1 web proxy nat=true \
+  listen="tcp:$hote:8081" connect="tcp:$adresse:80"
 incus config device show vm1
 
 echo "Site : http://$hote:8081/"

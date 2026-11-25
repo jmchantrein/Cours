@@ -21,17 +21,48 @@ concurrency:
 
 jobs:
   corriges:
-    runs-on: ubuntu-latest
-    timeout-minutes: 45
+    # Runner épinglé : la version d'Ubuntu décide des paquets (Docker, Incus) et
+    # ne doit pas changer sans qu'on le voie. Ubuntu 26.04 fournit Incus.
+    runs-on: ubuntu-26.04
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@v4
 
-      # ubuntu-latest fournit Docker, Compose v2, curl et shellcheck.
+      # Le runner fournit Docker, Compose v2, curl et shellcheck. Les faits
+      # utiles au diagnostic d'abord : système, KVM, place disponible.
       - name: Versions
         run: |
+          . /etc/os-release && echo "$PRETTY_NAME, noyau $(uname -r), $(nproc) processeurs"
+          ls -l /dev/kvm || echo "::warning::/dev/kvm absent : le TP Incus ne pourra pas lancer de VM"
+          df -h / | tail -n 1
           docker version --format 'Docker {{.Server.Version}}'
           docker compose version
           docker buildx version
+
+      # Le TP Incus (virtualisation/tp/incus) a besoin d'un Incus initialisé, comme
+      # dans son énoncé : paquet de la distribution, « incus admin init --minimal »,
+      # compte dans le groupe incus-admin.
+      - name: Incus
+        run: |
+          sudo apt-get update
+          apt-cache policy incus | head -n 3
+          sudo apt-get install -y incus qemu-system-x86 ovmf
+          incus --version
+          # Le démon relit ses pilotes (qemu) à son démarrage.
+          sudo systemctl restart incus
+          sudo incus admin init --minimal
+          sudo usermod -aG incus-admin "$USER"
+          sudo incus info | grep -E '^ +(driver|driver_version|server_version|storage|firewall):'
+          # Docker, présent sur le runner, fait rejeter le trafic des autres ponts
+          # (voir l'énoncé, « Avant de commencer »). tptestbr0 est le pont du harnais.
+          if sudo iptables -S DOCKER-USER > /dev/null 2>&1; then
+            sudo iptables -I DOCKER-USER -i tptestbr0 -j ACCEPT
+            sudo iptables -I DOCKER-USER -o tptestbr0 -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+            sudo iptables -S DOCKER-USER
+          else
+            echo "::warning::chaîne DOCKER-USER absente : si les instances n'ont pas de réseau, voir iptables -S FORWARD ci-dessous"
+          fi
+          sudo iptables -S FORWARD || true
 
       - name: Un harnais par TP corrigé
         run: |
@@ -46,13 +77,15 @@ jobs:
           done
           exit "$manquants"
 
+      # « sudo --user » ouvre une session neuve du même compte : elle a le groupe
+      # incus-admin, que le shell de cette étape n'a pas encore.
       - name: Harnais (--up)
         run: |
           echecs=0
           for harnais in */tp/*/tester.sh; do
             [ -f "$harnais" ] || continue
             echo "::group::$harnais --up"
-            if bash "$harnais" --up; then
+            if sudo --user "$USER" bash "$harnais" --up; then
               resultat="réussi"
             else
               resultat="en échec"; echecs=1

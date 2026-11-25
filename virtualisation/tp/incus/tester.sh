@@ -469,13 +469,13 @@ if voulue 3; then
   else
     # Instantané, casse, restauration.
     if jouer 3_instantanes_limites/instantane.sh 600; then
-      if incus snapshot list vm1 -f csv 2> /dev/null | grep -q '^site-installe,'; then
-        ok "étape 3 : l'instantané site-installe existe"
+      if incus snapshot list vm1 -f csv 2> /dev/null | grep -q '^propre,'; then
+        ok "étape 3 : l'instantané propre existe"
       else
-        ko "étape 3 : l'instantané site-installe n'apparaît pas dans incus snapshot list"
+        ko "étape 3 : l'instantané propre n'apparaît pas dans incus snapshot list"
       fi
       # La casse de l'énoncé : le code de WordPress disparaît.
-      dans vm1 rm -rf /usr/share/wordpress || true
+      dans vm1 rm -r /usr/share/wordpress || true
       if wp_titre_absent "$site_vm1" "$titre_vm1"; then
         ok "étape 3 : site cassé (code HTTP $(curl -s -o /dev/null -m 10 -w '%{http_code}' "$site_vm1/" || true))"
       else
@@ -505,18 +505,11 @@ if voulue 3; then
       ko "étape 3 : refus inattendu de limits.memory à chaud"
       retrait <<< "$sortie"
     fi
-    # Les processeurs, eux, se branchent à chaud ; leur mise en ligne dépend de
-    # l'invité. Relevé pour l'énoncé, sans vérification.
-    if sortie="$(incus config set vm1 limits.cpu=2 2>&1)"; then
-      sleep 5
-      info "limits.cpu=2 à chaud : accepté ; dans la VM, nproc = $(dans vm1 nproc 2>&1 || true)"
-      dans vm1 sh -c 'lscpu | grep -i -e "^CPU(s)" -e "line"' 2>&1 | retrait || true
-    else
-      info "limits.cpu=2 à chaud : refusé"
-      retrait <<< "$sortie"
-    fi
 
+    # Le script ajoute un processeur à chaud, puis arrête la VM pour la mémoire.
     if jouer 3_instantanes_limites/limites.sh 900; then
+      # Relevé pour l'énoncé : le processeur ajouté à chaud est-il en ligne (lscpu) ?
+      sed -n '/lscpu --extended/,/incus stop vm1/p' "$travail/3_instantanes_limites_limites.sh.log" | retrait || true
       processeurs="$(dans vm1 nproc 2>&1 || true)"
       if [ "$processeurs" = "2" ]; then ok "étape 3 : après redémarrage, la VM a 2 processeurs"
       else ko "étape 3 : la VM a « $processeurs » processeur(s), 2 attendus"; fi
