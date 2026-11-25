@@ -68,6 +68,7 @@ jobs:
           docker version --format 'Docker {{.Server.Version}}'
           docker compose version
           docker buildx version
+          shellcheck --version | sed -n 's/^version: /ShellCheck /p'
 
       - name: Paquets apt du harnais
         env:

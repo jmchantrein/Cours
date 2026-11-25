@@ -238,7 +238,8 @@ else ko "pair-a : wg0 n'a pas 10.9.9.1/24"; fi
 if sur pair-a 'ip route show dev wg0' | grep -q '^10\.9\.9\.0/24'; then ok "pair-a : route 10.9.9.0/24 par wg0"
 else ko "pair-a : pas de route 10.9.9.0/24 par wg0"; fi
 
-compose exec -T -d pair-b bash -c 'tcpdump -lni eth0 -c 8 > /tmp/capture.txt 2> /dev/null'
+# « ip » : seulement l'IPv4, sans l'ARP ni le multicast IPv6 qui suivent le démarrage des conteneurs.
+compose exec -T -d pair-b bash -c 'tcpdump -lni eth0 -c 8 ip > /tmp/capture.txt 2> /dev/null'
 sleep 2
 if sur pair-a 'ping -c 3 -W 2 10.9.9.2' > "$travail/ping.log" 2>&1 && grep -q ' 0% packet loss' "$travail/ping.log"; then
   ok "ping de 10.9.9.1 à 10.9.9.2 dans le tunnel : 3 réponses"
@@ -267,11 +268,20 @@ recu() { sur "$1" "wg show wg0 transfer" | awk -v k="$2" '$1 == k { print $2 }';
 envoye() { sur "$1" "wg show wg0 transfer" | awk -v k="$2" '$1 == k { print $3 }'; }
 sur pair-b "wg set wg0 peer ${PUBLIC[a]} allowed-ips 10.9.9.100/32"
 r0="$(recu pair-b "${PUBLIC[a]}")"; e0="$(envoye pair-b "${PUBLIC[a]}")"
+compose exec -T -d pair-b bash -c "timeout 10 tcpdump -lni eth0 -c 2 udp and src host $reseau.2 > /tmp/entrant.txt 2> /dev/null"
+sleep 1
 if sur pair-a 'ping -c 2 -W 1 10.9.9.2' > /dev/null 2>&1; then ko "entrant : pair-b répond à une source hors des AllowedIPs de pair-a"
 else ok "entrant : pair-b refuse la source 10.9.9.1, le ping échoue"; fi
+sleep 1
+sur pair-b 'pkill tcpdump' > /dev/null 2>&1 || true
+arrives="$(sur pair-b 'grep -c "\.51820 > " /tmp/entrant.txt' || true)"
 r1="$(recu pair-b "${PUBLIC[a]}")"; e1="$(envoye pair-b "${PUBLIC[a]}")"
 if [ "$r1" -gt "$r0" ] && [ "$e1" = "$e0" ]; then ok "entrant : wg show transfer, reçu $r0 → $r1 octets, envoyé inchangé ($e1) : paquets jetés"
-else ko "entrant : compteurs reçu $r0 → $r1, envoyé $e0 → $e1"; fi
+# Le module du noyau ne compte peut-être pas les paquets qu'il jette (le journal de la CI a montré reçu inchangé) :
+# la preuve devient alors l'arrivée des paquets chiffrés sur eth0 de pair-b, sans un octet envoyé en retour.
+elif [ -n "$module" ] && [ "${arrives:-0}" -gt 0 ] && [ "$e1" = "$e0" ]; then
+  ok "entrant : $arrives paquets UDP de pair-a arrivés sur pair-b, aucun octet envoyé en retour ($e1) : paquets jetés (compteur reçu $r0 → $r1 avec le module noyau)"
+else ko "entrant : compteurs reçu $r0 → $r1, envoyé $e0 → $e1, paquets UDP arrivés : ${arrives:-0}"; fi
 sur pair-b "wg set wg0 peer ${PUBLIC[a]} allowed-ips 10.9.9.1/32"
 if sur pair-a 'ping -c 1 -W 2 10.9.9.2' > /dev/null 2>&1; then ok "AllowedIPs rétablies : le ping repasse"
 else ko "AllowedIPs rétablies : le ping ne repasse pas"; fi

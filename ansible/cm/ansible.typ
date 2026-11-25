@@ -3,8 +3,8 @@
 //   typst compile --root . --font-path commun/fonts ansible/cm/ansible.typ build/ansible/ansible.pdf
 // Une diapo = un titre `==` ; une section (surtitre bleu) = un titre `=`.
 // Structure : règles de .claude/skills/structurer-diapos-cours ; apparence : charte de commun/.
-// Sorties rejouées avec ansible-core 2.19.4 et ansible-lint 26.11.0 (pip, Python 3.12), sur un labo
-// de trois conteneurs (un nœud de contrôle, deux nœuds gérés Ubuntu 24.04) : voir ansible/cm/rejouer.sh.
+// Sorties rejouées avec ansible-core 2.19.4 et ansible-lint 26.11.0 (pip, Python 3.13), sur un labo
+// de trois conteneurs (un nœud de contrôle, deux nœuds gérés Debian 13) : voir ansible/cm/rejouer.sh.
 
 #import "../../commun/theme-cours.typ": *
 
@@ -30,7 +30,7 @@
 )
 
 #couverture(illustration: "noeuds")[Ansible][Automatiser les configurations][Jean-Mathieu Chantrein][25 novembre 2026]
-#speaker-note[Cours compagnon des cours Virtualisation et Conteneurisation : ils fournissent les machines ; celui-ci les configure. Versions employées pour toutes les sorties : ansible-core 2.19.4 et ansible-lint 26.11.0 (installés par pip, Python 3.12), nœuds gérés Ubuntu 24.04 dans des conteneurs Docker. Le labo du TP repose sur Debian : les sorties qui dépendent de la distribution sont signalées « à rejouer ». Script de rejeu : ansible/cm/rejouer.sh.]
+#speaker-note[Cours compagnon des cours Virtualisation et Conteneurisation : ils fournissent les machines ; celui-ci les configure. Versions employées pour toutes les sorties : ansible-core 2.19.4 et ansible-lint 26.11.0 (installés par pip, Python 3.13), nœuds gérés Debian 13 (trixie, 13.8) dans des conteneurs Docker, comme au TP. Script de rejeu : ansible/cm/rejouer.sh.]
 
 // ======================================================================
 = Sommaire
@@ -133,7 +133,7 @@
       # 2. le module, copié par sftp
       <managed-node-1> PUT …/tmp4ls7woby TO /root/.ansible/tmp/ansible-tmp-…/AnsiballZ_ping.py
       # 3. exécuté par le Python du nœud
-      <managed-node-1> SSH: EXEC ssh -C -tt managed-node-1 '… /usr/bin/python3.12 …/AnsiballZ_ping.py …'
+      <managed-node-1> SSH: EXEC ssh -C -tt managed-node-1 '… /usr/bin/python3.13 …/AnsiballZ_ping.py …'
       # 4. puis effacé
       <managed-node-1> SSH: EXEC ssh -C managed-node-1 '… rm -f -r /root/.ansible/tmp/ansible-tmp-…/ …'
       ```
@@ -147,7 +147,7 @@
 )
 
 == Le labo du cours : trois conteneurs <labo>
-#let _note = [Le même labo que le TP : un conteneur control-node, deux conteneurs managed-node-1 et managed-node-2, sur un réseau Docker dont le DNS résout les noms des services. Ici les images sont Ubuntu 24.04 (le TP emploie Debian) ; ansible-core 2.19.4 est installé par pip dans un environnement virtuel. Câblage SSH, fait par le script du labo : paire de clés ed25519 sur le nœud de contrôle, clé publique dans /root/.ssh/authorized\_keys de chaque nœud, empreintes des nœuds dans known\_hosts (en vrai : les vérifier). interpreter\_python \= auto\_silent : sans cette ligne, chaque commande avertit qu’Ansible a découvert l’interpréteur /usr/bin/python3.12. Ordre de recherche de la configuration : variable ANSIBLE\_CONFIG, ./ansible.cfg, \~/.ansible.cfg, /etc/ansible/ansible.cfg ; le premier trouvé l’emporte, les autres sont ignorés.]
+#let _note = [Le même labo que le TP : un conteneur control-node, deux conteneurs managed-node-1 et managed-node-2, sur un réseau Docker dont le DNS résout les noms des services. Les images sont Debian 13 ; ansible-core 2.19.4 est installé par pip dans un environnement virtuel (Python 3.13). Câblage SSH, fait par le script du labo : paire de clés ed25519 sur le nœud de contrôle, clé publique dans /root/.ssh/authorized\_keys de chaque nœud, empreintes des nœuds dans known\_hosts (en vrai : les vérifier). interpreter\_python \= auto\_silent : sans cette ligne, chaque commande avertit qu’Ansible a découvert l’interpréteur /usr/bin/python3.13. Ordre de recherche de la configuration : variable ANSIBLE\_CONFIG, ./ansible.cfg, \~/.ansible.cfg, /etc/ansible/ansible.cfg ; le premier trouvé l’emporte, les autres sont ignorés.]
 #anime(
   rang(
     bloc(role: "pratique", poids: 1.1)[`/etc/ansible/ansible.cfg`][
@@ -308,7 +308,7 @@
 = Agir
 
 == Commandes ad hoc : un module, une fois <ad-hoc>
-#let _note = [Une commande ad hoc lance un seul module sur les hôtes d’un motif, sans playbook : ansible « motif » -m « module » -a « arguments ». Sortie 1 : SUCCESS, la réponse JSON du module ; "changed": false, ping ne modifie rien ; ansible\_facts.discovered\_interpreter\_python : le Python trouvé sur le nœud (managed-node-2 répond de même). Sortie 2 : setup collecte les facts, la « carte d’identité » du nœud ; sans filtre, 799 lignes ici. Les facts sont aussi collectés au début de chaque play (tâche « Gathering Facts »), et deviennent des variables ansible\_\*. Nœuds Ubuntu 24.04 dans le labo du cours : sur le labo Debian du TP, ansible\_distribution vaut "Debian" (à rejouer). ansible-core contient 71 modules ansible.builtin (ansible-doc -l) ; le paquet « ansible » ajoute des collections, avec des milliers de modules. ansible-doc ansible.builtin.apt affiche la documentation d’un module.]
+#let _note = [Une commande ad hoc lance un seul module sur les hôtes d’un motif, sans playbook : ansible « motif » -m « module » -a « arguments ». Sortie 1 : SUCCESS, la réponse JSON du module ; "changed": false, ping ne modifie rien ; ansible\_facts.discovered\_interpreter\_python : le Python trouvé sur le nœud (managed-node-2 répond de même). Sortie 2 : setup collecte les facts, la « carte d’identité » du nœud ; sans filtre, 800 lignes ici. Les facts sont aussi collectés au début de chaque play (tâche « Gathering Facts »), et deviennent des variables ansible\_\*. Nœuds Debian 13 : ansible\_distribution vaut "Debian", ansible\_distribution\_release "trixie", ansible\_distribution\_version "13.8". ansible-core contient 71 modules ansible.builtin (ansible-doc -l) ; le paquet « ansible » ajoute des collections, avec des milliers de modules. ansible-doc ansible.builtin.apt affiche la documentation d’un module.]
 #anime(
   rang(
     bloc(role: "pratique")[Terminal · le nœud répond-il ?][
@@ -317,7 +317,7 @@
         $ ansible all -m ansible.builtin.ping
         managed-node-1 | SUCCESS => {
             "ansible_facts": {
-                "discovered_interpreter_python": "/usr/bin/python3.12"
+                "discovered_interpreter_python": "/usr/bin/python3.13"
             },
             "changed": false,
             "ping": "pong"
@@ -333,10 +333,10 @@
             -a "filter=ansible_distribution*"
         managed-node-1 | SUCCESS => {
             "ansible_facts": {
-                "ansible_distribution": "Ubuntu",
+                "ansible_distribution": "Debian",
         # … (fichier lu, famille)
-                "ansible_distribution_release": "noble",
-                "ansible_distribution_version": "24.04",
+                "ansible_distribution_release": "trixie",
+                "ansible_distribution_version": "13.8",
         # …
             "changed": false
         }
@@ -934,7 +934,7 @@
 )
 
 == Rôles : ranger un service, le réutiliser <roles>
-#let _note = [Arborescence du rôle du TP (tree 2.1.1, installé sur le nœud de contrôle). Chaque répertoire a son main.yml, lu automatiquement : defaults/ (variables par défaut, niveau de précédence le plus faible : faites pour être surchargées), vars/ (variables du rôle, niveau 15 : à ne pas surcharger), tasks/, handlers/, templates/ et files/ (cherchés là par template et copy, sans chemin), meta/ (auteur, licence, plateformes, dépendances). Préfixer les variables d’un rôle par son nom (nginx\_hello\_world\_port) évite les collisions entre rôles. import\_role est statique (lu à l’analyse du playbook) ; include\_role est dynamique (évalué à l’exécution, peut dépendre d’une condition). On peut aussi écrire roles: au niveau du play. ansible-galaxy role init crée l’arborescence complète, avec en plus vars/, tests/ et un README.md. Ansible Galaxy (galaxy.ansible.com) partage des rôles et des collections ; une collection regroupe rôles, modules et plugins, versionnés ensemble ; un requirements.yml les liste pour ansible-galaxy install -r. Lire le code d’un rôle éprouvé (geerlingguy.docker, au TP) avant d’écrire le sien.]
+#let _note = [Arborescence du rôle du TP (tree 2.2.1, installé sur le nœud de contrôle). Chaque répertoire a son main.yml, lu automatiquement : defaults/ (variables par défaut, niveau de précédence le plus faible : faites pour être surchargées), vars/ (variables du rôle, niveau 15 : à ne pas surcharger), tasks/, handlers/, templates/ et files/ (cherchés là par template et copy, sans chemin), meta/ (auteur, licence, plateformes, dépendances). Préfixer les variables d’un rôle par son nom (nginx\_hello\_world\_port) évite les collisions entre rôles. import\_role est statique (lu à l’analyse du playbook) ; include\_role est dynamique (évalué à l’exécution, peut dépendre d’une condition). On peut aussi écrire roles: au niveau du play. ansible-galaxy role init crée l’arborescence complète, avec en plus vars/, tests/ et un README.md. Ansible Galaxy (galaxy.ansible.com) partage des rôles et des collections ; une collection regroupe rôles, modules et plugins, versionnés ensemble ; un requirements.yml les liste pour ansible-galaxy install -r. Lire le code d’un rôle éprouvé (geerlingguy.docker, au TP) avant d’écrire le sien.]
 #anime(
   rang(
     bloc(role: "pratique", poids: 0.95)[Terminal · l’arborescence][

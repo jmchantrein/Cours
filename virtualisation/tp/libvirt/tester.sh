@@ -128,6 +128,12 @@ travail="$(mktemp -d "${TMPDIR:-/tmp}/tptest.XXXXXX")"
 chmod 755 "$travail"
 pool="tptest-pool"
 dossier_pool="$travail/pool"
+# AppArmor (Ubuntu) n'autorise QEMU que sur les emplacements usuels des images : le pool d'essai va
+# sous /var/lib/libvirt/images quand ce dossier existe (la CI y est refusée dans /tmp : « Permission denied »).
+if [ -d /var/lib/libvirt/images ] && [ -w /var/lib/libvirt/images ]; then
+  dossier_pool="$(mktemp -d /var/lib/libvirt/images/tptest-pool.XXXXXX)"
+  chmod 755 "$dossier_pool"
+fi
 domaines=(tptest-vm tptest-vm-2 tptest-vm-3)
 reseaux=(tptest-nat tptest-labo)
 
@@ -150,8 +156,8 @@ nettoyer() {
   fi
 }
 en_sortie() {
-  if [ -z "$garder" ]; then nettoyer; rm -rf -- "$travail"
-  else echo "--keep : ressources « tptest » conservées ; fichiers dans $travail"; fi
+  if [ -z "$garder" ]; then nettoyer; rm -rf -- "$travail" "$dossier_pool"
+  else echo "--keep : ressources « tptest » conservées ; fichiers dans $travail et $dossier_pool"; fi
 }
 trap en_sortie EXIT
 nettoyer # restes d'un test interrompu

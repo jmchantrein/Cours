@@ -9,6 +9,11 @@ mkdir -p /dev/pts /proc /sys /run /tmp /root
 mount -t devpts devpts /dev/pts
 mount -t proc proc /proc
 mount -t sysfs sysfs /sys
+# <(…) et /dev/stdin passent par /dev/fd : sans eux, la substitution de processus et Bats échouent.
+ln -s /proc/self/fd /dev/fd
+ln -s fd/0 /dev/stdin
+ln -s fd/1 /dev/stdout
+ln -s fd/2 /dev/stderr
 hostname cours
 exec </dev/ttyS0 >/dev/ttyS0 2>&1
 # La page passe la taille de son terminal au noyau : terminal=<colonnes>x<lignes>.
