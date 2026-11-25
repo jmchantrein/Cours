@@ -22,6 +22,17 @@
 - [ ] Vérifier les liens externes du TP WordPress (docs.docker.com, wordpress.org, iximiuz Labs : non testables depuis l’environnement de rédaction)
 - [ ] Vérifier le site publié par GitHub Pages (accueil, TP, artefact, polices, renvois vers les diapos)
 
+### Migration depuis le dépôt `site`
+Périmètre décidé le 2026-11-25 : virtualisation (libvirt), delta conteneurisation, Ansible, outils d’administration
+système en quatre cours (`shell/`, `edition-formats/`, `acces-distants/`, `git/`) ; pas de « page de cours » ;
+Qt (licence à régler avec Vincent Barichard), ia-apprentissage, intro-ordinateur, intro-systeme et glossaire restent sur le site.
+- [ ] Vague 1 — diapos : delta virtualisation (libvirt, réseau, stockage, instantanés), delta conteneurisation (réseau, erreurs à éviter), `ansible/cm/`, `shell/cm/`, `edition-formats/cm/`, `acces-distants/cm/`, `git/cm/`
+- [ ] Vague 2 — TP avec corrigés testés : `virtualisation/tp/libvirt/`, Ansible (trois séances), shell (dont premiers pas et fichiers, issus d’intro-linux), sed et awk, YAML/JSON, SSH, tmux, WireGuard, Git
+- [ ] Vague 3 — artefacts : chaîne de backing files qcow2, CMD × ENTRYPOINT, précédence et inventaire Ansible, idempotence, expansions Bash, graphe Git, typage YAML ↔ JSON
+- [ ] Terminal interactif des pages web (clic sur une commande → exécution dans un terminal), repris du principe du site
+- [ ] Intégration : accueil `index.typ`, tableau du `README.md`, CI (paquets des harnais), relecture indépendante de chaque cours
+- [ ] Relecture par l’auteur des contenus dont la source du site est rédigée par IA (réseau Docker, erreurs à éviter, réseau et stockage libvirt, concepts Ansible, tmux, labo WireGuard)
+
 ## Fait
 
 ### One-shots
