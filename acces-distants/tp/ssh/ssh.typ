@@ -45,10 +45,17 @@ un bastion, `scp` et `rsync`, une redirection de port, puis le durcissement de `
 #bloc(role: "pratique")[Prérequis][
   - Docker avec le plugin Compose v2, et un accès au réseau (l’image de base et les paquets Debian se téléchargent).
   - Le labo (`compose.yaml` et le dossier `machine/`) est fourni dans le dossier
-    #link("https://github.com/jmchantrein/Cours/tree/main/acces-distants/tp/ssh/corrige")[`corrige/`] ; copiez-le chez vous et
-    travaillez dedans. Les autres fichiers ne servent qu’une fois l’étape faite, comme corrigés.
-  - Deux terminaux ouverts dans le dossier du labo : un pour le poste d’Ada, un pour la console des machines.
+    #link("https://github.com/jmchantrein/Cours/tree/main/acces-distants/tp/ssh/corrige")[`corrige/`] : la commande
+    ci-dessous en extrait le contenu de l’archive du dépôt des cours, dans `~/tp-ssh`, où vous travaillez. Les autres
+    fichiers ne servent qu’une fois l’étape faite, comme corrigés.
+  - Deux terminaux ouverts dans `~/tp-ssh` : un pour le poste d’Ada, un pour la console des machines.
 ]
+
+#terminal[```console
+$ mkdir -p ~/tp-ssh && cd ~/tp-ssh
+$ curl -fsSL https://github.com/jmchantrein/Cours/archive/refs/heads/main.tar.gz | tar -xz --strip-components=5 Cours-main/acces-distants/tp/ssh/corrige
+$ ls
+```]
 
 #bloc[Indices et corrigés][
   Chaque étape propose des indices, puis un corrigé, repliés. Les corrigés sont des fichiers réels, rejoués
@@ -56,7 +63,8 @@ un bastion, `scp` et `rsync`, une redirection de port, puis le durcissement de `
   de la page, et les résultats vérifiés (clé chiffrée, empreinte, `authorized_keys`, rebond, `rsync`, tunnel,
   durcissement). Au clavier, `ssh` vous demande le mot de passe et la phrase de passe ; les scripts du corrigé,
   eux, n’ont pas de clavier : ils donnent ces réponses par `SSH_ASKPASS`, un détail du harnais. Les sorties
-  montrées viennent d’OpenSSH 10.0 (Debian 13).
+  montrées viennent d’OpenSSH 10.0 (Debian 13). Différence avec les diapos : le bastion écoute ici sur le port 2222 (au
+  lieu de 22), pour s’exercer à `-p` et à `Port`.
 ]
 
 #schema([Le labo : trois machines, deux réseaux. Le poste ne voit pas le serveur.], ch => {
@@ -342,10 +350,14 @@ un bastion, `scp` et `rsync`, une redirection de port, puis le durcissement de `
 
 #bloc(role: "question")[Consignes][
   - Sur la console du serveur, lisez la configuration effective de `sshd` : mot de passe, connexion de `root`.
+  - Le labo n’installe aucune clé pour `root` : autorisez la vôtre sur le serveur (par la console), et constatez que
+    `root` entre *avant* le durcissement. Sans cela, `root` serait refusé avant comme après : la vérification
+    ne prouverait rien.
   - Interdisez le mot de passe et la connexion de `root`, par un *fichier à vous* dans `sshd_config.d`. Pourquoi
     pas une ligne de plus dans `sshd_config` ?
   - Vérifiez la syntaxe *avant* de recharger, puis rechargez.
-  - Depuis le poste, ouvrez une *nouvelle* connexion : le mot de passe est refusé, `root` aussi, la clé passe.
+  - Depuis le poste, ouvrez une *nouvelle* connexion : le mot de passe est refusé, `root` aussi (alors qu’il entrait
+    tout à l'heure), la clé d’`ada` passe.
 ]
 
 #indice(titre: [Indice : l’ordre de lecture])[
@@ -363,6 +375,12 @@ un bastion, `scp` et `rsync`, une redirection de port, puis le durcissement de `
   #terminal[```console
   # sur votre machine : la console du serveur
   $ docker compose exec serveur sh -c "sshd -T | grep -E '^(passwordauthentication|permitrootlogin) '"
+  # votre clé, déjà autorisée pour ada, l'est aussi pour root
+  $ docker compose exec serveur sh -c 'install -d -m 700 /root/.ssh && cp /home/ada/.ssh/authorized_keys /root/.ssh/authorized_keys'
+  # sur le poste : avant le durcissement, root entre
+  $ ssh -o BatchMode=yes root@serveur hostname
+  serveur
+  # sur votre machine : la console du serveur
   $ docker compose cp 10-durcissement.conf serveur:/etc/ssh/sshd_config.d/10-durcissement.conf
   $ docker compose exec serveur sshd -t
   $ docker compose exec serveur pkill -HUP -x sshd
@@ -372,10 +390,12 @@ un bastion, `scp` et `rsync`, une redirection de port, puis le durcissement de `
   $ ssh serveur hostname
   ```]
   Avant : `passwordauthentication yes` et `permitrootlogin without-password` (l’ancien nom de `prohibit-password` :
-  `root` entre par clé). Une ligne ajoutée à `sshd_config` n’aurait rien changé : le fichier inclus en tête l’emporte.
+  `root` entre par clé, mais seulement si une clé est autorisée pour lui : d’où la copie d’`authorized_keys` vers
+  `/root/.ssh`, faite par la console). Une ligne ajoutée à `sshd_config` n’aurait rien changé : le fichier inclus en tête l’emporte.
   Après : le serveur ne propose plus que `publickey`, `root` est refusé même avec une clé autorisée, et la session
   ouverte avant le rechargement est toujours vivante. Le bastion, lui, n’est pas durci : il accepte encore le mot de passe.
   #f("10-durcissement.conf")
+  #f("etape-10-root.sh")
   #f("etape-10-durcir.sh")
   #f("etape-10-verifier.sh")
 ]

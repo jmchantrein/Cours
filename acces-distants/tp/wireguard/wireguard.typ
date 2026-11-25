@@ -40,8 +40,17 @@ vous mettez `AllowedIPs` à l’épreuve, puis vous ajoutez un troisième pair.
   - Un système où les conteneurs peuvent créer une interface réseau : le labo demande la capacité `NET_ADMIN`
     et le périphérique `/dev/net/tun`, et il est lancé sur *votre* machine, pas sur un hébergement partagé qui les refuse.
   - Le labo (dossier #link("https://github.com/jmchantrein/Cours/tree/main/acces-distants/tp/wireguard/labo")[`labo/`] : un
-    `Dockerfile` et un `compose.yaml`), copié chez vous. Trois terminaux ouverts dans ce dossier : un par pair.
+    `Dockerfile` et un `compose.yaml`) et les corrigés (dossier `corrige/`, à n’ouvrir qu’une fois l’étape faite) :
+    la commande ci-dessous les extrait de l’archive du dépôt des cours, dans `~/tp-wireguard`.
+  - Trois terminaux ouverts dans `~/tp-wireguard/labo` : un par pair. Toutes les commandes `docker compose` du TP
+    se tapent depuis ce dossier.
 ]
+
+#terminal[```console
+$ mkdir -p ~/tp-wireguard && cd ~/tp-wireguard
+$ curl -fsSL https://github.com/jmchantrein/Cours/archive/refs/heads/main.tar.gz | tar -xz --strip-components=4 Cours-main/acces-distants/tp/wireguard/labo Cours-main/acces-distants/tp/wireguard/corrige
+$ cd labo
+```]
 
 #bloc(role: "precaution")[Un labo, pas une architecture][
   Trois conteneurs *jetables* avec `NET_ADMIN` jouent trois machines sur un réseau ordinaire, le réseau
@@ -117,8 +126,8 @@ vous mettez `AllowedIPs` à l’épreuve, puis vous ajoutez un troisième pair.
 #corrige[
   #f("generer-cles.sh")
   #terminal[```console
-  # sur votre machine, dans le dossier où se trouve generer-cles.sh : copier le script, le lancer
-  $ for p in pair-a pair-b pair-c; do docker compose -f labo/compose.yaml cp generer-cles.sh "$p:/usr/local/bin/"; docker compose -f labo/compose.yaml exec "$p" generer-cles.sh; done
+  # sur votre machine, dans ~/tp-wireguard/labo : copier le script (dans ../corrige), le lancer
+  $ for p in pair-a pair-b pair-c; do docker compose cp ../corrige/generer-cles.sh "$p:/usr/local/bin/"; docker compose exec "$p" generer-cles.sh; done
   ```]
   `prive.key` et `public.key` sont en `rw-------` (600), à root. La clé publique se donne aux autres pairs ; la
   privée ne quitte jamais la machine. C’est l’idée de SSH, avec d’autres clés (Curve25519).

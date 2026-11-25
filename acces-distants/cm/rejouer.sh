@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Rejoue les démonstrations du cours « Accès distants » (SSH, tmux, WireGuard) et relève les versions.
-# Les machines du cours (client, bastion, serveur ; pair-a, pair-b, pair-c) sont ici des conteneurs jetables :
+# Les machines du cours (poste, bastion, serveur ; pair-a, pair-b, pair-c) sont ici des conteneurs jetables :
 # un labo, pas une architecture à reproduire (le cours Conteneurisation enseigne « pas de sshd dans un conteneur »).
 #
 # Prérequis : Docker, Python 3 (pour attendre.py), droits sur le démon Docker.
@@ -17,7 +17,7 @@ P=${REJEU_PREFIXE:-acces}
 ICI=$(cd "$(dirname "$0")" && pwd)
 IMAGE=${1:-${P}-debian}
 RESEAUX=("${P}-public" "${P}-prive" "${P}-wg")
-MACHINES=("${P}-client" "${P}-bastion" "${P}-serveur" "${P}-poste" "${P}-wg-a" "${P}-wg-b" "${P}-wg-c")
+MACHINES=("${P}-poste" "${P}-bastion" "${P}-serveur" "${P}-exo" "${P}-wg-a" "${P}-wg-b" "${P}-wg-c")
 
 nettoyer() {
   docker container rm -f "${MACHINES[@]}" >/dev/null 2>&1
@@ -82,63 +82,63 @@ EOF
 fi
 
 # ---------- Machines ----------
-# client et bastion sur le réseau « public » ; bastion et serveur sur le réseau « privé » (sans sortie) :
-# le client ne voit pas le serveur.
+# poste et bastion sur le réseau « public » ; bastion et serveur sur le réseau « privé » (sans sortie) :
+# le poste ne voit pas le serveur.
 docker network create "${P}"-public >/dev/null
 docker network create --internal "${P}"-prive >/dev/null
-for m in client bastion serveur; do
+for m in poste bastion serveur; do
   docker container run -d --init --name "${P}-$m" --hostname "$m" --network none "$IMAGE" >/dev/null
 done
-docker network disconnect none "${P}"-client; docker network disconnect none "${P}"-bastion; docker network disconnect none "${P}"-serveur
-docker network connect "${P}"-public "${P}"-client
+docker network disconnect none "${P}"-poste; docker network disconnect none "${P}"-bastion; docker network disconnect none "${P}"-serveur
+docker network connect "${P}"-public "${P}"-poste
 docker network connect "${P}"-public "${P}"-bastion
 docker network connect "${P}"-prive "${P}"-bastion
 docker network connect "${P}"-prive "${P}"-serveur
-for m in client bastion serveur; do
+for m in poste bastion serveur; do
   prep "$m" 'useradd -m -s /bin/bash ada && echo ada:motdepasse | chpasswd && ssh-keygen -A && mkdir -p /run/sshd && chmod 755 /run/sshd'
 done
 for m in bastion serveur; do prep "$m" '/usr/sbin/sshd -E /var/log/sshd.log'; done
 
 titre "Versions"
-root_sur client 'ssh -V 2>&1; tmux -V; wg --version; . /etc/os-release; echo "$PRETTY_NAME"'
+root_sur poste 'ssh -V 2>&1; tmux -V; wg --version; . /etc/os-release; echo "$PRETTY_NAME"'
 
 # ======================================================================
 titre "SSH · générer la paire de clés"
-sur_saisie client 'ssh-keygen -t ed25519' 'save the key' '\n' 'passphrase' '\n' 'again' '\n'
-sur client 'ls -l ~/.ssh'
-sur client 'cat ~/.ssh/id_ed25519.pub'
+sur_saisie poste 'ssh-keygen -t ed25519' 'save the key' '\n' 'passphrase' '\n' 'again' '\n'
+sur poste 'ls -l ~/.ssh'
+sur poste 'cat ~/.ssh/id_ed25519.pub'
 
 titre "SSH · déployer la clé publique (première connexion : empreinte du bastion)"
 root_sur bastion 'ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub'
-sur_saisie client 'ssh-copy-id ada@bastion' 'fingerprint' 'yes\n' 'password:' 'motdepasse\n'
+sur_saisie poste 'ssh-copy-id ada@bastion' 'fingerprint' 'yes\n' 'password:' 'motdepasse\n'
 sur bastion 'ls -l ~/.ssh; cat ~/.ssh/authorized_keys'
-sur client 'ssh ada@bastion hostname'
-sur client 'head -c 60 ~/.ssh/known_hosts; echo'
+sur poste 'ssh ada@bastion hostname'
+sur poste 'head -c 60 ~/.ssh/known_hosts; echo'
 
 titre "SSH · StrictModes : un authorized_keys modifiable par tous est ignoré"
 prep bastion 'chmod o+w /home/ada/.ssh/authorized_keys'
 sur bastion 'ls -l ~/.ssh/authorized_keys'
-sur client 'ssh -o BatchMode=yes ada@bastion hostname; echo "code de retour : $?"'
+sur poste 'ssh -o BatchMode=yes ada@bastion hostname; echo "code de retour : $?"'
 root_sur bastion 'grep refused /var/log/sshd.log'
 prep bastion 'chmod 600 /home/ada/.ssh/authorized_keys'
 
 titre "SSH · la clé d'hôte du bastion change (réinstallation… ou attaque)"
 prep bastion 'rm /etc/ssh/ssh_host_* && ssh-keygen -A && pkill -HUP -f "sshd -E"'
 sleep 1
-sur client 'ssh ada@bastion hostname; echo "code de retour : $?"'
-sur client 'ssh-keygen -R bastion'
-sur_saisie client 'ssh ada@bastion hostname' 'fingerprint' 'yes\n'
+sur poste 'ssh ada@bastion hostname; echo "code de retour : $?"'
+sur poste 'ssh-keygen -R bastion'
+sur_saisie poste 'ssh ada@bastion hostname' 'fingerprint' 'yes\n'
 
 titre "SSH · le serveur n'est joignable que par le bastion"
-sur client 'ssh ada@serveur hostname; echo "code de retour : $?"'
-sur_saisie client 'ssh-copy-id -o ProxyJump=ada@bastion ada@serveur' 'fingerprint' 'yes\n' 'password:' 'motdepasse\n'
-sur client 'ssh -J ada@bastion ada@serveur hostname'
+sur poste 'ssh ada@serveur hostname; echo "code de retour : $?"'
+sur_saisie poste 'ssh-copy-id -o ProxyJump=ada@bastion ada@serveur' 'fingerprint' 'yes\n' 'password:' 'motdepasse\n'
+sur poste 'ssh -J ada@bastion ada@serveur hostname'
 root_sur bastion 'hostname -I'
-sur client "ssh -J ada@bastion ada@serveur 'echo \$SSH_CONNECTION'"
+sur poste "ssh -J ada@bastion ada@serveur 'echo \$SSH_CONNECTION'"
 sur bastion 'ls ~/.ssh'
 
 titre "SSH · ~/.ssh/config"
-prep client 'cat > /home/ada/.ssh/config <<EOF
+prep poste 'cat > /home/ada/.ssh/config <<EOF
 Host bastion
     User ada
 
@@ -152,14 +152,14 @@ Host serveur1
     Port 2222
 EOF
 chown ada:ada /home/ada/.ssh/config'
-sur client 'cat ~/.ssh/config'
-sur client 'ssh serveur hostname'
-sur client "ssh -G serveur1 | grep -E '^(hostname|user|port) '"
-sur client "ssh -G serveur | grep -E '^(hostname|user|port|proxyjump) '"
+sur poste 'cat ~/.ssh/config'
+sur poste 'ssh serveur hostname'
+sur poste "ssh -G serveur1 | grep -E '^(hostname|user|port) '"
+sur poste "ssh -G serveur | grep -E '^(hostname|user|port|proxyjump) '"
 
 titre "SSH · agent, et risque du transfert d'agent (-A)"
-sur client 'eval "$(ssh-agent)"; ssh-add; ssh-add -l'
-docker exec -d -u ada -w /home/ada -e HOME=/home/ada "${P}"-client bash -c 'eval "$(ssh-agent)"; ssh-add; ssh -A bastion sleep 30'
+sur poste 'eval "$(ssh-agent)"; ssh-add; ssh-add -l'
+docker exec -d -u ada -w /home/ada -e HOME=/home/ada "${P}"-poste bash -c 'eval "$(ssh-agent)"; ssh-add; ssh -A bastion sleep 30'
 sleep 3
 root_sur bastion 'ls -d /tmp/ssh-*/agent.*'
 root_sur bastion 'export SSH_AUTH_SOCK=$(ls /tmp/ssh-*/agent.*); whoami; ssh-add -l; ssh -o StrictHostKeyChecking=accept-new ada@serveur hostname'
@@ -167,25 +167,25 @@ root_sur bastion 'export SSH_AUTH_SOCK=$(ls /tmp/ssh-*/agent.*); whoami; ssh-add
 titre "SSH · redirections de port"
 docker exec -d -u ada -w /home/ada "${P}"-serveur bash -c 'mkdir -p supervision && echo "Supervision : tout va bien" > supervision/index.html && cd supervision && exec python3 -m http.server 8000 --bind 127.0.0.1'
 docker exec -d "${P}"-serveur bash -c 'mkdir -p /srv/wiki && echo "Wiki interne du réseau privé" > /srv/wiki/index.html && cd /srv/wiki && exec python3 -m http.server 80'
-docker exec -d -u ada -w /home/ada "${P}"-client bash -c 'mkdir -p maquette && echo "Maquette du site, sur le poste client" > maquette/index.html && cd maquette && exec python3 -m http.server 9000 --bind 127.0.0.1'
+docker exec -d -u ada -w /home/ada "${P}"-poste bash -c 'mkdir -p maquette && echo "Maquette du site, sur le poste" > maquette/index.html && cd maquette && exec python3 -m http.server 9000 --bind 127.0.0.1'
 sleep 2
 sur serveur 'ss -ltn | grep -E ":(80|8000) "'
 # -L : un port local mène à un service du serveur
-sur client 'curl -sS localhost:8080; echo "code de retour : $?"'
+sur poste 'curl -sS localhost:8080; echo "code de retour : $?"'
 # (une seule session : le transfert passe par le bastion, dont le ssh -W meurt avec le terminal)
-sur client 'ssh -f -N -L 8080:localhost:8000 serveur; curl -sS localhost:8080'
-# -R : un port du serveur mène à un service du client
-sur client 'ssh -f -N -R 9000:localhost:9000 serveur; ssh serveur curl -sS localhost:9000'
+sur poste 'ssh -f -N -L 8080:localhost:8000 serveur; curl -sS localhost:8080'
+# -R : un port du serveur mène à un service du poste
+sur poste 'ssh -f -N -R 9000:localhost:9000 serveur; ssh serveur curl -sS localhost:9000'
 # -D : un proxy SOCKS local, sorti par le bastion
-sur client 'curl -sS --max-time 3 http://serveur/; echo "code de retour : $?"'
-sur client 'ssh -f -N -D 1080 bastion; curl -sS --socks5-hostname localhost:1080 http://serveur/'
+sur poste 'curl -sS --max-time 3 http://serveur/; echo "code de retour : $?"'
+sur poste 'ssh -f -N -D 1080 bastion; curl -sS --socks5-hostname localhost:1080 http://serveur/'
 
 titre "SSH · transférer des fichiers"
-prep client 'su ada -c "umask 022; mkdir -p /home/ada/site && cd /home/ada/site && echo accueil > index.html && echo contact > contact.html && echo rapport > /home/ada/rapport.txt"'
-sur client 'scp rapport.txt serveur:/tmp/'
-sur client 'rsync -av site/ serveur:site/'
-prep client 'su ada -c "echo accueil2 > /home/ada/site/index.html"'
-sur client 'rsync -av site/ serveur:site/'
+prep poste 'su ada -c "umask 022; mkdir -p /home/ada/site && cd /home/ada/site && echo accueil > index.html && echo contact > contact.html && echo rapport > /home/ada/rapport.txt"'
+sur poste 'scp rapport.txt serveur:/tmp/'
+sur poste 'rsync -av site/ serveur:site/'
+prep poste 'su ada -c "echo accueil2 > /home/ada/site/index.html"'
+sur poste 'rsync -av site/ serveur:site/'
 sur serveur 'ls site /tmp/rapport.txt'
 
 titre "SSH · durcir le serveur"
@@ -201,12 +201,12 @@ root_sur serveur "sshd -T | grep -i '^passwordauthentication'"
 # en conteneur, pas de systemd : SIGHUP fait relire la configuration (sur un serveur : systemctl reload ssh)
 prep serveur 'pkill -HUP -f "sshd -E"'
 sleep 1
-sur client 'ssh -o PubkeyAuthentication=no serveur hostname; echo "code de retour : $?"'
-sur client 'ssh serveur hostname'
+sur poste 'ssh -o PubkeyAuthentication=no serveur hostname; echo "code de retour : $?"'
+sur poste 'ssh serveur hostname'
 
 titre "SSH · corrigé de l'exercice (sur un poste quelconque : ssh -G ne se connecte pas)"
-docker container run -d --init --name "${P}"-poste --hostname poste --network none "$IMAGE" >/dev/null
-prep poste 'useradd -m -s /bin/bash ada && mkdir -p /home/ada/.ssh && cat > /home/ada/.ssh/config <<FIN
+docker container run -d --init --name "${P}"-exo --hostname poste --network none "$IMAGE" >/dev/null
+prep exo 'useradd -m -s /bin/bash ada && mkdir -p /home/ada/.ssh && cat > /home/ada/.ssh/config <<FIN
 Host bastion
     HostName bastion.example.org
     User admin
@@ -218,30 +218,30 @@ Host base
     ProxyJump bastion
 FIN
 chown -R ada:ada /home/ada/.ssh && chmod 700 /home/ada/.ssh'
-sur poste 'cat ~/.ssh/config'
-sur poste "ssh -G bastion | grep -E '^(hostname|user|port) '"
-sur poste "ssh -G -p 2222 admin@bastion.example.org | grep -E '^(hostname|user|port) '"
-sur poste "ssh -G base | grep -E '^(hostname|user|proxyjump) '"
-sur poste "ssh -G -L 3000:localhost:3000 base | grep -E '^localforward '"
-docker container rm -f "${P}"-poste >/dev/null
+sur exo 'cat ~/.ssh/config'
+sur exo "ssh -G bastion | grep -E '^(hostname|user|port) '"
+sur exo "ssh -G -p 2222 admin@bastion.example.org | grep -E '^(hostname|user|port) '"
+sur exo "ssh -G base | grep -E '^(hostname|user|proxyjump) '"
+sur exo "ssh -G -L 3000:localhost:3000 base | grep -E '^localforward '"
+docker container rm -f "${P}"-exo >/dev/null
 
 # ======================================================================
 titre "tmux · sans tmux, la coupure tue le travail"
-docker exec -d -u ada -w /home/ada -e HOME=/home/ada -e TERM=xterm "${P}"-client script -qfc 'ssh -t serveur sleep 600' /dev/null
+docker exec -d -u ada -w /home/ada -e HOME=/home/ada -e TERM=xterm "${P}"-poste script -qfc 'ssh -t serveur sleep 600' /dev/null
 sleep 3
 sur serveur 'pgrep -afx "sleep 600"'
-sur client 'pkill -KILL -f "^ssh -t serveur"'
+sur poste 'pkill -KILL -f "^ssh -t serveur"'
 sleep 2
 sur serveur 'pgrep -afx "sleep 600"; echo "code de retour : $?"'
 
 titre "tmux · avec tmux, la session survit"
-docker exec -d -u ada -w /home/ada -e HOME=/home/ada -e TERM=xterm "${P}"-client script -qfc 'ssh -t serveur tmux new -s maj sleep 600' /dev/null
+docker exec -d -u ada -w /home/ada -e HOME=/home/ada -e TERM=xterm "${P}"-poste script -qfc 'ssh -t serveur tmux new -s maj sleep 600' /dev/null
 sleep 3
-sur client 'pkill -KILL -f "^ssh -t serveur"'
+sur poste 'pkill -KILL -f "^ssh -t serveur"'
 sleep 2
-sur client 'ssh serveur tmux ls'
-sur client "ssh serveur 'pgrep -afx \"sleep 600\"'"
-sur client 'ssh serveur tmux kill-session -t maj'
+sur poste 'ssh serveur tmux ls'
+sur poste "ssh serveur 'pgrep -afx \"sleep 600\"'"
+sur poste 'ssh serveur tmux kill-session -t maj'
 
 titre "tmux · session, fenêtres, panneaux"
 sur serveur 'tmux new -d -s admin -n edition'

@@ -207,7 +207,7 @@ la retrouvez, et vous la faites reconstruire par un script.
   base-index 1
   $ tmux show -gw mode-keys
   mode-keys vi
-  $ tmux list-keys -T prefix | grep -E 'split-window'
+  $ tmux list-keys -T prefix | grep -E 'split-window( -[hv])?$'
   $ tmux list-keys -T prefix r
   $ tmux kill-server
   ```]
@@ -241,7 +241,8 @@ la retrouvez, et vous la faites reconstruire par un script.
   `split-window -h` coupe côte à côte ; `send-keys -t <panneau> 'commande' Enter` tape dans le shell d’un panneau :
   quand on quitte l’éditeur, le shell reste. Une commande donnée à `new-window` remplace le shell. Le test `[ -t 0 ]`
   dit si l’entrée standard est un terminal ; dans tmux (`$TMUX` définie), on change de session par
-  `switch-client`, car imbriquer un client dans un panneau est un piège : #d("tmux-script")[Piloter tmux par script].
+  `switch-client`, car un `attach` lancé dans un panneau imbriquerait un client tmux dans un autre : tmux le refuse
+  tant que `$TMUX` est définie, et, forcé, il enverrait le préfixe au client extérieur.
 ]
 
 #corrige[

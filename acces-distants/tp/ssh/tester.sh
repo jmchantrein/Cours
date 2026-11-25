@@ -301,8 +301,9 @@ if etape etape-9-tunnel.sh; then
 fi
 
 titre "Étape 10 — durcir sshd"
-# Avant : root entre par clé (prohibit-password, réglage de Debian), ada par mot de passe.
-console serveur sh -c 'install -d -m 700 /root/.ssh && cp /home/ada/.ssh/authorized_keys /root/.ssh/'
+# Avant : root entre par clé une fois la clé d'ada autorisée pour lui (prohibit-password, réglage de Debian), ada par mot de passe.
+if (cd "$corrige" && ./etape-10-root.sh) > "$travail/etape-10-root.log" 2>&1; then ok "etape-10-root.sh"
+else ko "etape-10-root.sh"; journal etape-10-root; fi
 if [ "$(par_mot_de_passe serveur 2> /dev/null)" = serveur ]; then ok "avant : mot de passe accepté"
 else ko "avant : le mot de passe devrait être accepté"; fi
 if [ "$(poste 'ssh -o BatchMode=yes root@serveur hostname' 2> /dev/null)" = serveur ]; then ok "avant : root entre par clé"

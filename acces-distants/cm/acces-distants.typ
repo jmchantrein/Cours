@@ -40,20 +40,20 @@
       - Implémentation de référence : *OpenSSH*, livrée avec Linux, macOS et Windows
     ],
     bloc(role: "pratique", taille: px(26))[Le fil rouge : Ada et trois machines][
-      - `client` : le poste d’Ada, d’où partent toutes les commandes
+      - `poste` : la machine d’Ada, d’où partent toutes les commandes
       - `bastion` : la seule machine joignable depuis l’extérieur
       - `serveur` : sur un réseau privé, joignable seulement depuis le bastion
     ],
   ),
   grid(columns: (1fr, px(250), 1fr, px(250), 1fr), align: horizon, column-gutter: px(12),
-    machine(distant: false, role: [poste d’Ada])[client],
+    machine(distant: false, role: [machine d’Ada])[poste],
     fleche(haut: [réseau public]),
     machine(role: [porte d’entrée])[bastion],
     fleche(haut: [réseau privé]),
     machine(role: [la machine à administrer])[serveur],
   ),
   source-de: [#link("https://man.openbsd.org/ssh")[man.openbsd.org/ssh] · #link("https://man.openbsd.org/sshd")[man.openbsd.org/sshd]],
-  note: [Pour les démonstrations, client, bastion et serveur sont des conteneurs jetables reliés par deux réseaux (public, privé) : un laboratoire. Le cours Conteneurisation enseigne de ne pas faire tourner sshd dans un conteneur en production ; ici, les conteneurs jouent le rôle de machines. Toutes les sorties viennent de `acces-distants/cm/rejouer.sh`, rejoué le 25 novembre 2026 sur Debian 13 (image debian:13-slim, paquets openssh-client et openssh-server 1:10.0p1-7+deb13u4 ; ssh -V affiche OpenSSH_10.0p2 Debian-7+deb13u4, le p2 vient des correctifs de sécurité du paquet Debian ; tmux 3.5a ; wireguard-tools 1.0.20210914). Les empreintes, dates, ports et numéros de processus changent à chaque rejeu : seule leur forme compte.],
+  note: [Pour les démonstrations, poste, bastion et serveur sont des conteneurs jetables reliés par deux réseaux (public, privé) : un laboratoire. Le cours Conteneurisation enseigne de ne pas faire tourner sshd dans un conteneur en production ; ici, les conteneurs jouent le rôle de machines. Toutes les sorties viennent de `acces-distants/cm/rejouer.sh`, rejoué le 25 novembre 2026 sur Debian 13 (image debian:13-slim, paquets openssh-client et openssh-server 1:10.0p1-7+deb13u4 ; ssh -V affiche OpenSSH_10.0p2 Debian-7+deb13u4, le p2 vient des correctifs de sécurité du paquet Debian ; tmux 3.5a ; wireguard-tools 1.0.20210914). Les empreintes, dates, ports et numéros de processus changent à chaque rejeu : seule leur forme compte. Le bastion écoute ici sur le port 22, le défaut, pour que les premières diapos n’aient ni `-p` ni `Port` : le mot-clé `Port` n’est introduit qu’à la diapo ~/.ssh/config. Le TP SSH, lui, place volontairement le bastion sur le port 2222, pour s’exercer à `-p`, à `Port` et à l’entrée `[bastion]:2222` de known\_hosts ; la machine d’Ada s’y appelle `poste`, comme ici.],
 )
 
 == Le mot de passe, maillon faible
@@ -82,7 +82,7 @@
 #slide(repeat: 4, self => {
   let (uncover,) = utils.methods(self)
   grid(columns: (px(560), 1fr, px(560)), column-gutter: px(24), align: horizon,
-    machine([client (Ada)], distant: false, taille: px(30), {
+    machine([poste (Ada)], distant: false, taille: px(30), {
       set text(size: px(21))
       stack(spacing: px(10),
         fichier("~/.ssh/id_ed25519", taille: px(19))[clé *privée* d’Ada : secrète, ne quitte jamais le poste],
@@ -104,7 +104,7 @@
     Chacun garde sa clé privée ; seules des *signatures* traversent le réseau. Une clé publique volée ne permet pas d’entrer : elle sert seulement à vérifier.
   ]))
   source[#link("https://man.openbsd.org/ssh#AUTHENTICATION")[man ssh, AUTHENTICATION] · #link("https://www.rfc-editor.org/rfc/rfc4252#section-7")[RFC 4252, § 7] · #link("https://www.rfc-editor.org/rfc/rfc4253#section-8")[RFC 4253, § 8]]
-  utils.speaker-note(self: self)[Un clic par étape. Ordre réel du protocole : d’abord l’échange de clés, où le serveur signe avec sa clé d’hôte (RFC 4253, § 8) ; le client vérifie cette clé contre known\_hosts. Ensuite l’authentification de l’utilisateur (RFC 4252, § 7) : le client signe des données qui contiennent l’identifiant de session, propre à cette connexion ; le serveur vérifie la signature avec la clé publique trouvée dans authorized\_keys. Le cours d’origine parlait d’un « défi cryptographique que seule la clé privée peut résoudre » : c’est l’idée, la signature de données propres à la session en est la forme exacte (man ssh : « The client proves that it has access to the private key and the server checks that the corresponding public key is authorized »). Diapo de référence pour l’artefact « décision de connexion SSH » et le TP SSH.]
+  utils.speaker-note(self: self)[Un clic par étape. Ordre réel du protocole : d’abord l’échange de clés, où le serveur signe avec sa clé d’hôte (RFC 4253, § 8) ; le client vérifie cette clé contre known\_hosts. Ensuite l’authentification de l’utilisateur (RFC 4252, § 7) : le client signe des données qui contiennent l’identifiant de session, propre à cette connexion ; le serveur vérifie la signature avec la clé publique trouvée dans authorized\_keys. Le cours d’origine parlait d’un « défi cryptographique que seule la clé privée peut résoudre » : c’est l’idée, la signature de données propres à la session en est la forme exacte (man ssh : « The client proves that it has access to the private key and the server checks that the corresponding public key is authorized »). Diapo de référence pour le TP SSH.]
 })
 
 == Générer la paire de clés : ssh-keygen <ssh-keygen>
@@ -112,7 +112,7 @@
 #anime(
   rang(
     bloc(role: "pratique", poids: 1.45, taille: px(24))[Sur le poste d’Ada][
-      #terminal(titre: [client · ada], taille: px(18))[
+      #terminal(titre: [poste · ada], taille: px(18))[
         ```
         $ ssh-keygen -t ed25519
         Generating public/private ed25519 key pair.
@@ -123,12 +123,12 @@
         Your identification has been saved in /home/ada/.ssh/id_ed25519
         Your public key has been saved in /home/ada/.ssh/id_ed25519.pub
         The key fingerprint is:
-        SHA256:hypuhgF2oTSkA47o1l6na0GMzC8DsNIWbDX9rWhyCHs ada@client
+        SHA256:X9YqPYkG3Gchdv6sJohIS2dYj5xxVI8FMSfgCIksoQ8 ada@poste
         # … puis le dessin de l’empreinte (randomart, 11 lignes)
         $ ls -l ~/.ssh
         total 8
-        -rw------- 1 ada ada 399 Nov 25 15:33 id_ed25519
-        -rw-r--r-- 1 ada ada  92 Nov 25 15:33 id_ed25519.pub
+        -rw------- 1 ada ada 399 Nov 25 20:39 id_ed25519
+        -rw-r--r-- 1 ada ada  91 Nov 25 20:39 id_ed25519.pub
         ```
       ]
     ],
@@ -142,7 +142,7 @@
   ),
   note(role: "precaution", taille: px(22))[*Ed25519 plutôt que RSA 4096* : la version d’origine de ce cours conseillait `ssh-keygen -t rsa -b 4096`. OpenSSH crée aujourd’hui une clé Ed25519 par défaut : courte, rapide, sans taille à choisir. RSA reste pour un très vieux serveur qui ignore Ed25519.],
   source-de: link("https://man.openbsd.org/ssh-keygen")[man ssh-keygen],
-  note: [OpenSSH 10.0 (Debian 13). man ssh-keygen : « If invoked without any arguments, ssh-keygen will generate an Ed25519 key ». Les trois Entrée : emplacement par défaut, puis passphrase vide deux fois. Le commentaire ada\@client est rempli par défaut avec utilisateur\@machine. Le dessin (randomart) sert à comparer deux empreintes d’un coup d’œil ; il est omis faute de place.],
+  note: [OpenSSH 10.0 (Debian 13). man ssh-keygen : « If invoked without any arguments, ssh-keygen will generate an Ed25519 key ». Les trois Entrée : emplacement par défaut, puis passphrase vide deux fois. Le commentaire ada\@poste est rempli par défaut avec utilisateur\@machine. Le dessin (randomart) sert à comparer deux empreintes d’un coup d’œil ; il est omis faute de place.],
 )
 
 == Protéger la clé privée : passphrase, agent <agent-ssh>
@@ -155,17 +155,17 @@
       - *Agent* : `ssh-agent` garde la clé déchiffrée en mémoire ; la passphrase se tape une fois par session
     ],
     bloc(role: "pratique", poids: 1.1, taille: px(24))[L’agent en pratique][
-      #terminal(titre: [client · ada], taille: px(18))[
+      #terminal(titre: [poste · ada], taille: px(18))[
         ```
         # démarre l’agent et exporte son adresse
         $ eval "$(ssh-agent)"
-        Agent pid 254
+        Agent pid 256
         # confie la clé à l’agent (passphrase demandée s’il y en a une)
         $ ssh-add
-        Identity added: /home/ada/.ssh/id_ed25519 (ada@client)
+        Identity added: /home/ada/.ssh/id_ed25519 (ada@poste)
         # clés détenues par l’agent
         $ ssh-add -l
-        256 SHA256:hypuhgF2oTSkA47o1l6na0GMzC8DsNIWbDX9rWhyCHs ada@client (ED25519)
+        256 SHA256:X9YqPYkG3Gchdv6sJohIS2dYj5xxVI8FMSfgCIksoQ8 ada@poste (ED25519)
         ```
       ]
       `ssh` demande ensuite chaque signature à l’agent, sans relire la clé.
@@ -180,12 +180,12 @@
 #anime(
   rang(
     bloc(role: "pratique", poids: 1.55, taille: px(24))[Première connexion au bastion][
-      #terminal(titre: [client · ada], taille: px(18))[
+      #terminal(titre: [poste · ada], taille: px(18))[
         ```
         $ ssh-copy-id ada@bastion
         /usr/bin/ssh-copy-id: INFO: Source of key(s) to be installed: "/home/ada/.ssh/id_ed25519.pub"
         The authenticity of host 'bastion (172.18.0.3)' can't be established.
-        ED25519 key fingerprint is SHA256:TZgV2SI1WZKCLBfogARlWWMuaAMhBvMzy/vhPuc27Y8.
+        ED25519 key fingerprint is SHA256:2r9IUqJ02BKaLukNEOwqIzQBrVml/enVaTcyx2nxiQA.
         This key is not known by any other names.
         Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
         /usr/bin/ssh-copy-id: INFO: attempting to log in with the new key(s), […]
@@ -214,22 +214,22 @@
 #anime(
   rang(
     bloc(role: "pratique", poids: 1.4, taille: px(24))[Comparer les deux empreintes][
-      #terminal(titre: [client · ada], taille: px(18))[
+      #terminal(titre: [poste · ada], taille: px(18))[
         ```
         # affichée par ssh à la première connexion :
-        ED25519 key fingerprint is SHA256:TZgV2SI1WZKCLBfogARlWWMuaAMhBvMzy/vhPuc27Y8.
+        ED25519 key fingerprint is SHA256:2r9IUqJ02BKaLukNEOwqIzQBrVml/enVaTcyx2nxiQA.
         ```
         #cadre([bastion · root, sur la console de la machine], niveau: "distant")[
           ```
           # empreinte de la clé d’hôte, lue sur le bastion lui-même
           $ ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub
-          256 SHA256:TZgV2SI1WZKCLBfogARlWWMuaAMhBvMzy/vhPuc27Y8 root@bastion (ED25519)
+          256 SHA256:2r9IUqJ02BKaLukNEOwqIzQBrVml/enVaTcyx2nxiQA root@bastion (ED25519)
           ```
         ]
         ```
         # après « yes », la clé est mémorisée (nom de machine haché)
         $ head -c 60 ~/.ssh/known_hosts; echo
-        |1|MpexreULGNi9Pb/dUBaSoCuOb3M=|b7xVKBaur1VaDjema+GMeYFMnqg=
+        |1|mvkTkAyxwSrwSbVpqujyUhMNNKE=|PJWVKZhokYg9arwCMGfQLs3OYcs=
         ```
       ]
     ],
@@ -248,7 +248,7 @@
 #anime(
   rang(
     bloc(role: "pratique", poids: 1.55, taille: px(24))[Le bastion a été réinstallé… ou pas][
-      #terminal(titre: [client · ada], taille: px(18))[
+      #terminal(titre: [poste · ada], taille: px(18))[
         ```
         $ ssh ada@bastion hostname
         @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
@@ -258,7 +258,7 @@
         Someone could be eavesdropping on you right now (man-in-the-middle attack)!
         It is also possible that a host key has just been changed.
         The fingerprint for the ED25519 key sent by the remote host is
-        SHA256:bzgSuF9ZNzqBdkAux4n98DltQlayYOHZyxgA84YIZeo.
+        SHA256:ui/E6+MdhkSyXktF48dOX/nrMBjXPEgfJ9thFXGTyes.
         Please contact your system administrator.
         Add correct host key in /home/ada/.ssh/known_hosts to get rid of this message.
         Offending ECDSA key in /home/ada/.ssh/known_hosts:3
@@ -271,13 +271,13 @@
     ],
     bloc(role: "danger", taille: px(24))[Deux explications possibles][
       - Le serveur a été *réinstallé* : nouvelles clés d’hôte, alerte légitime
-      - Une machine s’intercale entre le client et le serveur : *attaque de l’homme du milieu*
+      - Une machine s’intercale entre le poste et le serveur : *attaque de l’homme du milieu*
       - Avant tout : vérifier la nouvelle empreinte par un autre canal
       - Puis seulement : `ssh-keygen -R bastion` retire l’ancienne clé ; la connexion suivante redemande l’empreinte
     ],
   ),
   source-de: link("https://man.openbsd.org/ssh-keygen")[man ssh-keygen, option -R],
-  note: [Démonstration : les clés d’hôte du bastion ont été régénérées (ssh-keygen -A), comme après une réinstallation. ssh refuse la connexion (code de retour 255) : la vérification stricte de la clé d’hôte est un refus, pas un avertissement. man ssh : si l’identification change, ssh avertit et désactive l’authentification par mot de passe, pour empêcher une usurpation du serveur. Après ssh-keygen -R bastion (trois lignes retirées : une par type de clé, Ed25519, RSA, ECDSA), la connexion suivante redemande l’empreinte SHA256:bzgSu…Zeo, comme à la première connexion.],
+  note: [Démonstration : les clés d’hôte du bastion ont été régénérées (ssh-keygen -A), comme après une réinstallation. ssh refuse la connexion (code de retour 255) : la vérification stricte de la clé d’hôte est un refus, pas un avertissement. man ssh : si l’identification change, ssh avertit et désactive l’authentification par mot de passe, pour empêcher une usurpation du serveur. Après ssh-keygen -R bastion (trois lignes retirées : une par type de clé, Ed25519, RSA, ECDSA), la connexion suivante redemande l’empreinte SHA256:ui/E6…yes, comme à la première connexion.],
 )
 
 == Plus de mot de passe… si les droits sont stricts <strictmodes>
@@ -285,13 +285,13 @@
 #anime(
   rang(
     bloc(role: "pratique", taille: px(24))[Connexion par clé][
-      #terminal(titre: [client · ada], taille: px(18))[
+      #terminal(titre: [poste · ada], taille: px(18))[
         #cadre([bastion · ada], niveau: "distant")[
           ```
           $ ls -l ~/.ssh; cat ~/.ssh/authorized_keys
           total 4
-          -rw------- 1 ada ada 92 Nov 25 15:33 authorized_keys
-          ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBga+LXXjimi1Tk…
+          -rw------- 1 ada ada 91 Nov 25 20:39 authorized_keys
+          ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINi4gGtw3QzZRnR…
           ```
         ]
         ```
@@ -303,11 +303,11 @@
       La ligne d’`authorized_keys` est la copie exacte de `id_ed25519.pub`.
     ],
     bloc(role: "avertissement", taille: px(24))[StrictModes : des droits trop larges, et la clé est ignorée][
-      #terminal(titre: [client · ada], taille: px(18))[
+      #terminal(titre: [poste · ada], taille: px(18))[
         #cadre([bastion · ada], niveau: "distant")[
           ```
           $ ls -l ~/.ssh/authorized_keys
-          -rw-----w- 1 ada ada 92 Nov 25 15:33 /home/ada/.ssh/authorized_keys
+          -rw-----w- 1 ada ada 91 Nov 25 20:39 /home/ada/.ssh/authorized_keys
           ```
         ]
         ```
@@ -332,7 +332,7 @@
 #anime(
   rang(
     bloc(role: "pratique", poids: 1.1, taille: px(24))[Le fichier, puis ce que ssh en retient][
-      #terminal(titre: [client · ada], taille: px(18))[
+      #terminal(titre: [poste · ada], taille: px(18))[
         ```
         $ cat ~/.ssh/config
         Host bastion
@@ -369,7 +369,7 @@
 
 #anime(
   grid(columns: (1fr, px(300), 1fr, px(300), 1fr), align: horizon, column-gutter: px(12),
-    machine(distant: false)[client],
+    machine(distant: false)[poste],
     fleche(haut: [① connexion ssh], bas: [au bastion]),
     machine[bastion],
     fleche(haut: [② transfert TCP], bas: [jusqu’au serveur]),
@@ -377,7 +377,7 @@
   ),
   rang(
     bloc(role: "pratique", poids: 1.35, taille: px(24))[Démonstration][
-      #terminal(titre: [client · ada], taille: px(18))[
+      #terminal(titre: [poste · ada], taille: px(18))[
         ```
         # le serveur est invisible depuis le poste
         $ ssh ada@serveur hostname
@@ -387,7 +387,7 @@
         serveur
         # d’où le serveur voit-il venir la connexion ?
         $ ssh -J ada@bastion ada@serveur 'echo $SSH_CONNECTION'
-        172.19.0.2 43740 172.19.0.3 22
+        172.19.0.2 48854 172.19.0.3 22
         # avec ProxyJump dans ~/.ssh/config
         $ ssh serveur hostname
         serveur
@@ -396,7 +396,7 @@
     ],
     bloc(taille: px(24))[Lire la démonstration][
       - `172.19.0.2` : l’adresse du bastion sur le réseau privé
-      - La session ssh va *du client au serveur* : le bastion ne fait que relayer des octets chiffrés
+      - La session ssh va *du poste au serveur* : le bastion ne fait que relayer des octets chiffrés
       - La clé privée reste sur le poste : sur le bastion, `~/.ssh` ne contient que `authorized_keys`
     ],
   ),
@@ -409,7 +409,7 @@
 #anime(
   rang(
     bloc(role: "pratique", poids: 1.5, taille: px(24))[Ce que peut faire root sur le bastion][
-      #terminal(titre: [client · ada], taille: px(18))[
+      #terminal(titre: [poste · ada], taille: px(18))[
         ```
         # Ada ouvre une session vers le bastion en transférant son agent (-A)
         $ ssh -A bastion sleep 30
@@ -418,12 +418,12 @@
           ```
           # la socket de l’agent d’Ada, relayée sur le bastion
           $ ls -d /tmp/ssh-*/agent.*
-          /tmp/ssh-NafJFAXPet/agent.190
+          /tmp/ssh-V87fKLI33N/agent.186
           $ export SSH_AUTH_SOCK=$(ls /tmp/ssh-*/agent.*)
           $ whoami
           root
           $ ssh-add -l
-          256 SHA256:hypuhgF2oTSkA47o1l6na0GMzC8DsNIWbDX9rWhyCHs ada@client (ED25519)
+          256 SHA256:X9YqPYkG3Gchdv6sJohIS2dYj5xxVI8FMSfgCIksoQ8 ada@poste (ED25519)
           $ ssh -o StrictHostKeyChecking=accept-new ada@serveur hostname
           Warning: Permanently added 'serveur' (ED25519) to the list of known hosts.
           serveur
@@ -455,20 +455,20 @@
   stack(spacing: px(26),
     ligne(1, "-L", "ssh -L 8080:localhost:8000 serveur", [Locale],
       grid(columns: (1fr, px(250), 1fr, px(170), 1fr), align: horizon, column-gutter: px(8),
-        machine(distant: false, role: [`localhost:8080`])[client], tunnel[tunnel ssh], machine[serveur], fleche(haut: [connexion]), machine(role: [`localhost:8000`], taille: px(24))[service du serveur]),
-      [Un port du *client* mène à un service joignable *depuis le serveur*]),
+        machine(distant: false, role: [`localhost:8080`])[poste], tunnel[tunnel ssh], machine[serveur], fleche(haut: [connexion]), machine(role: [`localhost:8000`], taille: px(24))[service du serveur]),
+      [Un port du *poste* mène à un service joignable *depuis le serveur*]),
     ligne(2, "-R", "ssh -R 9000:localhost:9000 serveur", [Distante],
       grid(columns: (1fr, px(170), 1fr, px(250), 1fr), align: horizon, column-gutter: px(8),
-        machine(distant: false, role: [`localhost:9000`], taille: px(24))[service du client], fleche(vers: "gauche", haut: [connexion]), machine(distant: false)[client], fleche(vers: "gauche", haut: [tunnel ssh]), machine(role: [`localhost:9000`])[serveur]),
-      [Un port du *serveur* mène à un service joignable *depuis le client*]),
+        machine(distant: false, role: [`localhost:9000`], taille: px(24))[service du poste], fleche(vers: "gauche", haut: [connexion]), machine(distant: false)[poste], fleche(vers: "gauche", haut: [tunnel ssh]), machine(role: [`localhost:9000`])[serveur]),
+      [Un port du *serveur* mène à un service joignable *depuis le poste*]),
     ligne(3, "-D", "ssh -D 1080 bastion", [Dynamique],
       grid(columns: (1fr, px(250), 1fr, px(170), 1fr), align: horizon, column-gutter: px(8),
-        machine(distant: false, role: [proxy SOCKS `:1080`])[client], tunnel[tunnel ssh], machine[bastion], fleche(haut: [connexion]), machine(role: [demandée par l’application], taille: px(24))[toute destination]),
-      [Un *proxy SOCKS* (mandataire générique) sur le client ; chaque connexion sort par le serveur]),
+        machine(distant: false, role: [proxy SOCKS `:1080`])[poste], tunnel[tunnel ssh], machine[bastion], fleche(haut: [connexion]), machine(role: [demandée par l’application], taille: px(24))[toute destination]),
+      [Un *proxy SOCKS* (mandataire générique) sur le poste ; chaque connexion sort par le serveur]),
     uncover("4-", note(role: "retenir", taille: px(24))[`-L` : j’apporte chez moi un service de là-bas · `-R` : j’expose là-bas un service de chez moi · `-D` : je sors sur le réseau par là-bas. Dans `-L port:hôte:port_hôte`, `hôte` est résolu *par le serveur* : `localhost` y désigne le serveur lui-même.]),
   )
   source[#link("https://man.openbsd.org/ssh#L")[man ssh, options -L, -R, -D]]
-  utils.speaker-note(self: self)[Un clic par redirection, puis la synthèse. Les flèches indiquent le sens d’ouverture des connexions ; les données circulent ensuite dans les deux sens. -R est la symétrique de -L : c’est le serveur qui écoute, le client qui se connecte au service. SOCKS (_SOCKet Secure_) : protocole par lequel une application demande au proxy d’ouvrir une connexion pour elle, vers la destination de son choix ; ssh est serveur SOCKS 4 et 5 (man ssh, -D). Seul root peut ouvrir un port privilégié (inférieur à 1024). Diapo de référence pour un artefact ou un TP sur les redirections.]
+  utils.speaker-note(self: self)[Un clic par redirection, puis la synthèse. Les flèches indiquent le sens d’ouverture des connexions ; les données circulent ensuite dans les deux sens. -R est la symétrique de -L : c’est le serveur qui écoute, le client qui se connecte au service. SOCKS (_SOCKet Secure_) : protocole par lequel une application demande au proxy d’ouvrir une connexion pour elle, vers la destination de son choix ; ssh est serveur SOCKS 4 et 5 (man ssh, -D). Seul root peut ouvrir un port privilégié (inférieur à 1024). Le TP SSH (étape 9) fait la redirection locale -L.]
 })
 
 == Les trois redirections à l’œuvre <redirections-demo>
@@ -476,7 +476,7 @@
 #anime(
   rang(
     bloc(role: "pratique", poids: 1.5, taille: px(24))[Démonstration][
-      #terminal(titre: [client · ada], taille: px(18))[
+      #terminal(titre: [poste · ada], taille: px(18))[
         #cadre([serveur · ada], niveau: "distant")[
           ```
           # supervision : seulement en local ; wiki : sur le réseau privé
@@ -495,7 +495,7 @@
         # la maquette du poste (localhost:9000) devient visible du serveur
         $ ssh -f -N -R 9000:localhost:9000 serveur
         $ ssh serveur curl -sS localhost:9000
-        Maquette du site, sur le poste client
+        Maquette du site, sur le poste
         $ ssh -f -N -D 1080 bastion
         $ curl -sS --socks5-hostname localhost:1080 http://serveur/
         Wiki interne du réseau privé
@@ -525,7 +525,7 @@
     Supprime à la destination ce qui n’existe plus à la source : le lancer d’abord avec `-n` (`--dry-run`), qui montre sans rien faire. Une barre oubliée ou en trop change aussi la destination.
   ]
   rangee(poids: (1.25, 1),
-    h => terminal(titre: [client · ada], taille: px(18), hauteur: h)[
+    h => terminal(titre: [poste · ada], taille: px(18), hauteur: h)[
       ```
       $ scp rapport.txt serveur:/tmp/
       rapport.txt                     100%    8    13.8KB/s   00:00
@@ -562,7 +562,7 @@
 #anime(
   rang(
     bloc(role: "pratique", poids: 1.35, taille: px(24))[Ada veut interdire le mot de passe][
-      #terminal(titre: [client · ada], taille: px(18))[
+      #terminal(titre: [poste · ada], taille: px(18))[
         #cadre([serveur · root], niveau: "distant")[
           ```
           # -T : la configuration effective de sshd
@@ -598,7 +598,7 @@
 #anime(
   rang(
     bloc(role: "pratique", poids: 1.35, taille: px(24))[Un fichier à soi, lu en premier][
-      #terminal(titre: [client · ada], taille: px(18))[
+      #terminal(titre: [poste · ada], taille: px(18))[
         #cadre([serveur · root], niveau: "distant")[
           ```
           # « 10- » : lu avant « 50- », donc prioritaire
@@ -677,7 +677,7 @@
       HostName bastion.example.org
       User admin
       Port 2222
-  ```], terminal(titre: [client · ada], taille: px(19))[```
+  ```], terminal(titre: [poste · ada], taille: px(19))[```
   # sans le fichier, la même configuration :
   $ ssh -G -p 2222 admin@bastion.example.org | grep -E '^(hostname|user|port) '
   user admin
@@ -727,7 +727,7 @@
 #anime(
   rang(
     bloc(role: "pratique", poids: 1.3, taille: px(24))[Une mise à jour longue, lancée par ssh][
-      #terminal(titre: [client · ada], taille: px(19))[
+      #terminal(titre: [poste · ada], taille: px(19))[
         ```
         # sleep 600 joue le rôle d’une mise à jour de dix minutes
         $ ssh -t serveur sleep 600
@@ -739,7 +739,7 @@
           ```
         ]
         ```
-        # le terminal du client se ferme brutalement
+        # le terminal du poste se ferme brutalement
         $ pkill -KILL -f "^ssh -t serveur"
         ```
         #cadre([serveur · ada], niveau: "distant")[
@@ -771,11 +771,11 @@
       - Le terminal d’Ada n’est qu’un *client* qui les affiche : qu’il disparaisse, le serveur continue
     ],
     bloc(role: "pratique", poids: 1.25, taille: px(24))[La même coupure, avec tmux][
-      #terminal(titre: [client · ada], taille: px(19))[
+      #terminal(titre: [poste · ada], taille: px(19))[
         ```
         # la mise à jour tourne dans une session tmux nommée « maj »
         $ ssh -t serveur tmux new -s maj sleep 600
-        # le terminal du client se ferme brutalement
+        # le terminal du poste se ferme brutalement
         $ pkill -KILL -f "^ssh -t serveur"
         $ ssh serveur tmux ls
         maj: 1 windows (created Wed Nov 25 15:34:24 2026)
@@ -827,7 +827,7 @@
     ),
   )
   source[#link("https://man.openbsd.org/tmux#DESCRIPTION")[man tmux, DESCRIPTION]]
-  utils.speaker-note(self: self)[Un clic par niveau : serveur, sessions, fenêtres, panneaux, puis clients. L’arbre est exactement celui que construit la diapositive suivante (sortie de list-panes : admin:0.0, admin:0.1, admin:1.0, perso:0.0). man tmux : « A session is a single collection of pseudo terminals under the management of tmux. Each session has one or more windows linked to it. A window occupies the entire screen and may be split into rectangular panes, each of which is a separate pseudo terminal. Any number of tmux instances may connect to the same session ». Diapo de référence pour l’artefact « arbre tmux » et le TP tmux.]
+  utils.speaker-note(self: self)[Un clic par niveau : serveur, sessions, fenêtres, panneaux, puis clients. L’arbre est exactement celui que construit la diapositive suivante (sortie de list-panes : admin:0.0, admin:0.1, admin:1.0, perso:0.0). man tmux : « A session is a single collection of pseudo terminals under the management of tmux. Each session has one or more windows linked to it. A window occupies the entire screen and may be split into rectangular panes, each of which is a separate pseudo terminal. Any number of tmux instances may connect to the same session ». Diapo de référence pour le TP tmux.]
 })
 
 == Construire l’arbre en commandes <tmux-commandes>
@@ -835,7 +835,7 @@
 #anime(
   rang(
     bloc(role: "pratique", poids: 1.35, taille: px(24))[Démonstration][
-      #terminal(titre: [client · ada], taille: px(19))[
+      #terminal(titre: [poste · ada], taille: px(19))[
         #cadre([serveur · ada], niveau: "distant")[
           ```
           # -d : créer sans s’attacher ; -s : session ; -n : fenêtre
@@ -895,7 +895,7 @@
 #anime(
   rang(
     bloc(role: "pratique", poids: 1.3, taille: px(24))[Taper et lire dans un panneau, sans s’y attacher][
-      #terminal(titre: [client · ada], taille: px(19))[
+      #terminal(titre: [poste · ada], taille: px(19))[
         #cadre([serveur · ada], niveau: "distant")[
           ```
           # taper une commande dans la fenêtre « journaux »
@@ -925,7 +925,7 @@
 #anime(
   rang(
     bloc(role: "pratique", poids: 1.25, taille: px(24))[Le fichier, puis la vérification][
-      #terminal(titre: [client · ada], taille: px(19))[
+      #terminal(titre: [poste · ada], taille: px(19))[
         #cadre([serveur · ada], niveau: "distant")[
           ```
           $ cat ~/.tmux.conf
@@ -1070,7 +1070,7 @@
       - Le tunnel passe dans des datagrammes UDP (_User Datagram Protocol_)
       - Chaque machine a une interface `wg0`, une *paire de clés* et une *adresse dans le tunnel* (`10.9.9.1/24`)
       - Elle connaît chacun de ses *pairs* par sa *clé publique*, comme `authorized_keys` en SSH
-      - Pour chaque pair : `Endpoint` (son adresse réelle, facultative) et `AllowedIPs` (les adresses du tunnel qui sont à lui)
+      - Pour chaque pair : `Endpoint` (son adresse réelle, facultative) et `AllowedIPs` (les adresses joignables par ce pair : la sienne dans le tunnel, et les réseaux derrière lui)
     ],
   ),
   grid(columns: (1fr, px(720), 1fr), column-gutter: px(16), align: horizon,
@@ -1229,7 +1229,7 @@
     ),
   )
   source[#link("https://www.wireguard.com/#cryptokey-routing")[wireguard.com, Cryptokey Routing] · #link("https://git.zx2c4.com/wireguard-tools/about/src/man/wg.8")[man wg, AllowedIPs]]
-  utils.speaker-note(self: self)[Un clic par bloc. man wg, AllowedIPs : « a comma-separated list of IP (v4 or v6) addresses with CIDR masks from which incoming traffic for this peer is allowed and to which outgoing traffic for this peer is directed. The catch-all 0.0.0.0/0 may be specified for matching all IPv4 addresses ». 0.0.0.0/0 : tout le trafic IPv4 passe dans le tunnel (le « VPN complet ») ; wg-quick règle alors la route par défaut. Le choix du préfixe le plus précis est démontré dans le corrigé de l’exercice (question 4). Les trois points sont rejoués aux diapositives suivantes. Diapo de référence pour l’artefact « table AllowedIPs » et le TP WireGuard.]
+  utils.speaker-note(self: self)[Un clic par bloc. man wg, AllowedIPs : « a comma-separated list of IP (v4 or v6) addresses with CIDR masks from which incoming traffic for this peer is allowed and to which outgoing traffic for this peer is directed. The catch-all 0.0.0.0/0 may be specified for matching all IPv4 addresses ». 0.0.0.0/0 : tout le trafic IPv4 passe dans le tunnel (le « VPN complet ») ; wg-quick règle alors la route par défaut. Le choix du préfixe le plus précis est démontré dans le corrigé de l’exercice (question 4). Les trois points sont rejoués aux diapositives suivantes. Diapo de référence pour le TP WireGuard.]
 })
 
 == AllowedIPs à l’épreuve : sortant, puis entrant <wireguard-epreuve>
