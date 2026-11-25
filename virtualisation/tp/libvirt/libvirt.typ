@@ -341,7 +341,8 @@ l’installateur, par une copie complète, puis par un disque en copie sur écri
 
 #indice(titre: [Indice : le modèle])[
   #d("qcow2-backing")[qcow2 : copie sur écriture et chaîne d’images], puis la démonstration
-  #d("backing-file")[Une VM de plus pour 196 Kio].
+  #d("backing-file")[Une VM de plus pour 196 Kio]. Pour voir qui fournit chaque grappe, ce que pèse chaque image
+  et ce qu’une écriture dans la base change : l’artefact #link("../../artefacts/chaine-qcow2/")[La chaîne d’images qcow2].
 ]
 #indice(titre: [Indice : les commandes])[
   `virsh vol-clone` copie un volume ; `virsh vol-create-as` crée un volume, et `--backing-vol` l’adosse à un

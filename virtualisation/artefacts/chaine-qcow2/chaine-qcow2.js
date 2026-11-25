@@ -141,7 +141,7 @@
   const s = (n, mot, pluriel = mot + "s") => `${n} ${n > 1 ? pluriel : mot}`;
   const kio = n => `${n} Kio`;
   const liste = ks => ks.join(", ");
-  const plage = r => r.nombre > 1 ? (r.nombre === GRAPPES ? `les ${GRAPPES} grappes (1 Mio)` : `les grappes ${r.grappe} à ${r.grappe + r.nombre - 1}`) : `la grappe ${r.grappe}`;
+  const plage = r => r.nombre > 1 ? (r.nombre === GRAPPES ? `les ${GRAPPES} grappes (1 Mio)` : `les grappes ${r.grappe}${r.nombre === 2 ? " et " : " à "}${r.grappe + r.nombre - 1}`) : `la grappe ${r.grappe}`;
   // « 14 grappes lues dans base.qcow2, 2 dans vm1.qcow2 ; 0 introuvable (zéro) ».
   function resume(v) {
     const par = new Map();
@@ -170,16 +170,17 @@
       p.push(`Tout ce qu'elle lit vient de la chaîne : ${resume(r.vue)}.`);
     } else if (r.op === "ecrire") {
       const i = image(e, r.image);
-      p.push(`Écriture de l'octet ${hex(r.motif)} dans ${plage(r)} de ${r.image} : ${i.base ? `la grappe est rangée dans ${r.image}, l'image visée (copie sur écriture), pas dans ${i.base}, qui reste intacte` : `${r.image} n'a pas d'image de base : elle range la grappe chez elle`}.`);
-      p.push(`${r.image} occupe maintenant ${kio(r.occupation)} (${s(nbPropres(i), "grappe")} propre${nbPropres(i) > 1 ? "s" : ""}) contre ${kio(r.occupationAvant)} avant.`);
+      p.push(`Octet ${hex(r.motif)} écrit dans ${plage(r)} de ${r.image} : ${i.base ? `${r.nombre > 1 ? "rangées" : "rangée"} dans ${r.image} (copie sur écriture), ${i.base} reste intacte` : `image sans base, elle range ${r.nombre > 1 ? "les grappes" : "la grappe"} chez elle`}.`);
+      if (r.occupation !== r.occupationAvant) p.push(`${r.image} : ${kio(r.occupation)} (${nbPropres(i)} propre${nbPropres(i) > 1 ? "s" : ""}), ${kio(r.occupationAvant)} avant.`);
       if (r.touche.length) {
         p.push(...groupesChangement(r.touche));
-        p.push(`Danger : ${r.image} sert de base à ${r.dependantes.join(", ")} ; sa grappe a changé sous leurs pieds, et leurs disques deviennent incohérents.`);
+        const touchees = [...new Set(r.touche.map(c => c.image))];
+        p.push(`Danger : ${r.image} est la base de ${touchees.join(", ")}, ${touchees.length > 1 ? "dont les disques deviennent incohérents" : "dont le disque devient incohérent"}.`);
       }
       const masque = r.masque;
       if (masque.length) p.push(...[...new Set(masque.map(m => m.image))].map(n => {
-        const ms = masque.filter(m => m.image === n);
-        return `${n} ne voit pas ${ms.length > 1 ? "ces changements" : "ce changement"} (grappe ${liste(ms.map(m => m.grappe))}) : ${ms.every(m => m.par === ms[0].par) ? (ms[0].par ? `elle la lit dans ${ms[0].par}, plus haut dans la chaîne` : "") : "une image plus haute fournit la grappe"}.`;
+        const ms = masque.filter(m => m.image === n), gs = liste(ms.map(m => m.grappe)), propres = ms.every(m => m.par === n), pluriel = ms.length > 1;
+        return `${n} ne voit pas ${pluriel ? "ces changements" : "ce changement"} (grappe${pluriel ? "s" : ""} ${gs}) : ${propres ? `${pluriel ? "ses grappes propres cachent celles" : "sa grappe propre cache celle"} de ${r.image}` : `${pluriel ? "une image" : "une image"} plus haute dans la chaîne ${pluriel ? "les fournit" : "la fournit"}`}.`;
       }));
       if (r.etrangeres.length && !r.touche.length) p.push(`${r.etrangeres.join(", ")} ne dépend${r.etrangeres.length > 1 ? "ent" : ""} pas de ${r.image} : ${r.etrangeres.length > 1 ? "elles lisent" : "elle lit"} comme avant.`);
     } else if (r.op === "lire") {
@@ -188,21 +189,21 @@
       p.push(r.fournisseur ? `${r.fournisseur} la fournit : octet ${hex(r.motif)}.` : `Introuvable dans toute la chaîne : elle vaut zéro (octet 00), sans rien occuper.`);
     } else if (r.op === "commit") {
       const [nom, dest] = [r.image, r.dest];
-      p.push(r.copiees.length ? `commit : les ${s(r.copiees.length, "grappe")} propre${r.copiees.length > 1 ? "s" : ""} de ${nom} (${liste(r.copiees)}) sont reversée${r.copiees.length > 1 ? "s" : ""} dans ${dest}.`
+      p.push(r.copiees.length ? `commit : ${r.copiees.length > 1 ? `les ${r.copiees.length} grappes propres` : "la grappe propre"} de ${nom} (${liste(r.copiees)}) ${r.copiees.length > 1 ? "sont reversées" : "est reversée"} dans ${dest}.`
         : `${nom} n'a aucune grappe propre : il n'y a rien à reverser dans ${dest}.`);
-      p.push(`${nom} est vidée et reste adossée à ${dest} : ${kio(r.occupationApres[nom])} contre ${kio(r.occupationAvant[nom])} (QEMU réécrit ses métadonnées : ${KIO_META_VIDEE} Kio, à 4 Kio près selon le système de fichiers) ; ${dest} passe de ${kio(r.occupationAvant[dest])} à ${kio(r.occupationApres[dest])}.`);
+      p.push(`${nom} est vidée, toujours adossée à ${dest} : ${kio(r.occupationApres[nom])} contre ${kio(r.occupationAvant[nom])} (QEMU réécrit ses métadonnées ; ±4 Kio selon le système de fichiers). ${dest} passe de ${kio(r.occupationAvant[dest])} à ${kio(r.occupationApres[dest])}.`);
       const propre = r.touche.filter(c => c.image === nom), chezDest = r.touche.filter(c => c.image === dest), autres = r.touche.filter(c => c.image !== nom && c.image !== dest);
-      p.push(propre.length ? `Défaut : ${nom} ne lit plus les mêmes données.` : `Ce que lit ${nom} n'a pas changé : ses grappes sont maintenant lues dans ${dest}.`);
-      if (chezDest.length) p.push(`${dest} lit maintenant ${chezDest.map(c => `${hex(c.apres)} à la grappe ${c.grappe} (${hex(c.avant)} avant)`).join(", ")} : c'est ce que ${nom} lui a reversé.`);
+      p.push(propre.length ? `Défaut : ${nom} ne lit plus les mêmes données.` : `Ce que lit ${nom} n'a pas changé : ses grappes viennent maintenant de ${dest}.`);
+      if (chezDest.length) p.push(`${dest} lit maintenant ${chezDest.map(c => `${hex(c.apres)} à la grappe ${c.grappe} (${hex(c.avant)} avant)`).join(", ")} : ce que ${nom} lui a reversé.`);
       if (autres.length) { p.push(...groupesChangement(autres)); p.push(`Danger : ${dest} a changé, et ${[...new Set(autres.map(c => c.image))].join(", ")} en dépend${new Set(autres.map(c => c.image)).size > 1 ? "ent" : ""}.`); }
     } else if (r.op === "rebase") {
       const i = image(e, r.image);
-      p.push(`${r.image} s'appuyait sur ${r.ancienne ?? "aucune image"} ; elle s'appuie sur ${r.base ?? "aucune image"} (qemu-img rebase ${r.base ? `-b ${r.base} -F qcow2` : '-b ""'}).`);
+      p.push(`${r.image} ${r.ancienne ? `s'appuyait sur ${r.ancienne}` : "n'avait pas d'image de base"} ; elle ${r.base ? `s'appuie sur ${r.base}` : "n'en a plus"} (qemu-img rebase ${r.base ? `-b ${r.base} -F qcow2` : '-b ""'}).`);
       if (r.copiees.length) {
         const zeros = r.copiees.filter(k => i.zeros[k] || i.grappes[k] === 0), sansPlace = r.copiees.filter(k => i.zeros[k]);
         p.push(`Pour qu'elle lise les mêmes données, qemu-img copie dans ${r.image} les ${s(r.copiees.length, "grappe")} que l'ancienne chaîne fournissait autrement (${liste(r.copiees)})${zeros.length ? `, dont ${s(zeros.length, "écrite")} comme des zéros : la nouvelle chaîne y lit autre chose que zéro${sansPlace.length ? `${sansPlace.length === zeros.length ? "" : ` (${sansPlace.length} sans place`}${sansPlace.length === zeros.length ? " ; sans ancienne base, QEMU les marque « zéro » : aucune place occupée" : ")"}` : ""}` : ""}.`);
       } else p.push(`La nouvelle chaîne fournit déjà les mêmes données : aucune grappe à copier.`);
-      p.push(`${r.image} occupe ${kio(r.occupation)} contre ${kio(r.occupationAvant)} avant. ${r.inchange ? `Ce qu'elle lit n'a pas changé.` : `Défaut : ce qu'elle lit a changé.`}`);
+      p.push(`${r.image} occupe ${r.occupation === r.occupationAvant ? `toujours ${kio(r.occupation)}` : `${kio(r.occupation)} contre ${kio(r.occupationAvant)} avant`}. ${r.inchange ? `Ce qu'elle lit n'a pas changé.` : `Défaut : ce qu'elle lit a changé.`}`);
     }
     return p;
   }
@@ -317,8 +318,6 @@
   function construire() {
     racine.replaceChildren(
       el("section", { class: "zone-commandes" },
-        el("div", { class: "titre-zone" }, el("h2", {}, "Commandes"),
-          bouton("Remettre à zéro", () => { moteur.fermer(); tour++; sim = depart(); choix = { image: BASE, grappe: 0, motif: 0xaa, cible: "" }; derniere = []; signal = new Set(); phase = 2; tailles = null; dessiner(); }, { class: "zero-bouton" })),
         el("div", { class: "commandes" },
           el("div", { class: "rangee" },
             el("label", {}, el("span", { class: "champ" }, "image"), menu("image", "Image visée", [], v => { choix.image = v; dessiner(); })),
@@ -332,11 +331,12 @@
             bouton("commit", () => mainLibre({ op: "commit", image: choix.image }), { "data-action": "commit", title: "qemu-img commit image" }),
             bouton("rebase sur", () => mainLibre({ op: "rebase", image: choix.image, base: choix.cible || null, sansCopie: choix.sansCopie }), { "data-action": "rebase", title: "qemu-img rebase -b cible -F qcow2 image" }),
             el("label", {}, menu("cible", "Nouvelle image de base du rebase", [], v => { choix.cible = v; dessiner(); })),
-            el("label", { class: "option" }, el("input", { type: "checkbox", "data-cle": "sansCopie", onchange: ev => { choix.sansCopie = ev.target.checked; dessiner(); } }), el("code", {}, "-u"))))),
+            el("label", { class: "option" }, el("input", { type: "checkbox", "data-cle": "sansCopie", onchange: ev => { choix.sansCopie = ev.target.checked; dessiner(); } }), el("code", {}, "-u")),
+            bouton("Remettre à zéro", () => { moteur.fermer(); tour++; sim = depart(); choix = { image: BASE, grappe: 0, motif: 0xaa, cible: "" }; derniere = []; signal = new Set(); phase = 2; tailles = null; dessiner(); }, { class: "zero-bouton" })))),
       el("section", { class: "zone-images cadre" },
         el("div", { class: "entete-images" }, el("h2", {}, "Images, vues depuis chacune"), el("div", { class: "index", "aria-hidden": "true" })),
         el("div", { class: "images" }),
-        el("p", { class: "mention" }, "Case : l'octet lu, et l'image qui le fournit (B = base, 1 = vm1…). Trait plein : grappe propre ; ↓ : lue plus bas ; · : zéro. La case -u (rebase sans copie) n'est pas simulée.")),
+        el("p", { class: "mention" }, "Octet lu et image qui le fournit (B = base, 1 = vm1…). Trait plein : propre ; ↓ : lue plus bas ; · : zéro. -u (rebase sans copie) : non simulé.")),
       el("section", { class: "zone-explication cadre" }, el("h2", {}, "Ce que dit le résultat"),
         el("div", { class: "explication-texte", role: "status", "aria-live": "polite" })));
   }
@@ -352,31 +352,31 @@
   const premiere = (...ops) => async () => { remise(); return enchainer(ops); };
   const RECETTES = {
     "ecriture-cow": [
-      ["Créer base.qcow2 et y écrire l'octet 0xaa dans 1 Mio (les 16 grappes).", premiere(...base1M())],
+      ["Créer base.qcow2, y écrire 0xaa dans 1 Mio.", premiere(...base1M())],
       ["Créer vm1.qcow2 adossée à base.qcow2.", etape(adosser(BASE))],
       ["Écrire 0xbb dans la grappe 0 de vm1.qcow2.", etape(ecrire("vm1.qcow2", 0, 0xbb))],
       ["Lire la grappe 5 depuis vm1.qcow2.", etape(lire("vm1.qcow2", 5))],
     ],
     "vm-de-plus": [
-      ["Créer base.qcow2 et y écrire l'octet 0xaa dans 1 Mio.", premiere(...base1M())],
+      ["Créer base.qcow2, y écrire 0xaa dans 1 Mio.", premiere(...base1M())],
       ["Créer vm1.qcow2 adossée à base.qcow2.", etape(adosser(BASE))],
-      ["Créer vm2.qcow2, adossée elle aussi à base.qcow2.", etape(adosser(BASE))],
+      ["Créer vm2.qcow2, adossée aussi à base.qcow2.", etape(adosser(BASE))],
       ["Écrire 0xcc dans la grappe 3 de vm2.qcow2.", etape(ecrire("vm2.qcow2", 3, 0xcc))],
     ],
     "danger-base": [
-      ["Créer base.qcow2 (0xaa dans 1 Mio), puis vm1.qcow2 et vm2.qcow2 adossées à elle.", premiere(...base1M(), adosser(BASE), adosser(BASE))],
+      ["Créer base.qcow2 (0xaa dans 1 Mio), vm1 et vm2 adossées.", premiere(...base1M(), adosser(BASE), adosser(BASE))],
       ["Écrire 0xbb dans la grappe 0 de vm1.qcow2.", etape(ecrire("vm1.qcow2", 0, 0xbb))],
       ["Écrire 0xdd dans la grappe 0 de base.qcow2.", etape(ecrire(BASE, 0, 0xdd))],
       ["Écrire 0xdd dans la grappe 5 de base.qcow2.", etape(ecrire(BASE, 5, 0xdd))],
     ],
     "chaine-commit": [
-      ["Créer base.qcow2 (0xaa dans 1 Mio) ; créer vm1.qcow2 adossée à base.qcow2 et y écrire 0xbb dans la grappe 1.", premiere(...base1M(), adosser(BASE), ecrire("vm1.qcow2", 1, 0xbb))],
-      ["Créer vm2.qcow2 adossée à vm1.qcow2 et y écrire 0xcc dans la grappe 2.", etape(adosser("vm1.qcow2"), ecrire("vm2.qcow2", 2, 0xcc))],
+      ["Créer base (0xaa dans 1 Mio), vm1 adossée, 0xbb en grappe 1.", premiere(...base1M(), adosser(BASE), ecrire("vm1.qcow2", 1, 0xbb))],
+      ["Créer vm2 adossée à vm1, 0xcc en grappe 2.", etape(adosser("vm1.qcow2"), ecrire("vm2.qcow2", 2, 0xcc))],
       ["Lire les grappes 0, 1 et 2 depuis vm2.qcow2.", etape(lire("vm2.qcow2", 0), lire("vm2.qcow2", 1), lire("vm2.qcow2", 2))],
       ["commit de vm2.qcow2 dans sa base, vm1.qcow2.", etape({ op: "commit", image: "vm2.qcow2" })],
     ],
     "rebase": [
-      ["Créer base.qcow2 (0xaa dans 1 Mio) ; vm1.qcow2 adossée à base.qcow2, avec 0xbb dans la grappe 1 ; vm2.qcow2 adossée à vm1.qcow2, avec 0xcc dans la grappe 2.",
+      ["Créer base (0xaa), vm1 (0xbb en grappe 1), vm2 sur vm1 (0xcc en grappe 2).",
         premiere(...base1M(), adosser(BASE), ecrire("vm1.qcow2", 1, 0xbb), adosser("vm1.qcow2"), ecrire("vm2.qcow2", 2, 0xcc))],
       ["rebase de vm2.qcow2 sur base.qcow2, sans passer par vm1.qcow2.", etape({ op: "rebase", image: "vm2.qcow2", base: BASE })],
       ["rebase de vm2.qcow2 sur aucune image (aplatir).", etape({ op: "rebase", image: "vm2.qcow2", base: null })],

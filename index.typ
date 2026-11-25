@@ -80,6 +80,7 @@ Sept cours, à lire dans l’ordre de la page : les outils de l’administrateur
     #actions(
       bouton(principal: true, [Diapositives], pdf("virtualisation", "projection")),
       bouton([TP : Administrer des VM avec libvirt], "virtualisation/tp/libvirt/"),
+      bouton([Artefact : La chaîne d’images qcow2], "virtualisation/artefacts/chaine-qcow2/"),
     )
     #rendus("virtualisation")
   ],
