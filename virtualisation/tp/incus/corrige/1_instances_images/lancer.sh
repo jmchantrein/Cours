@@ -6,8 +6,9 @@ set -eu
 incus launch images:debian/13 vm1 --vm
 
 # incus exec passe par l'agent de la VM, qui ne répond qu'une fois le système
-# invité démarré : on attend sa première réponse.
-until incus exec vm1 -- true 2> /dev/null; do sleep 2; done
+# invité démarré : on attend sa première réponse, deux minutes au plus (au-delà,
+# timeout arrête l'attente et le script échoue).
+timeout 120 sh -c 'until incus exec vm1 -- true 2> /dev/null; do sleep 2; done'
 
 incus list
 incus info vm1

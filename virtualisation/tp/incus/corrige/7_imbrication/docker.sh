@@ -9,7 +9,8 @@ incus launch images:debian/13 docker --vm \
   --config limits.cpu=2 --config limits.memory=2GiB \
   --device root,size=20GiB
 
-until incus exec docker -- getent hosts deb.debian.org > /dev/null 2>&1; do sleep 2; done
+# L'agent de la VM, puis le réseau : deux minutes au plus.
+timeout 120 sh -c 'until incus exec docker -- getent hosts deb.debian.org > /dev/null 2>&1; do sleep 2; done'
 
 # Les paquets du cours de conteneurisation.
 incus exec docker -- apt-get update

@@ -118,8 +118,33 @@ jobs:
           apt-cache policy incus | head -n 3
           sudo apt-get install -y incus qemu-system-x86 ovmf
           incus --version
+          # Ubuntu 26.04 fournit les coreutils de uutils (Rust) : leur dd 0.10
+          # lit en O_DIRECT dans un tampon non aligné, et le noyau refuse
+          # (EINVAL : « dd: IO error: Invalid input »). Or le pilote dir d'Incus
+          # copie le disque d'une VM par « dd … iflag=direct oflag=direct » dès
+          # que le fichier s'ouvre en O_DIRECT (copyDevice, internal/server/
+          # storage/drivers/utils.go) : instantané et restauration échouent.
+          # Debian 13, la cible du TP, a le dd de GNU. Le démon, et lui seul,
+          # reçoit donc les coreutils de GNU (paquet gnu-coreutils, commandes
+          # préfixées gnu) en tête de son PATH.
+          dd --version | head -n 1
+          if ! dd --version 2>&1 | head -n 1 | grep -q 'GNU coreutils'; then
+            sudo apt-get install -y gnu-coreutils
+            sudo mkdir -p /usr/local/lib/incus-gnu /etc/systemd/system/incus.service.d
+            for f in $(dpkg -L gnu-coreutils | grep '^/usr/bin/gnu'); do
+              sudo ln -sf "$f" "/usr/local/lib/incus-gnu/${f#/usr/bin/gnu}"
+            done
+            # Un EnvironmentFile ajouté après ceux du paquet l'emporte sur eux.
+            echo 'PATH=/usr/local/lib/incus-gnu:/usr/libexec/incus:/usr/sbin:/usr/bin:/sbin:/bin' \
+              | sudo tee /etc/default/incus-ci > /dev/null
+            printf '[Service]\nEnvironmentFile=/etc/default/incus-ci\n' \
+              | sudo tee /etc/systemd/system/incus.service.d/gnu-coreutils.conf > /dev/null
+            sudo systemctl daemon-reload
+            /usr/local/lib/incus-gnu/dd --version | head -n 1
+          fi
           # Le démon relit ses pilotes (qemu) à son démarrage.
           sudo systemctl restart incus
+          echo "PATH du démon : $(sudo cat "/proc/$(pgrep -o -x incusd)/environ" | tr '\0' '\n' | sed -n 's/^PATH=//p')"
           sudo incus admin init --minimal
           sudo usermod -aG incus-admin "$USER"
           sudo incus info | grep -E '^ +(driver|driver_version|server_version|storage|firewall):'
@@ -136,11 +161,21 @@ jobs:
 
       # « sudo --user » ouvre une session neuve du même compte : elle a le groupe
       # incus-admin, que le shell de cette étape n'a pas encore.
+      # Le harnais s'arrête de lui-même avant le délai du job : sur SIGTERM, il
+      # affiche le bilan de ce qu'il a vérifié, puis nettoie.
       - name: Harnais (--up)
         env:
           TP: ${{ matrix.tp }}
+          DELAI: ${{ matrix.delai }}
         run: |
-          if ! sudo --user "$USER" bash "$TP/tester.sh" --up; then
+          if ! timeout -k 3m "$((DELAI - 12))m" sudo --user "$USER" bash "$TP/tester.sh" --up; then
             echo "::error file=$TP/tester.sh::$TP/tester.sh --up a échoué (bilan à la fin du journal)"
             exit 1
           fi
+
+      # Après un échec, l'état d'Incus tel que le harnais l'a laissé.
+      - name: État d'Incus après le harnais
+        if: failure() && matrix.incus
+        run: |
+          sudo incus list --all-projects || true
+          sudo journalctl -u incus --no-pager | tail -n 60 || true

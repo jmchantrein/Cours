@@ -22,11 +22,12 @@ titre "Redémarrage : de incus restart à la première réponse de incus exec (s
 for instance in ct1 vm1; do
   debut="$(date +%s)"
   incus restart "$instance"
-  until incus exec "$instance" -- true 2> /dev/null; do sleep 1; done
+  timeout 120 sh -c "until incus exec $instance -- true 2> /dev/null; do sleep 1; done"
   printf '%s  : %s s\n' "$instance" "$(($(date +%s) - debut))"
-  # La suite mesure ce démarrage : on attend qu'il soit fini. Le code de
-  # retour signale un service en échec, ce qui n'empêche pas la mesure.
-  incus exec "$instance" -- systemctl is-system-running --wait > /dev/null || true
+  # La suite mesure ce démarrage : on attend qu'il soit fini, deux minutes au
+  # plus. Le code de retour signale un service en échec, ou le délai dépassé,
+  # ce qui n'empêche pas la mesure.
+  timeout 120 incus exec "$instance" -- systemctl is-system-running --wait > /dev/null || true
 done
 
 titre "Démarrage : les phases que systemd a chronométrées"

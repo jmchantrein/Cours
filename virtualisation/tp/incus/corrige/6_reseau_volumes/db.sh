@@ -13,7 +13,7 @@ incus launch images:debian/13 db
 # crée ses fichiers, ou y retrouve ceux d'une instance précédente.
 incus storage volume attach default donnees db /var/lib/mysql
 
-until incus exec db -- getent hosts deb.debian.org > /dev/null 2>&1; do sleep 2; done
+timeout 120 sh -c 'until incus exec db -- getent hosts deb.debian.org > /dev/null 2>&1; do sleep 2; done'
 incus exec db -- apt-get update
 incus exec db --env DEBIAN_FRONTEND=noninteractive -- apt-get install -y mariadb-server
 

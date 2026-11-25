@@ -20,10 +20,14 @@
 #   1  vm1 est une machine virtuelle, un processus QEMU de l'hôte sous un compte
 #      sans privilège ; son système se sait sous KVM ; elle joint les dépôts ;
 #   2  WordPress répond en HTTP, joint sa base et s'installe ;
-#   3  l'instantané restaure le site cassé ; Incus 6.0 refuse d'augmenter à
-#      chaud la mémoire de la VM ; après redémarrage elle a 2 processeurs et
-#      2 Gio, et ses services sont revenus seuls ;
-#   4  le conteneur partage le noyau de l'hôte et la VM non ; il redémarre plus
+#   3  l'instantané restaure le site cassé ; à chaud, Incus refuse d'augmenter
+#      la mémoire de la VM s'il n'a pas l'extension memory_hotplug (6.0.4, celui
+#      de Debian 13) et l'accepte s'il l'a (6.0.5) ; après redémarrage elle a
+#      2 processeurs et 2 Gio, et ses services sont revenus seuls ;
+#   4  (avant les étapes 4, 5 et 6, une fois) un conteneur témoin reçoit une
+#      adresse IPv4 sur le pont ; sinon, diagnostic du réseau des conteneurs,
+#      et ces étapes sont abandonnées ;
+#      le conteneur partage le noyau de l'hôte et la VM non ; il redémarre plus
 #      vite qu'elle ; ses processus sont visibles de l'hôte sous des UID
 #      décalés, et sous 0 et 33 dans le conteneur ; il voit la mémoire de
 #      l'hôte, puis sa limite ; le proxy publie son port 80 sur le port 8080
@@ -56,7 +60,9 @@
 #
 # Intégration continue (.github/workflows/test-corriges.yml), qui lit ces deux
 # lignes : délai du job en minutes, prérequis à installer.
-#   ci-delai: 180
+# Chaque attente est bornée (deux minutes en général) : un passage normal
+# dure une demi-heure environ, le délai du job n'est qu'un filet.
+#   ci-delai: 120
 #   ci-prerequis: incus
 set -euo pipefail
 
@@ -83,6 +89,25 @@ case "$seule" in "" | [1-7]) ;; *) echo "--only attend un numéro d'étape, de 1
 # ---------------------------------------------------------------- comptes rendus
 
 reussis=0; echecs=()
+bilan() { # le compte rendu final, et le code de sortie
+  printf '\n======== Bilan (%s) : %s vérifications réussies, %s en échec ========\n' "--$mode" "$reussis" "${#echecs[@]}"
+  if [ "${#echecs[@]}" -gt 0 ]; then
+    printf '  - %s\n' "${echecs[@]}"
+    exit 1
+  fi
+  exit 0
+}
+# Interrompu (délai du job, Ctrl+C) : le bilan de ce qui a été vérifié, puis le
+# nettoyage (trap EXIT).
+# shellcheck disable=SC2317 # appelée par trap
+interrompu() { # $1 signal
+  trap "" TERM INT   # un second signal (sudo le relaie) ne doit pas couper le bilan
+  if [ -n "${enfant:-}" ]; then kill "$enfant" 2> /dev/null || true; fi
+  ko "harnais interrompu par le signal $1 (délai dépassé ?)"
+  bilan
+}
+trap 'interrompu TERM' TERM
+trap 'interrompu INT' INT
 ok() { printf 'OK     %s\n' "$*"; reussis=$((reussis + 1)); }
 ko() { printf 'ÉCHEC  %s\n' "$*"; echecs+=("$*"); }
 info() { printf '       %s\n' "$*"; }
@@ -195,6 +220,7 @@ PYTHON
 
 travail=""
 isolation_prete=""
+version_serveur=""; memoire_a_chaud=""; debut_harnais=""
 
 mourir() { printf '%s\n' "$@" >&2; exit 1; }
 
@@ -249,6 +275,7 @@ supprimer_instances() { # $1… instances
   for i in "$@"; do incus delete --force "$i" > /dev/null 2>&1 || true; done
 }
 
+# shellcheck disable=SC2317 # appelée par trap
 en_sortie() {
   [ -n "$travail" ] || return 0
   if [ -z "$garder" ]; then
@@ -269,6 +296,7 @@ preparer() {
   command -v curl > /dev/null || mourir "curl est introuvable dans le PATH."
   travail="$(mktemp -d "${TMPDIR:-/tmp}/tptest-incus.XXXXXX")"
   trap en_sortie EXIT
+  debut_harnais="$(date '+%Y-%m-%d %H:%M:%S')"
 
   # Les faits utiles au diagnostic, d'abord.
   echo "======== Environnement ========"
@@ -283,6 +311,13 @@ preparer() {
   fi
   grep -E '^ +(driver|driver_version|kernel_version|server_version|storage|firewall|os_name|os_version):' \
     "$travail/incus-info.txt" | retrait || true
+  version_serveur="$(sed -n 's/^ *server_version: *"\{0,1\}\([^"]*\)"\{0,1\}$/\1/p' "$travail/incus-info.txt" | head -n 1)"
+  # L'extension d'API memory_hotplug (Incus 6.12, reportée dans 6.0.5) décide
+  # de ce que l'étape 3 attend d'une augmentation de mémoire à chaud.
+  if grep -qx -e '- memory_hotplug' "$travail/incus-info.txt"; then memoire_a_chaud="1"; else memoire_a_chaud=""; fi
+  info "extension memory_hotplug : $(if [ -n "$memoire_a_chaud" ]; then echo présente; else echo absente; fi)"
+  # Le pilote dir copie le disque d'une VM avec dd (instantanés) : celui du PATH du démon.
+  info "dd de l'hôte : $(dd --version 2>&1 | head -n 1)"
   [ -e /dev/kvm ] || mourir "/dev/kvm est absent : pas de machine virtuelle sans KVM." \
     "Activez VT-x ou AMD-V dans l'UEFI ; dans une VM, activez la virtualisation imbriquée."
   grep -Eq '^ +driver: .*qemu' "$travail/incus-info.txt" || mourir \
@@ -317,11 +352,19 @@ preparer() {
 # Le script tourne tel quel, dans le projet du harnais, avec la trace de ses
 # commandes (sh -x) : en cas d'échec, la fin du journal montre la commande fautive.
 
+# Le script tourne en arrière-plan : « wait » laisse le harnais traiter aussitôt
+# un signal (délai du job), au lieu d'attendre la fin du script.
+enfant=""
 jouer() { # $1 script, relatif à corrige/  $2 délai en secondes
   local journal code=0
   journal="$travail/$(tr '/' '_' <<< "$1").log"
   info "→ corrige/$1 (délai : $2 s)"
-  timeout -k 30 "$2" sh -x "$corrige/$1" > "$journal" 2>&1 || code=$?
+  timeout -k 30 "$2" sh -x "$corrige/$1" > "$journal" 2>&1 &
+  enfant=$!
+  wait "$enfant" || code=$?
+  enfant=""
+  # Les barres de progression d'incus launch réécrivent leur ligne : une seule ligne suffit.
+  sed -i -e 's/.*\r\([^\r]\)/\1/' -e '/^Retrieving image: /d' "$journal" 2> /dev/null || true
   if [ "$code" -eq 0 ]; then
     ok "script $1"
     tail -n 8 "$journal" | retrait
@@ -341,14 +384,25 @@ dans() { # $1 instance  $2… commande
 # Colonne d'incus list pour une instance, désignée par son nom exact.
 colonne() { incus list "^$1\$" -c "$2" -f csv 2> /dev/null || true; } # $1 instance  $2 colonne
 
-adresse() { # $1 instance : son adresse IPv4 sur le pont, attendue jusqu'à deux minutes
-  local a
-  for _ in $(seq 1 60); do
-    a="$(colonne "$1" 4 | grep -m 1 -o '^[0-9.]*' || true)"
-    if [ -n "$a" ]; then echo "$a"; return 0; fi
+# Toute attente du harnais est bornée : une à deux minutes sans résultat, et
+# l'échec est constaté.
+pendant() { # $1 secondes  $2… commande : rejouée toutes les 2 s jusqu'à son succès ou la fin du délai
+  local fin=$((SECONDS + $1)); shift
+  while :; do
+    if "$@"; then return 0; fi
+    [ "$SECONDS" -lt "$fin" ] || return 1
     sleep 2
   done
-  return 1
+}
+
+adresse() { # $1 instance  [$2 délai en s, 120 par défaut] : son adresse IPv4 sur le pont
+  local a fin=$((SECONDS + ${2:-120}))
+  while :; do
+    a="$(colonne "$1" 4 | grep -m 1 -o '^[0-9.]*' || true)"
+    if [ -n "$a" ]; then echo "$a"; return 0; fi
+    [ "$SECONDS" -lt "$fin" ] || return 1
+    sleep 2
+  done
 }
 
 # Ce qu'il faut pour comprendre un échec sans accès à la machine.
@@ -360,24 +414,154 @@ diagnostic() { # $1… instances
     echo "------ incus info $i --show-log (fin)"
     incus info "$i" --show-log 2>&1 | tail -n 30 | retrait || true
     echo "------ $i : services en échec, fin du journal"
-    timeout 60 incus exec "$i" -- sh -c 'systemctl --failed --no-pager --no-legend; journalctl -n 25 --no-pager' 2>&1 \
+    timeout 20 incus exec "$i" -- sh -c 'systemctl --failed --no-pager --no-legend; journalctl -n 25 --no-pager' 2>&1 \
       | tail -n 40 | retrait || true
+    # Un conteneur en marche sans IPv4 : le diagnostic du réseau.
+    if [ "$(colonne "$i" ts)" = "CONTAINER,RUNNING" ] && [ -z "$(colonne "$i" 4)" ]; then diagnostic_reseau "$i"; fi
   done
 }
 
 diagnostic_cloud_init() { # $1 instance
   echo "------ $1 : cloud-init status --long, fin de cloud-init-output.log"
-  timeout 60 incus exec "$1" -- sh -c 'cloud-init status --long; tail -n 40 /var/log/cloud-init-output.log' 2>&1 \
+  timeout 20 incus exec "$1" -- sh -c 'cloud-init status --long; tail -n 40 /var/log/cloud-init-output.log' 2>&1 \
     | retrait || true
+}
+
+# Une commande de l'hôte, sous sudo sans mot de passe si possible, sinon sous le
+# compte courant ; sa sortie est bornée.
+hote() { # $1 titre  $2… commande
+  local titre="$1"; shift
+  echo "------ hôte : $titre"
+  if sudo -n true 2> /dev/null; then timeout 30 sudo -n "$@" 2>&1 | head -n 200 | retrait || true
+  else timeout 30 "$@" 2>&1 | head -n 200 | retrait || true; fi
+}
+
+# Un conteneur système sans adresse IPv4 : de quoi départager, en un passage, le
+# client DHCP du conteneur (systemd-networkd et le reste de systemd), le
+# serveur DHCP du pont (dnsmasq), le pare-feu de l'hôte et le pont lui-même.
+# La partie hôte et les témoins ne sont joués qu'une fois par passage.
+diagnostic_reseau_fait=""
+diagnostic_reseau() { # $1 conteneur sans IPv4
+  local ct="$1" t pid temoins=()
+  echo "======== Diagnostic : $ct n'a pas d'adresse IPv4 sur $pont"
+  incus info "$ct" 2>&1 | sed -n '/^Network usage:/,$p' | head -n 30 | retrait || true
+  echo "------ $ct : console (messages de systemd au démarrage, fin)"
+  incus console "$ct" --show-log 2>&1 | tail -n 60 | retrait || true
+  echo "------ $ct : systemd, systemd-networkd, adresses, processus"
+  # Chaque commande a son délai : un systemd bloqué ne doit pas bloquer le diagnostic.
+  # shellcheck disable=SC2016 # développé dans le conteneur
+  timeout 90 incus exec "$ct" -- sh -c '
+    t() { echo "--- $*"; timeout 10 "$@" 2>&1 | tail -n 40; }
+    t systemctl --version
+    t systemctl is-system-running
+    t systemctl --failed --no-pager --no-legend
+    t systemctl list-jobs --no-pager
+    t systemctl status --no-pager --lines=5 systemd-networkd systemd-journald
+    t networkctl status eth0 --no-pager
+    t journalctl -b -u systemd-networkd --no-pager
+    echo "--- /etc/systemd/network/*"; head -n 30 /etc/systemd/network/* 2>&1
+    t ip -4 addr
+    t ip route
+    echo "--- /etc/resolv.conf"; cat /etc/resolv.conf 2>&1
+    echo "--- ps (état, attente noyau)"; ps -eo pid,ppid,stat,wchan:30,etime,args 2>&1 | head -n 60
+    echo "--- ps -e | wc -l : $(ps -e | wc -l)"
+  ' 2>&1 | retrait || true
+
+  [ -z "$diagnostic_reseau_fait" ] || return 0
+  diagnostic_reseau_fait="1"
+
+  echo "------ hôte : le pont $pont, et incusbr0 pour comparer"
+  incus network show "$pont" --project default 2>&1 | retrait || true
+  incus network info "$pont" --project default 2>&1 | head -n 20 | retrait || true
+  incus network show incusbr0 --project default 2>&1 | sed -n '/^config:/,/^description:/p' | retrait || true
+  hote "baux et réservations de dnsmasq pour $pont" sh -c \
+    "ls -l /var/lib/incus/networks/$pont/; cat /var/lib/incus/networks/$pont/dnsmasq.leases; ls /var/lib/incus/networks/$pont/dnsmasq.hosts/"
+  hote "processus dnsmasq" ps -o pid,args -C dnsmasq
+  hote "journal du démon depuis le début du test (dnsmasq, dhcp)" sh -c \
+    "journalctl -u incus --since '$debut_harnais' --no-pager | grep -i -E 'dnsmasq|dhcp' | tail -n 40"
+  hote "table nftables d'Incus" nft list table inet incus
+  hote "règles nftables (début)" nft list ruleset
+  hote "br_netfilter et sysctl des ponts" sh -c \
+    "if [ -d /sys/module/br_netfilter ]; then echo 'br_netfilter chargé'; else echo 'br_netfilter non chargé'; fi; sysctl net.bridge.bridge-nf-call-iptables net.bridge.bridge-nf-call-ip6tables net.bridge.bridge-nf-call-arptables 2>&1"
+  hote "AppArmor : refus, tâches bloquées (dmesg)" sh -c \
+    "dmesg | grep -i -E 'apparmor=\"DENIED\"|blocked for more than|hung_task' | tail -n 30; cat /proc/sys/kernel/apparmor_restrict_unprivileged_userns 2>&1; apparmor_parser --version 2>&1 | head -n 1"
+  # Processus bloqués dans le noyau (état D) : leur pile dit où.
+  for pid in $(ps -eo pid=,stat= | awk '$2 ~ /^D/ { print $1 }' | head -n 5); do
+    hote "pile noyau du processus $pid (état D) : $(ps -o args= -p "$pid" | cut -c 1-80)" cat "/proc/$pid/stack"
+  done
+  # Le DHCP sur le pont pendant que le conteneur renouvelle son bail : une
+  # demande sans réponse, une réponse ignorée, ou aucune demande.
+  if command -v tcpdump > /dev/null && sudo -n true 2> /dev/null; then
+    echo "------ hôte : DHCP sur $pont pendant 20 s (networkctl renew eth0 dans $ct)"
+    # shellcheck disable=SC2024 # le fichier appartient au compte courant
+    sudo -n timeout 20 tcpdump -n -e -vv -i "$pont" -c 20 'udp port 67 or udp port 68' > "$travail/dhcp.txt" 2>&1 &
+    t=$!
+    sleep 2
+    timeout 15 incus exec "$ct" -- networkctl renew eth0 > /dev/null 2>&1 || true
+    wait "$t" || true
+    head -n 80 "$travail/dhcp.txt" | retrait
+  else
+    info "(tcpdump ou sudo sans mot de passe indisponible : pas de capture DHCP)"
+  fi
+
+  # Témoins : la même image, sur incusbr0, puis sur $pont avec security.nesting
+  # (systemd peut alors monter ce que l'AppArmor d'un conteneur lui refuse),
+  # puis privilégié (pas d'espace de noms utilisateur).
+  echo "------ témoins : la même image, autrement lancée (adresse attendue 90 s)"
+  if incus network show incusbr0 --project default > /dev/null 2>&1 \
+    && incus launch images:debian/13 tptest-temoin-incusbr0 --network incusbr0 > /dev/null 2>&1; then
+    temoins+=(tptest-temoin-incusbr0)
+  fi
+  incus launch images:debian/13 tptest-temoin-nesting -c security.nesting=true > /dev/null 2>&1 \
+    && temoins+=(tptest-temoin-nesting)
+  incus launch images:debian/13 tptest-temoin-privilegie -c security.privileged=true > /dev/null 2>&1 \
+    && temoins+=(tptest-temoin-privilegie)
+  pendant 90 tous_adresses "${temoins[@]}" || true
+  for t in "${temoins[@]}"; do
+    info "$t : IPv4 « $(colonne "$t" 4) », $(timeout 10 incus exec "$t" -- systemctl is-system-running 2>&1 || true), $(colonne "$t" N) processus"
+  done
+  supprimer_instances "${temoins[@]}"
+  echo "======== Fin du diagnostic de $ct"
+}
+
+# shellcheck disable=SC2317 # appelée par pendant
+tous_adresses() { # $1… instances : toutes ont une adresse IPv4
+  local i
+  for i in "$@"; do [ -n "$(colonne "$i" 4)" ] || return 1; done
+}
+
+# Le réseau des conteneurs système, établi une fois par passage sur un témoin
+# avant la première étape qui en lance : sans lui, ces étapes sont abandonnées
+# en quelques minutes au lieu d'attendre leurs délais.
+reseau_conteneurs=""   # vide : pas encore établi ; ok ; ko
+controler_reseau_conteneurs() { # $1 étape ; réussit si les conteneurs ont le réseau
+  local a sortie
+  if [ -z "$reseau_conteneurs" ]; then
+    reseau_conteneurs="ko"
+    if ! sortie="$(incus launch images:debian/13 tptest-temoin 2>&1)"; then
+      ko "étape $1 : lancement du conteneur témoin impossible"; tail -n 5 <<< "$sortie" | retrait
+    elif a="$(adresse tptest-temoin 90)"; then
+      reseau_conteneurs="ok"
+      ok "étape $1 : un conteneur témoin reçoit une adresse sur $pont ($a)"
+    else
+      ko "étape $1 : un conteneur témoin n'a pas d'adresse IPv4 sur $pont après 90 s"
+      diagnostic_reseau tptest-temoin
+    fi
+    supprimer_instances tptest-temoin
+  elif [ "$reseau_conteneurs" = "ko" ]; then
+    ko "étape $1 : non jouée, les conteneurs n'ont pas de réseau (voir le diagnostic plus haut)"
+  fi
+  [ "$reseau_conteneurs" = "ok" ]
 }
 
 # ------------------------------------------------------------------ HTTP, WordPress
 
 attendre_http() { # $1 url : une réponse 2xx ou 3xx en moins de deux minutes
-  local code
-  for _ in $(seq 1 60); do
-    code="$(curl -s -o /dev/null -m 10 -w '%{http_code}' "$1" 2> /dev/null || true)"
+  local code fin=$((SECONDS + 120))
+  while :; do
+    code="$(curl -s -o /dev/null -m 5 -w '%{http_code}' "$1" 2> /dev/null || true)"
     case "$code" in 2?? | 3??) return 0 ;; esac
+    [ "$SECONDS" -lt "$fin" ] || break
     sleep 2
   done
   info "dernier code HTTP de $1 : ${code:-aucun}"
@@ -389,10 +573,11 @@ attendre_http() { # $1 url : une réponse 2xx ou 3xx en moins de deux minutes
 # l'installation, la page d'accueil porte le titre choisi, lu dans la base.
 mot_de_passe_wp="tptest-$RANDOM-$RANDOM"
 wp_installer() { # $1 url du site  $2 titre
-  local corps pret=""
-  for _ in $(seq 1 40); do
-    corps="$(curl -s -m 30 "$1/wp-admin/install.php?step=1" 2> /dev/null || true)"
+  local corps pret="" fin=$((SECONDS + 120))
+  while :; do
+    corps="$(curl -s -m 15 "$1/wp-admin/install.php?step=1" 2> /dev/null || true)"
     if [[ "$corps" == *'name="weblog_title"'* ]]; then pret="1"; break; fi
+    [ "$SECONDS" -lt "$fin" ] || break
     sleep 3
   done
   if [ -z "$pret" ]; then
@@ -410,18 +595,18 @@ wp_installer() { # $1 url du site  $2 titre
 }
 
 wp_titre_present() { # $1 url du site  $2 titre : attendu jusqu'à une minute
-  local corps
-  for _ in $(seq 1 20); do
-    corps="$(curl -sL -m 30 "$1/" 2> /dev/null || true)"
+  local corps fin=$((SECONDS + 60))
+  while :; do
+    corps="$(curl -sL -m 10 "$1/" 2> /dev/null || true)"
     if [[ "$corps" == *"<title>$2"* ]]; then return 0; fi
+    [ "$SECONDS" -lt "$fin" ] || return 1
     sleep 3
   done
-  return 1
 }
 
 wp_titre_absent() { # $1 url du site  $2 titre : un seul essai
   local corps
-  corps="$(curl -sL -m 30 "$1/" 2> /dev/null || true)"
+  corps="$(curl -sL -m 10 "$1/" 2> /dev/null || true)"
   [[ "$corps" != *"<title>$2"* ]]
 }
 
@@ -461,7 +646,7 @@ titre_vm1="tptest-vm1-$RANDOM"
 if voulue 1; then
   titre_etape 1 1_instances_images "instances et images"
   verifier_script 1_instances_images/lancer.sh
-  if [ "$mode" = "up" ] && jouer 1_instances_images/lancer.sh 900; then
+  if [ "$mode" = "up" ] && jouer 1_instances_images/lancer.sh 600; then
     vm1_prete="1"
     etat="$(colonne vm1 ts)"
     if [ "$etat" = "VIRTUAL-MACHINE,RUNNING" ]; then ok "étape 1 : vm1 est une machine virtuelle en marche"
@@ -488,12 +673,7 @@ if voulue 1; then
     else ko "étape 1 : systemd-detect-virt répond « $virt » dans vm1"; fi
 
     # Le réseau du pont : sans lui, aucune des étapes suivantes n'aboutit.
-    joint=""
-    for _ in $(seq 1 30); do
-      if timeout 30 incus exec vm1 -- bash -c 'exec 3<> /dev/tcp/deb.debian.org/80' 2> /dev/null; then joint="1"; break; fi
-      sleep 4
-    done
-    if [ -n "$joint" ]; then
+    if pendant 120 timeout 10 incus exec vm1 -- bash -c 'exec 3<> /dev/tcp/deb.debian.org/80' 2> /dev/null; then
       ok "étape 1 : la VM joint les dépôts Debian (pont, NAT, résolution de noms)"
     else
       ko "étape 1 : la VM ne joint pas deb.debian.org"
@@ -520,7 +700,7 @@ if voulue 2; then
     :
   elif [ -z "$vm1_prete" ]; then
     ko "étape 2 : non jouée, vm1 n'est pas prête (étape 1)"
-  elif jouer 2_administrer/installer.sh 1500; then
+  elif jouer 2_administrer/installer.sh 900; then
     if site_wordpress 2 vm1 "$titre_vm1"; then site_vm1="$url_site"; else diagnostic vm1; fi
   else
     diagnostic vm1
@@ -553,7 +733,7 @@ if voulue 3; then
       else
         ko "étape 3 : le site répond encore après la suppression de son code"
       fi
-      if jouer 3_instantanes_limites/restaurer.sh 900; then
+      if jouer 3_instantanes_limites/restaurer.sh 600; then
         site_vm1="http://$(adresse vm1 || true)"
         if wp_titre_present "$site_vm1" "$titre_vm1"; then ok "étape 3 : l'instantané restaure le site ($site_vm1)"
         else ko "étape 3 : le site n'est pas revenu après la restauration"; diagnostic vm1; fi
@@ -562,24 +742,39 @@ if voulue 3; then
       fi
     fi
 
-    # À chaud. L'énoncé annonce le comportement d'Incus 6.0 : la mémoire d'une VM
-    # en marche ne s'augmente pas. Sur une autre série, le résultat est noté sans juger.
-    version="$(incus --version 2> /dev/null || true)"
+    # À chaud. Ce qu'Incus répond dépend de sa version (updateMemoryLimit,
+    # internal/server/instance/drivers/driver_qemu.go) : sans l'extension
+    # memory_hotplug (6.0.4, celle de Debian 13), un refus ; avec elle (6.0.5,
+    # 6.12 et suivantes), QEMU reçoit une barrette de mémoire, sauf si
+    # limits.memory.hotplug vaut false.
+    hotplug="$(incus config get vm1 limits.memory.hotplug --expanded 2> /dev/null || true)"
+    avant="$(dans vm1 cat /proc/meminfo 2> /dev/null | memoire_ko || true)"
     if sortie="$(incus config set vm1 limits.memory=2GiB 2>&1)"; then
-      case "$version" in
-        6.0.*) ko "étape 3 : Incus $version accepte d'augmenter à chaud la mémoire de la VM, l'énoncé annonce un refus" ;;
-        *) info "Incus $version accepte d'augmenter à chaud la mémoire de la VM (l'énoncé décrit la série 6.0)" ;;
-      esac
-    elif [[ "$sortie" == *"beyond boot time size"* ]]; then
-      ok "étape 3 : à chaud, Incus refuse d'augmenter la mémoire de la VM"
+      if [ -z "$memoire_a_chaud" ]; then
+        ko "étape 3 : Incus $version_serveur, sans l'extension memory_hotplug, accepte d'augmenter à chaud la mémoire de la VM"
+      elif [ "$hotplug" = "false" ]; then
+        ko "étape 3 : Incus $version_serveur accepte la mémoire à chaud malgré limits.memory.hotplug=false"
+      else
+        ok "étape 3 : Incus $version_serveur (memory_hotplug) accepte d'augmenter à chaud la mémoire de la VM"
+        # Relevé pour l'énoncé : l'invité voit-il la barrette ajoutée ?
+        sleep 5
+        apres="$(dans vm1 cat /proc/meminfo 2> /dev/null | memoire_ko || true)"
+        info "MemTotal dans vm1 : $((${avant:-0} / 1024)) Mio avant, $((${apres:-0} / 1024)) Mio 5 s après"
+        dans vm1 sh -c 'lsmem --summary 2>&1 || true' 2>&1 | retrait || true
+      fi
+    elif [ -z "$memoire_a_chaud" ] && [[ "$sortie" == *"Cannot increase memory size beyond boot time size when VM is running"* ]]; then
+      ok "étape 3 : à chaud, Incus $version_serveur refuse d'augmenter la mémoire de la VM"
+      retrait <<< "$sortie"
+    elif [ -n "$memoire_a_chaud" ] && [ "$hotplug" = "false" ] && [[ "$sortie" == *"Memory hotplug feature is disabled"* ]]; then
+      ok "étape 3 : limits.memory.hotplug=false : Incus $version_serveur refuse la mémoire à chaud"
       retrait <<< "$sortie"
     else
-      ko "étape 3 : refus inattendu de limits.memory à chaud"
+      ko "étape 3 : réponse inattendue d'Incus $version_serveur à limits.memory=2GiB à chaud (memory_hotplug : ${memoire_a_chaud:-absente})"
       retrait <<< "$sortie"
     fi
 
     # Le script ajoute un processeur à chaud, puis arrête la VM pour la mémoire.
-    if jouer 3_instantanes_limites/limites.sh 900; then
+    if jouer 3_instantanes_limites/limites.sh 600; then
       # Relevé pour l'énoncé : le processeur ajouté à chaud est-il en ligne (lscpu) ?
       sed -n '/lscpu --extended/,/incus stop vm1/p' "$travail/3_instantanes_limites_limites.sh.log" | retrait || true
       processeurs="$(dans vm1 nproc 2>&1 || true)"
@@ -614,13 +809,15 @@ if voulue 4; then
     :
   elif [ -z "$site_vm1" ]; then
     ko "étape 4 : non jouée, vm1 et son site ne sont pas prêts (étapes 1 et 2)"
-  elif jouer 4_conteneur_systeme/conteneur.sh 900; then
+  elif ! controler_reseau_conteneurs 4; then
+    :
+  elif jouer 4_conteneur_systeme/conteneur.sh 600; then
     etat="$(colonne ct1 ts)"
     if [ "$etat" = "CONTAINER,RUNNING" ]; then ok "étape 4 : ct1 est un conteneur en marche"
     else ko "étape 4 : état de ct1 inattendu ($etat)"; fi
 
     # Les mesures de l'énoncé : le journal du script les montre toutes.
-    if jouer 4_conteneur_systeme/comparer.sh 900; then
+    if jouer 4_conteneur_systeme/comparer.sh 600; then
       journal_comparer="$travail/4_conteneur_systeme_comparer.sh.log"
       sed -n '/^== /,$p' "$journal_comparer" | grep -v '^+ ' | retrait || true
       # Redémarrage : le script chronomètre les deux instances, en secondes.
@@ -738,8 +935,9 @@ if voulue 5; then
   verifier_cloud_init 5_profils_cloud_init/cloud-init.yaml 2_administrer
   verifier_cloud_init 5_profils_cloud_init/squelette.yaml 2_administrer
   verifier_squelette 5_profils_cloud_init/squelette.yaml 5_profils_cloud_init/cloud-init.yaml
-  if [ "$mode" = "up" ]; then
-    if jouer 5_profils_cloud_init/profil.sh 2700; then
+  # wp-ct est un conteneur : sans réseau des conteneurs, l'étape est abandonnée.
+  if [ "$mode" = "up" ] && controler_reseau_conteneurs 5; then
+    if jouer 5_profils_cloud_init/profil.sh 1500; then
       for paire in wp-vm:VIRTUAL-MACHINE wp-ct:CONTAINER; do
         instance="${paire%%:*}"; genre="${paire#*:}"
         info "$instance : cloud-init $(dans "$instance" cloud-init status 2>&1 | tr '\n' ' ' || true)"
@@ -833,7 +1031,9 @@ if voulue 6; then
   fi
   if [ "$mode" = "up" ]; then
     titre="tptest-web-$RANDOM"
-    if jouer 6_reseau_volumes/deployer.sh 2400; then
+    if ! controler_reseau_conteneurs 6; then
+      : # db et web sont des conteneurs
+    elif jouer 6_reseau_volumes/deployer.sh 1500; then
       adresse_db="$(adresse db || true)"
       resolue="$(dans web getent hosts db.incus 2>&1 | awk '{ print $1 }' || true)"
       if [ -n "$adresse_db" ] && [ "$resolue" = "$adresse_db" ]; then ok "étape 6 : web résout db.incus ($adresse_db)"
@@ -849,7 +1049,7 @@ if voulue 6; then
       if site_wordpress 6 web "$titre"; then
         ok "étape 6 : WordPress, dans web, joint sa base dans db par son nom"
         avant="$(incus config get db volatile.uuid 2> /dev/null || true)"
-        if jouer 6_reseau_volumes/recreer-db.sh 1500; then
+        if jouer 6_reseau_volumes/recreer-db.sh 900; then
           apres="$(incus config get db volatile.uuid 2> /dev/null || true)"
           if [ -n "$apres" ] && [ "$apres" != "$avant" ]; then ok "étape 6 : db est une nouvelle instance ($(adresse db || true))"
           else ko "étape 6 : db n'a pas été recréée"; fi
@@ -896,7 +1096,7 @@ if voulue 7; then
   titre_etape 7 7_imbrication "imbrication"
   verifier_script 7_imbrication/docker.sh
   if [ "$mode" = "up" ]; then
-    if jouer 7_imbrication/docker.sh 1800; then
+    if jouer 7_imbrication/docker.sh 1200; then
       if [ "$(colonne docker t)" = "VIRTUAL-MACHINE" ]; then ok "étape 7 : docker est une machine virtuelle"
       else ko "étape 7 : docker n'est pas une machine virtuelle"; fi
       if dans docker docker container run --rm hello-world 2>&1 | grep -q 'Hello from Docker'; then
@@ -915,8 +1115,4 @@ fi
 
 # ----------------------------------------------------------------------- bilan
 
-printf '\n======== Bilan (%s) : %s vérifications réussies, %s en échec ========\n' "--$mode" "$reussis" "${#echecs[@]}"
-if [ "${#echecs[@]}" -gt 0 ]; then
-  printf '  - %s\n' "${echecs[@]}"
-  exit 1
-fi
+bilan

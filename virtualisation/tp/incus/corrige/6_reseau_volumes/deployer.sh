@@ -14,7 +14,7 @@ incus storage volume create default donnees
 
 # L'instance web : le paquet wordpress, sans serveur de base de données.
 incus launch images:debian/13 web
-until incus exec web -- getent hosts deb.debian.org > /dev/null 2>&1; do sleep 2; done
+timeout 120 sh -c 'until incus exec web -- getent hosts deb.debian.org > /dev/null 2>&1; do sleep 2; done'
 incus exec web -- apt-get update
 incus exec web --env DEBIAN_FRONTEND=noninteractive -- apt-get install -y wordpress
 

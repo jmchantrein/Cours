@@ -18,10 +18,12 @@ incus launch images:debian/13/cloud wp-vm --vm --profile default --profile wordp
 incus launch images:debian/13/cloud wp-ct --profile default --profile wordpress
 
 # cloud-init travaille au premier démarrage : status --wait rend la main quand
-# il a fini (un code de retour non nul signale une erreur ou un avertissement).
+# il a fini, ici au plus dix minutes (un code de retour non nul signale une
+# erreur, un avertissement ou le délai dépassé ; incus list et le site diront
+# ce qu'il en est).
 for instance in wp-vm wp-ct; do
-  until incus exec "$instance" -- true 2> /dev/null; do sleep 2; done
-  incus exec "$instance" -- cloud-init status --wait || true
+  timeout 120 sh -c "until incus exec $instance -- true 2> /dev/null; do sleep 2; done"
+  timeout 600 incus exec "$instance" -- cloud-init status --wait || true
 done
 
 # La configuration que chaque instance hérite de ses profils.

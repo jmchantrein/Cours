@@ -8,7 +8,8 @@ set -eu
 cd "$(dirname "$0")"
 
 # La VM doit répondre et avoir le réseau : son agent, puis la résolution de noms.
-until incus exec vm1 -- getent hosts deb.debian.org > /dev/null 2>&1; do sleep 2; done
+# On attend deux minutes au plus.
+timeout 120 sh -c 'until incus exec vm1 -- getent hosts deb.debian.org > /dev/null 2>&1; do sleep 2; done'
 
 # Le paquet wordpress amène Apache, PHP et un client de base de données ; le
 # serveur MariaDB est à demander.

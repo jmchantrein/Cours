@@ -6,6 +6,6 @@ set -eu
 # redémarre.
 incus snapshot restore vm1 propre
 
-# Le site est de retour quand Apache et MariaDB ont redémarré.
-until incus exec vm1 -- systemctl is-active --quiet apache2 mariadb 2> /dev/null; do sleep 2; done
+# Le site est de retour quand Apache et MariaDB ont redémarré (deux minutes au plus).
+timeout 120 sh -c 'until incus exec vm1 -- systemctl is-active --quiet apache2 mariadb 2> /dev/null; do sleep 2; done'
 incus snapshot list vm1

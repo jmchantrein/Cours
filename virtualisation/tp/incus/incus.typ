@@ -286,10 +286,13 @@ y installez WordPress par les paquets de Debian.
     mémoire ; avec les valeurs par défaut, Incus refuse. Enfin, un instantané n’est pas une sauvegarde : il
     est rangé dans le même pool de stockage que le disque de la VM, et une panne du disque de l’hôte emporte
     les deux. Une sauvegarde sort de l’hôte : `incus export vm1 vm1.tar.gz`.
-  + Incus 6.0 refuse : « Cannot increase memory size beyond boot time size when VM is running ». La VM a reçu
-    sa mémoire au démarrage de QEMU ; à chaud, Incus 6.0 sait seulement lui en reprendre. Il faut l’arrêter,
-    changer la clé, la redémarrer. L’ajout à chaud arrive avec Incus 6.12 (extension `memory_hotplug`), donc
-    après la version 6.0 de Debian 13. Le processeur, lui, est branché à chaud, comme une carte dans une
+  + Incus 6.0.4, celui de Debian 13, refuse : « Cannot increase memory size beyond boot time size when VM is
+    running ». La VM a reçu sa mémoire au démarrage de QEMU ; à chaud, cette version sait seulement lui en
+    reprendre. Il faut l’arrêter, changer la clé, la redémarrer. L’ajout à chaud est venu avec Incus 6.12
+    (extension `memory_hotplug`), et la série 6.0 l’a reçu avec la version 6.0.5 : celle-ci accepte la
+    commande et branche dans la VM en marche une barrette de mémoire virtuelle, dans la limite d’un maximum
+    fixé au démarrage de QEMU (clé `limits.memory.hotplug` ; `false` rétablit un refus). `incus version`
+    dit laquelle vous avez. Le processeur, lui, est branché à chaud, comme une carte dans une
     machine allumée : `lscpu --extended` l’affiche aussitôt, et sa colonne ONLINE dit si l’invité s’en sert
     déjà. S’il ne l’a pas mis en ligne, le redémarrage qui suit s’en charge. Après le redémarrage :
     2 processeurs, 2 Gio.
@@ -363,7 +366,8 @@ comparez à votre VM par des mesures faites sur votre machine.
   + Un conteneur système est un groupe de processus de l’hôte : sans limite, il voit tous ses processeurs et
     toute sa mémoire. Une limite est un réglage du cgroup de ces processus, que le noyau de l’hôte applique
     aussitôt : `incus exec ct1 -- cat /sys/fs/cgroup/memory.max` la montre, et `free -m` en tient compte. La
-    mémoire d’une VM, elle, est du matériel virtuel, fixé au lancement de QEMU.
+    mémoire d’une VM, elle, est du matériel virtuel, fixé au lancement de QEMU : Incus 6.0.4 ne sait pas en
+    ajouter ensuite.
   + Sous des UID décalés : le root du conteneur est l’UID 1000000 de l’hôte sur une installation par défaut,
     son `www-data` (33) l’UID 1000033 ; dans `ct1`, la même commande `ps` les montre sous 0 et 33. Le noyau
     traduit les UID du conteneur vers une plage réservée de l’hôte, celle que donne `uid_map` : c’est un
