@@ -1,0 +1,4 @@
+# /etc/mysql/mariadb.conf.d/99-ecoute.cnf — lu après 50-server.cnf, qui limite
+# l'écoute à 127.0.0.1 : MariaDB accepte les connexions des autres instances.
+[mariadbd]
+bind-address = 0.0.0.0

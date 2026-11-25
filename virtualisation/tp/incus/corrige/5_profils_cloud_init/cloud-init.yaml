@@ -1,0 +1,51 @@
+#cloud-config
+# WordPress installé au premier démarrage d'une instance, VM ou conteneur :
+# les commandes de l'étape 2, décrites au lieu d'être tapées.
+package_update: true
+packages:
+  - wordpress
+  - mariadb-server
+
+# defer : les fichiers sont écrits après l'installation des paquets.
+write_files:
+  - path: /etc/wordpress/config-default.php
+    owner: root:www-data
+    permissions: "0640"
+    defer: true
+    content: |
+      <?php
+      // Réglages du WordPress de Debian : /usr/share/wordpress/wp-config.php charge ce
+      // fichier, /etc/wordpress/config-default.php, quel que soit le nom du site.
+      define('DB_NAME', 'wordpress');
+      define('DB_USER', 'wordpress');
+      define('DB_PASSWORD', 'tempo');
+      define('DB_HOST', 'localhost');
+  - path: /etc/apache2/sites-available/wordpress.conf
+    defer: true
+    content: |
+      # Site Apache du WordPress de Debian : /etc/apache2/sites-available/wordpress.conf.
+      # Le code est dans /usr/share/wordpress ; les contenus (thèmes, extensions,
+      # médias) sont dans /var/lib/wordpress/wp-content.
+      <VirtualHost *:80>
+          DocumentRoot /usr/share/wordpress
+          Alias /wp-content /var/lib/wordpress/wp-content
+
+          <Directory /usr/share/wordpress>
+              Options FollowSymLinks
+              DirectoryIndex index.php
+              Require all granted
+          </Directory>
+          <Directory /var/lib/wordpress/wp-content>
+              Options FollowSymLinks
+              Require all granted
+          </Directory>
+      </VirtualHost>
+
+# Exécutées une fois, en root, après les paquets et les fichiers.
+runcmd:
+  - mariadb -e "CREATE DATABASE wordpress"
+  - mariadb -e "CREATE USER 'wordpress'@'localhost' IDENTIFIED BY 'tempo'"
+  - mariadb -e "GRANT ALL PRIVILEGES ON wordpress.* TO 'wordpress'@'localhost'"
+  - a2dissite 000-default
+  - a2ensite wordpress
+  - systemctl reload apache2
