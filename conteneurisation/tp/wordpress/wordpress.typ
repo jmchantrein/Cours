@@ -167,7 +167,8 @@ l’étape 2 reprendra ce fichier pour l’améliorer.
   - Les instructions stables d’abord : le #d("cache-buildkit")[cache de build] réutilise tout ce qui précède
     la première instruction modifiée.
   - `WORKDIR` pour changer de répertoire, plutôt que `RUN cd …`.
-  - La commande par défaut en forme exec : #d("forme-exec")[Forme exec ou shell : l’arrêt].
+  - La commande par défaut en forme exec : #d("forme-exec")[Forme exec ou shell : l’arrêt] ; l’artefact
+    #link("../../artefacts/cmd-entrypoint/")[CMD × ENTRYPOINT] montre ce que le conteneur lance dans chaque forme.
   - Un tag précis pour l’image de base : #d("tag-ou-digest")[Tag ou digest].
 ]
 
@@ -206,7 +207,8 @@ l’étape 2 reprendra ce fichier pour l’améliorer.
   Le cours appelle ce modèle « root au démarrage seulement » : #d("root-au-demarrage")[Root au démarrage
   seulement]. Un script d’entrée lancé en root prépare ce qui exige root (créer un dossier, changer un
   propriétaire), puis remplace son propre processus par le service, sous un utilisateur sans privilège :
-  `exec setpriv …` ou `exec gosu …`. La commande `setpriv` est déjà dans `debian:13`.
+  `exec setpriv …` ou `exec gosu …`. La commande `setpriv` est déjà dans `debian:13`. Ce script est l’`ENTRYPOINT` :
+  il reçoit le `CMD` en arguments (artefact #link("../../artefacts/cmd-entrypoint/")[CMD × ENTRYPOINT]).
 ]
 #indice(titre: [Indice : Apache sans root])[
   - Depuis Docker 20.10, un processus sans privilège peut écouter sur le port 80 dans un conteneur.

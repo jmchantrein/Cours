@@ -1,0 +1,133 @@
+/* cmd-entrypoint.css — mise en forme de l’artefact ; les couleurs sont celles de la charte (variables CSS).
+   En haut : le Dockerfile et la commande docker container run, les deux entrées. Dessous, trois cadres (argv,
+   ce que Docker enregistre, PID 1), puis l’explication calculée. Sur un écran d’ordinateur, l’ensemble occupe la
+   hauteur de la fenêtre ; ce qui déborde défile dans son cadre.
+   Chaque mot de l’argv garde la couleur de ce qui l’a fourni, toujours doublée de son nom (ENTRYPOINT, CMD…). */
+#artefact { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) minmax(0, 1fr); gap: .6rem .8rem; align-content: start; }
+#artefact section { min-width: 0; }
+#artefact .zone-dockerfile { grid-column: 1 / 3; }
+#artefact .zone-run { grid-column: 3; }
+#artefact .zone-explication { grid-column: 1 / -1; }
+#artefact h2 { margin: 0 0 .3rem; padding: 0; border: 0; font-size: .75rem; color: var(--c-gris);
+  letter-spacing: .08em; text-transform: uppercase; }
+[data-variante="dyslexie"] #artefact h2 { text-transform: none; }
+#artefact .cadre { display: flex; flex-direction: column; padding: .5rem .7rem .55rem; background: #fff;
+  border: 1px solid var(--c-filet); border-radius: .6rem; box-shadow: 0 1px 2px rgb(15 30 51 / .05); }
+#artefact .cadre > h2 { flex: none; }
+#artefact code { padding: 0; border: 0; background: none; color: inherit; font-family: "IBM Plex Mono", ui-monospace, monospace; }
+#artefact .vide { margin: 0; color: var(--c-gris); font-size: .8rem; }
+#artefact .mention { margin: .35rem 0 0; color: var(--c-gris); font-size: .7rem; line-height: 1.3; }
+
+/* Les entrées : deux terminaux sombres, comme le Dockerfile de l’artefact du cache. */
+.dockerfile, .lancement { padding: .45rem .7rem; border-radius: .6rem; background: var(--c-nuit); color: var(--c-texte-term); }
+.dockerfile .ligne, .lancement .ligne { display: grid; grid-template-columns: 6.6rem minmax(0, 1fr) auto; gap: 0 .5rem; align-items: center; padding: .15rem 0; }
+.lancement .ligne { grid-template-columns: 6.6rem minmax(0, 1fr); }
+.dockerfile .ligne + .ligne, .lancement .ligne + .ligne { border-top: 1px solid var(--c-encart); }
+.mot-cle { color: var(--c-prompt); font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: .8rem; font-weight: 600; }
+.dockerfile .texte { white-space: nowrap; font-size: .82rem; color: var(--c-texte-term); }
+.lancement .ligne-commande { margin: .1rem 0; font-size: .82rem; }
+
+.lancement .invite { margin-right: .4rem; color: var(--c-prompt); }
+#artefact select, #artefact input[type="text"] { width: 100%; min-width: 0; padding: .25rem .4rem; border: 1px solid var(--c-ardoise); border-radius: .3rem;
+  background: var(--c-encart); color: var(--c-texte-term); font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: .8rem; }
+#artefact input::placeholder { color: var(--c-commentaire); opacity: 1; }
+#artefact select:disabled, #artefact input:disabled { opacity: .75; }
+#artefact button { padding: .25rem .7rem; border: 1px solid var(--c-ardoise); border-radius: .3rem; background: #fff;
+  color: var(--c-encre); font: inherit; font-size: .8rem; cursor: pointer; }
+#artefact button:hover:not(:disabled) { background: var(--c-bleu-clair); }
+#artefact button:disabled { opacity: .3; cursor: default; }
+.titre-zone { min-height: 1.75rem; display: flex; align-items: baseline; justify-content: space-between; gap: .5rem; }
+#artefact button.zero { margin-bottom: .3rem; padding: .1rem .6rem; font-size: .75rem; }
+/* Ce qu’une recette vient de modifier clignote brièvement. */
+@keyframes signal { from { box-shadow: 0 0 0 .25rem var(--precaution-entete); } to { box-shadow: 0 0 0 .25rem transparent; } }
+#artefact .signale { animation: signal 1.6s ease-out; border-color: var(--precaution-accent); }
+
+/* L’argv : un mot par pastille, avec le nom de son origine dessous. */
+.mots { display: flex; flex-wrap: wrap; gap: .35rem .4rem; margin: 0; }
+.mot { display: inline-flex; flex-direction: column; align-items: center; padding: .15rem .45rem .1rem; border: 2px solid var(--entete);
+  border-radius: .4rem; background: var(--fond-role); line-height: 1.15; }
+.mot code { font-size: .88rem; font-weight: 600; white-space: pre; color: var(--c-encre); }
+.mot small { font-size: .62rem; color: var(--c-ardoise); white-space: nowrap; }
+.origine-entrypoint { --entete: var(--notion-entete); --fond-role: var(--notion-fond); }
+.origine-cmd { --entete: var(--pratique-entete); --fond-role: var(--pratique-fond); }
+.origine-herite { --entete: var(--pratique-entete); --fond-role: var(--c-espace); border-style: dashed; }
+.origine-arguments { --entete: var(--precaution-entete); --fond-role: var(--precaution-fond); }
+.origine-option { --entete: var(--avertissement-entete); --fond-role: var(--avertissement-fond); }
+.erreur { margin: 0; color: var(--danger-accent); font-weight: 600; font-size: .85rem; }
+.limite { color: var(--avertissement-accent); }
+
+/* Ce que Docker enregistre ; PID 1. */
+.inspect p, .pid1 p { margin: .12rem 0; font-size: .76rem; line-height: 1.3; overflow-wrap: anywhere; }
+.inspect .commande, .pid1 .commande { margin-top: .3rem; color: var(--c-gris); font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: .7rem; }
+.inspect .commande:first-child { margin-top: 0; }
+.inspect .valeur { display: grid; grid-template-columns: 4.6rem minmax(0, 1fr); gap: 0 .3rem; align-items: baseline; }
+.pid1 .programme .champ { margin-right: .4rem; }
+.champ { color: var(--c-ardoise); font-size: .68rem; }
+.pid1 .qui { margin: 0 0 .1rem; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 1rem; font-weight: 700; }
+.pid1 .qui small { display: block; font-family: inherit; font-size: .68rem; font-weight: 400; color: var(--c-ardoise); }
+.pid1.shell .qui { color: var(--avertissement-accent); }
+.pid1.shell .qui::before { content: "⚠ "; }
+.pid1.programme .qui { color: var(--pratique-accent); }
+.pid1.programme .qui::before { content: "✓ "; }
+
+/* L’explication calculée. */
+.explication-texte { font-size: .8rem; line-height: 1.38; }
+.explication-texte p { margin: .1rem 0; }
+.explication-texte .erreur { font-size: inherit; }
+.zone-explication, .zone-inspect, .zone-argv, .zone-pid1 { overflow-y: auto; }
+
+/* Recettes : dans chaque expérience, une carte à part — bandeau sombre, comme le terminal du Dockerfile.
+   Fermée, elle liste ses étapes ; ouverte, elle explique ce qui vient de se passer et attend « Continuer ». */
+.recette { margin: .5rem 0 0; border: 2px solid var(--c-nuit); border-radius: .6rem; background: var(--c-espace); overflow: hidden; }
+.recette-entete { display: flex; align-items: baseline; gap: .6rem; padding: .25rem .7rem; background: var(--c-nuit); color: var(--c-texte-term); font-size: .8rem; }
+.recette-titre { color: var(--c-prompt); font-size: .72rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
+[data-variante="dyslexie"] .recette-titre { text-transform: none; }
+.recette-rang { flex: 1; min-width: 0; font-weight: 600; }
+.recette .fermer { margin-left: auto; padding: 0 .35rem; border: 0; background: none; color: var(--c-texte-term); font: inherit; cursor: pointer; }
+.recette .fermer:hover { color: var(--c-prompt); }
+.recette-etapes { margin: .4rem .7rem 0; padding-left: 1.5rem; color: var(--c-ardoise); font-size: .92em; line-height: 1.3; }
+.recette-etapes li { padding-left: .15rem; border-radius: .25rem; }
+.recette-etapes .faite { color: var(--c-gris); }
+.recette-etapes .faite::marker { content: "✓ "; }
+.recette-etapes .expliquee { color: var(--c-encre); font-weight: 600; background: #fff; }
+.recette-etapes .courante { color: var(--c-encre); font-weight: 600; background: var(--precaution-fond); }
+.recette-etapes .prochaine { color: var(--c-encre); }
+.recette-etapes .prochaine::marker { content: "▸ "; }
+.explication { margin: .4rem .7rem 0; padding: .35rem .7rem .4rem; border-left: .3rem solid var(--notion-entete); border-radius: 0 .4rem .4rem 0; background: #fff; }
+.explication p { margin: .15rem 0; line-height: 1.38; }
+.explication .explication-titre { margin-top: 0; color: var(--notion-accent); font-size: .72rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
+[data-variante="dyslexie"] .explication-titre { text-transform: none; }
+.lecteur { display: flex; flex-wrap: wrap; align-items: center; gap: .3rem .5rem; padding: .45rem .7rem .55rem; }
+.lecteur button { padding: .22rem .7rem; border: 1px solid var(--c-ardoise); border-radius: .4rem; background: #fff;
+  color: var(--c-encre); font: inherit; font-size: .82rem; font-weight: 600; cursor: pointer; white-space: nowrap; }
+.lecteur button:hover:not(:disabled) { background: var(--c-bleu-clair); }
+.lecteur button:disabled { opacity: .35; cursor: default; }
+.lecteur button.jouer { border-color: var(--notion-entete); background: var(--notion-entete); color: var(--notion-texte); }
+.lecteur button.jouer:hover:not(:disabled) { background: var(--c-encre); border-color: var(--c-encre); }
+.sans-pause { display: inline-flex; align-items: center; gap: .3rem; color: var(--c-ardoise); font-size: .78rem; }
+
+/* Fenêtre basse (petit portable) : le panneau d’aide se resserre pour que recette et réponse tiennent ensemble. */
+@media (min-width: 60rem) and (max-height: 46rem) {
+  .aide { font-size: .82rem; line-height: 1.4; }
+  .experiences-nav { margin-bottom: .25rem; }
+  .experience { padding: .4rem .7rem .5rem; }
+  .experience .question > p { margin: .1rem 0; }
+  .recette { margin-top: .35rem; }
+  .recette-etapes { margin-top: .3rem; line-height: 1.25; }
+  .explication { margin-top: .3rem; padding: .25rem .6rem .3rem; }
+  .explication p { margin: .08rem 0; line-height: 1.32; }
+  .lecteur { padding: .35rem .7rem .4rem; }
+  .experience details { margin-top: .35rem; }
+  .experience details > summary { padding: .22rem .8rem; }
+  .experience .repli { padding: .35rem .8rem .4rem; }
+}
+
+/* Écran d’ordinateur : l’artefact prend la hauteur disponible ; les cadres du bas s’étirent. */
+@media (min-width: 60rem) and (min-height: 36rem) {
+  #artefact { height: 100%; grid-template-rows: auto minmax(0, 1.25fr) minmax(0, 1fr); }
+  #artefact .cadre { min-height: 0; }
+}
+@media (max-width: 60rem) { #artefact { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  #artefact .zone-dockerfile, #artefact .zone-run { grid-column: 1 / -1; }  }
+@media (max-width: 44rem) { #artefact { grid-template-columns: minmax(0, 1fr); }
+  .dockerfile .ligne { grid-template-columns: 6.6rem minmax(0, 1fr); } .dockerfile .texte { grid-column: 2; white-space: normal; } }

@@ -90,6 +90,7 @@ Sept cours, à lire dans l’ordre de la page : les outils de l’administrateur
       bouton(principal: true, [Diapositives], pdf("conteneurisation", "projection")),
       bouton([TP : Conteneuriser WordPress], "conteneurisation/tp/wordpress/"),
       bouton([Artefact : Le cache de build], "conteneurisation/artefacts/cache-de-build/"),
+      bouton([Artefact : CMD × ENTRYPOINT], "conteneurisation/artefacts/cmd-entrypoint/"),
     )
     #rendus("conteneurisation")
   ],
