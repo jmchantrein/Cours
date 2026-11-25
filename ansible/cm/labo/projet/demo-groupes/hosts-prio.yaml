@@ -1,0 +1,8 @@
+mon_groupe:
+  hosts:
+    managed-node-1:
+  vars:
+    ansible_group_priority: 10
+web_server:
+  hosts:
+    managed-node-1:

@@ -1,0 +1,33 @@
+<!-- Un domaine libvirt réduit à l'essentiel : le squelette qu'on retrouve
+     dans tout « virsh dumpxml », débarrassé de ce que libvirt complète seul
+     (uuid, adresse MAC, adresses PCI, contrôleurs).
+     Le disque est désigné par son pool et son volume, pas par un chemin :
+     l'option remove-all-storage de virsh undefine saura alors le supprimer.
+     Sans élément loader ni firmware="efi", la VM démarre en BIOS : les
+     instantanés internes (virsh snapshot-create-as) restent possibles. -->
+<domain type="kvm">
+  <name>vm-exemple</name>
+  <memory unit="MiB">2048</memory>
+  <vcpu>2</vcpu>
+  <os>
+    <type arch="x86_64" machine="q35">hvm</type>
+    <boot dev="hd"/>
+  </os>
+  <features>
+    <!-- sans ACPI, l'invité n'entend pas « virsh shutdown » -->
+    <acpi/>
+  </features>
+  <devices>
+    <disk type="volume" device="disk">
+      <driver name="qemu" type="qcow2"/>
+      <source pool="default" volume="vm-exemple.qcow2"/>
+      <target dev="vda" bus="virtio"/>
+    </disk>
+    <interface type="network">
+      <source network="default"/>
+      <model type="virtio"/>
+    </interface>
+    <console type="pty"/>
+    <graphics type="vnc"/>
+  </devices>
+</domain>

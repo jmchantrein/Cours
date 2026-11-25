@@ -1,0 +1,23 @@
+---
+- name: Préparer les nœuds
+  hosts: all
+  tasks:
+    - name: Installer tree
+      ansible.builtin.apt:
+        name: tree
+        state: present
+
+    - name: Créer le répertoire du site
+      ansible.builtin.file:
+        path: /srv/site
+        state: directory
+        mode: "0755"
+
+    - name: Noter la date du déploiement
+      ansible.builtin.shell: date > /srv/site/deploiement.txt
+
+    - name: Déposer la page d’accueil
+      ansible.builtin.copy:
+        content: "Bonjour\n"
+        dest: /srv/site/index.txt
+        mode: "0644"

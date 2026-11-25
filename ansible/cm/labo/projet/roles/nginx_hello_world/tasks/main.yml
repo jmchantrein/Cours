@@ -1,0 +1,25 @@
+---
+- name: Installer le paquet nginx
+  ansible.builtin.apt:
+    name: nginx
+    state: present
+
+- name: Publier la page Hello world
+  ansible.builtin.copy:
+    src: index.html
+    dest: /var/www/html/index.html
+    owner: www-data
+    group: www-data
+    mode: "0644"
+
+- name: Configurer nginx sur le port {{ nginx_hello_world_port }}
+  ansible.builtin.template:
+    src: etc_nginx_sites_available_default.j2
+    dest: /etc/nginx/sites-available/default
+    mode: "0644"
+  notify: Redémarrer nginx
+
+- name: Démarrer nginx
+  ansible.builtin.service:
+    name: nginx
+    state: started

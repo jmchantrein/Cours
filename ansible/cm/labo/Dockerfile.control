@@ -1,0 +1,13 @@
+# Nœud de contrôle du labo du cours : ansible-core et ansible-lint (pip, versions
+# figées), un client SSH. Rien d’autre : Ansible n’a besoin que de SSH pour agir.
+# Secret « ca » facultatif : un certificat d’autorité pour pip derrière un proxy.
+FROM ubuntu:24.04
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
+      python3-venv openssh-client curl ca-certificates tree \
+    && rm -rf /var/lib/apt/lists/*
+RUN --mount=type=secret,id=ca,required=false \
+    python3 -m venv /opt/ansible \
+    && if [ -s /run/secrets/ca ]; then export PIP_CERT=/run/secrets/ca; fi \
+    && /opt/ansible/bin/pip install -q "ansible-core==2.19.4" "ansible-lint==26.11.0"
+ENV PATH=/opt/ansible/bin:$PATH LANG=C.UTF-8
+CMD ["sleep", "infinity"]

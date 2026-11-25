@@ -1,0 +1,13 @@
+<!-- Réseau isolé « labo » : le fichier du réseau default, sans l'élément
+     forward. Les VM qui s'y branchent se joignent entre elles et joignent
+     l'hôte (192.168.100.1), mais rien ne sort vers l'extérieur.
+     libvirt crée le pont virbr1 et sert le DHCP sur 192.168.100.0/24. -->
+<network>
+  <name>labo</name>
+  <bridge name="virbr1"/>
+  <ip address="192.168.100.1" netmask="255.255.255.0">
+    <dhcp>
+      <range start="192.168.100.10" end="192.168.100.100"/>
+    </dhcp>
+  </ip>
+</network>

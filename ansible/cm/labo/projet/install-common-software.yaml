@@ -1,0 +1,11 @@
+---
+- name: Installer les logiciels communs
+  hosts: all
+  tasks:
+    - name: Installer la liste de paquets communs
+      ansible.builtin.apt:
+        name:
+          - htop
+          - ncdu
+          - vim
+        state: present

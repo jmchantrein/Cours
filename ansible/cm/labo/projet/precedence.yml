@@ -1,0 +1,10 @@
+---
+- name: Qui gagne ?
+  hosts: all
+  gather_facts: false
+  vars:
+    welcome_msg: "from play vars"
+  tasks:
+    - name: Afficher welcome_msg
+      ansible.builtin.debug:
+        var: welcome_msg

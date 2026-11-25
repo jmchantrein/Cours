@@ -1,0 +1,7 @@
+---
+- name: Installer les serveurs web de l’infrastructure
+  hosts: web_server
+  tasks:
+    - name: Déployer le rôle nginx_hello_world
+      ansible.builtin.import_role:
+        name: nginx_hello_world

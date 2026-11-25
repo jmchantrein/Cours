@@ -1,0 +1,11 @@
+---
+- name: Qui gagne ?
+  hosts: all
+  gather_facts: false
+  connection: local
+  vars:
+    msg: play
+  tasks:
+    - name: Afficher msg
+      ansible.builtin.debug:
+        var: msg

@@ -1,0 +1,17 @@
+all:
+  hosts:
+    bastion:
+  children:
+    prod:
+      children:
+        web:
+          hosts:
+            web1:
+            web2:
+        bdd:
+          hosts:
+            bdd1:
+    nouveaux:
+      hosts:
+        web2:
+        bdd1:

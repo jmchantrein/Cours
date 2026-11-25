@@ -1,0 +1,6 @@
+mon_groupe:
+  hosts:
+    managed-node-1:
+web_server:
+  hosts:
+    managed-node-1:

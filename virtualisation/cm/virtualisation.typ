@@ -21,8 +21,9 @@
 #plan-cours(
   ([Introduction], [Machine physique, système d’exploitation, machine virtuelle]),
   ([Concepts], [Émulation et virtualisation, assistance matérielle, types d’hyperviseur, paravirtualisation, QEMU et KVM]),
-  ([Usages], [Bilan, migration à chaud, virtualisation imbriquée, image ISO et empreintes, créer une VM avec libvirt, mini TP, outils de gestion, Qubes OS]),
-  ([Pour aller plus loin], [MicroVM, VM et conteneurs ; pour rappel]),
+  ([Usages], [Bilan, migration à chaud, virtualisation imbriquée, image ISO et empreintes, mini TP]),
+  ([Administrer avec libvirt], [XML, connexions, cycle de vie, réseaux, stockage et qcow2, instantanés]),
+  ([Pour aller plus loin], [Outils de gestion, microVM, VM et conteneurs ; pour rappel]),
 )
 
 // ======================================================================
@@ -425,7 +426,7 @@
   note: [Sorties de sha256sum (GNU coreutils 9.4), tronquées à 40 chiffres hexadécimaux pour tenir sur la diapositive, comme l’annonce la première ligne du terminal. Le tiret final signifie « entrée standard ». Empreintes complètes : bonjour = 9cec0af545144159bac85c7b908d5e0b9b0ef961497401c5ad8da26f065ad926 ; Bonjour = 8dc2a6966f1be1644ec6b1f7223f47e53de5ad05e1c976736d948e7977a13dd3 ; ISO 13.7.0 = a7ef94ac2fb9a7fec454552abd629b7cc9d5155c886165a45649f5ce6167e355. Deux fichiers différents peuvent en théorie avoir la même empreinte (collision) ; une fonction cryptographique rend cette recherche impraticable.],
 )
 
-== Télécharger l’ISO, puis la vérifier
+== Télécharger l’ISO, puis la vérifier <iso-verifier>
 
 #slide(repeat: 6, self => {
   let (uncover,) = utils.methods(self)
@@ -477,43 +478,7 @@
   utils.speaker-note(self: self)[Une phase du terminal par clic, puis les deux encadrés et la note. Le 18 novembre 2026, sur l’image 13.7.0 (792 723 456 octets) : gpgv → Good signature (clé DF9B 9C49 EAA9 2984 3258 9D76 DA87 E80D 6294 BE9B, trousseau debian-role-keys.pgp du paquet debian-keyring) ; sha256sum -c → OK, puis FAILED après modification d’un seul octet. Les trois fichiers partent du même \$URL\_BASE : image, sommes et signature sont au même endroit du dépôt. --ignore-missing : SHA256SUMS liste aussi d’autres images non téléchargées. Sur le choix de l’algorithme : MD5 (collisions pratiques depuis \~2008) et SHA-1 (collision « SHAttered », Google 2017) sont cassés ; SHA-256/512 (famille SHA-2) n’ont pas de collision connue. La résistance aux collisions importe face à un attaquant qui voudrait faire passer une autre image pour l’officielle ; pour une simple corruption de transfert, même un hachage faible suffirait. L’anti-falsification vient en dernier ressort de la signature GPG, qui protège le fichier d’empreintes lui-même. Sans machine Debian : gpg --verify SHA256SUMS.sign SHA256SUMS après import de la clé, puis comparer son empreinte à celle de debian.org/CD/verify.]
 })
 
-== Créer une VM : virt-install, puis virsh
-
-#anime(
-  rang(
-    bloc(role: "pratique", poids: 1.3)[Démonstration][
-      #terminal(taille: px(21))[
-        ```
-        # extensions de virtualisation exposées ?
-        $ grep -cE 'vmx|svm' /proc/cpuinfo
-        8
-        # modules KVM chargés
-        $ ls /sys/module | grep kvm
-        kvm
-        kvm_intel
-        $ sudo apt install qemu-system-x86 \
-          libvirt-daemon-system virtinst virt-viewer
-        # VM : 2 Gio de mémoire, 2 processeurs, disque de 10 Gio
-        $ virt-install --name test --memory 2048 \
-          --vcpus 2 --disk size=10 --osinfo detect=on \
-          --cdrom debian-13.7.0-amd64-netinst.iso
-        # virt-viewer ouvre la console : on y fait l’installation
-        # toutes les VM, même arrêtées
-        $ virsh list --all
-        ```
-      ]
-    ],
-    bloc(role: "retenir")[À retenir][
-      - virt-install crée la VM, virsh la gère : tous deux passent par libvirt
-      - virt-viewer affiche la console graphique de l’installateur
-      - Prérequis : être membre des groupes kvm et libvirt
-    ],
-  ),
-  source-de: [#link("https://libvirt.org/docs.html")[libvirt.org] · #link("https://github.com/virt-manager/virt-manager/blob/main/man/virt-install.rst")[virt-install(1)]],
-  note: [L’ISO est celle téléchargée et vérifiée aux diapositives précédentes. grep -c compte une ligne par processeur logique : un nombre non nul indique que les extensions sont exposées. Commandes pour Debian/Ubuntu ; --osinfo existe depuis virt-install 4.0 ; detect=on identifie l’OS à partir de l’ISO ; --disk size=10 s’exprime en Gio. Par défaut virt-install choisit un affichage graphique (protocoles SPICE ou VNC) et lance virt-viewer (--autoconsole graphical) pour interagir avec l’installateur ; sans virt-viewer, aucune console ne s’ouvre et l’installation interactive est impossible. Alternative en mode texte : --graphics none avec une console série (virsh console). virsh list --all affiche une ligne par VM : identifiant, nom, état (en cours d’exécution, fermé). Proxmox VE, OpenStack et oVirt s’appuient aussi sur KVM. Sorties types, à rejouer avec virtualisation/cm/rejouer-tp.sh.],
-)
-
-== Mini TP : une VM, puis une VM dans la VM
+== Mini TP : une VM, puis une VM dans la VM <mini-tp>
 
 #anime(
   rang(bloc(role: "pratique", taille: px(24))[Prérequis][
@@ -532,7 +497,7 @@
   note: [À faire en direct, une question par clic. Laisser chercher avant de passer au corrigé. Aide : man qemu-system-x86\_64 ; Ctrl+Alt+2 ouvre le moniteur QEMU.],
 )
 
-== Mini TP : corrigé (1/4)
+== Mini TP : corrigé (1/4) <mini-tp-corrige-1>
 
 // Les questions restent affichées ; une réponse par clic.
 #slide(repeat: 3, self => {
@@ -665,6 +630,389 @@
   utils.speaker-note(self: self)[Prérequis : la VM Debian installée sur debian.qcow2 à la question 3. Clic 1, hôte : nested doit valoir Y (Intel) ou 1 (AMD, /sys/module/kvm\_amd/parameters/nested) ; sinon, recharger le module avec l’option nested=1. La VM de niveau 1 doit être relancée avec -cpu host : sans cette option, le processeur virtuel n’expose pas vmx/svm, /dev/kvm est absent dans la VM et la VM imbriquée tourne en émulation pure (TCG), très lentement. Prévoir assez de mémoire au niveau 1 pour héberger le niveau 2. Clic 2, niveau 1 : /dev/kvm présent ; on installe QEMU, on télécharge l’image Alpine « Virtual » (quelques dizaines de Mio, nom de fichier versionné, d’où le motif alpine-virt-\*) et on lance l’invité. Clic 3, niveau 2 : Alpine démarre sur l’ISO en mode live, identifiant root sans mot de passe ; dmesg montre l’hyperviseur KVM (ici celui de la VM de niveau 1). Sorties types, à rejouer sur le poste de démonstration.]
 })
 
+// ======================================================================
+= Administrer avec libvirt
+
+== libvirt décrit chaque objet en XML <libvirt-xml>
+
+#anime(
+  rang(
+    bloc(taille: px(25))[Ce que fait libvirt][
+      - Une bibliothèque et un service (démon `libvirtd`, ou `virtqemud`) placés entre les outils et l’hyperviseur
+      - Ses clients : `virsh` (ligne de commande), `virt-install` (création), virt-manager (interface graphique)
+      - Un pilote par hyperviseur (QEMU/KVM, Xen, LXC…), et les mêmes commandes au-dessus
+      - Chaque objet est décrit par un document XML, sa *définition*, que libvirt conserve
+    ],
+    bloc(role: "pratique", poids: 1.15, taille: px(24))[Quatre objets, quatre définitions XML][
+      #table(columns: (auto, auto, 1fr), stroke: none, inset: (x: px(8), y: px(8)),
+        fill: (x, y) => if y == 0 or calc.even(y) { c.bleu-clair } else { c.fond },
+        table.header(..([Objet], [Élément], [Commandes virsh]).map(strong)),
+        [*Domaine* : une VM], [`<domain>`], [`define`, `start`, `dumpxml`],
+        [*Réseau* virtuel], [`<network>`], [`net-define`, `net-start`],
+        [*Pool* : où ranger les disques], [`<pool>`], [`pool-define`, `pool-start`],
+        [*Volume* : un disque], [`<volume>`], [`vol-create-as`, `vol-delete`],
+      )
+    ],
+  ),
+  rang(bloc(role: "retenir")[À retenir][
+    Un *domaine* est le nom que libvirt donne à une VM. Lire sa définition (`virsh dumpxml`), c’est lire la VM : processeurs, mémoire, disques, cartes réseau.
+  ]),
+  source-de: [#link("https://libvirt.org/format.html")[libvirt.org, XML format] · #link("https://libvirt.org/manpages/virsh.html")[virsh(1)]],
+  note: [Le mini TP lançait QEMU à la main : une ligne de commande par VM, à retaper à chaque démarrage. libvirt garde la définition et lance QEMU à notre place. Les définitions des domaines de qemu:\/\/\/system sont rangées sous /etc/libvirt/qemu/ : on ne les modifie pas directement, on passe par virsh edit (qui valide le XML) ou virsh define. libvirt a été lancé par Red Hat ; libvirtd est le démon historique, que certaines distributions remplacent par des démons par pilote (virtqemud pour QEMU). Une confusion fréquente : KVM n’est pas un fork de QEMU. KVM est un module du noyau ; c’est qemu-kvm, programme en espace utilisateur, qui était un fork de QEMU, refusionné dans QEMU 1.3.],
+)
+
+== Deux connexions : system ou session <connexions-libvirt>
+
+#anime(
+  rang(
+    bloc(taille: px(22), taille-titre: px(26))[`qemu:///system` : les VM du système][
+      - Démon en root ; chaque QEMU sous un compte dédié (`libvirt-qemu`)
+      - Pool `default` (`/var/lib/libvirt/images`), réseau `default` (NAT, traduction d’adresses)
+      - Pour root et le groupe `libvirt` ; celle des serveurs et de ce cours
+    ],
+    bloc(taille: px(22), taille-titre: px(26))[`qemu:///session` : les VM de votre compte][
+      - Un démon à votre nom, lancé à la demande, avec vos droits
+      - Disques sous `~/.local/share/libvirt/images` ; réseau en mode utilisateur
+      - Ne voit aucune VM du système, et réciproquement
+    ],
+  ),
+  rang(
+    bloc(role: "pratique", poids: 1.35, taille: px(22), taille-titre: px(26))[Démonstration][
+      #terminal(titre: none, taille: px(19))[
+        ```
+        # compte ordinaire, sans réglage : la session
+        $ virsh uri
+        qemu:///session
+        $ echo 'export LIBVIRT_DEFAULT_URI=qemu:///system' >> ~/.bashrc
+        $ export LIBVIRT_DEFAULT_URI=qemu:///system
+        $ virsh uri
+        qemu:///system
+        ```
+      ]
+    ],
+    bloc(role: "precaution", taille: px(22), taille-titre: px(26))[Une VM a disparu ?][
+      `virsh list --all` ne montre pas une VM qui existe : vérifier d’abord la connexion, avec `virsh uri`. Root, donc `sudo virsh`, parle par défaut au système.
+    ],
+  ),
+  source-de: [#link("https://libvirt.org/uri.html")[libvirt.org, Connection URIs] · #link("https://libvirt.org/drvqemu.html")[libvirt.org, QEMU/KVM driver]],
+  note: [Sorties de virsh (libvirt 10.0.0) : virsh uri vaut qemu:\/\/\/session pour un compte ordinaire, même membre du groupe libvirt, et qemu:\/\/\/system pour root. Le groupe libvirt n’ouvre que qemu:\/\/\/system : sans -c qemu:\/\/\/system ou LIBVIRT\_DEFAULT\_URI, virsh et virt-install d’un compte ordinaire créent leurs VM dans la session, où le réseau default et le pool default n’existent pas. Autre réglage possible : uri\_default dans \~/.config/libvirt/libvirt.conf. Le cours et le TP travaillent en qemu:\/\/\/system, sans sudo, grâce au groupe libvirt. Le réseau en mode utilisateur de la session (SLIRP ou passt) donne l’accès sortant, mais aucune VM n’y est joignable depuis l’hôte sans redirection de port.],
+)
+
+== Créer une VM : virt-install, puis virsh <virt-install>
+
+#anime(
+  rang(
+    bloc(role: "pratique", poids: 1.35)[Démonstration][
+      #terminal(taille: px(20))[
+        ```
+        $ sudo apt install qemu-system-x86 \
+          libvirt-daemon-system virtinst virt-viewer
+        # accès à qemu:///system ; puis fermer et rouvrir la session
+        $ sudo adduser "$USER" libvirt
+        $ export LIBVIRT_DEFAULT_URI=qemu:///system
+        # VM : 2 Gio de mémoire, 2 processeurs, disque de 10 Gio
+        $ virt-install --name ma-premiere-vm --memory 2048 \
+          --vcpus 2 --disk size=10 --osinfo detect=on \
+          --network network=default \
+          --cdrom debian-13.7.0-amd64-netinst.iso
+        # virt-viewer ouvre la console : on y fait l’installation
+        # toutes les VM, même arrêtées
+        $ virsh list --all
+         Id   Name             State
+        --------------------------------
+         7    ma-premiere-vm   running
+        ```
+      ]
+    ],
+    bloc(role: "retenir")[À retenir][
+      - virt-install crée la VM, virsh la gère : tous deux passent par libvirt
+      - virt-viewer affiche la console graphique de l’installateur
+      - Prérequis : un hôte prêt (questions 1 et 2 du mini TP) et le groupe `libvirt` ; le groupe `kvm` ne sert qu’à lancer QEMU soi-même
+    ],
+  ),
+  source-de: [#link("https://libvirt.org/docs.html")[libvirt.org] · #link("https://github.com/virt-manager/virt-manager/blob/main/man/virt-install.rst")[virt-install(1)]],
+  note: [L’ISO est celle téléchargée et vérifiée à la diapositive « Télécharger l’ISO, puis la vérifier ». Commandes pour Debian/Ubuntu ; --osinfo existe depuis virt-install 4.0 ; detect=on identifie l’OS à partir de l’ISO ; --disk size=10 s’exprime en Gio et crée le volume ma-premiere-vm.qcow2 dans le pool default, que virt-install crée lui-même s’il n’existe pas. --network network=default passe par le réseau libvirt plutôt que de nommer son pont (virbr0). Le micrologiciel reste le BIOS : virt-install (4.1 et 5.0) ne choisit l’UEFI pour un invité x86 que si l’OS l’exige, ce qui garde possibles les instantanés internes (plus loin). Par défaut virt-install choisit un affichage graphique (SPICE ou VNC) et lance virt-viewer (--autoconsole graphical) ; sans virt-viewer, aucune console ne s’ouvre et l’installation interactive est impossible. Alternative en mode texte : --graphics none avec une console série (virsh console). virsh list --all : identifiant (numéro attribué à chaque démarrage, - si la VM est arrêtée), nom, état. Sortie de virsh 10.0.0, en anglais (LC\_ALL=C), rejouée par virtualisation/cm/rejouer-libvirt.sh sur une VM sans système ; à rejouer sur un poste avec KVM et l’ISO.],
+)
+
+== Le cycle de vie d’un domaine <cycle-de-vie>
+
+#let etat(t, sous, fond: c.invite-clair, trait: none) = block(width: 100%, height: px(150), fill: fond,
+  stroke: trait, radius: px(12), inset: px(12), align(center + horizon, stack(spacing: px(10),
+    text(size: px(30), weight: 600, t), text(size: px(24), fill: c.ardoise, sous))))
+#let transition(haut, bas: none) = align(center + horizon, stack(spacing: px(10),
+  text(size: px(26), weight: 600, fill: c.invite, haut),
+  if bas != none { text(size: px(26), weight: 600, fill: c.invite, bas) }))
+
+#slide(repeat: 6, self => {
+  let (uncover,) = utils.methods(self)
+  grid(columns: (1fr, px(250), 1fr, px(330), 1fr), row-gutter: px(20), align: horizon,
+    etat([Un fichier XML], [`ma-premiere-vm.xml`], fond: c.appli),
+    uncover("2-", transition([`define` →], bas: [← `dumpxml`])),
+    uncover("2-", etat([Définie, éteinte], [`shut off`])),
+    uncover("3-", transition([`start` →], bas: uncover("4-")[← `shutdown`, `destroy`])),
+    uncover("3-", etat([En marche], [`running`], trait: px(4) + c.invite)),
+    [], [], uncover("5-", transition([↓ `undefine`])), [], [],
+    [], [], uncover("5-", etat([Plus de définition], [disques conservés, sauf `--remove-all-storage`], fond: c.fond,
+      trait: (paint: c.invite, thickness: px(2), dash: "dashed"))), [], [],
+  )
+  v(px(28))
+  uncover("6-", rendre-bloc(bloc(role: "retenir")[À retenir][
+    Définir n’est pas démarrer : une VM définie existe, éteinte, et `virsh list --all` la montre. `virt-install` fait les deux d’un coup : `define`, puis `start`.
+  ]))
+  source[#link("https://libvirt.org/manpages/virsh.html")[virsh(1), Domain commands]]
+  utils.speaker-note(self: self)[Un clic par transition. define enregistre la définition (domaine persistant) ; start lance le processus QEMU ; shutdown demande à l’invité de s’éteindre, destroy arrête le processus net (diapositive suivante) ; undefine efface la définition. dumpxml relit la définition : c’est le chemin inverse de define, d’où le TP qui crée une VM à partir du XML d’une autre. Hors du schéma : virsh create lance une VM sans la définir (domaine transitoire, qui disparaît à l’arrêt) ; suspend et resume la mettent en pause ; autostart la démarre avec l’hôte. États affichés par virsh 10.0.0 en anglais : running, shut off, paused.]
+})
+
+== Éteindre, débrancher, effacer : trois commandes <arreter-effacer>
+
+#anime(
+  rang(
+    bloc(role: "pratique", poids: 1.2, taille: px(24))[Démonstration][
+      #terminal(titre: none, taille: px(20))[
+        ```
+        # demande à l’invité de s’éteindre
+        $ virsh shutdown ma-premiere-vm
+        Domain 'ma-premiere-vm' is being shutdown
+        # arrêt immédiat du processus QEMU
+        $ virsh destroy ma-premiere-vm
+        Domain 'ma-premiere-vm' destroyed
+        $ virsh list --all
+         Id   Name             State
+        ---------------------------------
+         -    ma-premiere-vm   shut off
+        ```
+      ]
+    ],
+    bloc(taille: px(23), taille-titre: px(26))[Trois commandes, trois effets][
+      - `shutdown` : l’invité reçoit l’événement ACPI (gestion de l’alimentation) du bouton et s’éteint proprement
+      - `destroy` : on débranche la prise. Le nom trompe : définition et disque restent, `start` relance la VM
+      - `undefine` : efface la définition ; avec `--remove-all-storage`, aussi les volumes de ses disques
+    ],
+  ),
+  rang(
+    bloc(role: "avertissement", taille: px(23), taille-titre: px(26))[`destroy` : un arrêt brutal][
+      Comme une coupure de courant : ce que l’invité n’a pas écrit sur le disque est perdu. On l’emploie quand `shutdown` ne répond pas.
+    ],
+    bloc(role: "danger", taille: px(23), taille-titre: px(26))[`undefine --remove-all-storage` : sans retour][
+      La VM et ses disques disparaissent. Avant : `virsh dumpxml ma-premiere-vm > ma-premiere-vm.xml`.
+    ],
+  ),
+  source-de: [#link("https://libvirt.org/manpages/virsh.html")[virsh(1)]],
+  note: [Sorties de virsh 10.0.0, sur une VM sans système : shutdown n’y a aucun effet (aucun invité n’écoute l’ACPI), d’où le destroy ; sur une VM Debian installée, shutdown l’éteint en quelques secondes. Le domaine doit déclarer \<acpi/> dans ses features (virt-install le fait). --remove-all-storage ne supprime que les volumes connus d’un pool (diapositive « Pools et volumes ») ; un disque posé ailleurs reste en place. Les notes d’origine du cours écrivaient virsh undefined : la commande est undefine.],
+)
+
+== Trois façons de brancher une VM <reseaux-libvirt>
+
+#anime(
+  rang(
+    bloc(taille: px(22), taille-titre: px(26))[NAT : le réseau `default`][
+      #raw("<forward mode='nat'/>", lang: none)
+      - Les VM sortent par l’adresse de l’hôte ; de l’extérieur, on ne les joint pas
+      - Pont `virbr0` de l’hôte (192.168.122.1) ; libvirt y sert le DHCP (adresses automatiques) et le DNS (noms)
+      - Pour : une VM de travail. C’est le réseau par défaut
+    ],
+    bloc(taille: px(22), taille-titre: px(26))[Pont (_bridge_) vers le réseau local][
+      #raw("<forward mode='bridge'/>", lang: none) \
+      #raw("<bridge name='br0'/>", lang: none)
+      - La VM est branchée sur le réseau local : elle y a sa propre adresse
+      - Le réseau local la joint comme une machine de plus : à protéger comme telle
+      - Pour : un serveur. Demande un pont `br0` sur une carte filaire de l’hôte
+    ],
+    bloc(taille: px(22), taille-titre: px(26))[Isolé : un réseau de laboratoire][
+      _pas d’élément_ #raw("<forward>", lang: none)
+      - Les VM se joignent entre elles et joignent l’hôte ; rien ne sort
+      - Pont et DHCP servis par libvirt, comme en NAT
+      - Pour : un laboratoire (cluster, attaque, configuration réseau) sans fuite
+    ],
+  ),
+  rang(bloc(role: "retenir", taille: px(26))[À retenir][
+    Un réseau libvirt est un XML (`virsh net-define`, puis `net-start`) ; d’un mode à l’autre, l’élément `<forward>` change. Une VM peut avoir plusieurs cartes, sur plusieurs réseaux.
+  ]),
+  source-de: [#link("https://libvirt.org/formatnetwork.html")[libvirt.org, Network XML format] · #link("https://wiki.libvirt.org/Networking.html")[wiki.libvirt.org, Networking]],
+  note: [Le réseau default est livré par libvirt (/usr/share/libvirt/networks/default.xml) : \<forward/> y est écrit sans mode, et nat est le mode par défaut ; virsh net-dumpxml default l’affiche en clair (mode='nat'). Tant qu’aucune VM n’y est branchée, ip addr show virbr0 affiche NO-CARRIER : le pont existe, rien n’y est relié. Pont vers le réseau local : on crée d’abord un pont de l’hôte (br0) qui englobe la carte filaire ; une carte Wi-Fi ne se met pas en pont (le point d’accès refuse les adresses MAC des VM). Le réseau isolé, avec deux cartes par VM (une sur default, une sur labo), est l’étape 8 du TP libvirt.],
+)
+
+== Pools et volumes : où vivent les disques <pools-volumes>
+
+#anime(
+  rang(
+    bloc(taille: px(24))[Deux étages][
+      - Un *pool* : un espace où ranger des disques (répertoire, volumes LVM, _Logical Volume Manager_, partage NFS, Ceph…)
+      - Un *volume* : un disque dans un pool. Mêmes commandes quel que soit le pool : `vol-create-as`, `vol-clone`, `vol-delete`
+      - Le pool `default` : le répertoire `/var/lib/libvirt/images`, créé par virt-install ou virt-manager à leur premier usage
+    ],
+  ),
+  rang(
+    bloc(role: "pratique", poids: 1.45, taille: px(24))[Démonstration][
+      #terminal(titre: none, taille: px(19))[
+        ```
+        $ virsh pool-list
+         Name      State    Autostart
+        -------------------------------
+         default   active   yes
+        $ virsh vol-list default
+         Name                   Path
+        ----------------------------------------------------------------------
+         ma-premiere-vm.qcow2   /var/lib/libvirt/images/ma-premiere-vm.qcow2
+        ```
+      ]
+    ],
+    bloc(role: "precaution", taille: px(23), taille-titre: px(26))[Hors des pools, libvirt n’efface rien][
+      `undefine --remove-all-storage` supprime les volumes des pools. Un disque rangé ailleurs reste : « is not managed by libvirt. Remove it manually ».
+    ],
+  ),
+  source-de: [#link("https://libvirt.org/storage.html")[libvirt.org, Storage management] · #link("https://libvirt.org/formatstorage.html")[Storage pool and volume XML format]],
+  note: [Sorties de virsh 10.0.0. Le volume ma-premiere-vm.qcow2 est celui que virt-install a créé (--disk size=10). Un pool se définit en XML comme le reste (virsh pool-define-as … dir --target …, puis pool-start et pool-autostart). Un disque désigné par son pool et son volume (\<disk type='volume'>\<source pool='default' volume='…'/>) ne dépend plus de son chemin : c’est ce que fait le fichier vm-exemple.xml du TP. Message d’erreur relevé avec libvirt 10.0.0 sur un disque hors pool.],
+)
+
+== qcow2 : copie sur écriture et chaîne d’images <qcow2-backing>
+
+#slide(repeat: 5, self => {
+  let (uncover,) = utils.methods(self)
+  let image(t, sous, fond, texte: c.encre, trait: none) = block(width: 100%, height: px(120), fill: fond,
+    stroke: trait, radius: px(12), inset: px(14), align(center + horizon, stack(spacing: px(8),
+      text(size: px(26), weight: 600, fill: texte, t), text(size: px(22), fill: texte, sous))))
+  let b-modele = bloc(taille: px(24))[Le modèle][
+    - Un disque qcow2 est découpé en grappes (_clusters_) de 64 Kio ; une grappe jamais écrite ne prend pas de place (allocation fine)
+    - Une image peut s’appuyer sur une autre, son image de base (_backing file_), qui reste en lecture seule
+    - *Écrire* : la grappe va dans l’image du haut, celle de la VM (copie sur écriture, _copy-on-write_)
+    - *Lire* : la grappe est cherchée dans l’image du haut, puis dans chaque image de base, en descendant la chaîne ; introuvable, elle vaut zéro
+  ]
+  grid(columns: (px(620), 1fr), column-gutter: px(56),
+    stack(spacing: px(14),
+      uncover("3-", image([`troisieme-vm.qcow2`], [la VM : lecture-écriture], c.invite-clair,
+        trait: (paint: c.invite, thickness: px(3), dash: "dashed"))),
+      uncover("3-", align(center, text(size: px(24), weight: 600, fill: c.invite)[↓ s’appuie sur])),
+      uncover("2-", image([`base-ma-premiere-vm.qcow2`], [image de base : lecture seule], c.nuit, texte: c.fond)),
+    ),
+    bloc-anime(b-modele, 1, uncover),
+  )
+  v(px(24))
+  uncover("5-", rendre-bloc(bloc(role: "danger", taille: px(24))[Attention : la base est intouchable][
+    Modifier ou démarrer l’image de base change ce que lisent toutes les VM qui s’appuient sur elle : leurs disques deviennent incohérents.
+  ]))
+  source[#link("https://www.qemu.org/docs/master/interop/qcow2.html")[qemu.org, qcow2 format] · #link("https://www.qemu.org/docs/master/system/images.html")[qemu.org, Disk images]]
+  utils.speaker-note(self: self)[Modèle énoncé pour l’artefact « chaîne de backing files ». Un clic par puce du modèle, la chaîne se dessine avec la deuxième et la troisième puce. Grappe de 64 Kio : taille par défaut (cluster\_size: 65536 dans qemu-img info). L’allocation fine est celle du mini TP (196 Kio pour un disque de 20 Gio) ; qcow2 signifie QEMU Copy On Write, version 2. La chaîne peut compter plusieurs étages (base, image intermédiaire, VM) : qemu-img commit reverse une image dans sa base, qemu-img rebase change de base. C’est le mécanisme des couches d’images du cours Docker, au niveau des blocs d’un disque au lieu des fichiers. Danger, réalisé en démonstration à la diapositive suivante : une grappe écrite dans la base change sous les pieds des VM qui ne l’avaient pas réécrite.]
+})
+
+== Une VM de plus pour 196 Kio : le backing file <backing-file>
+
+#anime(
+  rang(
+    bloc(role: "pratique", poids: 1.5, taille: px(24))[Démonstration avec qemu-img][
+      #terminal(titre: none, taille: px(19))[
+        ```
+        $ qemu-img create -q -f qcow2 base.qcow2 10G
+        # 1 Mio écrit dans la base (octets 0xaa)
+        $ qemu-io -c "write -P 0xaa 0 1M" base.qcow2 > /dev/null
+        # -b : l’image de base ; -F : son format
+        $ qemu-img create -q -f qcow2 -b base.qcow2 -F qcow2 vm1.qcow2
+        $ ls -sh base.qcow2 vm1.qcow2
+        1.3M base.qcow2
+        196K vm1.qcow2
+        # la VM écrit ses 64 premiers Kio (octets 0xbb)
+        $ qemu-io -c "write -P 0xbb 0 64k" vm1.qcow2 > /dev/null
+        # quelle image porte chaque plage du disque de vm1 ?
+        $ qemu-img map vm1.qcow2
+        Offset          Length          Mapped to       File
+        0               0x10000         0x50000         vm1.qcow2
+        0x10000         0xf0000         0x60000         base.qcow2
+        ```
+      ]
+    ],
+    bloc(taille: px(23), taille-titre: px(26))[Ce que montre `qemu-img map`][
+      - Les 64 premiers Kio (`0x10000`) : écrits par la VM, donc dans `vm1.qcow2`
+      - Les 960 Kio suivants : jamais réécrits, lus dans `base.qcow2`
+      - Le reste des 10 Gio : écrit nulle part, absent de la carte, lu comme des zéros
+      - Avec libvirt : `virsh vol-create-as` crée ce disque dans un pool (`--backing-vol`) ; `qemu-img info --backing-chain` lit la chaîne
+    ],
+  ),
+  source-de: [#link("https://www.qemu.org/docs/master/tools/qemu-img.html")[qemu-img(1)] · #link("https://libvirt.org/manpages/virsh.html")[virsh(1), vol-create-as]],
+  note: [Sorties de qemu-img 8.2.2. qemu-io (paquet qemu-utils) lit et écrit dans une image sans VM : write -P 0xaa remplit la plage de l’octet 0xaa. Sans -F, qemu-img refuse désormais une image de base dont le format n’est pas donné (deviner le format d’une image est un risque de sécurité). L’ancien sujet du site donnait qemu-img info … | tail -2 pour voir l’image de base : avec QEMU 8.2, ces deux lignes sont file length et disk size ; on cherche les lignes backing file (grep backing) ou on lit toute la chaîne (--backing-chain). Le TP crée ainsi une troisième VM sur une base copiée de la première (étape 7) : quelques Kio au lieu d’une copie complète.],
+)
+
+== Instantanés : revenir en arrière <instantanes>
+
+#anime(
+  rang(
+    bloc(role: "pratique", poids: 1.4, taille: px(24))[Démonstration][
+      #terminal(titre: none, taille: px(19))[
+        ```
+        $ virsh snapshot-create-as ma-premiere-vm avant-tp \
+          --description "état sain"
+        Domain snapshot avant-tp created
+        $ virsh snapshot-list ma-premiere-vm
+         Name       Creation Time               State
+        -------------------------------------------------
+         avant-tp   2026-11-25 09:57:10 +0000   running
+        # … une fausse manœuvre dans l’invité, puis :
+        $ virsh snapshot-revert ma-premiere-vm avant-tp
+        Domain snapshot avant-tp reverted
+        ```
+      ]
+    ],
+    bloc(taille: px(23), taille-titre: px(26))[Un instantané interne][
+      - Rangé dans le fichier qcow2 lui-même : le format raw n’en a pas
+      - VM en marche : disque *et* mémoire ; la VM repart dans l’état exact de la photo
+      - Ce qui s’est passé depuis est perdu : c’est le but
+    ],
+  ),
+  rang(bloc(role: "precaution", taille: px(23), taille-titre: px(26))[UEFI : pas d’instantané interne][
+    Une VM en UEFI (micrologiciel en mémoire flash, _pflash_) refuse : « internal snapshots of a VM with pflash based firmware are not supported ». Pour Debian, virt-install choisit le BIOS : les instantanés internes fonctionnent.
+  ]),
+  source-de: [#link("https://libvirt.org/formatsnapshot.html")[libvirt.org, Snapshot XML format] · #link("https://libvirt.org/kbase/snapshots.html")[libvirt.org, Snapshots]],
+  note: [Sorties de virsh 10.0.0 en TCG ; le refus en UEFI est relevé avec libvirt 10.0.0 et OVMF (firmware='efi'), à rejouer sur Debian 13 (libvirt 11). Le code de virt-install le dit : pour un invité x86, il garde le BIOS « since it is faster and doesn’t break QEMU internal snapshots », sauf si l’OS exige l’UEFI. Parade pour une VM en UEFI : un instantané externe (virsh snapshot-create-as --disk-only), qui crée un nouveau fichier qcow2 au-dessus de l’ancien, exactement la chaîne de la diapositive qcow2.],
+)
+
+== À vous : effacer une VM qui a un instantané <a-vous-effacer>
+
+#anime(
+  rang(bloc(role: "pratique", taille: px(26))[La situation][
+    - `ma-premiere-vm` est en marche ; elle a l’instantané `avant-tp`
+    - Vous voulez la faire disparaître, disque compris
+  ]),
+  rang(bloc(role: "question")[À vous][
+    + `virsh destroy ma-premiere-vm` : que reste-t-il de la VM ?
+    + Puis `virsh undefine ma-premiere-vm` : que se passe-t-il ?
+    + Quelle commande efface la VM, son instantané et son disque ?
+  ]),
+  note: [Laisser chercher, avec man virsh (commande undefine). Le corrigé est sur la diapositive suivante.],
+)
+
+== Effacer une VM : corrigé
+
+#corriges(note: [Sorties de virsh 10.0.0. Question 2 : libvirt refuse d’effacer une définition dont les instantanés ont des métadonnées ; le code de retour vaut 1. --snapshots-metadata efface ces métadonnées (les instantanés internes disparaissent avec le volume). Une VM en UEFI demande en plus --nvram (« cannot undefine domain with nvram »). L’ancien sujet du site enseignait undefine --remove-all-storage après un instantané : il échoue tel quel.],
+  (1, [`virsh destroy ma-premiere-vm` : que reste-t-il de la VM ?],
+    reponse(terminal(titre: none, taille: px(19))[
+      ```
+      $ virsh destroy ma-premiere-vm
+      Domain 'ma-premiere-vm' destroyed
+      $ virsh list --all
+       Id   Name             State
+      ---------------------------------
+       -    ma-premiere-vm   shut off
+      # → tout : définition, disque, instantané ; seul le processus est arrêté
+      ```
+    ])),
+  (2, [Puis `virsh undefine ma-premiere-vm` : que se passe-t-il ?],
+    reponse(terminal(titre: none, taille: px(19))[
+      ```
+      $ virsh undefine ma-premiere-vm
+      error: Failed to undefine domain 'ma-premiere-vm'
+      error: Requested operation is not valid: cannot delete inactive domain with 1 snapshots
+      # → refus : l’instantané protège la définition
+      ```
+    ])),
+  (3, [Quelle commande efface la VM, son instantané et son disque ?],
+    reponse(terminal(titre: none, taille: px(19))[
+      ```
+      $ virsh undefine ma-premiere-vm --snapshots-metadata --remove-all-storage
+      Domain 'ma-premiere-vm' has been undefined
+      Volume 'vda'(/var/lib/libvirt/images/ma-premiere-vm.qcow2) removed.
+      ```
+    ])),
+)
+
 == virt-manager : libvirt en interface graphique
 
 #anime(
@@ -681,8 +1029,11 @@
     ],
   ),
   bandeau[*Origine* : projet *libvirt / virt-manager*, développé par *Red Hat* et sa communauté · logiciel libre (GPL) · pilote KVM/QEMU au travers de libvirt · #link("https://virt-manager.org")[virt-manager.org]],
-  note: [Suite directe de la diapositive sur virt-install et virsh : l’équivalent graphique. virt-manager (Virtual Machine Manager) et virsh s’appuient tous deux sur libvirt ; ce qui est fait dans l’un se retrouve dans l’autre. Console distante via SSH : virt-manager -c qemu+ssh:\/\/user\@hote/system. Statut au 18 novembre 2026 : toujours maintenu en amont et standard sur Debian/Ubuntu ; Red Hat l’a déprécié dans RHEL (annoncé dès RHEL 8) et pousse la console web Cockpit avec le module cockpit-machines.],
+  note: [Fin de la partie libvirt : l’équivalent graphique de virsh et de virt-install. virt-manager (Virtual Machine Manager) et virsh s’appuient tous deux sur libvirt ; ce qui est fait dans l’un se retrouve dans l’autre. Console distante via SSH : virt-manager -c qemu+ssh:\/\/user\@hote/system. Statut au 18 novembre 2026 : toujours maintenu en amont et standard sur Debian/Ubuntu ; Red Hat l’a déprécié dans RHEL (annoncé dès RHEL 8) et pousse la console web Cockpit avec le module cockpit-machines.],
 )
+
+// ======================================================================
+= Pour aller plus loin
 
 == Incus : conteneurs et VM, un seul outil
 
@@ -798,9 +1149,6 @@
   note: [Exemple marquant d’usage de la virtualisation de type 1 côté poste de travail, pour la sécurité et non la consolidation. Chaque qube est une VM Xen ; le compromis d’une application reste confiné à son qube. dom0 (le domaine d’administration Xen) n’a pas d’accès réseau ; des qubes de service dédiés portent le réseau (sys-net), le pare-feu (sys-firewall) et l’USB (sys-usb). Les VM applicatives dérivent de modèles en lecture seule (Fedora, Debian, Whonix pour Tor), ce qui centralise les mises à jour. Les qubes jetables (DisposableVM) servent à ouvrir un fichier à risque puis disparaissent. Au 18 novembre 2026 : projet fondé par Joanna Rutkowska (Invisible Things Lab), première version stable 1.0 en 2012 ; série stable 4.2 depuis fin 2023 ; licence GPL ; fondé sur Xen. Rendu célèbre notamment par le soutien public d’Edward Snowden.],
 )
 
-// ======================================================================
-= Pour aller plus loin
-
 == MicroVM : une VM réduite à l’essentiel
 
 #anime(
@@ -872,6 +1220,9 @@
     - Type 1 ou type 2 : une frontière floue ; la paravirtualisation (virtio) est une autre question
     - Une image téléchargée se vérifie : signature (authenticité), puis empreinte SHA-256 (intégrité)
     - Une VM est un processus de l’hôte ; avec `-cpu host`, elle peut à son tour lancer des VM
+    - libvirt décrit domaines, réseaux, pools et volumes en XML ; connexion `qemu:///system`, avec le groupe `libvirt`
+    - `shutdown` éteint, `destroy` débranche, `undefine` efface ; un instantané interne (qcow2, BIOS) permet de revenir en arrière
+    - Réseau NAT, pont ou isolé ; un disque qcow2 peut s’appuyer sur une image de base, qui devient intouchable
     - MicroVM et conteneurs isolent plus légèrement : machine minimale pour l’une, noyau partagé pour les autres
   ]),
   note: [Récapitulatif, une idée par clic, dans l’ordre du cours.],

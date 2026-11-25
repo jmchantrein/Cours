@@ -1,0 +1,6 @@
+web_server:
+  children:
+    mon_groupe:
+mon_groupe:
+  hosts:
+    managed-node-1:

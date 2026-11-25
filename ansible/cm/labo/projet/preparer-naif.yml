@@ -1,0 +1,11 @@
+---
+- name: Préparer les nœuds
+  hosts: all
+  tasks:
+    - name: Installer tree
+      ansible.builtin.apt:
+        name: tree
+        state: latest
+
+    - name: Noter la date du déploiement
+      ansible.builtin.shell: date > /srv/site/deploiement.txt

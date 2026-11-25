@@ -1,0 +1,15 @@
+<!-- Le réseau « default », tel que libvirt l'installe
+     (/usr/share/libvirt/networks/default.xml) : un pont virbr0 porté par
+     l'hôte (192.168.122.1), un DHCP pour les VM, et forward, dont le mode
+     par défaut est nat : les VM sortent par l'adresse de l'hôte, l'extérieur
+     ne les joint pas. virsh net-dumpxml default affiche mode="nat" en clair. -->
+<network>
+  <name>default</name>
+  <bridge name="virbr0"/>
+  <forward/>
+  <ip address="192.168.122.1" netmask="255.255.255.0">
+    <dhcp>
+      <range start="192.168.122.2" end="192.168.122.254"/>
+    </dhcp>
+  </ip>
+</network>
