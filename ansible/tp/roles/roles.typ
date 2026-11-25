@@ -282,7 +282,7 @@ et #link("../playbooks/index.html")[playbooks].
   #f("site-web.yml")
   #terminal[```console
   $ ansible-lint --offline site-web.yml
-  Passed: 0 failure(s), 0 warning(s) in 8 files processed of 10 encountered. Last profile that met the validation criteria was 'production'.
+  Passed: 0 failure(s), 0 warning(s) in 5 files processed of 5 encountered. Last profile that met the validation criteria was 'production'.
   $ ansible-playbook site-web.yml
   PLAY [Installer les serveurs web de l’infrastructure] **************************
 
