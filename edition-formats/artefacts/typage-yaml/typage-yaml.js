@@ -757,8 +757,7 @@
         el("p", { class: "erreur" }, `${r.erreur.classe} : ${r.erreur.message}`),
         el("p", { class: "mention" }, "La conversion échoue : aucune valeur."))
       : el("div", { class: "lecture" },
-        el("p", { class: "ligne" }, el("span", { class: "champ" }, "Type"), badge(r.noeud)),
-        el("p", { class: "ligne" }, el("span", { class: "champ" }, "Valeur"), valeurDe(r.noeud, r.repr)),
+        el("p", { class: "ligne type-valeur" }, el("span", { class: "champ" }, "Type"), badge(r.noeud), el("span", { class: "champ" }, "Valeur"), valeurDe(r.noeud, r.repr)),
         el("p", { class: "ligne regle" }, el("span", { class: "champ" }, "Règle"), el("span", {}, phraseRegle(r))));
     return corps;
   }
@@ -805,9 +804,6 @@
       el("h2", {}, "Ce que dit le résultat"),
       el("div", { class: "explication-texte", role: "status", "aria-live": "polite" },
         ...phrases.map(f => el("p", { class: f.startsWith("Limitation") ? "limite" : /refusent|échoue/.test(f) && !f.includes("même façon") ? "erreur" : "" }, f))));
-    // La ligne telle qu'elle serait écrite dans le fichier.
-    const apercu = racine.querySelector(".apercu");
-    if (apercu) apercu.textContent = doc ? "" : `clé: ${etat.texte}`;
   }
 
   // ---------- Contrôles : créés une fois, relus par `appliquer` ----------
@@ -831,8 +827,7 @@
       el("section", { class: "zone-entree cadre" },
         el("div", { class: "saisie" },
           el("div", { class: "entree entree-scalaire" },
-            el("code", { class: "cle" }, "clé:"), champTexte,
-            el("p", { class: "mention" }, "Tel qu’il est écrit dans le fichier, guillemets compris : ", el("code", { class: "apercu" }))),
+            el("code", { class: "cle" }, "clé:"), champTexte),
           el("div", { class: "entree entree-document" }, zoneDocument)),
         el("div", { class: "commandes" },
           el("h2", {}, "Ce que vous écrivez"),
