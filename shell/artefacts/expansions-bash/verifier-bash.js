@@ -88,9 +88,12 @@ const LIT = ["a", "b", "x", "ab", "abc", "txt", ".txt", ".", "-", "_", "=", ":",
 const GLOBS = ["*", "?", "*.txt", "?.txt", "a*", "*a*", ".*", "*.md", "??", "*b", "g*", "*.*", "?*", "src/*", "*/*", "*/", "src/*.c", "mes*/*", "vide/*", "./*", "src/.*", "*/.*", "d?*"];
 const nom = () => choix(NOMS);
 const sansEspace = s => s.replace(/ /g, "");
+let dansCommande = 0;   // > 0 : on écrit l'intérieur d'un $(echo …), où le générateur n'imbrique pas de substitution
 function argsEcho(prof) {   // arguments simples d'un $(echo …)
   const n = entier(0, 3), mots = [];
+  dansCommande++;
   for (let i = 0; i < n; i++) mots.push(piece(prof + 2, "nu", false) + (rnd() < 0.4 ? piece(prof + 2, "nu", false) : ""));
+  dansCommande--;
   return mots.join(choix([" ", " ", "  "]));
 }
 function contenuDq(prof) {
@@ -104,14 +107,14 @@ function contenuDq(prof) {
     else if (r < 0.68) s += choix(["\\$", "\\\\", "\\\"", "\\q", "\\*"]);
     else if (r < 0.74) s += choix(["*", "?", "{a,b}", "{1..3}", "~", "'", "[", "!", "$", "/"]);
     else if (r < 0.80) s += "$" + nom() + choix(LIT);
-    else if (r < 0.86 && prof < 2) s += "$(echo " + argsEcho(prof) + ")";
+    else if (r < 0.86 && prof < 2 && !dansCommande) s += "$(echo " + argsEcho(prof) + ")";
     else s += choix(LIT);
   }
   return s;
 }
 function contenuSq() {
   const n = entier(0, 3); let s = "";
-  for (let i = 0; i < n; i++) s += choix(LIT.concat([" ", "$p", "*", "{a,b}", "\"", "\\", "~", "?", "$(echo a)", "${p}"]));
+  for (let i = 0; i < n; i++) s += choix(LIT.concat([" ", "$p", "*", "{a,b}", "\"", "\\", "~", "?", "$(echo a)", "${p}"].filter(x => !(dansCommande && x.includes("(")))));
   return s;
 }
 // Une pièce de mot. `debut` : première pièce du mot (le tilde y a un sens). `ctx` : toujours « nu » ici.
@@ -125,8 +128,8 @@ function piece(prof, ctx, debut) {
   if (r < 0.49) return '"' + contenuDq(prof) + '"';
   if (r < 0.53) return "'" + contenuSq() + "'";
   if (r < 0.58) return "\\" + choix(["*", "?", "$", "\\", "'", '"', " ", "a", "{", "}", ",", "~", ".", "/"]);
-  if (r < 0.63 && debut) return choix(["~", "~", "~/x", "~/", "~/*"]);
-  if (r < 0.68) return "$(echo " + argsEcho(prof) + ")";
+  if (r < 0.63 && debut) return choix(["~", "~", "~/x", "~/"]);
+  if (r < 0.68 && !dansCommande) return "$(echo " + argsEcho(prof) + ")";
   if (r < 0.70) return "$'" + choix(["a\\tb", "x", "\\n", "it\\'s", "\\\\", "a b", "*", "\\\"", "$p", "{a,b}"]) + "'";
   if (prof < 3) {
     if (r < 0.80) {
@@ -195,7 +198,7 @@ function reel(lot) {
 for i in $(seq 0 ${lot.length - 1}); do
   rm -rf /home/ada/labo; mkdir -p /home/ada/labo; cd /home/ada/labo
   while IFS= read -r -d '' f; do case "$f" in */) mkdir -p -- "./$f";; *) mkdir -p -- "$(dirname -- "./$f")"; : > "./$f";; esac; done < /cas/$i.f
-  env -i HOME=/home/ada PATH=/usr/bin:/bin LC_ALL=C timeout 5 bash --noprofile --norc /cas/$i.sh >/tmp/o 2>/tmp/e; rc=$?
+  env -i HOME=/home/ada PATH=/usr/bin:/bin LC_ALL=C.UTF-8 timeout 5 bash --noprofile --norc /cas/$i.sh >/tmp/o 2>/tmp/e; rc=$?
   printf '%s\\t%s\\t%s\\t%s\\n' "$i" "$rc" "$(od -An -v -tx1 /tmp/o | tr -d ' \\n')" "$(head -c 400 /tmp/e | tr '\\n\\t' '  ')"
   cd /
 done`;
@@ -253,6 +256,11 @@ for (const c of aFaire) {
 }
 const limitesDistinctes = new Set(horsPortee.map(c => c.sim.limites[0].split(" : ")[0].slice(0, 60)));
 const limitesHasard = horsPortee.filter(c => c.groupe === "hasard").length;
+if (process.argv.includes("--limites")) {
+  const n = new Map();
+  for (const c of horsPortee.filter(c => c.groupe === "hasard")) n.set(c.sim.limites[0].slice(0, 90), (n.get(c.sim.limites[0].slice(0, 90)) ?? 0) + 1);
+  for (const [m, k] of [...n].sort((a, b) => b[1] - a[1])) console.log(`${String(k).padStart(5)} limitation du hasard : ${m}`);
+}
 
 // Les lignes hors sous-ensemble : toutes doivent être déclarées hors de portée (jamais exécutées).
 const hors = [...new Set(HORS.split("\n").filter(l => l.trim() !== ""))];
@@ -261,7 +269,7 @@ const messages = new Set();
 for (const ligne of hors) {
   const r = sim.simuler({ ligne, variables: VARS, fichiers: FICHIERS });
   if (r.limites.length) messages.add(r.limites[0]);
-  else if (r.erreur) { /* refusée par Bash : acceptable pour les lignes mal fermées */ if (!/^echo.*(["'(]|\$\(|\$\{)/.test(ligne) && !/\\$/.test(ligne)) { horsEcarts++; console.log(`HORS-SOUS-ENSEMBLE : « ${ligne} » est déclarée erreur (${r.erreur}) au lieu d'une limitation`); } }
+  else if (r.erreur) { horsEcarts++; console.log(`HORS-SOUS-ENSEMBLE : « ${ligne} » est déclarée erreur de syntaxe (${r.erreur}) au lieu d'une limitation`); }
   else { horsEcarts++; console.log(`HORS-SOUS-ENSEMBLE : « ${ligne} » n'est PAS déclarée hors de portée : argv ${montrer(r.argv)}`); }
 }
 
