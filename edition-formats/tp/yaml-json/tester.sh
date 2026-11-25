@@ -27,8 +27,10 @@
 #                     par yq comme par PyYAML, il donne les livres de livres.yaml,
 #                     l'auteur devenu un objet ; naissance est un entier ;
 #   requetes.sh       rejoué sur une copie : sa sortie est celle de l'énoncé, le
-#                     fichier réécrit reste du YAML et seul le titre a changé ;
-#                     yq -i sans -y est refusé et laisse le fichier intact.
+#                     fichier réécrit passe yamllint --strict (--explicit-start garde le
+#                     --- de tête ; sans l'option, il disparaît), le commentaire a
+#                     disparu et seul le titre a changé ; yq -i sans -y est refusé
+#                     et laisse le fichier intact.
 #
 # Fichiers exclus du --lint, parce qu'ils échouent exprès (l'étudiant les
 # corrige) : fichiers/livres-fautif.yaml, fichiers/pieges.yaml.
@@ -210,10 +212,18 @@ compare "requetes.sh : la sortie annoncée" "$sortie" "$(printf '%s\n' 'Le meill
   'Le meilleur des mondes' 'Les portes de la perception' 'Le meilleur des mondes' 'Les portes de la perception')"
 compare "livres.yaml réécrit : seul le titre de 1984 a changé" \
   "$(py_json "$travail/livres.yaml")" "$(jq -cS '.livres[0].titre = "2024"' <<< "$avant")"
-if yamllint "$travail/livres.yaml" > /dev/null; then ok "livres.yaml réécrit : yamllint ne trouve pas d'erreur"
-else ko "livres.yaml réécrit : yamllint trouve une erreur"; fi
+if yamllint --strict "$travail/livres.yaml"; then ok "livres.yaml réécrit : yamllint --strict ne dit rien (le --- de tête est resté)"
+else ko "livres.yaml réécrit : yamllint --strict signale quelque chose"; fi
+compare "livres.yaml réécrit : les quatre premières lignes de l'énoncé" "$(head -4 "$travail/livres.yaml")" \
+  "$(printf '%s\n' '---' 'livres:' "  - titre: '2024'" '    auteur: George Orwell')"
 if grep -q '^#' "$travail/livres.yaml"; then ko "livres.yaml réécrit : le commentaire est resté"
-else ok "livres.yaml réécrit par yq -yi : le commentaire et --- ont disparu, comme l'annonce l'énoncé"; fi
+else ok "livres.yaml réécrit par yq -yi : le commentaire a disparu, comme l'annonce l'énoncé"; fi
+cp "$corrige/livres.yaml" "$travail/sans-debut.yaml"
+yq -yi '(.livres[] | select(.titre == "1984") | .titre) = "2024"' "$travail/sans-debut.yaml"
+if grep -q '^---' "$travail/sans-debut.yaml"; then ko "yq -yi sans --explicit-start : le --- de tête est resté"
+else ok "yq -yi sans --explicit-start : le --- de tête disparaît, comme l'annonce l'énoncé"; fi
+compare "… et yamllint le signale (document-start)" \
+  "$(yamllint "$travail/sans-debut.yaml" | grep -o '(document-start)' || true)" "(document-start)"
 cp "$corrige/livres.yaml" "$travail/refus.yaml"
 if yq -i '.livres[0].titre = "2024"' "$travail/refus.yaml" 2> "$travail/refus.log"; then ko "yq -i sans -y est accepté"
 else ok "yq -i sans -y est refusé : $(cat "$travail/refus.log")"; fi

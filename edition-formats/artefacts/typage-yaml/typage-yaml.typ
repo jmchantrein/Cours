@@ -36,7 +36,8 @@
       [En 1.1, `22:22` est un entier en base 60 : 22 × 60 + 22 = 1342, et `1:30` vaut 90. En 1.2, ce sont des chaînes.
         Entre guillemets, `"22:22"` est une chaîne partout.], "base-60"),
     ([`2026-11-25` : quel type, et que devient-il en JSON ? Et `"2026-11-25"` ? Et `2026-13-45` ?],
-      [Une date dans les deux versions ; JSON n’a pas de date : `json.dumps` échoue (_TypeError_). Entre guillemets, c’est une
+      [Une date dans les deux lectures, mais pas pour la même raison : en 1.1, c’est le schéma ; en 1.2, le schéma de base n’a
+        pas de type date, et c’est ruamel.yaml qui en construit une, hors schéma. JSON n’a pas de date : `json.dumps` échoue (_TypeError_). Entre guillemets, c’est une
         chaîne, qui s’écrit sans difficulté. `2026-13-45` a la forme d’une date, pas la valeur : le document est refusé
         (_ValueError : month must be in 1..12_).], "date-json"),
     ([Mode document : `norvege.yaml`, puis corrigé (`"NO"`, `true`), puis avec `mode: 0644`. Où les versions divergent-elles ?],

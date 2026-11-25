@@ -220,7 +220,7 @@ Le paquet de Debian 13 est la 3.4.3 (celui d’Ubuntu 24.04, la 3.1.0) ; les sor
   - Que signale `yamllint` ? Que ne signale-t-il pas ?
   - Écrivez `pieges-corrige.yaml`, que les deux analyseurs lisent de la même façon, avec les types voulus : le
     titre, la cote et la durée sont des chaînes, `no` est le code de la langue norvégienne, `disponible` est un
-    booléen.
+    booléen, `publication` est une chaîne : la date reste du texte, `"1949-06-08"`.
 ]
 
 #terminal(raw(lang: "console", block: true,
@@ -313,7 +313,8 @@ Pour voir comment chaque version de YAML type un scalaire et ce que JSON en fait
   - fait la même extraction avec `jq`, sur `livres.json` ;
   - modifie en place, avec `yq`, le titre « 1984 » en « 2024 » dans `livres.yaml`.
 
-  Sauvegardez d’abord `livres.yaml` par `cp` : le script le modifie en place. Lancez-le, puis examinez le fichier modifié.
+  Sauvegardez d’abord `livres.yaml` par `cp` : le script le modifie en place. Lancez-le, puis examinez le fichier modifié :
+  `yamllint` ne doit plus rien dire.
 ]
 
 #indice(titre: [Indice : les filtres])[
@@ -322,8 +323,9 @@ Pour voir comment chaque version de YAML type un scalaire et ce que JSON en fait
   #d("yq-jq")[Interroger et modifier : jq et yq].
 ]
 #indice(titre: [Indice : modifier en place])[
-  `-i` modifie le fichier ; le `yq` de Debian exige alors `-y`, pour écrire du YAML. Le membre gauche d’une
-  affectation peut être un chemin filtré : `(… | select(…) | .titre) = "2024"`.
+  `-i` modifie le fichier ; le `yq` de Debian exige alors `-y`, pour écrire du YAML, et n’écrit pas le `---` de
+  tête que `yamllint` réclame : l’option `--explicit-start` le remet. Le membre gauche d’une affectation peut
+  être un chemin filtré : `(… | select(…) | .titre) = "2024"`.
 ]
 
 #corrige[
@@ -338,17 +340,16 @@ Pour voir comment chaque version de YAML type un scalaire et ce que JSON en fait
   Le meilleur des mondes
   Les portes de la perception
   $ head -4 livres.yaml
+  ---
   livres:
     - titre: '2024'
       auteur: George Orwell
-      annee_publication: 1949
   $ yamllint livres.yaml
-  livres.yaml
-    1:1       warning  missing document start "---"  (document-start)
   $ yq -i '.livres[0].titre = "2024"' livres.yaml
   yq: -i/--in-place can only be used with -y/-Y/-t/-x
   ```]
-  `yq -yi` réécrit tout le fichier à partir de l’arbre : le commentaire et le `---` disparaissent, et les
-  guillemets deviennent simples. Sans `-y`, le `yq` de Debian refuse `-i` et laisse le fichier intact. Les
-  filtres de `yq` et de `jq` sont les mêmes : `yq` n’est qu’un convertisseur placé devant jq.
+  `yq -yi` réécrit tout le fichier à partir de l’arbre : le commentaire disparaît et les guillemets deviennent
+  simples. Sans `--explicit-start`, le `---` de tête disparaît aussi et `yamllint` le signale : l’option le
+  remet. Sans `-y`, le `yq` de Debian refuse `-i` et laisse le fichier intact. Les filtres de `yq` et de `jq`
+  sont les mêmes : `yq` n’est qu’un convertisseur placé devant jq.
 ]

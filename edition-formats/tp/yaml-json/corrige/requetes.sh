@@ -13,5 +13,6 @@ yq -r '.livres[] | select(.auteur == "Aldous Huxley") | .titre' livres.yaml
 # 3. Le même filtre, par jq sur le fichier JSON.
 jq -r '.livres[] | select(.auteur == "Aldous Huxley") | .titre' livres.json
 
-# 4. Retitrer 1984 en 2024, dans le fichier : -i (en place) exige -y (sortie YAML).
-yq -yi '(.livres[] | select(.titre == "1984") | .titre) = "2024"' livres.yaml
+# 4. Retitrer 1984 en 2024, dans le fichier : -i (en place) exige -y (sortie YAML) ;
+#    --explicit-start remet le --- de tête, que yq -y n'écrit pas et que yamllint réclame.
+yq -yi --explicit-start '(.livres[] | select(.titre == "1984") | .titre) = "2024"' livres.yaml

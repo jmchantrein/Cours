@@ -2,7 +2,7 @@
 # Rejoue les commandes du cours « Éditer et structurer du texte » et relève les versions.
 # Environnement de référence : Debian 13 (conteneur debian:13-slim, paquets Debian). Lancé sur l'hôte, le script
 # construit ce conteneur (nom rejeu-edition-formats-…), y installe vim, jq, yq, yamllint, pandoc, python3-yaml,
-# python3-ruamel.yaml, bsdutils (commande script) et les locales, puis s'y rejoue lui-même. Il a donc besoin de Docker et d'un accès
+# python3-ruamel.yaml, vim-tiny, bsdutils (commande script) et les locales, puis s'y rejoue lui-même. Il a donc besoin de Docker et d'un accès
 # aux dépôts Debian. Le yq écrit en Go (mikefarah, pour la diapo « Deux outils nommés yq ») n'existe pas dans Debian :
 # le script télécharge le binaire amont (amd64), en version et SHA-256 fixés ; sans accès à GitHub, ses commandes sont sautées.
 # Derrière un proxy HTTPS qui réécrit TLS : TPTEST_CA=/chemin/ca.crt HTTPS_PROXY=http://hôte:port ./rejouer.sh
@@ -44,7 +44,7 @@ if [ -z "${REJEU_INTERNE:-}" ]; then
       apt-cache show vim-tiny | grep -E "^(Package|Version|Priority|Essential):"
       printf "\n$ dpkg -l | grep -c vim\n%s\n" "$(dpkg -l | grep -c vim || true)"
       DEBIAN_FRONTEND=noninteractive apt-get install -y -qq --no-install-recommends \
-        vim jq yq yamllint pandoc python3-yaml python3-ruamel.yaml bsdutils util-linux locales ca-certificates curl > /dev/null
+        vim vim-tiny jq yq yamllint pandoc python3-yaml python3-ruamel.yaml bsdutils util-linux locales ca-certificates curl > /dev/null
       sed -i "s/^# *fr_FR.UTF-8/fr_FR.UTF-8/" /etc/locale.gen; locale-gen > /dev/null
       if [ "$(dpkg --print-architecture)" = amd64 ] && curl -fsSL -o /usr/local/bin/yq-go \
         "https://github.com/mikefarah/yq/releases/download/$YQ_GO_VERSION/yq_linux_amd64" 2> /dev/null \
@@ -62,7 +62,7 @@ D=$(mktemp -d); cd "$D" || exit 1
 echo "# $(date -I) · $(uname -srm) · $(cat /etc/debian_version 2>/dev/null) · $D"
 
 # ---------------------------------------------------------------- versions
-a dpkg-query && run "dpkg-query -W -f '\${Package} \${Version}\n' vim vim-runtime jq yq yamllint pandoc python3-yaml python3-ruamel.yaml"
+a dpkg-query && run "dpkg-query -W -f '\${Package} \${Version}\n' vim vim-tiny vim-runtime jq yq yamllint pandoc python3-yaml python3-ruamel.yaml"
 a vim && run 'vim --version | sed -n "1p;2p"'
 a jq && run 'jq --version'
 a yq && run 'yq --version'
@@ -95,6 +95,14 @@ touches() {
   TERM=xterm script -qc "vim -u NONE -N -i NONE -s $t/k $t/f" /dev/null >/dev/null
   cat "$t/f"; rm -rf "$t"
 }
+# touches_avec(commande, fichier, touches) : comme touches, avec la commande donnée (vim-tiny, vi en mode compatible…).
+touches_avec() {
+  local t; t=$(mktemp -d); cp "$2" "$t/f"
+  # shellcheck disable=SC2059
+  printf "$3" > "$t/k"
+  TERM=xterm script -qc "$1 -s $t/k $t/f" /dev/null >/dev/null
+  cat "$t/f"; rm -rf "$t"
+}
 if a vim && a script; then
   : > vide
   echo; echo '# Survivre : i Hello World ! Échap :wq Entrée'; touches vide 'iHello World !\033:wq\r'
@@ -107,7 +115,15 @@ if a vim && a script; then
   echo; echo '# /environ Entrée d2j'; touches config.yaml '/environ\rd2j:wq\r'
   echo; echo '# /production Entrée dG'; touches config.yaml '/production\rdG:wq\r'
   echo; echo '# /version Entrée dd .'; touches config.yaml '/version\rdd.:wq\r'
-  echo; echo '# dd u Ctrl+r'; touches config.yaml 'jddu\x12:wq\r' | head -3
+  echo; echo '# dd u Ctrl+r (vim, avec defaults.vim)'; touches_avec 'vim -u DEFAULTS -i NONE' config.yaml 'jddu\x12:wq\r' | head -3
+  echo; echo '# dd u Ctrl+r (vim -N)'; touches config.yaml 'jddu\x12:wq\r' | head -3
+  echo; echo '# dd u Ctrl+r (vi, mode compatible, paquet vim)'; touches_avec 'vi -u NONE -i NONE' config.yaml 'jddu\x12:wq\r' | head -3
+  echo; echo '# dd u u (vi, mode compatible, paquet vim)'; touches_avec 'vi -u NONE -i NONE' config.yaml 'jdduu:wq\r' | head -3
+  if a vim.tiny; then
+    echo; echo '# dd u Ctrl+r (vim-tiny)'; touches_avec 'vim.tiny -u NONE -i NONE' config.yaml 'jddu\x12:wq\r' | head -3
+    echo; echo '# dd u u (vim-tiny)'; touches_avec 'vim.tiny -u NONE -i NONE' config.yaml 'jdduu:wq\r' | head -3
+    echo; echo '# dd u Ctrl+r (vim-tiny -N)'; touches_avec 'vim.tiny -u NONE -N -i NONE' config.yaml 'jddu\x12:wq\r' | head -3
+  fi
   echo; echo '# :%s/o/0/'; touches config.yaml ':%%s/o/0/\r:wq\r' | sed -n 2,4p
   echo; echo '# :%s/o/0/g'; touches config.yaml ':%%s/o/0/g\r:wq\r' | sed -n 2,4p
   echo; echo '# :%s/example.org/example.net/g'; touches config.yaml ':%%s/example.org/example.net/g\r:wq\r' | grep url
@@ -119,6 +135,14 @@ if a vim && a script; then
   echo; echo '# options en vigueur sur config.yaml avec ce ~/.vimrc'
   vim -u vimrc-complet -N -i NONE -es -c 'e config.yaml' -c 'redir! > opts' \
     -c 'set tabstop? shiftwidth? expandtab?' -c 'redir END' -c 'q' >/dev/null; tr -s ' \n' ' ' < opts; echo
+  if a vim.tiny; then
+    echo; echo '# le même ~/.vimrc avec vim-tiny : message au démarrage'
+    TERM=xterm script -qc "vim.tiny -u vimrc-complet -i NONE -c q" /dev/null | tr -d '\r' | grep -a -o 'E319.*' | head -1
+    echo '# options en vigueur sur config.yaml avec vim-tiny (ici vim-runtime est présent, car le paquet vim aussi : filetype=yaml ;'
+    echo '# avec vim-tiny seul, relevé dans un conteneur debian:13-slim, filetype est vide ; dans les deux cas, pas de réglages YAML)'
+    vim.tiny -u vimrc-complet -N -i NONE -es -c 'e config.yaml' -c 'redir! > opts-tiny' \
+      -c 'set tabstop? shiftwidth? expandtab? filetype?' -c 'redir END' -c 'q' >/dev/null 2>&1; tr -s ' \n' ' ' < opts-tiny; echo
+  fi
 fi
 
 # ---------------------------------------------------------------- Markdown
@@ -142,6 +166,14 @@ Options courantes :
 - `-a` : affiche aussi les fichiers cachés (nom commençant par `.`)
 - `-h` : tailles lisibles (Kio, Mio), avec `-l`
 - `-t` : trie par date de modification
+
+Voir le [manuel de GNU coreutils](https://www.gnu.org/software/coreutils/manual/coreutils.html).
+
+Pour lister un dossier :
+
+1. Ouvrir un terminal
+2. Aller dans le dossier avec `cd`
+3. Lancer `ls -lh`
 EOF
 if a pandoc; then
   run 'printf "**gras** et *italique*\n" | pandoc -t html'
@@ -152,6 +184,9 @@ if a pandoc; then
   run 'pandoc doc.md -o doc.pdf'
   run 'pandoc -f gfm -s doc.md -o sans-titre.html; ls sans-titre.html'
   run 'pandoc doc.md -o doc.odt && pandoc doc.md -o doc.docx && ls doc.odt doc.docx'
+  run 'pandoc -f gfm -s --metadata title="ls" doc.md -o doc.html && grep -o '"'"'href="https[^"]*"'"'"' doc.html && grep -o '"'"'<ol[^>]*>'"'"' doc.html'
+  run 'pandoc doc.md -o doc.odt && ls doc.html doc.odt'
+  run 'grep -m1 "<title>" sans-titre.html'
 fi
 
 # ---------------------------------------------------------------- YAML et JSON
@@ -203,6 +238,7 @@ objet2: *defaut
 EOF
 printf '{\t"a": 1}\n' > tabulation.json
 printf '{"a": 1, "a": 2}\n' > doublon.json
+printf '%%YAML 1.1\n---\n{\t"a": 1}\n' > tabulation11.yaml
 cat > matrice.yaml <<'EOF'
 t: true
 T: True
@@ -252,6 +288,9 @@ if a python3; then
   run $'python3 -c \'import sys, json, yaml\nprint(json.dumps(yaml.safe_load(sys.stdin), indent=1))\' < multi.yaml'
   run "python3 -c '$PY11' < tabulation.json 2>&1 | tail -2"
   run "python3 -c '$PY12' < tabulation.json"
+  run $'python3 -c \'import yaml\nprint(yaml.load(open("tabulation.json"), Loader=yaml.CSafeLoader))\''
+  run $'python3 -c \'from ruamel.yaml import YAML\nprint(YAML(typ="safe", pure=True).load(open("tabulation11.yaml")))\''
+  run $'python3 -c \'from ruamel.yaml import YAML\ny = YAML(); y.version = (1, 1)\nprint(y.load(open("tabulation11.yaml")))\''
   run "python3 -c '$PY12' < doublon.json 2>&1 | grep -m1 -i duplicate"
 fi
 if a python3; then
@@ -267,11 +306,14 @@ if a jq; then
 fi
 if a yq; then
   run 'yq . config.yaml'
+  run 'yq -c . tabulation.json'
+  run 'printf "mode: 0644\n" | yq -c .'
   run 'yq . config.yaml > config.json && jq -r ".application.nom" config.json'
   run 'jq -S . config.json > a.json; yq -S . config.yaml > b.json; cmp a.json b.json && echo identiques'
   run 'yq -r ".application.environnements.production.url" config.yaml'
   run 'cp config.yaml c.yaml; yq -i ".application.version = \"1.2.4\"" c.yaml'
   run 'yq -yi ".application.version = \"1.2.4\"" c.yaml && grep version c.yaml'
+  run 'yq -y . config.yaml | head -2 ; yq -y --explicit-start . config.yaml | head -2'
   run 'yq -c . ancres.yaml'
   run "yq -c '.objet1, .objet2' ancres.yaml"
   run 'yq -c .application.environnements commente.yaml'
@@ -290,6 +332,8 @@ if a yq-go; then
   run 'yq-go ".application.environnements.production.url" config.yaml'
   run 'cp config.yaml g.yaml; yq-go -i ".application.version = \"1.2.4\"" g.yaml && grep version g.yaml'
   run 'yq-go -o=json -I=0 . typage.yaml'
+  run 'yq-go -o=json -I=0 . tabulation.json'
+  run 'printf "mode: 0644\n" | yq-go -o=json -I=0 .'
   run 'yq-go ".[] | key + \" \" + tag" matrice.yaml | paste -sd";"'
   run 'yq-go -i ".application.version = \"1.2.4\"" commente.yaml && cat commente.yaml'
   run 'yq-go -o=json -I=0 . norvege.yaml'

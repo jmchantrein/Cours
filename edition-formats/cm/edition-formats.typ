@@ -168,16 +168,20 @@
     ],
     bloc[La ligne de commande][
       - `:w` : enregistrer, sans quitter
-      - `:q` : quitter ; refusé si le fichier a changé depuis le dernier enregistrement
+      - `:q` : quitter ; refusé si le fichier a changé
       - `:wq` : enregistrer et quitter
       - `:q!` : quitter *sans* enregistrer : les modifications sont perdues
-      - `u` : annuler (_undo_) ; #touche[Ctrl+r] : rétablir (_redo_), dans Vim (paquet `vim`)
-      - Dans le `vi` de Debian (`vim-tiny`, mode compatible) : un second `u` rétablit, #touche[Ctrl+r] ne le fait pas
+      - `u` : annuler (_undo_) ; #touche[Ctrl+r] : rétablir, avec le paquet `vim`
     ],
   ),
-  rang(bloc(role: "precaution", taille: px(24))[`:q` sur un fichier modifié][
-    - Vim répond : `E37: Modifications non enregistrées (ajoutez ! pour passer outre)`. Il protège le travail : `:w` pour garder, `:q!` pour jeter
-  ]),
+  rang(
+    bloc(role: "precaution", poids: 1.4, taille: px(24))[`:q` sur un fichier modifié][
+      - Vim répond : `E37: Modifications non enregistrées (ajoutez ! pour passer outre)`. Il protège le travail : `:w` pour garder, `:q!` pour jeter
+    ],
+    bloc(role: "precaution", taille: px(24))[`vi` de Debian : `vim-tiny`][
+      - Un second `u` rétablit ; #touche[Ctrl+r] ne le fait pas
+    ],
+  ),
   source-de: link("https://vimhelp.org/editing.txt.html#write-quit")[Vim, `:help write-quit`],
   note: [La séquence de touches a été jouée dans Vim (vim -s, sans configuration) : le fichier contient « Hello World ! ». Message E37 en français (LANG=fr\_FR.UTF-8), Vim 9.1.1230 (paquet vim de Debian 13, rejouer.sh). ZZ (mode normal) équivaut à :x, qui n’enregistre que si le fichier a changé. Annuler puis rétablir (dd, u, puis Ctrl+r ou u) : avec le paquet vim sans ~/.vimrc, lancé sous le nom vim, Ctrl+r rétablit ; lancé sous le nom vi (mode compatible, aussi celui de vim-tiny, le seul éditeur du paquet vim-tiny, 9.1.1230), Ctrl+r ne fait rien et le second u rétablit. Dès qu’un ~/.vimrc met nocompatible (ou avec -N), Ctrl+r rétablit aussi dans vim-tiny.],
 )
@@ -244,7 +248,7 @@
       essai([`/environ` #touche[Entrée] `d2j`], [supprime cette ligne et les deux suivantes], [environnements, production et son url disparaissent]),
       essai([`/production` #touche[Entrée] `dG`], [supprime jusqu’à la fin du fichier], [il reste les cinq premières lignes]),
       essai([`/version` #touche[Entrée] `dd` `.`], [supprime une ligne, puis répète], [version et environnements disparaissent]),
-      essai([`jdd` `u` #touche[Ctrl+r]], [supprime, annule, rétablit], [la ligne application: est supprimée]),
+      essai([`jdd` `u` #touche[Ctrl+r]], [supprime, annule, rétablit (`vim`, pas `vim-tiny`)], [la ligne application: est supprimée]),
     )
     grid(columns: (px(560), px(560), 1fr), align: horizon,
       inset: (x, y) => (y: px(11), left: if x > 0 { px(24) } else { 0pt }),
@@ -252,7 +256,7 @@
       ..([Touches], [Effet], [Résultat]).map(t => text(size: px(22), weight: 600, fill: c.bleu, t)),
       ..ls.enumerate().map(((i, l)) => l.map(x => u(str(d + i) + "-", x))).flatten())
   }),
-  note: [Chaque ligne part du config.yaml d’origine (avec la ligne --- en tête), le curseur en début de fichier. Toutes les séquences ont été jouées dans Vim sans configuration (vim -u NONE -s fichier-de-touches) et les résultats relevés dans le fichier (rejouer.sh, Vim 9.1.1230 de Debian 13). Après /1.2.3, le curseur est sur le « 1 » ; c’est un mot de Vim, distinct du « . » qui suit. Note : dans /1.2.3, le point est un métacaractère de l’expression régulière (n’importe quel caractère) : il trouve aussi « 1x2y3 ».],
+  note: [Chaque ligne part du config.yaml d’origine (avec la ligne --- en tête), le curseur en début de fichier. Toutes les séquences ont été jouées dans Vim sans configuration (vim -u NONE -s fichier-de-touches ; Ctrl+r : voir la diapositive « Survivre », il ne rétablit pas dans vim-tiny) et les résultats relevés dans le fichier (rejouer.sh, Vim 9.1.1230 de Debian 13). Après /1.2.3, le curseur est sur le « 1 » ; c’est un mot de Vim, distinct du « . » qui suit. Note : dans /1.2.3, le point est un métacaractère de l’expression régulière (n’importe quel caractère) : il trouve aussi « 1x2y3 ».],
 )
 
 == Rechercher et remplacer : `:s` <vim-substituer>
@@ -334,7 +338,7 @@
       filetype plugin indent on
       ```]
       - Lu à chaque démarrage de Vim : numéros de ligne, indentation automatique, tabulation de 4 colonnes, coloration syntaxique
-      - Suppose le paquet `vim` : avec `vim-tiny`, `syntax on` donne l’erreur E319 et les réglages YAML ne s’appliquent pas
+      - Suppose le paquet `vim` : avec `vim-tiny`, `syntax on` donne l’erreur E319 et les réglages YAML manquent
     ],
     bloc(role: "pratique", taille: px(24))[Vérifier une option][
       #terminal(titre: none, taille: px(21))[
@@ -591,7 +595,7 @@
     + Ajoutez un paragraphe qui explique à quoi sert la commande
     + Insérez un bloc de code qui montre comment utiliser `ls`
     + Ajoutez une liste à puces des options les plus courantes de `ls`
-    + Ajoutez, à la fin, un lien vers le manuel de `ls` et une liste numérotée des étapes pour lister un dossier
+    + Ajoutez, à la fin, un lien vers le manuel de GNU coreutils et une liste numérotée des étapes pour lister un dossier
     + Convertissez `doc.md` en HTML avec pandoc
     + Convertissez-le aussi en ODT, puis vérifiez que les deux fichiers existent
   ]),
@@ -625,9 +629,9 @@
 
 #corriges(
   note: [Fichier converti réellement (pandoc 3.1.11.1) : la conversion HTML contient un lien (a href) et une liste ordonnée (ol), relevés par grep (pandoc coupe ses lignes : le lien n’est pas sur la ligne de la balise a) ; ODT et HTML sont produits sans LaTeX, le format de sortie se déduisant de l’extension.],
-  (6, [Ajoutez, à la fin de `doc.md`, un lien vers le manuel de `ls` et une liste numérotée],
+  (6, [Ajoutez, à la fin de `doc.md`, un lien vers le manuel de GNU coreutils et une liste numérotée],
     reponse(fichier([doc.md, suite], taille: px(20))[```
-    Voir le [manuel de `ls`](https://www.gnu.org/software/coreutils/manual/html_node/ls-invocation.html).
+    Voir le [manuel de GNU coreutils](https://www.gnu.org/software/coreutils/manual/coreutils.html).
 
     Pour lister un dossier :
 
@@ -639,7 +643,7 @@
     reponse(terminal(titre: none, taille: px(18))[```
     $ pandoc -f gfm -s --metadata title="ls" doc.md -o doc.html
     $ grep -o 'href="https[^"]*"' doc.html
-    href="https://www.gnu.org/software/coreutils/manual/html_node/ls-invocation.html"
+    href="https://www.gnu.org/software/coreutils/manual/coreutils.html"
     $ grep -o '<ol[^>]*>' doc.html
     <ol type="1">
     ```])),
@@ -647,7 +651,8 @@
     reponse(terminal(titre: none, taille: px(18))[```
     $ pandoc doc.md -o doc.odt
     $ ls doc.html doc.odt
-    doc.html  doc.odt
+    doc.html
+    doc.odt
     ```])),
 )
 
@@ -826,11 +831,11 @@
 
 #anime(
   rang(
-    bloc(taille: px(24))[La réponse de la spécification][
+    bloc(taille: px(22))[La réponse de la spécification][
       - YAML 1.2 a été révisé pour que JSON en soit un sous-ensemble : un document JSON est un document YAML 1.2
-      - Pas pour tous les analyseurs : l’analyseur Python de PyYAML refuse la tabulation, permise en JSON ; son chargeur C (celui de `yq`) et ruamel.yaml, même en 1.1, la lisent
-      - Les clés en double : JSON les déconseille, YAML les interdit
-      #terminal(titre: none, taille: px(18))[
+      - Selon l’analyseur : PyYAML en Python refuse la tabulation, permise en JSON ; son chargeur C (`yq`) et ruamel.yaml la lisent
+      - Clés en double : JSON les déconseille, YAML les interdit
+      #terminal(titre: none, taille: px(17))[
         ```
         # une clé en double : jq garde la dernière
         $ printf '{"a": 1, "a": 2}\n' > doublon.json
@@ -940,7 +945,7 @@
       ```]
     ],
     bloc(role: "pratique", poids: 1.38, taille: px(24))[Valeurs lues][
-      #tableau((1fr, 1fr, 1fr, 1fr, 1fr), taille: px(19),
+      #tableau((1fr, 1fr, 1fr, 1fr, 1fr), taille: px(21),
         ([Clé], [PyYAML (1.1)], [ruamel.yaml (1.2)], [yq Go (1.2)], [yq Debian (3.4.3)]),
         ([`mode`], [`420`], [`644`], [`644`], [`420`]),
         ([`mode_12`], [`'0o644'`], [`420`], [`420`], [`420`]),
@@ -953,10 +958,10 @@
     ],
   ),
   rang(bloc(role: "avertissement", taille: px(22))[Les conséquences][
-    - `0644` lu en décimal (644) : en YAML 1.2 ; en 1.1, c’est l’octal, soit 420
-    - `22:22` (port de Compose) lu en base 60 (1342) : en YAML 1.1 ; en 1.2, une chaîne
-    - `1.10` devenue `1.1` : en 1.1 comme en 1.2
-    - Une date que `json.dumps` refuse (`TypeError: Object of type date is not JSON serializable`) : en 1.1 (PyYAML), et en 1.2 avec ruamel.yaml. Guillemets !
+    - `0644` lu en décimal (644), en YAML 1.2 ; en 1.1, c’est l’octal : 420
+    - `22:22` (port de Compose) lu en base 60 (1342), en YAML 1.1 ; en 1.2, une chaîne
+    - `1.10` devenue `1.1`, en YAML 1.1 comme en 1.2
+    - Une date que `json.dumps` refuse (`TypeError`), en 1.1 (PyYAML) et avec ruamel.yaml (1.2). Guillemets !
   ]),
   source-de: [#link("https://yaml.org/type/int.html")[YAML 1.1, int] · #link("https://yaml.org/spec/1.2.2/#1023-core-schema")[YAML 1.2.2, Core Schema] · #link("https://docs.docker.com/reference/compose-file/services/#ports")[Compose, ports]],
   note: [Relevés réels, conteneur Debian 13 : PyYAML 6.0.2 (yaml.safe\_load), ruamel.yaml 0.18.10 (YAML(typ="safe"), 1.2 par défaut), tous deux paquets Debian ; yq Go v4.44.3 (yq -o=json), binaire amont, absent de Debian (rejouer.sh) ; yq Debian 3.4.3 (yq -c .), le yq du cours : il lit 0644 et 0o644 comme 420 (octal, comme PyYAML pour 0644), mais 22:22 et la date comme des chaînes. 0644 en 1.1 : octal, soit 420 ; en 1.2, l’octal s’écrit 0o644, et 0644 est un entier décimal. 22:22 en 1.1 : 22 × 60 + 22 = 1342 (entier sexagésimal) ; la documentation de Compose recommande de mettre les ports entre guillemets pour cette raison. 1.10 est un flottant dans les deux versions : une version s’écrit entre guillemets. La date : PyYAML rend un datetime.date, que le module json ne sait pas écrire. 1984 sans guillemets : un entier, d’où les guillemets du titre dans l’exercice.],

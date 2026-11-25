@@ -571,7 +571,8 @@
     bool: { "1.1": "booléen de YAML 1.1 : yes, no, on, off, true, false, en minuscules, capitalisés ou en capitales",
             "1.2": "booléen du schéma de base 1.2 : seulement true et false, en minuscules, capitalisés ou en capitales" },
     null: { "1.1": "null : null, Null, NULL, ~ ou rien", "1.2": "null : null, Null, NULL, ~ ou rien" },
-    timestamp: { "1.1": "date : AAAA-MM-JJ, avec une heure et un fuseau facultatifs", "1.2": "date : AAAA-MM-JJ, avec une heure et un fuseau facultatifs" },
+    timestamp: { "1.1": "date : AAAA-MM-JJ, avec une heure et un fuseau facultatifs",
+                  "1.2": "date, hors du schéma de base 1.2 (il n’a pas de type date ; ruamel.yaml en construit une) : AAAA-MM-JJ, avec une heure et un fuseau facultatifs" },
   };
   const BRANCHES_INT = {
     zero: "entier : zéro", decimal: "entier décimal : des chiffres, zéros initiaux compris",
@@ -622,7 +623,7 @@
     if (r12?.ok && r12.regle.tag === "int" && (r12.regle.branche === "binaire" || /_/.test(texte)))
       notes.push("ruamel.yaml accepte ici 0b… et les soulignés (_), que le schéma de base de YAML 1.2 ne prévoit pas : le simulateur suit ruamel.yaml.");
     if (r12?.ok && r12.regle.tag === "timestamp")
-      notes.push("Le schéma de base de YAML 1.2 n’a pas de type date ; ruamel.yaml en reconnaît pourtant une, comme PyYAML.");
+      notes.push("En 1.2, cette date ne vient pas du schéma de base, qui n’a pas de type date : c’est ruamel.yaml qui en construit une, hors schéma (en 1.1, la date est dans le schéma).");
     return notes;
   }
   const conseil = texte => `Pour une chaîne dans toutes les versions : "${texte.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}".`;
