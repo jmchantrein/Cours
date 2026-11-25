@@ -42,6 +42,8 @@ utilisent Compose et les images officielles, qui emploient ces mêmes mécanisme
     `docker` : #d("installation")[Contexte d’utilisation et installation].
   - Un dossier de travail par étape : chaque étape part d’une copie du dossier de la précédente.
   - Le port 8080 de votre machine libre : le site se consulte sur #link("http://localhost:8080").
+  - Facultatif : qui a fait le TP #link("../../../virtualisation/tp/incus/#etape-7")[Découvrir Incus] peut
+    travailler dans la VM `docker` de son étape 7, au lieu d’une machine Debian 13.
 ]
 
 #bloc[Indices et corrigés][

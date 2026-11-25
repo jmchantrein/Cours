@@ -7,6 +7,10 @@
 
 ### Cours Virtualisation
 - [ ] Rejouer les sorties types (KVM, TP) avec `virtualisation/cm/rejouer-tp.sh` sur une machine avec KVM, puis remplacer les sorties des diapos et les mentions « à rejouer » des notes
+- [ ] Rejouer `virtualisation/tp/incus/tester.sh --up` sur une Debian 13 réelle (Incus 6.0.4) : la CI tourne sur Ubuntu 26.04, avec l’Incus d’Ubuntu
+- [ ] Rejouer en direct les commandes des diapos Incus, écrites d’après les sources d’Incus 6.0.4 et non exécutées
+- [ ] À la fusion de la branche qui ajoute la section libvirt et le TP `virtualisation/tp/libvirt/` : résoudre le conflit dans `virtualisation.typ`, puis appuyer la diapo `trois-etages` et les questions de comparaison du TP Incus sur le TP libvirt
+- [ ] Décider si les diapos Incus (nginx, `v1`, `c1`) et le TP (WordPress, `vm1`, `ct1`) gardent des noms d’instances différents
 
 ### Cours Conteneurisation — Orchestration
 - [ ] Rejouer sur Debian 13 les sorties Swarm des diapos « le fichier Compose devient une stack » et « passage à l’échelle, reprise sur panne » (prises sur Docker 29.10, un nœud), et tester la répartition de charge du routing mesh (`curl`, non rejouable sans IPVS)
@@ -19,6 +23,7 @@
 
 ### Artefacts
 - [ ] Rejouer `conteneurisation/artefacts/cache-de-build/verifier-buildkit.js` sur Debian 13 (docker.io 26.1.5) : le modèle n’a été confronté qu’à BuildKit de Docker Engine 29.10
+- [ ] Rejouer `virtualisation/artefacts/heritage-des-profils/verifier-incus.js` sur Debian 13 (Incus 6.0.4)
 
 ### Travaux pratiques
 - [ ] Vérifier dans Firefox et Chromium que les renvois du TP ouvrent le PDF à la bonne diapo (`#nameddest=`)
@@ -66,3 +71,4 @@
 - [x] 2026-11-24 — Artefact « cache de build » : modèle recalé sur BuildKit (CMD, ENTRYPOINT, LABEL, EXPOSE hors des clés ; casse, espaces et commentaires sans effet ; FROM fixe ; instructions non simulées signalées), vérifié par `verifier-buildkit.js` (140 builds, aucun écart) ; recettes en carte distincte, pause après chaque étape avec explication calculée et « Continuer », option sans pause, reprise en main à la fin sans quitter ; la règle passe dans le bandeau du titre
 - [x] 2026-11-24 — Artefact « cache de build » : la liste des étapes de la recette reste affichée pendant sa lecture (étapes faites cochées, étape expliquée surlignée, suivante repérée) ; panneau d’aide resserré sur les fenêtres basses
 - [x] 2026-11-25 — Docker Sandboxes dans les deux cours : Virtualisation, une diapo « Docker Sandboxes : une microVM par agent IA » (architecture, concurrents par technique d’isolation) et une puce au récapitulatif ; Conteneurisation, deux diapos en fin de « Utilisation avancée · Sécurité » (le besoin et l’annonce, puis la mise en place avec `sbx`) ; faits lus dans le dépôt source de la doc Docker (`docker/docs`, 25/11/2026)
+- [x] 2026-11-25 — Incus dans le cours de virtualisation : section dans les diapos, TP « Découvrir Incus » (`virtualisation/tp/incus/`, sept étapes des machines virtuelles aux conteneurs système, Docker dans une VM en facultatif, corrigés testés par `tester.sh`), artefact « L’héritage des profils » confronté à Incus par `verifier-incus.js` ; un seul TP sous virtualisation (ADR 0001), TP WordPress inchangé hormis une mention facultative ; boutons à l’accueil, README

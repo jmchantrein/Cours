@@ -32,10 +32,12 @@
     #rendus("conteneurisation")
   ],
   carte([Fondements de la virtualisation de machines], illustration: "vm")[
-    Émulation et virtualisation, assistance matérielle, hyperviseurs, QEMU et KVM, libvirt, avec un mini TP :
-    une VM, puis une VM dans la VM.
+    Émulation et virtualisation, assistance matérielle, hyperviseurs, QEMU et KVM, libvirt, Incus ; un mini TP (une VM,
+    puis une VM dans la VM) et un TP Incus, des machines virtuelles aux conteneurs système.
     #actions(
       bouton(principal: true, [Diapositives], pdf("virtualisation", "projection")),
+      bouton([TP : découvrir Incus], "virtualisation/tp/incus/"),
+      bouton([Artefact : l’héritage des profils], "virtualisation/artefacts/heritage-des-profils/"),
     )
     #rendus("virtualisation")
   ],
