@@ -421,6 +421,16 @@ diagnostic() { # $1… instances
   done
 }
 
+# Un site qui ne répond pas comme attendu : ce qu'il répond, et sa configuration.
+diagnostic_site() { # $1 instance  $2 url
+  echo "------ $2 : code HTTP, titre de la page"
+  curl -s -o "$travail/page.html" -m 10 -w '%{http_code}\n' "$2/" 2>&1 | retrait || true
+  grep -o -m 1 '<title>[^<]*' "$travail/page.html" 2> /dev/null | retrait || true
+  echo "------ $1 : configuration de WordPress et d'Apache"
+  timeout 20 incus exec "$1" -- sh -c 'ls -l /etc/wordpress/ /etc/apache2/sites-enabled/ /usr/share/wordpress/index.php; systemctl is-active apache2 mariadb' 2>&1 \
+    | retrait || true
+}
+
 diagnostic_cloud_init() { # $1 instance
   echo "------ $1 : cloud-init status --long, fin de cloud-init-output.log"
   timeout 20 incus exec "$1" -- sh -c 'cloud-init status --long; tail -n 40 /var/log/cloud-init-output.log' 2>&1 \
@@ -465,6 +475,9 @@ diagnostic_reseau() { # $1 conteneur sans IPv4
     echo "--- /etc/resolv.conf"; cat /etc/resolv.conf 2>&1
     echo "--- ps (état, attente noyau)"; ps -eo pid,ppid,stat,wchan:30,etime,args 2>&1 | head -n 60
     echo "--- ps -e | wc -l : $(ps -e | wc -l)"
+    echo "--- étiquettes AppArmor : PID 1, puis les processus (sd-mkuserns) de systemd"
+    cat /proc/1/attr/current 2>&1
+    for p in $(ps -eo pid=,args= | awk "/sd-mkuser/ { print \$1 }"); do echo "$p : $(cat /proc/$p/attr/current 2>&1)"; done
   ' 2>&1 | retrait || true
 
   [ -z "$diagnostic_reseau_fait" ] || return 0
@@ -484,7 +497,7 @@ diagnostic_reseau() { # $1 conteneur sans IPv4
   hote "br_netfilter et sysctl des ponts" sh -c \
     "if [ -d /sys/module/br_netfilter ]; then echo 'br_netfilter chargé'; else echo 'br_netfilter non chargé'; fi; sysctl net.bridge.bridge-nf-call-iptables net.bridge.bridge-nf-call-ip6tables net.bridge.bridge-nf-call-arptables 2>&1"
   hote "AppArmor : refus, tâches bloquées (dmesg)" sh -c \
-    "dmesg | grep -i -E 'apparmor=\"DENIED\"|blocked for more than|hung_task' | tail -n 30; cat /proc/sys/kernel/apparmor_restrict_unprivileged_userns 2>&1; apparmor_parser --version 2>&1 | head -n 1"
+    "dmesg | grep -i -E 'apparmor=\"DENIED\"|blocked for more than|hung_task' | tail -n 30; echo \"apparmor_restrict_unprivileged_userns = \$(cat /proc/sys/kernel/apparmor_restrict_unprivileged_userns 2>&1)\"; apparmor_parser --version 2>&1 | head -n 1"
   # Processus bloqués dans le noyau (état D) : leur pile dit où.
   for pid in $(ps -eo pid=,stat= | awk '$2 ~ /^D/ { print $1 }' | head -n 5); do
     hote "pile noyau du processus $pid (état D) : $(ps -o args= -p "$pid" | cut -c 1-80)" cat "/proc/$pid/stack"
@@ -736,7 +749,7 @@ if voulue 3; then
       if jouer 3_instantanes_limites/restaurer.sh 600; then
         site_vm1="http://$(adresse vm1 || true)"
         if wp_titre_present "$site_vm1" "$titre_vm1"; then ok "étape 3 : l'instantané restaure le site ($site_vm1)"
-        else ko "étape 3 : le site n'est pas revenu après la restauration"; diagnostic vm1; fi
+        else ko "étape 3 : le site n'est pas revenu après la restauration"; diagnostic_site vm1 "$site_vm1"; diagnostic vm1; fi
       else
         diagnostic vm1
       fi
@@ -790,7 +803,7 @@ if voulue 3; then
       if wp_titre_present "$site_vm1" "$titre_vm1"; then
         ok "étape 3 : après redémarrage, Apache et MariaDB sont revenus seuls, le site répond"
       else
-        ko "étape 3 : le site ne répond plus après le redémarrage de la VM"; diagnostic vm1
+        ko "étape 3 : le site ne répond plus après le redémarrage de la VM"; diagnostic_site vm1 "$site_vm1"; diagnostic vm1
       fi
     else
       diagnostic vm1

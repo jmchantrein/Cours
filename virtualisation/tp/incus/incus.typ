@@ -281,9 +281,12 @@ y installez WordPress par les paquets de Debian.
 #corrige(titre: [Réponses])[
   + Incus l’a arrêtée, a remis son disque dans l’état de l’instantané, puis l’a redémarrée : `uptime` le
     montre. L’article serait perdu : restaurer ramène tout le disque, base de données comprise, à l’état
-    figé. `--stateful` y ajoute la mémoire d’une VM en marche, si elle a été préparée pour : la clé
-    `migration.stateful=true`, posée VM arrêtée, et un disque racine dont `size.state` vaut au moins sa
-    mémoire ; avec les valeurs par défaut, Incus refuse. Enfin, un instantané n’est pas une sauvegarde : il
+    figé. Pour une VM en marche, Incus la suspend le temps de copier son disque, mais ne voit pas ce que
+    l’invité garde encore en cache : l’instantané est le disque d’une machine dont on aurait coupé le
+    courant. D’où le `sync` du corrigé, juste avant : sans lui, une configuration écrite quelques secondes
+    plus tôt manquerait au disque restauré. `--stateful` ajoute à l’instantané la mémoire d’une VM en marche,
+    si elle a été préparée pour : la clé `migration.stateful=true`, posée VM arrêtée, et un disque racine dont
+    `size.state` vaut au moins sa mémoire ; avec les valeurs par défaut, Incus refuse. Enfin, un instantané n’est pas une sauvegarde : il
     est rangé dans le même pool de stockage que le disque de la VM, et une panne du disque de l’hôte emporte
     les deux. Une sauvegarde sort de l’hôte : `incus export vm1 vm1.tar.gz`.
   + Incus 6.0.4, celui de Debian 13, refuse : « Cannot increase memory size beyond boot time size when VM is
