@@ -862,7 +862,7 @@
     ],
   ),
   source-de: [#link("https://libvirt.org/storage.html")[libvirt.org, Storage management] · #link("https://libvirt.org/formatstorage.html")[Storage pool and volume XML format]],
-  note: [Sorties de virsh 10.0.0. Le volume ma-premiere-vm.qcow2 est celui que virt-install a créé (--disk size=10). Un pool se définit en XML comme le reste (virsh pool-define-as … dir --target …, puis pool-start et pool-autostart). Un disque désigné par son pool et son volume (\<disk type='volume'>\<source pool='default' volume='…'/>) ne dépend plus de son chemin : c’est ce que fait le fichier vm-exemple.xml du TP. Message d’erreur relevé avec libvirt 10.0.0 sur un disque hors pool.],
+  note: [Sorties de virsh 10.0.0. Le volume ma-premiere-vm.qcow2 est celui que virt-install a créé (--disk size=10). Un pool se définit en XML comme le reste (virsh pool-define-as … dir --target …, puis pool-start et pool-autostart). Le XML d’un domaine désigne le disque par son chemin (\<disk type='file'>\<source file='/var/lib/libvirt/images/…'/>), comme le fichier vm-exemple.xml du TP ; libvirt retrouve le volume à ce chemin, d’où le --remove-all-storage. La forme \<disk type='volume'>\<source pool='default' volume='…'/> existe, mais elle est à éviter sous AppArmor : libvirt 10.0 (Ubuntu 24.04) écrit le profil du domaine avant de traduire le volume en chemin, et QEMU, confiné, n’a pas le droit d’ouvrir le disque (« Permission denied » ; code lu, défaut reproduit par la CI du dépôt). Debian 13 (libvirt 11.3) a le même ordre dans son code, sans observation. Message d’erreur relevé avec libvirt 10.0.0 sur un disque hors pool.],
 )
 
 == qcow2 : copie sur écriture et chaîne d’images <qcow2-backing>

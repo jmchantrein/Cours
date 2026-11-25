@@ -24,17 +24,13 @@ if ! grep -qxF "$vm_origine" <<< "$vm_eteintes"; then
   exit 1
 fi
 
-# Premier disque de la VM d'origine (vda) : un chemin pour une VM créée par
-# virt-install, un nom de volume pour un disque déclaré par pool et volume
-# (comme dans vm-exemple.xml). La base et le nouveau disque iront dans le pool
-# de ce disque.
-source_vda="$(virsh domblklist "$vm_origine" | awk '$1 == "vda" { print $2 }')"
-case "$source_vda" in
+# Premier disque de la VM d'origine (vda) : un chemin, comme dans une VM créée
+# par virt-install. La base et le nouveau disque iront dans le pool qui le contient.
+disque_origine="$(virsh domblklist "$vm_origine" | awk '$1 == "vda" { print $2 }')"
+case "$disque_origine" in
   "") echo "$vm_origine n'a pas de disque vda." >&2; exit 1 ;;
-  /*) disque_origine="$source_vda" ;;
-  *) pool_vda="$(virsh dumpxml --inactive "$vm_origine" \
-       | sed -n "s|.*<source pool='\([^']*\)' volume='$source_vda'.*|\1|p")"
-     disque_origine="$(virsh vol-path --pool "$pool_vda" "$source_vda")" ;;
+  /*) ;;
+  *) echo "Le disque vda de $vm_origine n'est pas un chemin ($disque_origine)." >&2; exit 1 ;;
 esac
 pool="$(virsh vol-pool "$disque_origine")"
 

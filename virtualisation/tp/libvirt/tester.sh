@@ -16,7 +16,7 @@
 #                     /dev/kvm, connexion qemu:///system) ;
 #   reseau-default.xml et labo.xml, renommés : net-define, net-start, le pont
 #                     existe sur l'hôte ;
-#   vm-exemple.xml    (pool, volume et réseau renommés) : define, l'état est
+#   vm-exemple.xml    (nom, chemin du disque dans le pool et réseau renommés) : define, l'état est
 #                     « shut off », start, l'état est « running » ;
 #   deuxieme-vm.sh    le clone a un nom, un uuid, une adresse MAC et un volume
 #                     neufs ;
@@ -162,7 +162,7 @@ nettoyer # restes d'un test interrompu
 set +e
 
 diagnostic() { # $1 domaine : ce qui explique un refus d'accès au disque (permissions, AppArmor, journal QEMU)
-  local d="$1" disque
+  local d="$1" disque uuid profil
   disque="$(virsh domblklist "$d" 2> /dev/null | awk 'NR > 2 && $1 == "vda" { print $2 }')"
   case "$disque" in /*) ;; *) disque="$(virsh vol-path --pool "$pool" "$disque" 2> /dev/null)" ;; esac
   {
@@ -172,8 +172,21 @@ diagnostic() { # $1 domaine : ce qui explique un refus d'accès au disque (permi
     echo "  compte de QEMU (qemu.conf) : $(grep -E '^[[:space:]]*(user|group|security_driver|dynamic_ownership)[[:space:]]*=' /etc/libvirt/qemu.conf 2> /dev/null | tr '\n' ' ')"
     echo "  module de sécurité : $(cat /sys/module/apparmor/parameters/enabled 2> /dev/null || echo aucun)"
     [ -r "/var/log/libvirt/qemu/$d.log" ] && { echo "  journal QEMU :"; tail -n 5 "/var/log/libvirt/qemu/$d.log"; }
-    command -v dmesg > /dev/null && dmesg 2> /dev/null | grep -iE 'apparmor.*(DENIED|denied)' | tail -n 5
-    command -v journalctl > /dev/null && journalctl -k --no-pager -n 400 2> /dev/null | grep -iE 'apparmor.*DENIED' | tail -n 5
+    # AppArmor : le profil que libvirt a écrit pour ce domaine nomme-t-il le disque ? Un disque absent de
+    # libvirt-<uuid>.files est refusé à QEMU ; les refus sont des lignes apparmor="DENIED" dont le profil
+    # commence par « libvirt- ».
+    uuid="$(virsh domuuid "$d" 2> /dev/null)"
+    profil="/etc/apparmor.d/libvirt/libvirt-$uuid.files"
+    if [ -r "$profil" ]; then
+      echo "  profil AppArmor $profil :"
+      sed 's/^/    /' "$profil"
+      if [ -n "$disque" ] && grep -qF "\"$disque\"" "$profil"; then echo "  le disque figure dans le profil"
+      else echo "  le disque est ABSENT du profil : AppArmor refuse son ouverture à QEMU"; fi
+    else
+      echo "  pas de profil AppArmor $profil"
+    fi
+    command -v dmesg > /dev/null && dmesg 2> /dev/null | grep -E 'apparmor="DENIED".*profile="libvirt-' | tail -n 5
+    command -v journalctl > /dev/null && journalctl -k --no-pager -n 400 2> /dev/null | grep -E 'apparmor="DENIED".*profile="libvirt-' | tail -n 5
   } 2>&1 | sed 's/^/       /'
 }
 essayer() { # $1 libellé  $2… commande : OK si elle réussit, ÉCHEC avec son message sinon ; garde son code de sortie
@@ -250,10 +263,11 @@ essayer "vol-create-as tptest-vm.qcow2" virsh vol-create-as "$pool" tptest-vm.qc
 xml_vm="$travail/tptest-vm.xml"
 sed -e 's|<domain type="kvm">|<domain type="qemu">|' \
     -e 's|<name>vm-exemple</name>|<name>tptest-vm</name>|' \
-    -e 's|pool="default" volume="vm-exemple.qcow2"|pool="tptest-pool" volume="tptest-vm.qcow2"|' \
+    -e "s|<source file=\"/var/lib/libvirt/images/vm-exemple.qcow2\"/>|<source file=\"$dossier_pool/tptest-vm.qcow2\"/>|" \
     -e 's|<source network="default"/>|<source network="tptest-labo"/>|' "$corrige/vm-exemple.xml" > "$xml_vm"
-if [ "$(grep -c 'tptest' "$xml_vm")" -eq 3 ] && grep -q 'type="qemu"' "$xml_vm"; then
-  ok "vm-exemple.xml : nom, pool, volume, réseau et type remplacés"
+if [ "$(grep -c 'tptest' "$xml_vm")" -eq 3 ] && grep -q 'type="qemu"' "$xml_vm" \
+  && ! grep -q 'images/vm-exemple' "$xml_vm" && grep -qF "<source file=\"$dossier_pool/tptest-vm.qcow2\"/>" "$xml_vm"; then
+  ok "vm-exemple.xml : nom, chemin du disque (dans le pool), réseau et type remplacés"
 else
   ko "vm-exemple.xml : un remplacement n'a pas eu lieu (le corrigé a changé ?)"
 fi
