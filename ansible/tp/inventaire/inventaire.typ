@@ -37,7 +37,7 @@ Chaque séance reprend le dossier de travail de la précédente.
 
 #bloc(role: "pratique")[Prérequis][
   - Une machine Linux avec Docker et Compose v2, et votre compte dans le groupe `docker` :
-    #link("https://jmchantrein.github.io/Cours/conteneurisation/cm/conteneurisation-projection.pdf")[cours Conteneurisation].
+    #link("../../../conteneurisation/cm/conteneurisation-projection.pdf")[cours Conteneurisation].
     Le labo télécharge des images Debian 13 et des paquets : il a besoin du réseau à sa première construction.
   - `git`, pour récupérer le labo.
   - Les notions de la première moitié du cours : le modèle (#d("modele-ansible")[Un nœud de contrôle, des nœuds
