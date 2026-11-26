@@ -44,7 +44,7 @@ valeurs et les écarts sont en tête de `charte.typ`).
 - Couverture : `#couverture(illustration: "vm")[titre][sous-titre][auteur][date]` ; clôture, même design et même
   illustration, en fin de cours : `#cloture(illustration: "vm")[Merci][Des questions ?][auteur][lien]`. Illustrations
   (dessinées dans `charte.typ`, une par cours) : `"vm"` (virtualisation : trois VM sur un hyperviseur), `"couches"`
-  (conteneurisation : couches d’image), `"tube"` (shell : trois commandes reliées par des tubes), `"graphe"` (git : main et
+  (conteneurisation : couches d’image), `"tube"` (shell : une invite, puis des lignes de texte filtrées par deux tubes `|`), `"graphe"` (git : main et
   une branche fusionnée), `"texte"` (édition et formats : fichier structuré et curseur), `"tunnel"` (accès distants :
   le poste, un tunnel chiffré, la machine distante), `"noeuds"` (ansible : un nœud de contrôle, trois nœuds gérés).
   Un cours nouveau ajoute sa illustration à `illustration(…)` de `charte.typ`, avec ses couleurs prises dans `c`.
@@ -66,6 +66,33 @@ valeurs et les écarts sont en tête de `charte.typ`).
   une machine où l’on entre à distance, en turquoise) ; ce qui suit le nom (puces, fichiers…) se place dessous, au centre.
   `#fleche(haut: […], bas: […], vers: "gauche", couleur: …)` relie deux cellules d’une grille, libellée au-dessus et
   au-dessous.
+
+## Dessiner une transformation
+Une diapo montre une transformation (skill `structurer-diapos-cours`, « Schémas et mise en scène ») : un état de
+départ, une action, un état d’arrivée ; chaque clic fait avancer l’action. Trois composants de `theme-cours.typ` :
+
+- **Scène** : `#anime(scene(n, k => …))` occupe n clics ; le dessin est une fonction du clic k (1 à n, puis n + 1 :
+  l’état final, sans plus rien mettre en valeur). Terminal et schéma qui avancent ensemble se placent dans la même
+  scène : `scene(5, k => grid(columns: 2, terminal-annote(…, etape: k), schema-etats(…, etape: k)))`.
+- **Commande ou sortie annotée** : `#anime(commande-annotee(("$ wc -l f", ("9 f", 3)), annote("wc", legende: [la commande]), annote("-l", legende: [une option])))`.
+  Une ligne paraît au clic donné (`("texte", clic)`, ou par morceaux `(("$ cut …", 1), (" | sort", 2))`) ; chaque
+  `annote(…)` désigne un morceau par son texte (`"-l"`, `(ligne: 2, texte: ";", n: 1)`, `(ligne: 2, cols: (3, 7))`),
+  l’encadre au clic où il paraît, puis le souligne, et le relie à sa légende. Les légendes se placent seules,
+  d’après la colonne du morceau, sur des rangées qui ne se chevauchent pas ; `cote: "haut" | "bas" | "droite"`.
+  Plusieurs morceaux : une légende commune, ou `pont: true` (un champ relié à ce qu’il concerne : `rwx` ↔ `ada`).
+  Sans `legende` : une marque seule (`garde: true` la laisse encadrée : la démonstration d’un corrigé).
+  `fond: "fichier"` : sur fond clair, avec `nom:` en tête. Hors `anime` : `terminal-annote(…, etape: k)`.
+- **Schéma à états** : `#schema-etats(etape: k, hauteur: 500, noeuds: (…), liens: (…), etats: ((:), (liens: (s1: (vers: "f.g"))), …))`.
+  Des nœuds nommés, en px de la maquette (`x`, `y`, `l`, `h`, `genre`) : `"processus"` (prises 0, 1, 2 numérotées ;
+  `attente: true` : pas encore lancé), `"terminal"`, `"fichier"` (`titre`, `pied`, `contenu` : des lignes ; `()` : vide),
+  `"flux"` (ce qui circule dans un tube), `"boite"`, `"texte"` (une légende qui change avec l’état). Un lien va de
+  `"nœud.prise"` à `"nœud.prise"` (prises du genre, `ports: (nom: ("g", 0.3))`, ou `g`, `d`, `h`, `b`) ; options
+  `etiquette`, `donnee` (ce qui circule, sur fond de terminal), `tirets` (le flux 2), `motif: "dotted"` (voie non suivie),
+  `fort`. Chaque état ne dit que ce qui change (`none` retire) ; ce qui change est encadré ou épaissi, et un lien
+  rebranché laisse son ancien tracé en pointillé. Les distinctions tiennent sans la couleur : épaisseur, motif du
+  trait, cadre, numéro de prise, étiquette.
+- Exemples : `shell/cm/shell.typ`, sections « Bash · Les bases » et « Bash · Flux et tubes » (ligne de `ls -l`
+  décodée champ par champ, redirections, ordre des redirections, tube, codes de retour).
 
 ## Animer une diapo
 Les apparitions suivent la skill `structurer-diapos-cours` : bloc par bloc, puis puce par puce.

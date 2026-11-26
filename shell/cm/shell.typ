@@ -38,115 +38,113 @@
 // ======================================================================
 = Bash · Les bases
 
-== Bash, sed, awk : pourquoi en administration système
+== Bash, sed, awk : à quoi ils servent
 
+// Un élément d’une scène qui paraît au clic d (avant : caché, sa place gardée).
+#let des(k, d, x) = if k >= d { x } else { hide(x) }
 #anime(
-  rang(
-    bloc(taille: px(26))[Trois outils][
-      - *Bash* (_Bourne Again SHell_, GNU) : le shell interactif par défaut de Debian et d’Ubuntu
-      - *sed* (_stream editor_) : éditer un flux de texte sans l’ouvrir
-      - *awk* : un langage pour les fichiers en colonnes
-    ],
-    bloc(role: "pratique", taille: px(26))[Ce qu’on en fait][
-      - Automatiser les tâches répétitives : sauvegardes, comptes, installations
-      - Traiter configurations, journaux, exports CSV (_comma-separated values_ : valeurs séparées par un délimiteur)
-      - Sur un serveur distant, sans interface graphique
-    ],
-  ),
-  rang(bloc(role: "retenir", taille: px(26))[Objectifs du cours][
-    - Composer de petits outils par des tubes ; comprendre ce que Bash fait de la ligne
-    - Écrire des scripts robustes, relus par ShellCheck et testés par Bats
-    - Transformer du texte avec sed et awk
-  ]),
+  scene(3, k => schema-etats(hauteur: 450, etape: k,
+    noeuds: (
+      vous: (x: 0, y: 0, l: 380, h: 120, titre: [Vous], sous: [au clavier, souvent à distance]),
+      bash: (x: 620, y: 0, l: 380, h: 120, titre: [Bash], sous: [lit et lance vos commandes]),
+      sys: (x: 1180, y: 0, l: 484, h: 120, titre: [Le système], sous: [programmes, configurations, journaux]),
+    ),
+    liens: (
+      l1: (de: "vous", vers: "bash", etiquette: [commandes, scripts]),
+      l2: (de: "bash", vers: "sys"),
+    ),
+    etats: (
+      (:),
+      (noeuds: (
+        e1: (x: 0, y: 190, l: 700, h: 100, genre: "fichier", titre: "services.conf", pied: [ligne 5], contenu: ("autostart = yes",)),
+        sed: (x: 820, y: 190, l: 260, h: 100, titre: [sed], sous: [remplace du texte]),
+        s1: (x: 1180, y: 190, l: 484, h: 100, genre: "fichier", titre: "services.conf", pied: [ligne 5], contenu: ("autostart = no",)),
+      ), liens: (
+        f1: (de: "e1", vers: "sed"), f2: (de: "sed", vers: "s1"),
+      )),
+      (noeuds: (
+        e2: (x: 0, y: 340, l: 700, h: 100, genre: "fichier", titre: "pionnieres.csv", pied: [ligne 4],
+          contenu: ("Hopper Grace;1952;langages;premier compilateur A-0",)),
+        awk: (x: 820, y: 340, l: 260, h: 100, titre: [awk], sous: [choisit des colonnes]),
+        s2: (x: 1180, y: 345, l: 484, h: 90, genre: "flux", contenu: ("Hopper Grace 1952",)),
+      ), liens: (
+        f3: (de: "e2", vers: "awk"), f4: (de: "awk", vers: "s2"),
+      )),
+    ),
+  )),
+  note(role: "retenir", taille: px(24))[Objectifs : composer de petits outils par des tubes, comprendre ce que Bash fait de la ligne ; écrire des scripts robustes, relus par ShellCheck et testés par Bats ; transformer du texte avec sed et awk.],
   source-de: link("https://www.gnu.org/software/bash/manual/bash.html")[GNU, Bash Reference Manual],
-  note: [Sur Debian, /bin/sh est dash (un shell POSIX plus léger, pour les scripts système) ; le shell de connexion des utilisateurs est bash. Sous macOS, le shell par défaut est zsh depuis Catalina (2019) : les scripts de ce cours commencent par \#!/bin/bash et s’exécutent avec bash.],
-)
-
-== Lire une ligne de commande <ligne-de-commande>
-
-#let _note = [#versions Les droits et les dates dépendent de la machine. Le répertoire de travail ~/atelier contient le fichier de données du cours (diapositive suivante) ; les TP le fournissent.]
-#anime(
-  rang(
-    bloc(poids: 1.1)[Forme d’une commande][
-      #terminal(titre: none, taille: px(22))[```
-        $ wc -l pionnieres.csv
-        9 pionnieres.csv
-        $ ls -l --human-readable pionnieres.csv
-        -rw-r--r-- 1 ada ada 474 Nov 25 09:53 pionnieres.csv
-        ```]
-      - *Invite* (_prompt_) : `$` pour un utilisateur, `#` pour root
-      - *Commande* : `wc` compte (_word count_) ; `-l` : les lignes
-      - *Options* courtes (`-l`) ou longues (`--human-readable`)
-      - *Arguments* : sur quoi porte la commande, ici le fichier
-    ],
-    bloc(role: "pratique")[Se documenter][
-      - `man wc` : le manuel (`q` pour quitter)
-      - `wc --help` : l’aide courte
-      - `type cd` : commande interne de Bash, ou programme ?
-      - Interne : `help cd`, ou `man bash`
-    ],
-  ),
-  source-de: link("https://www.gnu.org/software/coreutils/manual/coreutils.html")[GNU coreutils, manuel],
-  note: _note,
+  note: [#versions Un clic par outil. Bash (Bourne Again SHell, GNU) : le shell interactif par défaut de Debian et d’Ubuntu ; sed (stream editor) édite un flux de texte sans ouvrir le fichier dans un éditeur ; awk est un langage pour les fichiers en colonnes, comme les exports CSV (comma-separated values : valeurs séparées par un délimiteur). Les deux transformations sont des sorties réelles, montrées en détail plus loin : sed -i 's/autostart = yes/autostart = no/' services.conf modifie le fichier sur place ; awk -F';' 'NR > 1 { print \$1, \$2 }' pionnieres.csv affiche les deux premières colonnes (cadre en tirets : ce qui sort, pas un fichier). On s’en sert pour automatiser les tâches répétitives (sauvegardes, comptes, installations) et traiter configurations, journaux et exports, sur un serveur sans interface graphique. Sur Debian, /bin/sh est dash (un shell POSIX plus léger, pour les scripts système) ; le shell de connexion des utilisateurs est bash. Sous macOS, le shell par défaut est zsh depuis Catalina (2019) : les scripts de ce cours commencent par \#!/bin/bash et s’exécutent avec bash.],
 )
 
 == Le fil rouge : pionnieres.csv <fil-rouge>
 
-#let _note = [#versions Le fichier vient du dojo sed et awk du site (écrit pour lui, sans droits tiers). « materiel » et « reseau » sont écrits sans accent exprès : l’exercice sed les corrige. Les lignes ne sont pas triées par année (Goldwasser après Perlman), exprès aussi : le tri sert dans l’exercice des tubes.]
+#let _l = read("exemples/pionnieres.csv").trim(at: end).split("\n")
 #anime(
-  rang(
-    bloc(role: "pratique", poids: 1.6)[Le fichier de données du cours][
-      #terminal(titre: none, taille: px(20))[```
-        $ cat pionnieres.csv
-        nom;annee;domaine;contribution
-        Lovelace Ada;1843;programmation;premier programme publié
-        Booth Kathleen;1947;langages;premier langage d'assemblage
-        Hopper Grace;1952;langages;premier compilateur A-0
-        Johnson Katherine;1962;calcul;trajectoires de Friendship 7
-        Hamilton Margaret;1969;logiciel;logiciel embarqué d'Apollo 11
-        Conway Lynn;1978;materiel;révolution VLSI
-        Perlman Radia;1985;reseau;protocole spanning tree
-        Goldwasser Shafi;1982;cryptographie;chiffrement probabiliste
-        ```]
-    ],
-    bloc[Sa structure][
-      - Une ligne d’en-tête, puis une ligne par pionnière
-      - Quatre colonnes séparées par `;`
-      - Servira aux tubes, à sed et à awk
-    ],
+  commande-annotee(taille: px(24),
+    ("$ ls pionnieres.csv", "pionnieres.csv", ("$ cat pionnieres.csv", 2), .._l.map(x => (x, 2))),
+    annote((ligne: 1, texte: "pionnieres.csv"), cote: "droite", clic: 1, legende: [`ls` le trouve : le fichier existe]),
+    annote((ligne: 3, texte: _l.at(0)), cote: "droite", clic: 3, legende: [la première ligne, l’en-tête, nomme les colonnes]),
+    annote((ligne: 11, texte: ";"), clic: 4, legende: [`;` sépare les colonnes]),
+    annote((ligne: 11, texte: "1982"), clic: 5, legende: [colonne 2 : `annee`]),
+    annote((ligne: 11, texte: "cryptographie"), clic: 6, legende: [colonne 3 : `domaine`]),
   ),
-  note: _note,
+  note: [#versions D’abord l’existence du fichier (ls), puis son contenu (cat), puis sa structure : un clic par élément. Le répertoire de travail ~/atelier contient le fichier de données du cours ; les TP le fournissent. Le fichier vient du dojo sed et awk du site (écrit pour lui, sans droits tiers) : 9 lignes, l’en-tête et 8 pionnières. « materiel » et « reseau » sont écrits sans accent exprès : l’exercice sed les corrige. Les lignes ne sont pas triées par année (Goldwasser après Perlman), exprès aussi : le tri sert dans l’exercice des tubes. Les colonnes n’ont pas de largeur fixe : seul le `;` les sépare.],
+)
+
+== Lire une ligne de commande <ligne-de-commande>
+
+#anime(
+  scene(10, k => grid(columns: (1fr, px(840)), column-gutter: px(40),
+    terminal-annote(etape: k, taille: px(38),
+      ("$ wc -l pionnieres.csv", ("9 pionnieres.csv", 6)),
+      annote("$", cote: "haut", clic: 2, legende: [invite : `$` pour un utilisateur, `#` pour root]),
+      annote("wc", cote: "haut", clic: 3, legende: [la commande : `wc` compte (_word count_)]),
+      annote("-l", cote: "haut", clic: 4, legende: [une option : `-l`, les lignes]),
+      annote((ligne: 0, texte: "pionnieres.csv"), cote: "haut", clic: 5, legende: [un argument : sur quoi elle porte]),
+      annote("9", ligne: 1, clic: 6, legende: [9 lignes : l’en-tête et 8 pionnières]),
+    ),
+    stack(spacing: px(16),
+      des(k, 7, terminal-annote(etape: k, taille: px(22),
+        ("$ head -n 3 pionnieres.csv", ..read("exemples/pionnieres.csv").split("\n").slice(0, 3).map(x => (x, 8))),
+        annote("-n 3", cote: "haut", clic: 7, legende: [l’option `-n` et *son* argument, `3` : trois lignes]),
+        annote((ligne: 0, texte: "pionnieres.csv"), cote: "haut", clic: 8, legende: [l’argument de `head`]),
+      )),
+      des(k, 9, terminal-annote(etape: k, taille: px(22),
+        ("$ head --lines=3 pionnieres.csv", ..read("exemples/pionnieres.csv").split("\n").slice(0, 3)),
+        annote("--lines=3", cote: "haut", clic: 9, legende: [option longue : la même, en toutes lettres]),
+      )),
+      des(k, 10, note(role: "pratique", taille: px(22))[Se documenter : `man wc` (le manuel ; `q` pour quitter), `wc --help` (l’aide courte) ; `type cd` dit si `cd` est interne à Bash (alors `help cd`).]),
+    ),
+  )),
+  source-de: link("https://www.gnu.org/software/coreutils/manual/coreutils.html")[GNU coreutils, manuel],
+  note: [#versions Un morceau par clic. Le 9 se recompte sur le fichier vu à la diapositive précédente. Une option courte peut coller son argument (-n3) ; une option longue le donne après = (--lines=3) ou après une espace (--lines 3). Sortie de type cd : « cd is a shell builtin » ; de type wc : « wc is hashed (/usr/bin/wc) », un programme. Pour une commande interne : help cd, ou man bash.],
 )
 
 == Décoder une ligne de ls -l <ls-l>
 
-#let _note = [#versions Le groupe etudiants est créé pour l’exemple (groupadd, puis chgrp). Dans un terminal en français, la date s’écrit « nov. 25 09:55 ». Pour un lien symbolique, le type est l. Le nombre de liens d’un répertoire compte ses sous-répertoires plus deux (lui-même et « . »).]
+#let _ls = (
+  "-rw-r--r-- 1 ada ada        474 Nov 25 09:53 pionnieres.csv",
+  "-rwxr-x--- 1 ada etudiants  174 Nov 25 09:53 sauvegarde.sh",
+  "drwxr-xr-x 2 ada ada       4096 Nov 25 10:01 scripts",
+)
 #anime(
-  rang(bloc(role: "pratique")[Un fichier, un script, un répertoire][
-    #terminal(titre: none, taille: px(22))[```
-      $ ls -l
-      total 12
-      -rw-r--r-- 1 ada ada        474 Nov 25 09:53 pionnieres.csv
-      -rwxr-x--- 1 ada etudiants  174 Nov 25 09:53 sauvegarde.sh
-      drwxr-xr-x 2 ada ada       4096 Nov 25 10:01 scripts
-      ```]
-  ]),
-  rang(
-    bloc(taille: px(25))[Les colonnes, de gauche à droite][
-      - *Type* : `-` fichier ordinaire, `d` répertoire
-      - *Droits* par trois : propriétaire, groupe, autres
-      - Nombre de liens, *propriétaire*, *groupe*
-      - *Taille* en octets, date de modification, nom
-    ],
-    bloc(role: "retenir", taille: px(25))[Lire `rwxr-x---`][
-      - `r` lire, `w` écrire, `x` exécuter ; `-` : droit absent
-      - `rwx` : le propriétaire ada peut tout
-      - `r-x` : le groupe etudiants lit et exécute
-      - `---` : les autres n’ont aucun droit
-    ],
-  ),
+  scene(10, k => stack(spacing: px(20),
+    terminal-annote(etape: k, taille: px(20), ("$ ls -l", "total 12", .._ls),
+      annote((ligne: 3, texte: _ls.at(1)), clic: 2, garde: true)),
+    des(k, 2, terminal-annote(etape: k, taille: px(34), (_ls.at(1),),
+      annote((0, 1), cote: "haut", clic: 3, legende: [type : `-` fichier ordinaire, `d` répertoire]),
+      annote("rwx", "ada", pont: true, clic: 4, legende: [propriétaire `ada` : lire, écrire, exécuter (`r`, `w`, `x`)]),
+      annote("r-x", "etudiants", pont: true, clic: 5, legende: [groupe `etudiants` : lire, exécuter (`-` : droit absent)]),
+      annote("---", clic: 6, legende: [tous les autres : aucun droit]),
+      annote(" 1 ", cote: "haut", clic: 7, legende: [nombre de liens]),
+      annote("174", cote: "haut", clic: 8, legende: [taille en octets]),
+      annote("Nov 25 09:53", cote: "haut", clic: 9, legende: [dernière modification]),
+      annote("sauvegarde.sh", cote: "haut", clic: 10, legende: [nom]),
+    )),
+  )),
   source-de: link("https://www.gnu.org/software/coreutils/manual/html_node/What-information-is-listed.html")[GNU coreutils, What information is listed],
-  note: _note,
+  note: [#versions La ligne de sauvegarde.sh est agrandie dessous, puis décodée un champ par clic ; chaque triplet de droits est relié à la classe d’utilisateurs qu’il concerne. Le groupe etudiants est créé pour l’exemple (groupadd, puis chgrp). Dans un terminal en français, la date s’écrit « nov. 25 09:55 ». Pour un lien symbolique, le type est l. Le nombre de liens d’un répertoire compte ses sous-répertoires plus deux (lui-même et « . »).],
 )
 
 == À vous : décoder ls -l <exercice-ls-l>
@@ -159,26 +157,30 @@
     + Quels droits donne `chmod 640 pionnieres.csv` ? (r = 4, w = 2, x = 1)
   ]),
   rang(bloc(role: "pratique", taille: px(24))[La sortie de ls -l][
-    #terminal(titre: none, taille: px(21))[```
-      -rw-r--r-- 1 ada ada        474 Nov 25 09:53 pionnieres.csv
-      -rwxr-x--- 1 ada etudiants  174 Nov 25 09:53 sauvegarde.sh
-      drwxr-xr-x 2 ada ada       4096 Nov 25 10:01 scripts
-      ```]
+    #terminal(titre: none, taille: px(21), raw(_ls.join("\n"), block: true))
   ]),
-  note: [À faire en direct, une question par clic. Laisser chercher avant de passer au corrigé.],
+  note: [À faire en direct, une question par clic. Laisser chercher avant de passer au corrigé. Sur un répertoire, x donne le droit de le traverser (y entrer, atteindre ses fichiers), w celui d’y créer ou d’y supprimer des noms, à condition d’avoir aussi x.],
 )
 
 == Décoder ls -l : corrigé
 
-#corriges(note: [La question reste affichée ; un clic par réponse. Sur un répertoire, x donne le droit de le traverser (y entrer, atteindre ses fichiers), w celui d’y créer ou d’y supprimer des noms, à condition d’avoir aussi x. Octal : chaque chiffre est la somme des droits d’une classe.],
+// Une ligne de ls -l, ses triplets utiles encadrés : la démonstration d’une réponse.
+#let preuve(lignes, ..morceaux, texte) = stack(spacing: px(8),
+  terminal-annote(taille: px(23), lignes, ..morceaux.pos().map(m => annote(m, garde: true))),
+  text(size: px(24), texte))
+#corriges(note: [La question reste affichée ; un clic par réponse, avec la ligne qui la démontre, triplets en cause encadrés. Octal : chaque chiffre est la somme des droits d’une classe. #versions],
   (1, [Sur `scripts` : qui peut y entrer, qui peut y créer un fichier ?],
-    reponse[`drwxr-xr-x` : tout le monde y entre (`x` partout) ; seule ada y crée des fichiers (`w` pour le propriétaire seulement)]),
+    reponse(preuve((_ls.at(2),), "rwx", (ligne: 0, texte: "r-x", n: 1), (ligne: 0, texte: "r-x", n: 2))[
+      Tout le monde y entre (`x` dans les trois triplets) ; seule ada y crée des fichiers (`w` pour le propriétaire seulement).])),
   (2, [Un membre d’etudiants peut-il modifier `sauvegarde.sh` ? L’exécuter ?],
-    reponse[`rwxr-x---` : groupe `r-x`, donc pas de modification (`w` absent), mais exécution permise]),
+    reponse(preuve((_ls.at(1),), "r-x", "etudiants")[
+      Groupe `r-x` : pas de modification (`w` absent), mais l’exécution est permise.])),
   (3, [Un autre utilisateur peut-il lire `pionnieres.csv` ?],
-    reponse[`rw-r--r--` : oui, les autres ont `r--`]),
+    reponse(preuve((_ls.at(0),), (ligne: 0, texte: "r--", n: 2))[Oui : les autres ont `r--`.])),
   (4, [Quels droits donne `chmod 640 pionnieres.csv` ?],
-    reponse[6 = 4 + 2 : `rw-` ; 4 : `r--` ; 0 : `---`, soit `-rw-r-----`]),
+    reponse(preuve(("$ chmod 640 pionnieres.csv", "$ ls -l pionnieres.csv", "-rw-r----- 1 ada ada 474 Nov 25 09:53 pionnieres.csv"),
+        (ligne: 2, cols: (1, 4)), (ligne: 2, cols: (4, 7)), (ligne: 2, cols: (7, 10)))[
+      6 = 4 + 2 : `rw-` ; 4 : `r--` ; 0 : `---`.])),
 )
 
 // ----------------------------------------------------------------------
@@ -186,198 +188,319 @@
 
 == Trois flux par processus <flux-standards>
 
-#let _note = [#versions ls écrit d’abord ses erreurs (les noms introuvables), puis la liste. Un descripteur de fichier est le numéro sous lequel un processus désigne un fichier ouvert ; 0, 1 et 2 sont ouverts dès sa naissance, hérités du shell qui l’a lancé.]
-#let flux(t, sous) = block(width: 100%, fill: c.appli, radius: px(10), inset: px(14),
-  align(center, stack(spacing: px(6), text(size: px(26), weight: 600, t), text(size: px(22), fill: c.ardoise, sous))))
-#let fl(t) = align(center + horizon, text(size: px(24), fill: c.bleu, weight: 600, t))
+// Les schémas de cette section : un processus et ses trois prises, le clavier, le terminal ; 2 en tirets.
+#let clavier = (x: 0, y: 200, l: 210, h: 110, titre: [Clavier])
+#let erreur-ls = "ls: cannot access 'absent.txt': No such file or directory"
 #anime(
-  pas(1, (u, d) => u(str(d) + "-", grid(columns: (1fr, px(170), 1.2fr, px(170), 1fr), align: horizon, row-gutter: px(16),
-    grid.cell(rowspan: 2, flux([Clavier], [ou fichier, ou tube])),
-    grid.cell(rowspan: 2, fl[0 →]),
-    grid.cell(rowspan: 2, block(width: 100%, height: px(200), fill: c.nuit, radius: px(12),
-      align(center + horizon, text(size: px(30), weight: 600, fill: c.fond)[Commande]))),
-    fl[→ 1], flux([Écran], [sortie standard]),
-    fl[→ 2], flux([Écran], [erreur standard]),
-  ))),
-  rang(
-    bloc(taille: px(25))[Les trois flux standards][
-      - *Entrée standard* (_stdin_, descripteur 0) : ce que la commande lit
-      - *Sortie standard* (_stdout_, 1) : ce qu’elle produit
-      - *Erreur standard* (_stderr_, 2) : ses messages d’erreur
-    ],
-    bloc(role: "pratique", poids: 1.15, taille: px(25))[Deux flux, un même écran][
-      #terminal(titre: none, taille: px(20))[```
-        $ ls pionnieres.csv absent.txt
-        ls: cannot access 'absent.txt': No such file or directory
-        pionnieres.csv
-        ```]
-      - Par défaut, les trois sont branchés sur le terminal
-    ],
-  ),
+  scene(3, k => schema-etats(hauteur: 600, etape: k, taille: px(24),
+    noeuds: (
+      ls: (x: 370, y: 130, l: 260, h: 250, genre: "processus", titre: "ls", sous: [un processus]),
+      txt: (x: 0, y: 440, l: 1664, genre: "texte", taille: px(28), contenu: [Chaque processus naît avec trois flux numérotés : *0*, l’entrée standard (_stdin_) : ce qu’il lit ; *1*, la sortie standard (_stdout_) : ses résultats ; *2*, l’erreur standard (_stderr_) : ses messages d’erreur.]),
+    ),
+    etats: (
+      (:),
+      (noeuds: (
+        clavier: clavier,
+        ecran: (x: 1040, y: 150, l: 624, h: 210, genre: "terminal", titre: "Terminal", taille: px(17), contenu: ()),
+        txt: (contenu: [Au lancement, le shell branche 0 sur le clavier, 1 et 2 sur l’écran du terminal.]),
+      ), liens: (
+        e0: (de: "clavier", vers: "ls.0"),
+        s1: (de: "ls.1", vers: "ecran.g", etiquette: [1 : sortie], pos: 0.45),
+        s2: (de: "ls.2", vers: "ecran.g", etiquette: [2 : erreur], pos: 0.45, tirets: true),
+      )),
+      (noeuds: (
+        ecran: (contenu: ("$ ls pionnieres.csv absent.txt", erreur-ls, "pionnieres.csv")),
+        txt: (contenu: [ls écrit le nom trouvé sur 1, le message d’erreur sur 2 : à l’écran, rien ne distingue les deux lignes.]),
+      ), liens: (
+        s1: (etiquette: none, donnee: raw("pionnieres.csv"), pos-donnee: 0.45),
+        s2: (etiquette: none, donnee: [message d’erreur], pos-donnee: 0.45),
+      )),
+    ),
+  )),
   source-de: link("https://www.gnu.org/software/bash/manual/html_node/Redirections.html")[Bash Reference Manual, Redirections],
-  note: _note,
+  note: [#versions Un clic : le processus seul ; les branchements par défaut ; l’exécution, avec sur chaque fil ce qu’il porte. ls écrit d’abord ses erreurs (les noms introuvables), puis la liste. Un descripteur de fichier est le numéro sous lequel un processus désigne un fichier ouvert ; 0, 1 et 2 sont ouverts dès sa naissance, hérités du shell qui l’a lancé. Le flux 2 est dessiné en tirets dans tout le cours. ls ne lit pas son entrée standard : elle reste branchée, inutilisée.],
 )
 
-== Rediriger vers un fichier : >, >>, 2>, < <redirections>
+== Rediriger 1 ou 2 vers un fichier : > et 2> <redirections>
 
-#let _note = [#versions date -I écrit la date au format ISO 8601. Une redirection s’écrit n’importe où dans la commande, mais par convention à la fin. Le fichier cible de > est créé s’il n’existe pas.]
+// Fichier au-dessus du terminal pour 1, au-dessous pour 2 : les fils ne se croisent pas.
+#let ls-base = (x: 330, y: 160, l: 250, h: 240, genre: "processus", titre: "ls")
+#let fichier-haut = (x: 860, y: 0, l: 804, h: 100, genre: "fichier", taille: px(19))
 #anime(
-  rang(
-    bloc(role: "pratique", poids: 1.25)[Démonstration][
-      #terminal(titre: none, taille: px(19))[```
-        # stdout vers sortie.txt : seule l’erreur reste à l’écran
-        $ ls pionnieres.csv absent.txt > sortie.txt
-        ls: cannot access 'absent.txt': No such file or directory
-        $ cat sortie.txt
-        pionnieres.csv
-        # stderr vers erreurs.txt
-        $ ls pionnieres.csv absent.txt 2> erreurs.txt
-        pionnieres.csv
-        # les deux flux dans tout.txt
-        $ ls pionnieres.csv absent.txt > tout.txt 2>&1
-        # >> ajoute à la fin au lieu d’écraser
-        $ date -I >> tout.txt
-        $ wc -l tout.txt
-        3 tout.txt
-        # < : l’entrée standard vient du fichier
-        $ wc -l < pionnieres.csv
-        9
-        ```]
-    ],
-    bloc(role: "retenir")[Les redirections][
-      - `> f` : stdout dans `f`, *écrasé*
-      - `>> f` : stdout ajoutée à la fin de `f`
-      - `2> f` : stderr dans `f`
-      - `> f 2>&1` : les deux dans `f`
-      - `< f` : stdin lue dans `f`
-      - `wc -l < f` n’affiche pas de nom : wc ne lit qu’un flux
-    ],
-  ),
+  scene(5, k => schema-etats(hauteur: 600, etape: k, taille: px(24),
+    noeuds: (
+      clavier: (..clavier, y: 225), ls: ls-base,
+      ecran: (x: 860, y: 125, l: 804, h: 330, genre: "terminal", titre: "Terminal", taille: px(19), contenu: ()),
+      txt: (x: 0, y: 470, l: 760, genre: "texte", taille: px(26), contenu: [Au départ, 1 et 2 vont à l’écran.]),
+    ),
+    liens: (
+      e0: (de: "clavier", vers: "ls.0"),
+      s1: (de: "ls.1", vers: "ecran.g"),
+      s2: (de: "ls.2", vers: "ecran.g", tirets: true),
+    ),
+    etats: (
+      (:),
+      (noeuds: (
+        ecran: (contenu: ("$ ls pionnieres.csv absent.txt > sortie.txt",)),
+        sortie: (..fichier-haut, titre: "sortie.txt", contenu: ()),
+        txt: (contenu: [Avant de lancer ls, Bash branche 1 sur `sortie.txt` : il le crée, ou le vide s’il existe.]),
+      ), liens: (s1: (vers: "sortie.g", etiquette: raw("> sortie.txt"))),
+      ),
+      (noeuds: (
+        ecran: (contenu: ("$ ls pionnieres.csv absent.txt > sortie.txt", erreur-ls)),
+        sortie: (contenu: ("pionnieres.csv",)),
+        txt: (contenu: [ls s’exécute : le nom part dans le fichier, l’erreur reste à l’écran.]),
+      )),
+      (noeuds: (
+        ecran: (contenu: ("$ ls pionnieres.csv absent.txt > sortie.txt", erreur-ls, "$ cat sortie.txt", "pionnieres.csv")),
+        txt: (contenu: [`cat` affiche le fichier : il contient la sortie de ls.]),
+      )),
+      (noeuds: (
+        ecran: (contenu: ("$ ls pionnieres.csv absent.txt > sortie.txt", erreur-ls, "$ cat sortie.txt", "pionnieres.csv",
+          "$ ls pionnieres.csv absent.txt 2> erreurs.txt", "pionnieres.csv")),
+        erreurs: (x: 860, y: 480, l: 804, h: 100, genre: "fichier", taille: px(19), titre: "erreurs.txt", contenu: (erreur-ls,)),
+        txt: (contenu: [`2> erreurs.txt` : c’est 2, cette fois, qui part dans un fichier ; 1 reste à l’écran.]),
+      ), liens: (
+        s1: (vers: "ecran.g", etiquette: none),
+        s2: (vers: "erreurs.g", etiquette: raw("2> erreurs.txt"), pos: 0.55),
+      )),
+    ),
+  )),
   source-de: link("https://www.gnu.org/software/bash/manual/html_node/Redirections.html")[Bash Reference Manual, Redirections],
-  note: _note,
+  note: [#versions Un clic par étape : Bash branche, puis ls s’exécute ; cat montre le fichier ; puis 2>, branché et exécuté d’un même clic. L’ancien branchement reste en pointillé au clic où il change. Une redirection s’écrit n’importe où dans la commande, mais par convention à la fin. > est l’abréviation de 1>. Si sortie.txt existait, son contenu serait perdu (diapositives suivantes).],
+)
+
+== Ajouter ou lire : >> et <
+
+#anime(
+  scene(5, k => schema-etats(hauteur: 600, etape: k, taille: px(24),
+    noeuds: (
+      clavier: (..clavier, y: 125), ls: (..ls-base, y: 60),
+      sortie: (..fichier-haut, h: 150, titre: "sortie.txt", contenu: ("pionnieres.csv",)),
+      ecran: (x: 860, y: 180, l: 804, h: 230, genre: "terminal", titre: "Terminal", taille: px(19),
+        contenu: ("$ ls pionnieres.csv > sortie.txt",)),
+      txt: (x: 860, y: 440, l: 804, genre: "texte", taille: px(26), contenu: [Un premier `ls … > sortie.txt` y a écrit un nom.]),
+    ),
+    liens: (
+      e0: (de: "clavier", vers: "ls.0"),
+      s1: (de: "ls.1", vers: "sortie.g", etiquette: raw("> sortie.txt")),
+      s2: (de: "ls.2", vers: "ecran.g", tirets: true),
+    ),
+    etats: (
+      (:),
+      (noeuds: (
+        ecran: (contenu: ("$ ls sauvegarde.sh >> sortie.txt", "$ cat sortie.txt", "pionnieres.csv", "sauvegarde.sh")),
+        sortie: (contenu: ("pionnieres.csv", "sauvegarde.sh")),
+        txt: (contenu: [`>>` ajoute à la fin du fichier : l’ancien contenu reste.]),
+      ), liens: (s1: (etiquette: raw(">> sortie.txt")))),
+      (noeuds: (
+        ecran: (contenu: ("$ ls sauvegarde.sh > sortie.txt", "$ cat sortie.txt", "sauvegarde.sh")),
+        sortie: (contenu: ("sauvegarde.sh",)),
+        txt: (contenu: [`>` vide le fichier, puis écrit : l’ancien contenu est perdu.]),
+      ), liens: (s1: (etiquette: raw("> sortie.txt")))),
+      (noeuds: (
+        ls: (titre: "wc"),
+        ecran: (contenu: ("$ wc -l pionnieres.csv", "9 pionnieres.csv")),
+        sortie: none,
+        csv: (x: 0, y: 420, l: 560, h: 120, genre: "fichier", titre: "pionnieres.csv", pied: [9 lignes], taille: px(19),
+          contenu: ("nom;annee;domaine;contribution", "# …"), ports: (arg: ("h", 0.8), entree: ("h", 0.3))),
+        txt: (contenu: [Avec un argument, `wc` ouvre lui-même le fichier : il en connaît le nom, et l’affiche.]),
+      ), liens: (
+        s1: (vers: "ecran.g", etiquette: none),
+        arg: (de: "csv.arg", vers: "ls.b", etiquette: [argument], motif: "dash-dotted"),
+      )),
+      (noeuds: (
+        ecran: (contenu: ("$ wc -l pionnieres.csv", "9 pionnieres.csv", "$ wc -l < pionnieres.csv", "9")),
+        txt: (contenu: [`< pionnieres.csv` : Bash branche 0 sur le fichier ; `wc` lit son entrée standard, sans en connaître le nom.]),
+      ), liens: (
+        e0: (de: "csv.entree", etiquette: raw("< pionnieres.csv"), pos: 0.45),
+        arg: none,
+      )),
+    ),
+  )),
+  source-de: link("https://www.gnu.org/software/bash/manual/html_node/Redirections.html")[Bash Reference Manual, Redirections],
+  note: [#versions Le fichier change à chaque clic : ajout (>>), écrasement (>), puis l’entrée standard rebranchée (<). Le premier ls … > sortie.txt est joué juste avant (shell/cm/rejouer.sh, session « Ajouter, écraser, lire »). Le fichier pionnieres.csv est montré par son en-tête seulement : son contenu complet est sur la diapositive du fil rouge.],
 )
 
 == L’ordre des redirections compte <ordre-redirections>
 
-#let _note = [#versions Le manuel de Bash donne exactement cet exemple (section REDIRECTION, « Note that the order of redirections is significant »). 2>&1 se lit « le descripteur 2 devient une copie du descripteur 1 », pas « 2 va vers 1 pour toujours ».]
+// Un scénario : la commande, dont chaque redirection est pointée à son clic, et son effet sur les flux de ls.
+#let scenario(k, d, commande, a1, a2, etats) = grid(columns: (1fr, px(990)), column-gutter: px(28), align: horizon,
+  terminal-annote(etape: k - d + 1, taille: px(21), (commande,), a1, a2),
+  schema-etats(hauteur: 255, etape: k - d + 1, taille: px(22),
+    noeuds: (
+      ls: (x: 0, y: 30, l: 200, h: 195, genre: "processus", titre: "ls"),
+      ecran: (x: 350, y: 0, l: 640, h: 110, genre: "terminal", titre: "Écran", taille: px(17), contenu: ()),
+    ),
+    liens: (
+      s1: (de: "ls.1", vers: "ecran.g"),
+      s2: (de: "ls.2", vers: "ecran.g", tirets: true),
+    ),
+    etats: etats))
+#let fichier-sortie = (x: 350, y: 145, l: 640, h: 110, genre: "fichier", titre: "sortie.txt", taille: px(17), contenu: ())
 #anime(
-  rang(
-    bloc(role: "pratique", poids: 1.2)[Démonstration][
-      #terminal(titre: none, taille: px(20))[```
-        $ ls pionnieres.csv absent.txt > sortie.txt 2>&1
-        $ ls pionnieres.csv absent.txt 2>&1 > sortie.txt
-        ls: cannot access 'absent.txt': No such file or directory
-        $ cat sortie.txt
-        pionnieres.csv
-        ```]
-    ],
-    bloc[Bash les applique de gauche à droite][
-      - `> sortie.txt 2>&1` : 1 → fichier, puis 2 → là où va 1 : *le fichier*
-      - `2>&1 > sortie.txt` : 2 → là où va 1 : *l’écran* ; puis 1 → fichier
-      - `2>&1` copie la destination de 1 *au moment où il est lu*
-    ],
-  ),
-  rang(bloc(role: "retenir")[À retenir][
-    Pour tout envoyer dans un fichier : `commande > fichier 2>&1`, dans cet ordre.
-  ]),
+  scene(9, k => stack(spacing: px(14),
+    scenario(k, 1, "$ ls pionnieres.csv absent.txt > sortie.txt 2>&1",
+      annote("> sortie.txt", clic: 2, cote: "haut", legende: [① 1 → `sortie.txt`]),
+      annote("2>&1", clic: 3, legende: [② 2 → où va 1 *maintenant* : `sortie.txt`]),
+      ((:),
+       (noeuds: (sortie: fichier-sortie), liens: (s1: (vers: "sortie.g"))),
+       (liens: (s2: (vers: "sortie.g"))),
+       (noeuds: (sortie: (contenu: (erreur-ls, "pionnieres.csv")), ecran: (contenu: ("# (rien)",))))),
+    ),
+    des(k, 5, line(length: 100%, stroke: px(2) + c.filet)),
+    des(k, 5, scenario(k, 5, "$ ls pionnieres.csv absent.txt 2>&1 > sortie.txt",
+      annote("2>&1", clic: 2, cote: "haut", legende: [① 2 → où va 1 *maintenant* : l’écran ; rien ne bouge]),
+      annote("> sortie.txt", clic: 3, legende: [② 1 → `sortie.txt` ; 2 reste à l’écran]),
+      ((:),
+       (liens: (s2: (vers: "ecran.g"))),
+       (noeuds: (sortie: fichier-sortie), liens: (s1: (vers: "sortie.g"))),
+       (noeuds: (sortie: (contenu: ("pionnieres.csv",)), ecran: (contenu: (erreur-ls,))))),
+    )),
+    des(k, 9, note(role: "retenir", taille: px(24))[Bash applique les redirections de gauche à droite, avant de lancer la commande ; `2>&1` copie la destination de 1 *à cet instant*. Pour tout envoyer dans un fichier : `commande > fichier 2>&1`, dans cet ordre.]),
+  )),
   source-de: link("https://www.gnu.org/software/bash/manual/html_node/Redirections.html")[Bash Reference Manual, Redirections],
-  note: _note,
+  note: [#versions Quatre clics par commande : l’état de départ, chaque redirection dans l’ordre où Bash la lit, puis l’exécution ; ce que montrent l’écran et sortie.txt est la sortie réelle (cat sortie.txt après chaque commande). Le manuel de Bash donne exactement cet exemple (section REDIRECTION, « Note that the order of redirections is significant »). 2>&1 se lit « le descripteur 2 devient une copie du descripteur 1 », pas « 2 va vers 1 pour toujours ».],
 )
 
 == > vide le fichier avant de lancer la commande <troncature>
 
-#let _note = [#versions GNU sort lit toute son entrée avant d’écrire : -o peut désigner le fichier d’entrée (documenté dans le manuel de coreutils). Pour les autres commandes : écrire dans un fichier temporaire, puis mv. set -o noclobber fait refuser > sur un fichier existant (>| force).]
+#let _tri = (
+  "Booth Kathleen;1947;langages;premier langage d'assemblage",
+  "Conway Lynn;1978;materiel;révolution VLSI",
+  "Goldwasser Shafi;1982;cryptographie;chiffrement probabiliste",
+  "Hamilton Margaret;1969;logiciel;logiciel embarqué d'Apollo 11",
+  "Hopper Grace;1952;langages;premier compilateur A-0",
+  "Johnson Katherine;1962;calcul;trajectoires de Friendship 7",
+  "Lovelace Ada;1843;programmation;premier programme publié",
+  "Perlman Radia;1985;reseau;protocole spanning tree",
+  "nom;annee;domaine;contribution",
+)
 #anime(
-  rang(
-    bloc(role: "pratique", poids: 1.2)[Démonstration, sur une copie][
-      #terminal(titre: none, taille: px(21))[```
-        $ cp pionnieres.csv copie.csv
-        $ sort copie.csv > copie.csv
-        $ wc -c copie.csv
-        0 copie.csv
-        # sort sait écrire dans son propre fichier
-        $ cp pionnieres.csv copie.csv
-        $ sort -o copie.csv copie.csv
-        $ wc -c copie.csv
-        474 copie.csv
-        ```]
-    ],
-    bloc(role: "danger")[Données perdues][
-      - Bash ouvre et *tronque* `copie.csv` avant de lancer sort
-      - sort lit alors un fichier vide : le contenu est perdu
-      - Ne jamais rediriger vers le fichier qu’on lit
-    ],
-  ),
+  scene(4, k => schema-etats(hauteur: 600, etape: k, taille: px(24),
+    noeuds: (
+      term: (x: 0, y: 0, l: 560, h: 390, genre: "terminal", titre: "Terminal", taille: px(20),
+        contenu: ("$ cp pionnieres.csv copie.csv", "$ wc -c copie.csv", "474 copie.csv")),
+      copie: (x: 1084, y: 0, l: 580, h: 390, genre: "fichier", titre: "copie.csv", pied: [474 octets], contenu: _l,
+        taille: px(15), ports: (ecrit: ("g", 0.3), lu: ("g", 0.85))),
+      txt: (x: 0, y: 440, l: 1664, genre: "texte", taille: px(28), contenu: [`copie.csv` : une copie du fil rouge, 474 octets.]),
+    ),
+    etats: (
+      (:),
+      (noeuds: (
+        term: (contenu: ("$ cp pionnieres.csv copie.csv", "$ wc -c copie.csv", "474 copie.csv", "$ sort copie.csv > copie.csv")),
+        sort: (x: 620, y: 70, l: 240, h: 210, genre: "processus", titre: "sort", sous: [pas lancé], attente: true),
+        copie: (contenu: (), pied: [0 octet]),
+        txt: (contenu: [Bash prépare `> copie.csv` : il ouvre le fichier en écriture, ce qui le *vide*, avant que sort démarre.]),
+      ), liens: (s1: (de: "sort.1", vers: "copie.ecrit", etiquette: raw("> copie.csv")))),
+      (noeuds: (
+        term: (contenu: ("$ cp pionnieres.csv copie.csv", "$ wc -c copie.csv", "474 copie.csv", "$ sort copie.csv > copie.csv",
+          "$ wc -c copie.csv", "0 copie.csv")),
+        sort: (attente: false, sous: [lit du vide]),
+        txt: (contenu: note(role: "danger", taille: px(26))[sort lit un fichier déjà vide et n’écrit rien : les données sont perdues. Ne jamais rediriger vers le fichier qu’on lit.]),
+      ), liens: (lit: (de: "copie.lu", vers: "sort.b", etiquette: [lit son argument], motif: "dash-dotted"))),
+      (noeuds: (
+        term: (contenu: ("$ cp pionnieres.csv copie.csv", "$ sort -o copie.csv copie.csv", "$ wc -c copie.csv", "474 copie.csv")),
+        sort: (sous: [lit tout, écrit]),
+        copie: (contenu: _tri, pied: [474 octets, triés]),
+        txt: (contenu: [`sort -o copie.csv` : sort lit toute son entrée, puis écrit lui-même le fichier ; il est trié.]),
+      ), liens: (
+        s1: (de: "sort.d", vers: "copie.ecrit", etiquette: raw("-o copie.csv")),
+        lit: (fort: false),
+      )),
+    ),
+  )),
   source-de: link("https://www.gnu.org/software/coreutils/manual/html_node/sort-invocation.html")[GNU coreutils, sort invocation],
-  note: _note,
+  note: [#versions Sur une copie, pour ne pas perdre le fil rouge. Un clic : la copie ; Bash prépare la redirection (sort n’a pas démarré) ; sort s’exécute ; la bonne manière. GNU sort lit toute son entrée avant d’écrire : -o peut désigner le fichier d’entrée (documenté dans le manuel de coreutils). Pour les autres commandes : écrire dans un fichier temporaire, puis mv. set -o noclobber fait refuser > sur un fichier existant (>| force). En locale C.UTF-8, les majuscules passent avant les minuscules : l’en-tête « nom;… » finit en dernier.],
 )
 
 == Le tube branche une sortie sur une entrée <tubes>
 
-#let _note = [#versions cut -d';' -f3 : la 3e colonne, avec ; comme séparateur ; uniq -c ne fusionne que des lignes identiques consécutives, d’où le sort avant ; sort -rn : numérique, ordre décroissant. Les lignes de même compte sortent en ordre inverse alphabétique (-r). grep csv garde les lignes qui contiennent csv. Exemple d’origine du cours : cat fichier.txt | sort | uniq | wc -l ; sort fichier.txt suffit, sans cat.]
+#let _f3 = ("domaine", "programmation", "langages", "langages", "calcul", "logiciel", "materiel", "reseau", "cryptographie")
+#let _f3-tri = ("calcul", "cryptographie", "domaine", "langages", "langages", "logiciel", "materiel", "programmation", "reseau")
+#let _f3-uniq = ("1 calcul", "1 cryptographie", "1 domaine", "2 langages", "1 logiciel", "1 materiel", "1 programmation", "1 reseau").map(x => "      " + x)
+#let _f3-fin = ("2 langages", "1 reseau", "1 programmation", "1 materiel", "1 logiciel", "1 domaine", "1 cryptographie", "1 calcul").map(x => "      " + x)
+#let _tube = (x, titre) => (x: x + 30, y: 66, l: 220, h: 84, genre: "processus", titre: titre, taille-titre: px(30),
+  ports: ("0": ("g", 0.5), "1": ("d", 0.5), arg: ("h", 0.3)))
+#let _flux = (x, contenu, genre: "flux") => (x: x, y: 180, l: 290, h: 275, genre: genre, contenu: contenu, taille: px(18))
 #anime(
-  rang(
-    bloc(role: "pratique", poids: 1.25)[Un pipeline sur le fil rouge][
-      #terminal(titre: none, taille: px(20))[```
-        # 3e colonne, triée, doublons comptés, plus fréquent d’abord
-        $ cut -d';' -f3 pionnieres.csv | sort | uniq -c | sort -rn
-              2 langages
-              1 reseau
-              1 programmation
-              1 materiel
-              1 logiciel
-              1 domaine
-              1 cryptographie
-              1 calcul
-        # tube, puis redirection de la dernière commande
-        $ ls -l | grep csv > resultats.txt
-        $ cat resultats.txt
-        -rw-r--r-- 1 ada ada  474 Nov 25 09:53 pionnieres.csv
-        ```]
-    ],
-    bloc[Le tube `|`][
-      - `cmd1 | cmd2` : la sortie standard de cmd1 devient l’entrée standard de cmd2
-      - De petits outils, composés librement
-      - Pas de fichier temporaire
-      - L’en-tête « domaine » est compté : à retirer (exercice)
-    ],
-  ),
+  scene(6, k => stack(spacing: px(18),
+    terminal-annote(etape: k, taille: px(26),
+      ((("$ cut -d';' -f3 pionnieres.csv", 1), (" | sort", 3), (" | uniq -c", 4), (" | sort -rn", 5)),),
+      annote("-d';' -f3", clic: 2, cote: "haut", legende: [la colonne 3 ; les colonnes sont séparées par `;`]),
+      annote("| sort", clic: 3), annote("| uniq -c", clic: 4), annote("| sort -rn", clic: 5),
+    ),
+    schema-etats(hauteur: 495, etape: k, taille: px(24),
+      noeuds: (
+        csv: (x: 0, y: 0, l: 230, h: 42, genre: "fichier", titre: "pionnieres.csv", contenu: none),
+        cut: _tube(340, "cut"), d1: _flux(340, _f3),
+        txt: (x: 690, y: 200, l: 970, genre: "texte", taille: px(28), contenu: [cut écrit sur sa sortie standard la colonne 3 de chaque ligne, en-tête compris.]),
+      ),
+      liens: (arg: (de: "csv.d", vers: "cut.arg", motif: "dash-dotted", etiquette: [argument], pos: 0.4), o1: (de: "cut.b", vers: "d1.h")),
+      etats: (
+        (:),
+        (:),
+        (noeuds: (srt: _tube(680, "sort"), d2: _flux(680, _f3-tri),
+          txt: (x: 1030, l: 630, contenu: [`|` : la sortie standard de cut devient l’entrée standard de sort.])),
+         liens: (t1: (de: "cut.1", vers: "srt.0", etiquette: raw("|")), o2: (de: "srt.b", vers: "d2.h"))),
+        (noeuds: (unq: _tube(1020, "uniq -c"), d3: _flux(1020, _f3-uniq),
+          txt: (x: 1370, l: 290, contenu: [uniq -c fusionne les lignes identiques *qui se suivent* et les compte : d’où le tri.])),
+         liens: (t2: (de: "srt.1", vers: "unq.0", etiquette: raw("|")), o3: (de: "unq.b", vers: "d3.h"))),
+        (noeuds: (rn: _tube(1360, "sort -rn"), d4: _flux(1360, _f3-fin, genre: "terminal"), txt: none),
+         liens: (t3: (de: "unq.1", vers: "rn.0", etiquette: raw("|")), o4: (de: "rn.b", vers: "d4.h"))),
+        (noeuds: (rq: (x: 680, y: 462, l: 984, genre: "texte", taille: px(25),
+          contenu: [La ligne `1 domaine` vient de l’en-tête : à retirer (exercice).]))),
+      ),
+    ),
+  )),
   source-de: link("https://www.gnu.org/software/bash/manual/html_node/Pipelines.html")[Bash Reference Manual, Pipelines],
-  note: _note,
+  note: [#versions Une commande par clic ; sous chacune, ce qui sort réellement d’elle (rejoué étape par étape : cut, puis cut | sort, puis | uniq -c, puis | sort -rn). Les cadres en tirets sont ce qui circule dans les tubes, pas des fichiers : aucun fichier temporaire. Le dernier, sur fond de terminal, est ce qui s’affiche. sort -rn : numérique, ordre décroissant ; les lignes de même compte sortent en ordre alphabétique inverse (-r). Tube puis redirection de la dernière commande : ls -l | grep csv > resultats.txt écrit dans resultats.txt la ligne de pionnieres.csv. Exemple d’origine du cours : cat fichier.txt | sort | uniq | wc -l ; sort fichier.txt suffit, sans cat.],
 )
 
 == Code de retour : && et || <codes-retour>
 
-#let _note = [#versions ls renvoie 2 pour une erreur sérieuse (fichier introuvable), 1 pour une erreur mineure ; chaque commande documente ses codes (man ls, section Exit status). grep -q : silencieux, seul le code compte (0 trouvé, 1 non trouvé).]
+#let _voie = (x, y, titre) => (x: x, y: y, l: 240, h: 90, titre: titre)
 #anime(
-  rang(
-    bloc(role: "pratique", poids: 1.15)[Démonstration][
-      #terminal(titre: none, taille: px(20))[```
-        $ ls absent.txt
-        ls: cannot access 'absent.txt': No such file or directory
-        $ echo $?
-        2
-        $ grep -q Hopper pionnieres.csv
-        $ echo $?
-        0
-        $ grep -q Hopper pionnieres.csv && echo "trouvée"
-        trouvée
-        $ grep -q Turing pionnieres.csv || echo "absent du fichier"
-        absent du fichier
-        ```]
-    ],
-    bloc[Chaque commande rend un code][
-      - `0` : succès ; tout autre code : échec
-      - `$?` : le code de la dernière commande
-      - `a && b` : b seulement si a réussit
-      - `a || b` : b seulement si a échoue
-    ],
-  ),
-  rang(bloc(role: "avertissement")[Ne pas confondre][
-    `cmd1 | cmd2` *branche* deux flux ; `cmd1 || cmd2` enchaîne selon le *code de retour*.
-  ]),
+  scene(5, k => schema-etats(hauteur: 530, etape: k, taille: px(26),
+    noeuds: (
+      term: (x: 0, y: 0, l: 1664, h: 200, genre: "terminal", titre: "Terminal", taille: px(25),
+        contenu: ("$ ls absent.txt", erreur-ls, "$ echo $?", "2")),
+      cmd: (x: 0, y: 320, l: 560, h: 110, titre: raw("ls absent.txt"), sous: [ne trouve pas le fichier]),
+      code: (x: 640, y: 320, l: 230, h: 110, titre: [`$?` = 2], taille-titre: px(32)),
+      ok: _voie(970, 235, [0 : succès]),
+      ko: _voie(970, 415, [autre : échec]),
+    ),
+    liens: (
+      c1: (de: "cmd", vers: "code"),
+      v-ok: (de: "code", vers: "ok", motif: "dotted", fort: false),
+      v-ko: (de: "code", vers: "ko", fort: true),
+    ),
+    etats: (
+      (:),
+      (noeuds: (
+        term: (contenu: ("$ grep -q Hopper pionnieres.csv", "$ echo $?", "0")),
+        cmd: (titre: raw("grep -q Hopper pionnieres.csv"), sous: [trouve Hopper]), code: (titre: [`$?` = 0]),
+       ), liens: (v-ok: (motif: none, fort: true), v-ko: (motif: "dotted", fort: false))),
+      (noeuds: (
+        term: (contenu: ("$ grep -q Hopper pionnieres.csv && echo \"trouvée\"", "trouvée")),
+        suite: (x: 1360, y: 235, l: 304, h: 90, titre: raw("echo \"trouvée\""), sous: [lancée]),
+       ), liens: (et: (de: "ok", vers: "suite", etiquette: raw("&&")))),
+      (noeuds: (
+        term: (contenu: ("$ grep -q Turing pionnieres.csv || echo \"absent du fichier\"", "absent du fichier")),
+        cmd: (titre: raw("grep -q Turing pionnieres.csv"), sous: [ne trouve pas Turing]), code: (titre: [`$?` = 1]),
+        suite: (y: 415, titre: raw("echo \"absent …\""), sous: [lancée]),
+       ), liens: (v-ok: (motif: "dotted", fort: false), v-ko: (motif: none, fort: true), et: none,
+         ou: (de: "ko", vers: "suite", etiquette: raw("||")))),
+      (noeuds: (
+        term: (contenu: ("$ grep -q Hopper pionnieres.csv || echo \"absent du fichier\"", "# (rien : echo n’est pas lancé)")),
+        cmd: (titre: raw("grep -q Hopper pionnieres.csv"), sous: [trouve Hopper]), code: (titre: [`$?` = 0]),
+        suite: (sous: [pas lancée], attente: true),
+       ), liens: (v-ok: (motif: none, fort: true), v-ko: (motif: "dotted", fort: false), ou: (motif: "dotted", fort: false))),
+    ),
+  )),
+  encadre(role: "avertissement", libelle: [Ne pas confondre :])[`cmd1 | cmd2` *branche* deux flux ; `cmd1 || cmd2` enchaîne selon le *code de retour*.],
   source-de: link("https://www.gnu.org/software/bash/manual/html_node/Lists.html")[Bash Reference Manual, Lists of Commands],
-  note: _note,
+  note: [#versions Un clic par commande : la voie suivie est en trait plein, l’autre en pointillé. `a && b` : b seulement si a réussit (code 0) ; `a || b` : b seulement si a échoue. ls renvoie 2 pour une erreur sérieuse (fichier introuvable), 1 pour une erreur mineure ; chaque commande documente ses codes (man ls, section Exit status). grep -q : silencieux, seul le code compte (0 trouvé, 1 non trouvé). Le commentaire « (rien : echo n’est pas lancé) » n’est pas une sortie : la commande n’affiche rien.],
 )
 
 == À vous : deux pipelines sur pionnieres.csv <exercice-tubes>
@@ -397,19 +520,30 @@
 
 == Deux pipelines : corrigé
 
-#corriges(note: [#versions Le module « Bash : les bases » du site annonçait 6 domaines distincts : la commande en donne 7 sur ce fichier. -k2 trie à partir de la colonne 2 ; -n compare 1985 et 1982 comme des nombres.],
+#corriges(note: [#versions La réponse 1 montre d’abord la liste qu’elle compte. Le module « Bash : les bases » du site annonçait 6 domaines distincts : la commande en donne 7 sur ce fichier. -k2 trie à partir de la colonne 2 ; -n compare 1985 et 1982 comme des nombres.],
   (1, [Le nombre de domaines distincts, sans l’en-tête],
-    reponse(terminal(titre: none, taille: px(20))[```
+    reponse(terminal(titre: none, taille: px(19))[```
+      $ cut -d';' -f3 pionnieres.csv | tail -n +2 | sort -u
+      calcul
+      cryptographie
+      langages
+      logiciel
+      materiel
+      programmation
+      reseau
       $ cut -d';' -f3 pionnieres.csv | tail -n +2 | sort -u | wc -l
       7
       ```])),
   (2, [Les trois lignes les plus récentes],
-    reponse(terminal(titre: none, taille: px(20))[```
-      $ tail -n +2 pionnieres.csv | sort -t';' -k2 -rn | head -n 3
-      Perlman Radia;1985;reseau;protocole spanning tree
-      Goldwasser Shafi;1982;cryptographie;chiffrement probabiliste
-      Conway Lynn;1978;materiel;révolution VLSI
-      ```])),
+    reponse(terminal-annote(taille: px(20), largeur-legende: px(420),
+      ("$ tail -n +2 pionnieres.csv | sort -t';' -k2 -rn | head -n 3",
+       "Perlman Radia;1985;reseau;protocole spanning tree",
+       "Goldwasser Shafi;1982;cryptographie;chiffrement probabiliste",
+       "Conway Lynn;1978;materiel;révolution VLSI"),
+      annote("tail -n +2", cote: "haut", legende: [sans l’en-tête]),
+      annote("-t';' -k2", cote: "haut", legende: [séparateur `;`, clé : colonne 2]),
+      annote("-rn", cote: "haut", legende: [nombres, décroissant]),
+    ))),
 )
 
 // ----------------------------------------------------------------------

@@ -6,6 +6,7 @@
 # (ada, du groupe etudiants). Sur un Debian 13, il tourne tel quel : bash 5.2, GNU sed 4.9, mawk 1.3.4 (l’awk par
 # défaut), paquets shellcheck et bats (sinon, les sessions qui les emploient le signalent) ; la session cron n’est
 # jouée que si un service cron tourne.
+# REJOUER_NOM (facultatif) : préfixe du nom du conteneur (défaut : rejeu-shell).
 # Derrière un proxy HTTPS qui réécrit TLS, TPTEST_CA (voir le README.md du dépôt) : facultatif, absent en CI.
 #   TPTEST_CA=/chemin/ca.crt HTTPS_PROXY=http://hôte:port ./rejouer.sh > sorties-shell.txt 2>&1
 # Chaque session part d’une copie neuve de exemples/ dans ~/atelier, et se joue dans un vrai Bash
@@ -27,7 +28,7 @@ if [ -z "${REJOUER_CONTENEUR:-}" ] && ! debian13; then
     reseau+=(--network host --env "HTTPS_PROXY=$HTTPS_PROXY" --volume "$TPTEST_CA:/run/ca-hote.crt:ro"); apt_https="1"
   fi
   # Le cours est monté en lecture seule : les sessions n’écrivent que dans le dossier personnel d’ada.
-  exec docker container run --rm --name "rejeu-shell-$$" "${reseau[@]}" \
+  exec docker container run --rm --name "${REJOUER_NOM:-rejeu-shell}-$$" "${reseau[@]}" \
     --env "APT_HTTPS=$apt_https" --volume "$ici:/cm:ro" debian:13-slim bash -euc '
       if [ -n "$APT_HTTPS" ]; then
         sed -i "s|http://deb.debian.org|https://deb.debian.org|g" /etc/apt/sources.list.d/debian.sources
@@ -91,8 +92,15 @@ bats --version
 EOF
 
 # ---------- Ouverture ----------
+session "Le fil rouge : existence, puis contenu" <<'EOF'
+ls pionnieres.csv
+cat pionnieres.csv
+EOF
+
 session "Lire une commande" <<'EOF'
 wc -l pionnieres.csv
+head -n 3 pionnieres.csv
+head --lines=3 pionnieres.csv
 ls -l --human-readable pionnieres.csv
 type cd
 type wc
@@ -105,6 +113,8 @@ cp -p ~/atelier/pionnieres.csv ~/atelier/sauvegarde.sh .
 mkdir scripts
 chgrp etudiants sauvegarde.sh && chmod 750 sauvegarde.sh
 ls -l
+chmod 640 pionnieres.csv
+ls -l pionnieres.csv
 EOF
 
 # ---------- Flux, redirections, tubes ----------
@@ -124,23 +134,38 @@ wc -l tout.txt
 wc -l < pionnieres.csv
 EOF
 
+session "Ajouter, écraser, lire" <<'EOF'
+ls pionnieres.csv > sortie.txt
+ls sauvegarde.sh >> sortie.txt
+cat sortie.txt
+ls sauvegarde.sh > sortie.txt
+cat sortie.txt
+wc -l pionnieres.csv
+wc -l < pionnieres.csv
+EOF
+
 session "Ordre des redirections" <<'EOF'
 ls pionnieres.csv absent.txt > sortie.txt 2>&1
+cat sortie.txt
 ls pionnieres.csv absent.txt 2>&1 > sortie.txt
 cat sortie.txt
 EOF
 
 session "> tronque avant l’exécution" <<'EOF'
 cp pionnieres.csv copie.csv
+wc -c copie.csv
 sort copie.csv > copie.csv
 wc -c copie.csv
 cp pionnieres.csv copie.csv
 sort -o copie.csv copie.csv
 wc -c copie.csv
+cat copie.csv
 EOF
 
 session "Tubes" <<'EOF'
 cut -d';' -f3 pionnieres.csv
+cut -d';' -f3 pionnieres.csv | sort
+cut -d';' -f3 pionnieres.csv | sort | uniq -c
 cut -d';' -f3 pionnieres.csv | sort | uniq -c | sort -rn
 ls -l | grep csv > resultats.txt
 cat resultats.txt
@@ -152,7 +177,11 @@ echo $?
 grep -q Hopper pionnieres.csv
 echo $?
 grep -q Hopper pionnieres.csv && echo "trouvée"
+grep -q Turing pionnieres.csv
+echo $?
 grep -q Turing pionnieres.csv || echo "absent du fichier"
+grep -q Hopper pionnieres.csv || echo "absent du fichier"
+grep -q Turing pionnieres.csv && echo "trouvée"
 EOF
 
 session "Exercice pipeline" <<'EOF'

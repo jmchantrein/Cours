@@ -141,14 +141,27 @@
         fill: color.mix((c.hote-t, p), (c.nuit, 100% - p)))),
     )
   } else if nom == "tube" {
-    // un tube : trois commandes reliées par des « | », lancées par le shell, sur le noyau
-    stack(spacing: px(16),
-      grid(columns: (px(136), px(76)) * 2 + (px(136),), align: horizon,
-        ..range(5).map(i => if calc.even(i) { box(width: px(136), height: px(96), fill: c.hote-t, radius: px(12)) }
-          else { box(width: px(76), height: px(16), fill: c.hote-t.transparentize(40%)) })),
-      box(width: px(560), height: px(56), fill: color.mix((c.hote-t, 45%), (c.nuit, 55%)), radius: px(12)),
-      box(width: px(560), height: px(56), fill: c.gris, radius: px(12)),
-    )
+    // le shell : une invite (chevron, commande, curseur), puis un flux de lignes de texte qui traverse deux tubes « | » ;
+    // à chaque tube, il reste moins de lignes, plus nettes : le texte est filtré, transformé
+    let barre(x, y, l, f) = place(top + left, dx: px(x), dy: px(y), box(width: px(l), height: px(22), radius: px(11), fill: f))
+    let colonne(x, longueurs, f) = {
+      let haut = longueurs.len() * 22 + (longueurs.len() - 1) * 16
+      for (i, l) in longueurs.enumerate() { barre(x, 106 + (290 - haut) / 2 + i * 38, l, f) }
+    }
+    let tube(x) = place(top + left, dx: px(x), dy: px(96), box(width: px(20), height: px(310), radius: px(10), fill: c.hote-t))
+    box(width: px(560), height: px(406), {
+      // invite : chevron, commande, curseur
+      place(top + left, polygon(fill: c.hote-t, (px(0), px(0)), (px(38), px(26)), (px(0), px(52)), (px(0), px(36)),
+        (px(18), px(26)), (px(0), px(16))))
+      barre(62, 15, 230, color.mix((c.hote-t, 70%), (c.nuit, 30%)))
+      place(top + left, dx: px(310), box(width: px(26), height: px(52), fill: c.fond))
+      // le flux : 7 lignes, puis 4, puis 2
+      colonne(0, (150, 110, 170, 90, 140, 120, 160), color.mix((c.hote-t, 40%), (c.nuit, 60%)))
+      tube(200)
+      colonne(250, (130, 100, 140, 90), color.mix((c.hote-t, 70%), (c.nuit, 30%)))
+      tube(420)
+      colonne(470, (90, 70), c.hote-t)
+    })
   } else if nom == "graphe" {
     // un graphe de commits : main (bleu) et une branche (orange) qui s’en détache puis y revient
     let (r, bas, haut) = (28, 190, 60)
