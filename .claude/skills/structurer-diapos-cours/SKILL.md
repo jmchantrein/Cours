@@ -22,6 +22,16 @@ Applique ces règles à toute création ou révision de diapos de cours. Elles p
 - Supprime les redites dans le corps du cours.
 - Dis explicitement quand un sujet sort du cadre du cours.
 
+## Schémas et mise en scène
+- Dessine un schéma dès qu'il remplace un paragraphe ou une liste : objets, relations, états.
+- Montre une transformation : l'état de départ, l'action, l'état d'arrivée ; le clic fait avancer l'action.
+- Fais évoluer le schéma au clic, sur la même diapo : la commande s'exécute, l'état dessiné change.
+- Fais avancer ensemble le terminal et le schéma qu'il modifie.
+- Sur une commande ou une sortie, relie chaque morceau à son explication : souligne, encadre ou pose une flèche légendée, un morceau par clic.
+- Avant de manipuler un fichier, montre qu'il existe, puis son contenu, puis la commande.
+- Avant d'introduire un concept, montre ceux qui le composent ; tiens pour acquis les prérequis annoncés du cours.
+- Garde les listes à puces pour ce qui ne se dessine pas : une énumération, un « À retenir ».
+
 ## Exercices et corrigés
 - Mets l'énoncé (« À vous ») sur une diapo et le corrigé sur la suivante.
 - Rappelle la question sur la diapo de réponse.
@@ -43,7 +53,7 @@ Applique ces règles à toute création ou révision de diapos de cours. Elles p
 - Commente dans le terminal chaque ligne non évidente.
 
 ## Animations
-- Révèle le contenu bloc par bloc, puis puce par puce.
+- Fais avancer un schéma ou une annotation plutôt qu'une liste ; quand une diapo reste une liste, révèle-la bloc par bloc, puis puce par puce.
 - Fais apparaître les étapes séquentielles l'une après l'autre et la synthèse en dernier.
 - Synchronise chaque explication avec l'élément qu'elle explique.
 - Aligne chaque étiquette en face de l'élément qu'elle désigne.
