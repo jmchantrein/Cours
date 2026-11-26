@@ -77,6 +77,8 @@
 // terminal : les modes du terminal de la page (commun/terminal/), par ordre de préférence : "vm" (VM Linux dans
 // le navigateur), "compagnon" (le vrai shell de l’étudiant). Par exemple ("compagnon",) pour un TP Docker,
 // ("vm", "compagnon") pour un TP shell. none : pas de terminal, la page reste telle quelle.
+// Aperçu d’une branche (commun/construire-site.sh, `--input apercu=<branche>`) : le bandeau le dit.
+#let _apercu = sys.inputs.at("apercu", default: none)
 #let depot = "https://github.com/jmchantrein/Cours"
 #let page-web(titre: none, surtitre: none, sous-titre: none, auteur: none, date: none, racine: "../../../",
   liens: (), sommaire: true, illustration-couverture: none, atelier: false, terminal: none, corps) = {
@@ -104,6 +106,9 @@
       data: if modes != () { (terminal: modes.join(" "), racine: racine) } else { (:) })[
       #_el("header", class: "bandeau")[
         #_el("a", class: "accueil", href: racine + "index.html")[Cours]
+        #if _apercu != none {
+          _el("strong", style: "color:var(--c-prompt)", [Aperçu de la branche #_apercu — ce n’est pas le site publié])
+        }
         #_el("nav", liens.map(((t, a)) => _el("a", href: a, t)).join())
         #_el("label", class: "variante")[
           #_el("span", class: "variante-nom")[Accessibilité]

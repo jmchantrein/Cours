@@ -10,6 +10,7 @@ l’organisation et la compilation dans [`README.md`](README.md).
 - Prends les couleurs dans la charte (`c.*`, `roles.*`) ; écris toute couleur nouvelle dans `commun/charte.typ`.
 - Choisis le rôle d’après le sens du bloc, selon le tableau de `commun/README.md`.
 - Pour un besoin visuel nouveau, ajoute un rôle ou un composant à la charte, avec sa couleur dans chaque palette.
+- Compile tout le site, à sa place, par `commun/construire-site.sh [dossier]` ; la CI l’appelle, aperçu de branche compris.
 - Après une modification de diapos, compile chaque variante dans `build/` et vérifie qu’elle a le nombre de pages
   de la projection, plus une (la légende).
 - Versionne les sources seulement : les PDF et les `index.html` sont compilés par la CI et publiés sur le site ;

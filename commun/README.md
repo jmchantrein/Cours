@@ -194,6 +194,11 @@ Fichiers de `terminal/` :
 - `LICENCES.md` : licences et sources des composants publiés.
 
 `vendor/` et `compagnon/dist/` ne sont pas versionnés : la CI les construit et les publie avec le site.
+`construire-site.sh` (à la racine de `commun/`) enchaîne `preparer.sh --vm`, `tester-vm.mjs`, `compagnon/construire.sh` et
+`compagnon/tester.py`, puis compile les PDF et les pages web : c’est la construction de la CI. Sous `apercu/` (aperçu
+d’une branche, voir `README.md`), la page vient du même site `https://jmchantrein.github.io` : le compagnon l’admet,
+et `racine` suffit pour retrouver `commun/terminal/vendor/`. `APERCU_BRANCHE` ajoute au bandeau des pages web
+« Aperçu de la branche … » (entrée Typst `apercu`, lue par `page-web`).
 Tester, depuis la racine du dépôt, après `preparer.sh --vm` et `compagnon/construire.sh` :
 
     node commun/terminal/tester-vm.mjs               # démarre la VM dans Node, vérifie ses outils, puis rejoue

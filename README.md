@@ -69,12 +69,20 @@ Le terminal des pages web (bouton « Exécuter » à côté des commandes) a bes
     commun/terminal/preparer.sh --vm              # xterm.js, v86, image de la VM (Docker)
     commun/terminal/compagnon/construire.sh       # exécutables du compagnon (Go)
 
+Tout le site d’un coup (terminal, PDF des six variantes, pages web), à leur place dans l’arbre : c’est ce que lance la CI.
+
+    commun/construire-site.sh [dossier]           # défaut : ce dépôt ; Typst, Docker, Go, Node et Python 3 requis
+    COURS_VARIANTES="projection dyslexie" commun/construire-site.sh     # moins de variantes, pour aller plus vite
+
+Le script ne fait une étape que si l’arbre la demande (sans `commun/terminal/`, pas de terminal) : il construit aussi
+bien un arbre ancien que le courant.
+
 `--root .` autorise l’import de `commun/`. Les fichiers générés ne sont pas versionnés : git ignore `build/`,
 les PDF de `<cours>/cm/`, les `index.html`, `commun/terminal/vendor/` et `commun/terminal/compagnon/dist/`. Pour suivre les liens d’une page web à l’autre, compilez-la à sa
 place, à côté de sa source (`…/wordpress/index.html`).
 
-Sur GitHub, l’action `.github/workflows/compilation-cours.yml` recompile les supports à chaque push sur `main`
-touchant les sources ou la charte, et les publie sur le site, sans rien commiter.
+Sur GitHub, l’action `.github/workflows/compilation-cours.yml` appelle `commun/construire-site.sh` à chaque push sur `main`
+touchant les sources ou la charte, et publie le résultat sur le site, sans rien commiter.
 L’action `.github/workflows/test-corriges.yml` lance le `tester.sh --up` de chaque TP, un harnais par tâche
 (la matrice est la liste des `*/tp/*/tester.sh`) : chaque TP a son résultat, et les durées ne s’additionnent pas.
 
@@ -99,6 +107,21 @@ Le site est le dépôt, complété des supports compilés : l’action de compil
 <https://jmchantrein.github.io/Cours/> par GitHub Pages (source « GitHub Actions »).
 `index.html` mène aux diapos, aux TP et aux artefacts. Chaque page web embarque les variantes de rendu, que le lecteur
 choisit dans la page.
+
+### Aperçu d’une branche
+Le workflow lancé à la main sur une branche autre que `main` publie cette branche sous
+<https://jmchantrein.github.io/Cours/apercu/>, sans toucher à la production : la racine du site reste celle de `main`,
+reconstruite. Depuis l’onglet Actions (« Compilation et publication des supports », *Run workflow*, choisir la
+branche) ou par :
+
+    gh workflow run compilation-cours.yml --ref <branche>
+
+Le résumé de la tâche donne l’adresse et le nom de la branche ; chaque page web de l’aperçu porte, dans son bandeau,
+« Aperçu de la branche … — ce n’est pas le site publié ». Cet aperçu est public. Il est éphémère : la publication
+suivante (push sur `main` ou autre aperçu) l’efface, et il n’y en a qu’un à la fois. Les liens absolus
+vers `https://jmchantrein.github.io/Cours/…` et vers l’archive de `main` (commandes `curl … | tar` des TP) mènent à la
+production, non à l’aperçu. Si l’environnement `github-pages` limite les branches autorisées à déployer, y ajouter
+la branche (Settings, Environments).
 
 ## Signaler une erreur, proposer une amélioration
 Ces supports peuvent contenir des erreurs. Signalez-les par une

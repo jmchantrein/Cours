@@ -2,12 +2,18 @@ name: Compilation et publication des supports (Typst)
 
 # Compile les supports et publie le site GitHub Pages (source « GitHub Actions »).
 # Rien n'est commité : les PDF et les pages web sont générés ici, ignorés par git, et déposés sur le site.
+# Toute la construction est dans commun/construire-site.sh, appliqué à un arbre du dépôt :
 # - diapos : <cours>/cm/<cours>.typ donne un PDF par variante, <cours>/cm/<cours>-<variante>.pdf
 #   (projection, puis les rendus adaptés ; liste dans commun/charte.typ) ;
 # - pages web : <cours>/tp/<tp>/<tp>.typ, <cours>/artefacts/<nom>/<nom>.typ et index.typ donnent chacun
 #   un index.html à côté de leur source ; elles embarquent toutes les variantes ;
 # - terminal des pages web (commun/terminal/) : dépendances tierces à SHA-256 fixé et image de la VM dans
 #   commun/terminal/vendor/, exécutables du compagnon dans commun/terminal/compagnon/dist/, vérifiés avant publication.
+# Deux cas :
+# - push sur main, ou lancement manuel sur main : le site est le dépôt, complété des fichiers générés ;
+# - lancement manuel sur une autre branche (aperçu) : la racine du site est la branche main, reconstruite, et
+#   la branche lancée est publiée sous apercu/, sans rien changer à la production. Un seul aperçu à la fois :
+#   la publication suivante, depuis main ou depuis une autre branche, remplace le précédent.
 on:
   push:
     branches: [main]
@@ -36,6 +42,21 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # Aperçu : la production (main) est extraite à côté, dans principal/ ; la branche lancée y est copiée
+      # dans apercu/, avant toute construction.
+      - name: Aperçu, extraction de main et copie de la branche
+        if: github.ref != 'refs/heads/main'
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          path: principal
+
+      - name: Aperçu, branche sous apercu/
+        if: github.ref != 'refs/heads/main'
+        run: |
+          mkdir principal/apercu
+          tar --exclude=./.git --exclude=./principal -cf - . | tar -xf - -C principal/apercu
+
       - uses: typst-community/setup-typst@v4
         with:
           typst-version: "0.15"
@@ -45,50 +66,23 @@ jobs:
           go-version-file: commun/terminal/compagnon/go.mod
           cache-dependency-path: commun/terminal/compagnon/go.sum
 
-      # xterm.js, v86 et ses BIOS (sommes dans dependances.txt), puis l'image Alpine de la VM (Docker), démarrée
-      # une fois dans Node pour vérifier ses outils.
-      - name: Terminal, VM dans le navigateur
-        run: |
-          commun/terminal/preparer.sh --vm
-          node commun/terminal/tester-vm.mjs
+      - name: Construction du site
+        if: github.ref == 'refs/heads/main'
+        run: commun/construire-site.sh .
 
-      # Exécutables statiques du compagnon (Linux et macOS, amd64 et arm64), SHA256SUMS, puis test du protocole.
-      - name: Terminal, compagnon
+      # Chaque arbre est construit par le script de la branche lancée.
+      - name: Construction du site, aperçu
+        if: github.ref != 'refs/heads/main'
+        env:
+          BRANCHE: ${{ github.ref_name }}
         run: |
-          commun/terminal/compagnon/construire.sh
-          python3 -I commun/terminal/compagnon/tester.py
+          commun/construire-site.sh principal
+          APERCU_BRANCHE="$BRANCHE" commun/construire-site.sh principal/apercu
 
-      - name: Compilation des diapos
-        run: |
-          for src in */cm/*.typ; do
-            cours=${src%%/*}
-            [ "$src" = "$cours/cm/$cours.typ" ] || continue
-            for variante in projection deuteranopie protanopie tritanopie achromatopsie dyslexie; do
-              pdf="$cours/cm/$cours-$variante.pdf"
-              echo "::group::$pdf"
-              typst compile --root . --font-path commun/fonts --input variante="$variante" "$src" "$pdf"
-              echo "::endgroup::"
-            done
-          done
-
-      - name: Compilation des pages web
-        run: |
-          web() { typst compile --root . --font-path commun/fonts --features html --format html "$1" "$2"; }
-          for src in */tp/*/*.typ */artefacts/*/*.typ; do
-            [ -f "$src" ] || continue
-            dossier=$(dirname "$src")
-            [ "$src" = "$dossier/$(basename "$dossier").typ" ] || continue
-            echo "::group::$dossier/index.html"
-            web "$src" "$dossier/index.html"
-            echo "::endgroup::"
-          done
-          web index.typ index.html
-          web commun/terminal/compagnon.typ commun/terminal/index.html
-
-      # Le site est le dépôt, complété des supports compilés ci-dessus.
+      # Le site est le dépôt, complété des supports compilés ci-dessus (aperçu : l'arbre de main et son apercu/).
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: .
+          path: ${{ github.ref == 'refs/heads/main' && '.' || 'principal' }}
 
   publication:
     needs: compilation
@@ -102,3 +96,17 @@ jobs:
     steps:
       - id: publication
         uses: actions/deploy-pages@v4
+
+      - name: Résumé, adresse de l'aperçu
+        if: github.ref != 'refs/heads/main'
+        env:
+          BRANCHE: ${{ github.ref_name }}
+          SITE: ${{ steps.publication.outputs.page_url }}
+        run: |
+          {
+            echo "### Aperçu de la branche \`$BRANCHE\`"
+            echo
+            echo "${SITE%/}/apercu/"
+            echo
+            echo "La racine du site est celle de \`main\`. Cet aperçu est public ; la prochaine publication l'efface."
+          } >> "$GITHUB_STEP_SUMMARY"
