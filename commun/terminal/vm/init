@@ -16,20 +16,37 @@ ln -s fd/1 /dev/stdout
 ln -s fd/2 /dev/stderr
 hostname cours
 exec </dev/ttyS0 >/dev/ttyS0 2>&1
-# La page passe la taille de son terminal au noyau : terminal=<colonnes>x<lignes>.
+# La page passe au noyau la taille de son terminal (terminal=<colonnes>x<lignes>) et son état de départ :
+# depart=<script versionné du dépôt, embarqué sous /usr/share/cours/Cours-main/>, ici=<répertoire d'arrivée>.
 read -r ligne < /proc/cmdline
+depart= ici='~'
 for argument in $ligne; do
   case $argument in
     terminal=*x*)
       taille=${argument#terminal=}
       stty cols "${taille%x*}" rows "${taille#*x}" 2>/dev/null || true
       ;;
+    depart=*) depart=${argument#depart=} ;;
+    ici=*) ici=${argument#ici=} ;;
   esac
 done
+# Rien d'autre qu'un chemin simple du dépôt, sans remontée.
+case $depart in *[!A-Za-z0-9._/-]*|*..*|/*) depart= ;; esac
+case $ici in *[!A-Za-z0-9._/~-]*|*..*) ici='~' ;; esac
 printf "\033[1mUne VM Linux dans votre navigateur.\033[0m Rien n'est installé sur votre machine ;\n"
 printf "tout s'efface quand vous fermez la page. Pas de réseau.\n\n"
+# L'état de départ de la page : son script, lancé sous le compte ada depuis son répertoire personnel, avant la
+# première invite. L'étudiant n'a rien à télécharger ni à lancer.
+script=/usr/share/cours/Cours-main/$depart
+if [ -n "$depart" ] && [ -f "$script" ]; then
+  printf "Installation de l'état de départ de la page (%s)…\n" "$depart"
+  if su - ada -c "bash '$script'" >/dev/null 2>&1; then printf "État de départ installé.\n\n"
+  else printf "\033[1mÉchec de l'installation de l'état de départ (%s).\033[0m\n\n" "$depart"; fi
+fi
 # Marqueur invisible (titre de fenêtre, séquence OSC) : la page sait que le shell démarre.
 printf '\033]0;cours-terminal-pret\007'
 # Le shell est celui d'un compte ordinaire, ada (les TP sur les droits n'ont pas de sens en root).
 chown ada:ada /dev/ttyS0
-exec setsid sh -c 'exec su - ada -c "exec bash -l" </dev/ttyS0 >/dev/ttyS0 2>&1'
+# Le shell s'ouvre dans le répertoire d'arrivée de la page (~ par défaut).
+export COURS_ICI="$ici"
+exec setsid sh -c 'exec su - ada -c "cd $COURS_ICI 2>/dev/null; exec bash -l" </dev/ttyS0 >/dev/ttyS0 2>&1'

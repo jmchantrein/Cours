@@ -86,15 +86,26 @@
 //    creations: (("bash preparer.sh", ("/home/ada/atelier/",)), …))
 // arbre : les chemins absolus connus (un répertoire finit par « / ») ; creations : ce qu'une commande de la page crée
 // (absent tant qu'elle n'est pas passée) ; depart : le répertoire courant au début de la page.
+// depart : l'état de départ que la page suppose, obligatoire avec le mode "vm" : (script: "shell/tp/premiers-pas/preparer.sh",
+// cree: "~/atelier", ici: "~"). script : le script versionné (chemin depuis la racine du dépôt) qui crée dossiers,
+// fichiers et contenus ; cree : ce qu'il crée, dit à l'étudiant ; ici : le répertoire où l'on arrive. La VM le lance au
+// démarrage, avant la première invite ; avec le compagnon, la page propose la commande, sans rien lancer d'office.
+// (ici: "~") seul : la page part d'un répertoire personnel vide.
 // Aperçu d’une branche (commun/construire-site.sh, `--input apercu=<branche>`) : le bandeau le dit.
 #let _apercu = sys.inputs.at("apercu", default: none)
 #let depot = "https://github.com/jmchantrein/Cours"
 #let page-web(titre: none, surtitre: none, sous-titre: none, auteur: none, date: none, racine: "../../../",
   liens: (), sommaire: true, illustration-couverture: none, atelier: false, terminal: none, cours: false,
-  contexte: none, corps) = {
+  contexte: none, depart: none, corps) = {
   let modes = if terminal == none { () } else if type(terminal) == str { (terminal,) } else { terminal }
   assert(modes.len() > 0 or terminal == none, message: "terminal : au moins un mode, ou none")
   assert(modes.all(m => m in ("vm", "compagnon")), message: "terminal : les modes sont \"vm\" et \"compagnon\"")
+  assert(depart != none or "vm" not in modes, message: "terminal \"vm\" : déclarez l'état de départ, depart: (script: …, cree: …, ici: …)")
+  let donnees-depart = if depart == none { (:) } else {
+    (ici: depart.at("ici", default: "~")) + if depart.at("script", default: none) != none {
+      (depart: depart.script, depart-cree: depart.at("cree", default: ""))
+    } else { (:) }
+  }
   let police(fichier, graisse, style) = (
     "@font-face{font-family:'IBM Plex " + (if "Mono" in fichier { "Mono" } else { "Sans" }) + "';src:url('"
     + racine + "commun/fonts/" + fichier + ".ttf');font-weight:" + graisse + ";font-style:" + style + ";font-display:swap}"
@@ -114,7 +125,7 @@
         + if contexte != none { read("terminal/contexte.css") })
     ]
     #_el("body", class: if atelier { "atelier" } else if cours { "page-cours" } else if sommaire { "avec-sommaire" } else { "simple" },
-      data: if modes != () { (terminal: modes.join(" "), racine: racine) } else { (:) })[
+      data: if modes != () { (terminal: modes.join(" "), racine: racine) + donnees-depart } else { (:) })[
       #_el("header", class: "bandeau")[
         #_el("a", class: "accueil", href: racine + "index.html")[Cours]
         #if _apercu != none {
@@ -198,7 +209,9 @@
 
 // ---------- Code ----------
 // Terminal : `$ ` ouvre une commande, `# ` un commentaire ; le bouton « Copier » ne copie que les commandes.
-#let terminal(corps) = _el("div", class: "terminal", corps)
+// compagnon: true : des commandes pour le seul shell de l'étudiant (installer l'état de départ chez soi) ; dans la VM,
+// l'état de départ est déjà là, et tester-vm.mjs ne les rejoue pas.
+#let terminal(compagnon: false, corps) = if compagnon { _el("div", class: "terminal", data: (mode: "compagnon"), corps) } else { _el("div", class: "terminal", corps) }
 // Fichier réel du dépôt, affiché tel quel : `fichier("corrige/…/Dockerfile", read("corrige/…/Dockerfile"))`.
 // Le corrigé montré est ainsi le fichier testé par la CI.
 #let fichier(chemin, contenu, lang: auto) = {
