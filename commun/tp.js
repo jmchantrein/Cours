@@ -109,7 +109,7 @@
   // Hauteur du bandeau, pour ce qui reste en vue juste dessous (la colonne d’une page de cours).
   const bandeau = document.querySelector(".bandeau");
   const mesurer = () => document.documentElement.style.setProperty("--bandeau-h", bandeau.offsetHeight + "px");
-  if (bandeau) { mesurer(); addEventListener("resize", mesurer); }
+  if (bandeau) { mesurer(); new ResizeObserver(mesurer).observe(bandeau); }   // le bouton « Terminal » s’y ajoute ensuite
 
   // Sommaire : l’étape en cours de lecture est marquée, et une barre montre l’avancement dans la page.
   const sommaire = document.querySelector('nav[role="doc-toc"]');

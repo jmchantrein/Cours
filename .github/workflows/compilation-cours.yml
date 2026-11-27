@@ -18,9 +18,11 @@ on:
   push:
     branches: [main]
     paths:
-      - "*/cm/*.typ"
+      - "*/cm/**"
+      - "*/pages/**"
       - "*/tp/**"
       - "*/artefacts/**"
+      - "*/progression.yaml"
       - "index.typ"
       - "commun/**"
       - ".github/workflows/compilation-cours.yml"

@@ -226,10 +226,12 @@
       }
     }
     demarrer.addEventListener("click", lancer);
+    // Rend faux si la commande attend l’invite (VM qui démarre).
     m.executer = commande => {
       const texte = commande.replace(/\n/g, "\r") + "\r";
-      if (phase === "prete") envoyer(texte);
-      else { attente.push(texte); etat.textContent = "Commande en attente : la VM démarre…"; }
+      if (phase === "prete") { envoyer(texte); return true; }
+      attente.push(texte); etat.textContent = "Commande en attente : la VM démarre…";
+      return false;
     };
     m.inviter = () => { etat.textContent = "Démarrez d’abord la VM, puis cliquez à nouveau sur « Exécuter »."; demarrer.focus(); };
     m.montrer = () => { if (phase === "prete") etat.textContent = "VM prête : les commandes cliquées s’exécutent ici."; };
@@ -338,8 +340,8 @@
     const etaitFerme = volet.hidden;
     ouvrir();
     if (!courant.session) { courant.inviter(); return; }
-    courant.executer(bouton.dataset.commande);
-    signaler("terminal-commande", { commande: bouton.dataset.commande, bouton, mode: courant.id });
+    const differee = courant.executer(bouton.dataset.commande) === false;
+    signaler("terminal-commande", { commande: bouton.dataset.commande, bouton, mode: courant.id, differee });
     bouton.dataset.etat = "envoyee";
     setTimeout(() => delete bouton.dataset.etat, 700);
     // Le volet qui s’ouvre ne doit pas cacher la commande cliquée.

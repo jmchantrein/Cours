@@ -6,7 +6,7 @@ compilés par la CI et publiés sur le site.
 
 | Cours (dans l’ordre de lecture) | Diapos | Rendus adaptés | Sources |
 |---|---|---|---|
-| Shell : Bash, sed et awk | [`shell-projection.pdf`](https://jmchantrein.github.io/Cours/shell/cm/shell-projection.pdf) | [deuteranopie](https://jmchantrein.github.io/Cours/shell/cm/shell-deuteranopie.pdf) · [protanopie](https://jmchantrein.github.io/Cours/shell/cm/shell-protanopie.pdf) · [tritanopie](https://jmchantrein.github.io/Cours/shell/cm/shell-tritanopie.pdf) · [achromatopsie](https://jmchantrein.github.io/Cours/shell/cm/shell-achromatopsie.pdf) · [dyslexie](https://jmchantrein.github.io/Cours/shell/cm/shell-dyslexie.pdf) | [`shell/`](shell/) · TP [Premiers pas dans le shell](https://jmchantrein.github.io/Cours/shell/tp/premiers-pas/) · TP [Droits, liens, recherche et archives](https://jmchantrein.github.io/Cours/shell/tp/fichiers/) · TP [Du pipeline au script robuste](https://jmchantrein.github.io/Cours/shell/tp/scripts/) · TP [sed et awk : exercices progressifs](https://jmchantrein.github.io/Cours/shell/tp/sed-awk/) · artefact [Avant d’exécuter, Bash réécrit la ligne](https://jmchantrein.github.io/Cours/shell/artefacts/expansions-bash/) |
+| Shell : Bash, sed et awk | [`shell-projection.pdf`](https://jmchantrein.github.io/Cours/shell/cm/shell-projection.pdf) | [deuteranopie](https://jmchantrein.github.io/Cours/shell/cm/shell-deuteranopie.pdf) · [protanopie](https://jmchantrein.github.io/Cours/shell/cm/shell-protanopie.pdf) · [tritanopie](https://jmchantrein.github.io/Cours/shell/cm/shell-tritanopie.pdf) · [achromatopsie](https://jmchantrein.github.io/Cours/shell/cm/shell-achromatopsie.pdf) · [dyslexie](https://jmchantrein.github.io/Cours/shell/cm/shell-dyslexie.pdf) | [`shell/`](shell/) · page de cours [Se repérer dans l’arborescence](https://jmchantrein.github.io/Cours/shell/pages/arbo/) · TP [Premiers pas dans le shell](https://jmchantrein.github.io/Cours/shell/tp/premiers-pas/) · TP [Droits, liens, recherche et archives](https://jmchantrein.github.io/Cours/shell/tp/fichiers/) · TP [Du pipeline au script robuste](https://jmchantrein.github.io/Cours/shell/tp/scripts/) · TP [sed et awk : exercices progressifs](https://jmchantrein.github.io/Cours/shell/tp/sed-awk/) · artefact [Avant d’exécuter, Bash réécrit la ligne](https://jmchantrein.github.io/Cours/shell/artefacts/expansions-bash/) |
 | Éditer et structurer du texte | [`edition-formats-projection.pdf`](https://jmchantrein.github.io/Cours/edition-formats/cm/edition-formats-projection.pdf) | [deuteranopie](https://jmchantrein.github.io/Cours/edition-formats/cm/edition-formats-deuteranopie.pdf) · [protanopie](https://jmchantrein.github.io/Cours/edition-formats/cm/edition-formats-protanopie.pdf) · [tritanopie](https://jmchantrein.github.io/Cours/edition-formats/cm/edition-formats-tritanopie.pdf) · [achromatopsie](https://jmchantrein.github.io/Cours/edition-formats/cm/edition-formats-achromatopsie.pdf) · [dyslexie](https://jmchantrein.github.io/Cours/edition-formats/cm/edition-formats-dyslexie.pdf) | [`edition-formats/`](edition-formats/) · TP [Dojo Vim](https://jmchantrein.github.io/Cours/edition-formats/tp/vim/) · TP [Décrire des livres en YAML et en JSON](https://jmchantrein.github.io/Cours/edition-formats/tp/yaml-json/) · artefact [Le typage des scalaires YAML](https://jmchantrein.github.io/Cours/edition-formats/artefacts/typage-yaml/) |
 | Git : versionner et collaborer | [`git-projection.pdf`](https://jmchantrein.github.io/Cours/git/cm/git-projection.pdf) | [deuteranopie](https://jmchantrein.github.io/Cours/git/cm/git-deuteranopie.pdf) · [protanopie](https://jmchantrein.github.io/Cours/git/cm/git-protanopie.pdf) · [tritanopie](https://jmchantrein.github.io/Cours/git/cm/git-tritanopie.pdf) · [achromatopsie](https://jmchantrein.github.io/Cours/git/cm/git-achromatopsie.pdf) · [dyslexie](https://jmchantrein.github.io/Cours/git/cm/git-dyslexie.pdf) | [`git/`](git/) · TP [Git en local](https://jmchantrein.github.io/Cours/git/tp/git-local/) · TP [Git à plusieurs, sans forge](https://jmchantrein.github.io/Cours/git/tp/git-distant/) · artefact [Le graphe des commits](https://jmchantrein.github.io/Cours/git/artefacts/graphe-git/) |
 | Accès distants : SSH, tmux, WireGuard | [`acces-distants-projection.pdf`](https://jmchantrein.github.io/Cours/acces-distants/cm/acces-distants-projection.pdf) | [deuteranopie](https://jmchantrein.github.io/Cours/acces-distants/cm/acces-distants-deuteranopie.pdf) · [protanopie](https://jmchantrein.github.io/Cours/acces-distants/cm/acces-distants-protanopie.pdf) · [tritanopie](https://jmchantrein.github.io/Cours/acces-distants/cm/acces-distants-tritanopie.pdf) · [achromatopsie](https://jmchantrein.github.io/Cours/acces-distants/cm/acces-distants-achromatopsie.pdf) · [dyslexie](https://jmchantrein.github.io/Cours/acces-distants/cm/acces-distants-dyslexie.pdf) | [`acces-distants/`](acces-distants/) · TP [SSH : clés, bastion, tunnel, durcissement](https://jmchantrein.github.io/Cours/acces-distants/tp/ssh/) · TP [Travailler dans tmux](https://jmchantrein.github.io/Cours/acces-distants/tp/tmux/) · TP [Un tunnel WireGuard](https://jmchantrein.github.io/Cours/acces-distants/tp/wireguard/) |
@@ -34,11 +34,17 @@ qui relie ses couleurs à celles de la projection.
 
 ## Organisation
 Un dossier par cours, et dans chaque cours un dossier par nature de support. Les pages web renvoient les unes
-aux autres : un TP vers la diapo qui porte la notion et vers l’artefact qui la fait manipuler.
+aux autres : un TP vers la diapo qui porte la notion et vers l’artefact qui la fait manipuler. Un module de cours
+peut avoir ses diapos, sa page de cours, ou les deux.
 
-- `<cours>/cm/` : le cours magistral. `<cours>.typ` contient les diapos, en [Typst](https://typst.app) avec
-  [Touying](https://github.com/touying-typ/touying) ; les PDF `<cours>-<variante>.pdf` sont compilés par la CI.
+- `<cours>/cm/` : le cours magistral. Chaque `.typ` de ce dossier est un diaporama, en [Typst](https://typst.app) avec
+  [Touying](https://github.com/touying-typ/touying) : `<cours>.typ` pour tout le cours, ou un par module
+  (`arbo.typ`) ; la CI en compile les PDF `<nom>-<variante>.pdf`. Ce qu’ils importent se range dans un sous-dossier.
   Un exercice fait et corrigé en séance reste dans les diapos.
+- `<cours>/pages/<module>/` : une page de cours, que l’étudiant suit à son rythme, les mains sur le terminal : une
+  notion, la commande qui la montre, un clic, le résultat dans le terminal à côté, ce qu’il faut y regarder.
+  `<module>.typ` la contient, compilée par la CI en page web `index.html`. Ni énoncé ni corrigé : les exercices
+  restent au TP du module, vers lequel elle renvoie.
 - `<cours>/tp/<tp>/` : une séance de travaux pratiques. `<tp>.typ` contient l’énoncé, compilé par la CI en page
   web `index.html` ; `corrige/` contient les corrigés, fichiers réels que l’énoncé affiche à la demande ;
   `tester.sh` les construit et les vérifie.
@@ -59,7 +65,7 @@ Les diapos :
 
 Pour une variante : ajouter `--input variante=<variante>` (par exemple `--input variante=dyslexie`).
 
-Une page web (TP, accueil) : l’export HTML de Typst est encore expérimental, d’où `--features html` ;
+Une page web (TP, page de cours, accueil) : l’export HTML de Typst est encore expérimental, d’où `--features html` ;
 la version de Typst est fixée dans la CI.
 
     typst compile --root . --font-path commun/fonts --features html --format html conteneurisation/tp/wordpress/wordpress.typ build/wordpress.html
@@ -78,7 +84,8 @@ Le script ne fait une étape que si l’arbre la demande (sans `commun/terminal/
 bien un arbre ancien que le courant.
 
 `--root .` autorise l’import de `commun/`. Les fichiers générés ne sont pas versionnés : git ignore `build/`,
-les PDF de `<cours>/cm/`, les `index.html`, `commun/terminal/vendor/` et `commun/terminal/compagnon/dist/`. Pour suivre les liens d’une page web à l’autre, compilez-la à sa
+les PDF de `<cours>/cm/`, les `index.html` (TP, pages de cours, artefacts, accueil), `commun/terminal/vendor/` et
+`commun/terminal/compagnon/dist/`. Pour suivre les liens d’une page web à l’autre, compilez-la à sa
 place, à côté de sa source (`…/wordpress/index.html`).
 
 Sur GitHub, l’action `.github/workflows/compilation-cours.yml` appelle `commun/construire-site.sh` à chaque push sur `main`
@@ -90,6 +97,9 @@ Ajouter un cours : créer `<cours>/cm/<cours>.typ` qui importe `../../commun/the
 `index.typ` (carte, avec son illustration de couverture) et au tableau ci-dessus.
 Ajouter un TP : créer `<cours>/tp/<tp>/<tp>.typ` qui importe `../../../commun/theme-tp.typ`, avec ses corrigés
 dans `corrige/` et, s’ils s’exécutent, un `tester.sh` (la CI le découvre seule).
+Ajouter une page de cours : créer `<cours>/pages/<module>/<module>.typ` qui importe `../../../commun/theme-tp.typ` et
+déclare `page-web(cours: true, …)` (voir [`commun/README.md`](commun/README.md), « Pages web : pages de cours ») ;
+en mode `vm`, `commun/terminal/tester-vm.mjs` la découvre et la rejoue.
 
 Conventions des harnais `tester.sh` :
 

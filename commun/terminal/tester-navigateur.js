@@ -43,6 +43,8 @@ const pages = {
   "tp-scripts": "shell/tp/scripts/scripts.typ", "tp-sed-awk": "shell/tp/sed-awk/sed-awk.typ",
   "tp-git-local": "git/tp/git-local/git-local.typ", "tp-git-distant": "git/tp/git-distant/git-distant.typ",
   "tp-vim": "edition-formats/tp/vim/vim.typ", "tp-tmux": "acces-distants/tp/tmux/tmux.typ",
+  // Une page de cours : terminal à côté du texte, repère de contexte (le rejeu complet est dans tester-vm.mjs).
+  "cours-arbo": "shell/pages/arbo/arbo.typ",
 };
 const html = {};
 for (const [nom, source] of Object.entries(pages)) {
@@ -257,6 +259,37 @@ async function connecter(page, url) {
     await attendreTexte(page, attendu, 120000);
     ok(`${nom} : « ${clics.join(" », « ")} » cliqués dans la VM, fichiers de départ présents (${attendu})`);
   }
+
+  // 8. Page de cours : sur un écran large, le terminal est dans la colonne de droite, ouvert d’emblée, sous le repère
+  // de contexte ; le repère est déclaré par la page, puis lu dans la VM ; un cd cliqué y est tracé pas à pas.
+  await page.setViewportSize({ width: 1280, height: 650 });
+  await page.goto(adresse("cours-arbo"));
+  const repere = () => page.evaluate(() => {
+    const c = document.querySelector(".contexte"), v = document.querySelector(".terminal-volet");
+    return { source: c.dataset.source, cwd: c.dataset.cwd, ici: c.querySelector(".nom.ici")?.textContent,
+      pastilles: c.querySelectorAll(".arbre .pastille").length, dansCote: Boolean(v.closest(".cote")), ouvert: !v.hidden,
+      position: getComputedStyle(v).position, droite: v.getBoundingClientRect().left > innerWidth / 2,
+      defile: document.documentElement.scrollWidth > innerWidth };
+  });
+  let r = await repere();
+  verifier(r.dansCote && r.ouvert && r.position === "static" && r.droite && !r.defile && r.source === "page" && r.cwd === "/home/ada",
+    "page de cours 1280 × 650 : terminal ouvert à droite du texte, sous le repère, déclaré par la page (/home/ada)");
+  await page.locator(".terminal-accueil button.principal", { hasText: "Démarrer" }).click();
+  await etat(page).filter({ hasText: "VM prête" }).waitFor({ timeout: 180000 });
+  for (const debut of ["wget ", "bash preparer.sh", "cd atelier", "cd notes", "cd ../projets/site"]) {
+    await executer(page, debut).scrollIntoViewIfNeeded();
+    await executer(page, debut).click();
+    await attendreTexte(page, debut.startsWith("cd ../") ? "~/atelier/projets/site$" : debut.startsWith("bash") ? "Dossier de travail" : debut, 120000);
+  }
+  await attendre(2500);   // le tracé (une pastille toutes les 0,45 s), puis l’état qui suit
+  r = await repere();
+  verifier(r.source === "vm" && r.cwd === "/home/ada/atelier/projets/site" && r.ici === "site/" && r.pastilles === 3,
+    `page de cours : repère lu dans la VM après « cd ../projets/site » (${r.cwd}, « vous êtes ici » sur ${r.ici}, ${r.pastilles} pastilles)`);
+  await page.screenshot({ path: path.join(captures, "cours-arbo-1280x650.png") });
+  await page.setViewportSize({ width: 390, height: 800 });
+  await attendre(400);
+  r = await repere();
+  verifier(r.position === "fixed" && !r.defile, "page de cours 390 px : le terminal redevient un volet en bas, sans défilement horizontal");
   await contexte.close();
 
   console.log(`\n${reussis.length} vérifications réussies ; captures dans ${captures}`);

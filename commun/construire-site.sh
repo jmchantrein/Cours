@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # construire-site.sh — construit le site d'un arbre du dépôt, à sa place : terminal des pages web, diapos (PDF),
-# pages web (index.html). C'est ce que lance la CI (.github/workflows/compilation-cours.yml), et ce qui compile
+# pages web (index.html : TP, pages de cours, artefacts, accueil). C'est ce que lance la CI (.github/workflows/compilation-cours.yml), et ce qui compile
 # tout le site en local.
 #
 # Usage : commun/construire-site.sh [dossier]     (dossier : racine d'un arbre du dépôt ; défaut : le dépôt de ce script)
@@ -32,21 +32,21 @@ if [ -f commun/terminal/preparer.sh ]; then
   echo "::endgroup::"
 fi
 
-# Diapos : <cours>/cm/<cours>.typ donne un PDF par variante.
+# Diapos : chaque diaporama de <cours>/cm/ (<cours>.typ, et un par module : arbo.typ…) donne un PDF par variante,
+# <nom>-<variante>.pdf. Ce que les diaporamas importent se range dans un sous-dossier (cm/partage/…).
 for src in */cm/*.typ; do
-  cours=${src%%/*}
-  [ "$src" = "$cours/cm/$cours.typ" ] || continue
+  [ -f "$src" ] || continue
   for variante in $variantes; do
-    pdf="$cours/cm/$cours-$variante.pdf"
+    pdf="${src%.typ}-$variante.pdf"
     echo "::group::$pdf"
     typst compile --root . --font-path commun/fonts --input variante="$variante" "$src" "$pdf"
     echo "::endgroup::"
   done
 done
 
-# Pages web : TP, artefacts, accueil, page du compagnon, chacune en index.html à côté de sa source.
+# Pages web : TP, pages de cours, artefacts, accueil, page du compagnon, chacune en index.html à côté de sa source.
 web() { typst compile --root . --font-path commun/fonts --features html --format html "${entrees[@]}" "$1" "$2"; }
-for src in */tp/*/*.typ */artefacts/*/*.typ; do
+for src in */tp/*/*.typ */pages/*/*.typ */artefacts/*/*.typ; do
   [ -f "$src" ] || continue
   dossier=$(dirname "$src")
   [ "$src" = "$dossier/$(basename "$dossier").typ" ] || continue

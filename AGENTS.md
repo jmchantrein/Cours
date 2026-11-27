@@ -4,8 +4,8 @@ La charte graphique est dans [`commun/README.md`](commun/README.md) (rôles, pic
 la structure pédagogique des diapos dans [`.claude/skills/structurer-diapos-cours/SKILL.md`](.claude/skills/structurer-diapos-cours/SKILL.md) ;
 l’organisation et la compilation dans [`README.md`](README.md).
 
-- Range chaque support selon sa nature : diapos dans `<cours>/cm/`, séance de TP dans `<cours>/tp/<tp>/`,
-  artefact interactif dans `<cours>/artefacts/<nom>/`.
+- Range chaque support selon sa nature : diapos dans `<cours>/cm/`, page de cours dans `<cours>/pages/<module>/`,
+  séance de TP dans `<cours>/tp/<tp>/`, artefact interactif dans `<cours>/artefacts/<nom>/`.
 - Dans un cours, déclare des rôles : `bloc(role: …)`, `note`, `encadre`, `corrige` + `reponse`, `cadre(niveau: …)`.
 - Prends les couleurs dans la charte (`c.*`, `roles.*`) ; écris toute couleur nouvelle dans `commun/charte.typ`.
 - Choisis le rôle d’après le sens du bloc, selon le tableau de `commun/README.md`.
@@ -18,6 +18,10 @@ l’organisation et la compilation dans [`README.md`](README.md).
 - Pour créer ou réviser des diapos, applique les règles de structure de `structurer-diapos-cours`.
 - Écris un énoncé de TP en Typst avec `commun/theme-tp.typ` ; après une modification, compile la page en HTML
   dans `build/` et ouvre-la dans un navigateur.
+- Écris une page de cours avec `page-web(cours: true, …)` : une notion, la commande qui la montre, ce qu’il faut
+  regarder (`regardez`) ; les exercices longs restent au TP, et une question y prend la forme `predire`.
+- Après une modification d’une page de cours, lance `node commun/terminal/tester-vm.mjs --tp <cours>/pages/<module>`,
+  puis suis-la dans un navigateur, de 1280 × 650 à 1920 × 950, en cliquant chaque commande dans l'ordre.
 - Écris chaque corrigé de TP comme un fichier réel sous `corrige/`, affiché par `fichier(…)` dans un bloc `corrige`.
 - Aligne un TP sur son cours : mêmes commandes, même vocabulaire ; renvoie aux diapos par `diapo(…)`.
 - Déclare les paquets `apt` qu’un harnais demande à son hôte dans `paquets-apt.txt`, à côté de lui ; la CI les installe.

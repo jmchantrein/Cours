@@ -118,7 +118,7 @@
   const mono = texte => el("code", {}, texte);
   const pastille = (n, rang) => el("span", { class: "pastille", style: `--rang:${rang}`, "aria-hidden": "true" }, String(n));
   const etiquette = (classe, texte) => el("span", { class: "etiquette " + classe }, texte);
-  const CHIPS = 16;
+  const CHIPS = 24;
 
   // Le chemin courant en une ligne : la forme courte du repère (seule visible sur un écran étroit, repliée).
   function ligneChemin(etat) {
@@ -152,7 +152,7 @@
     function noeud(chemin, dossier, cache) {
       const d = etat.dossiers[chemin];
       const nom = chemin === "/" ? "/" : nomDe(chemin) + (dossier ? "/" : "");
-      const li = el("li", { class: [dossier ? "dossier" : "fichier", cache ? "cache" : "", vus.has(chemin) && chemin !== etat.cwd ? "sur-chemin" : ""].join(" ").trim() });
+      const li = el("li", { class: [dossier ? "n-dossier" : "n-fichier", cache ? "cache" : "", vus.has(chemin) && chemin !== etat.cwd ? "sur-chemin" : ""].join(" ").trim() });
       const ligne = el("span", { class: "ligne" });
       ligne.append(el("span", { class: "nom" + (chemin === etat.cwd ? " ici" : "") }, nom));
       if (chemin === etat.home) ligne.append(etiquette("personnel", "~"));
@@ -164,19 +164,28 @@
       if (chemin === etat.cwd) ligne.append(etiquette("vous-etes-ici", "◀ vous êtes ici"));
       if (avant && chemin === avant && avant !== etat.cwd) ligne.append(etiquette("avant", "avant"));
       li.append(ligne);
-      if (!dossier || !d) return li;
+      if (!dossier) return li;
+      if (!d) {   // contenu non décrit : seuls les répertoires du chemin dessiné y figurent
+        const ul = el("ul");
+        for (const p of [...vus].filter(p => p !== chemin && parent(p) === chemin).sort()) ul.append(noeud(p, true, false));
+        if (ul.children.length) li.append(ul);
+        return li;
+      }
       if (!d.lisible) { ligne.append(el("span", { class: "resume" }, "(illisible)")); return li; }
       if (d.total == null && !d.entrees.length) return li;
       const enfants = d.entrees.map(e => ({ ...e, chemin: joindre(chemin, e.nom) }));
       const lignes = deplie(chemin) ? enfants : enfants.filter(e => vus.has(e.chemin));
       const resume = deplie(chemin) ? [] : enfants.filter(e => !vus.has(e.chemin));
       const autres = (d.total ?? d.entrees.length) - d.entrees.length;
+      // Hors du répertoire personnel, un répertoire replié ne nomme son contenu que si la commande le liste.
+      const nommer = sous(chemin, etat.home) || (l && l.fin === chemin && l.cas.startsWith("ls"));
       if (resume.length || autres > 0 || (!enfants.length && !absents.length)) {
         const r = el("span", { class: "resume" });
         if (!enfants.length) r.append("(vide)");
-        resume.slice(0, CHIPS).forEach(e => r.append(el("span", { class: "puce" + (e.nom.startsWith(".") ? " cache" : "") }, e.nom + (e.dossier ? "/" : "")), " "));
+        if (!nommer && resume.length) r.append(el("span", { class: "plus" }, `… ${resume.length + Math.max(0, autres)} autres`));
+        if (nommer) resume.slice(0, CHIPS).forEach(e => r.append(el("span", { class: "puce" + (e.nom.startsWith(".") ? " cache" : "") }, e.nom + (e.dossier ? "/" : "")), " "));
         const plus = Math.max(0, resume.length - CHIPS) + Math.max(0, autres);
-        if (plus) r.append(el("span", { class: "plus" }, `+ ${plus}`));
+        if (nommer && plus) r.append(el("span", { class: "plus" }, `+ ${plus}`));
         ligne.append(r);
       }
       const ul = el("ul");
@@ -196,11 +205,11 @@
   function legende(l, avantEtat, etat, enAttente) {
     if (!l) return null;
     const p = el("div", { class: "contexte-lecture" });
-    const tete = el("p", {}, mono(l.cas === "cd-seul" ? "cd" : l.cas === "cd-moins" ? "cd -" : l.cas === "ls-courant" ? "ls" : (l.cas === "pwd" ? "pwd" : l.cas === "echo" ? "echo " + l.arg : l.cas + " " + l.arg)), " : ");
+    const tete = el("p", {}, mono(l.commande), " : ");
     const nom = c => mono(c);
-    if (l.cas === "cd-seul") tete.append("sans argument, ", mono("cd"), " ramène au répertoire personnel, ", nom(l.fin), ".");
-    else if (l.cas === "cd-moins") tete.append(mono("cd -"), " ramène au répertoire précédent, ", nom(l.fin || "?"), ", et l’affiche.");
-    else if (l.cas === "ls-courant") tete.append("sans argument, ", mono("ls"), " liste le répertoire courant, ", nom(nomDe(l.fin)), ".");
+    if (l.cas === "cd-seul") tete.append("sans argument, retour au répertoire personnel, ", nom(l.fin), ".");
+    else if (l.cas === "cd-moins") tete.append("retour au répertoire précédent, ", nom(l.fin || "?"), ", que cd affiche.");
+    else if (l.cas === "ls-courant") tete.append("sans chemin, ", mono("ls"), " liste le répertoire courant, ", nom(nomDe(l.fin)), ".");
     else if (l.cas === "pwd") tete.append("le chemin absolu du répertoire courant, lu de la racine jusqu’à lui.");
     else if (l.depart === "racine") tete.append("chemin absolu, il part de la racine ", mono("/"), ".");
     else if (l.depart === "personnel") tete.append(mono("~"), " est remplacé par le répertoire personnel, ", nom(l.debut), " : le chemin devient absolu.");
@@ -237,6 +246,7 @@
   let session = { mode: null, ouverte: false };
   let derniere = null;        // { l, avant, avantEtat, rang, attente }
   let finAnimation = 0;
+  let file = Promise.resolve(), enCours = 0;   // descriptions de la VM à appliquer ; commandes cliquées sans réponse
   const reduit = matchMedia("(prefers-reduced-motion: reduce)");
 
   const entete = el("div", { class: "contexte-entete" });
@@ -276,42 +286,60 @@
     const l = garde && derniere ? derniere.l : null;
     entete.replaceChildren(el("span", { class: "contexte-titre" }, "Où vous êtes"), el("span", { class: "contexte-source" }, texteSource), deplier);
     const attente = derniere && derniere.attente && sessionVM;
-    corps.replaceChildren(...[ligneChemin(etat),
-      el("div", { class: "contexte-arbre" }, arbre(etat, l, l && l.cas.startsWith("cd") && !attente ? derniere.avant : null)),
-      l ? legende(l, derniere.avantEtat, etat, attente) : null].filter(Boolean));
+    // La lecture de la commande avant l’arbre : elle reste en vue quand l’arbre, plus haut que le cadre, y défile.
+    corps.replaceChildren(...[ligneChemin(etat), l ? legende(l, derniere.avantEtat, etat, attente) : null,
+      el("div", { class: "contexte-arbre" }, arbre(etat, l, l && l.cas.startsWith("cd") && !attente ? derniere.avant : null))].filter(Boolean));
     panneau.classList.toggle("anime", anime && !reduit.matches);
     panneau.dataset.source = sessionVM && reel ? "vm" : "page";
     panneau.dataset.cwd = etat.cwd;
     // L’arbre défile dans son cadre pour garder le répertoire courant en vue.
-    panneau.querySelector(".nom.ici")?.scrollIntoView({ block: "nearest" });
+    const cadre = corps.querySelector(".contexte-arbre"), ici = cadre.querySelector(".nom.ici");
+    if (ici && cadre.scrollHeight > cadre.clientHeight) {
+      const haut = ici.getBoundingClientRect().top - cadre.getBoundingClientRect().top + cadre.scrollTop;
+      cadre.scrollTop = Math.max(0, haut - cadre.clientHeight / 3);
+    }
   }
 
   document.addEventListener("terminal-session", e => {
     session = e.detail;
     const vm = e.detail.mode === "vm" && e.detail.ouverte;
-    if (!vm) reel = null;
+    if (!vm) { reel = null; enCours = 0; }
     sessionVM = vm;
     rendre();
   });
+  // Trace la lecture de la commande cliquée sur l’état qui la précède.
+  function tracer(avantEtat) {
+    const l = lecture(derniere.commande, avantEtat);
+    if (l) l.commande = derniere.commande;
+    Object.assign(derniere, { l, avant: avantEtat.cwd, avantEtat });
+    finAnimation = Date.now() + (l ? l.pas.length * 450 + 350 : 0);
+    rendre({ anime: true });
+  }
   document.addEventListener("terminal-commande", e => {
     const rang = boutons.indexOf(e.detail.bouton);
-    const avantEtat = sessionVM && reel ? reel : etats[Math.max(0, rang)];
-    const l = lecture(e.detail.commande, avantEtat);
-    derniere = { l, avant: avantEtat.cwd, avantEtat, rang, attente: true };
-    finAnimation = Date.now() + (l ? l.pas.length * 450 + 350 : 0);
-    if (!sessionVM) derniere.attente = false;
-    rendre({ anime: true });
+    const vm = sessionVM && reel;
+    // attendus : les invites à passer jusqu’à celle qui suit cette commande. Une commande cliquée avant que la VM ait
+    // répondu aux précédentes se lit sur l’état qu’elles laissent : on attend leurs invites pour la tracer. Une
+    // commande différée (la VM démarre) part à la première invite, dont la description précède la sienne.
+    if (vm && !e.detail.differee) enCours++;
+    const attendus = e.detail.differee ? 2 : vm ? enCours : 1;
+    derniere = { commande: e.detail.commande, rang, attente: sessionVM, attendus, l: null };
+    if (attendus === 1) tracer(vm ? reel : etats[Math.max(0, rang)]);
+    else rendre();
   });
   document.addEventListener("terminal-contexte", e => {
     let etat;
     try { etat = lireRapport(e.detail.texte); } catch { return; }
     // Le tracé de la commande cliquée s’achève avant que l’arbre passe à l’état qui la suit.
-    setTimeout(() => {
+    // Les descriptions s’appliquent dans leur ordre d’arrivée, chacune après le tracé en cours.
+    file = file.then(() => new Promise(fini => setTimeout(() => {
       reel = etat;
+      if (enCours > 0) enCours--;
       // La lecture de la commande cliquée reste affichée jusqu’à l’invite suivante (une autre commande, tapée).
-      if (derniere) { if (derniere.attente) derniere.attente = false; else derniere = null; }
-      rendre();
-    }, Math.max(0, finAnimation - Date.now()));
+      if (derniere && derniere.attendus > 1) { if (--derniere.attendus === 1) tracer(reel); else rendre(); }
+      else { if (derniere) { if (derniere.attente) derniere.attente = false; else derniere = null; } rendre(); }
+      fini();
+    }, Math.max(0, finAnimation - Date.now()))));
   });
   let planifie = false;
   addEventListener("scroll", () => {

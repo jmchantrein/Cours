@@ -3,7 +3,7 @@
 - `charte.typ` : ce que tous les supports partagent — rôles pédagogiques, palettes des variantes, couleurs.
 - `theme-cours.typ` : la charte appliquée aux diapos (Touying) : blocs, terminaux, schémas, animations.
   Import depuis un cours : `#import "../../commun/theme-cours.typ": *`
-- `theme-tp.typ`, `tp.css`, `tp.js` : la charte appliquée aux pages web (énoncés de TP, accueil).
+- `theme-tp.typ`, `tp.css`, `tp.js` : la charte appliquée aux pages web (énoncés de TP, pages de cours, accueil).
   Import depuis un TP : `#import "../../../commun/theme-tp.typ": *`
 - `terminal/` : le terminal des pages web (voir « Pages web : terminal »).
 - `fonts/` : IBM Plex Sans et Mono (SIL Open Font License 1.1, voir `fonts/OFL-IBM-Plex.txt`).
@@ -169,6 +169,42 @@ par son navigateur. Le nom du rôle et son pictogramme sont écrits dans chaque 
 - Schéma : `#schema([légende], ch => …)` ; le dessin reçoit la charte d’une variante (`ch.c`, `ch.roles`) et
   s’écrit avec `boite(…)`, `case(…)` et les primitives de Typst. La page contient un dessin par palette.
 
+## Pages web : pages de cours
+Une page de cours (`<cours>/pages/<module>/<module>.typ`) se suit à son rythme, les mains sur le terminal : une
+notion, la commande qui la montre, un clic, le résultat dans le terminal à côté, une phrase qui dit quoi regarder,
+puis la notion suivante. Ce n’est ni un TP (pas d’énoncé, pas de corrigé : la page montre, l’étudiant observe et
+essaie ; les exercices longs restent au TP du module, vers lequel elle renvoie), ni un polycopié (ce qui se voit dans
+le terminal ne se redit pas). Elle suit les règles de progression de `structurer-diapos-cours` : prérequis en
+ouverture, pas de notion avant celles qui la composent, un fichier montré avant d’être manipulé. Un module peut avoir
+ses diapos et sa page : mêmes commandes, même arborescence, même vocabulaire. Exemple : `shell/pages/arbo/`.
+
+- Page : `#show: page-web.with(cours: true, terminal: ("vm", "compagnon"), contexte: (…), …)`. Sur un écran large
+  (64 rem et plus), le texte défile à gauche et une colonne reste en vue à droite : le repère de contexte en haut,
+  le terminal dessous, ouvert d’emblée ; terminal réduit, le repère prend la colonne. Sur un écran étroit, le repère
+  se réduit à une ligne sous le bandeau (bouton « Arbre » pour le dessin) et le terminal redevient un volet en bas.
+  En-tête compact, sommaire en boîte en tête du texte.
+- Commandes : des blocs `terminal[…]` (sortie annoncée sous chaque commande), suivis de `#regardez[…]` : ce qu’il
+  faut regarder dans le terminal ou dans le repère.
+- Prédire : `#predire[question][#terminal[…]][explication]`, un bloc du rôle `question` ; la sortie annoncée et
+  l’explication restent masquées jusqu’à ce que la commande soit exécutée (ou « Voir la sortie sans exécuter »).
+- `#pastille(n)` : le carré bleu à chiffre blanc d’un pas, dans le texte comme dans le repère.
+- **Repère de contexte** (`terminal/contexte.js`, `terminal/contexte.css`) : un arbre dessiné qui dit où l’on est,
+  toujours au même endroit : la racine, le chemin jusqu’au répertoire courant (« ◀ vous êtes ici ») et jusqu’au
+  répertoire personnel (`~`), le contenu du répertoire courant ; un répertoire replié nomme son contenu en petit, les
+  noms cachés en italique gris. Une commande cliquée qui lit un chemin (`cd`, `ls`, `pwd`, `echo ~`) y est tracée :
+  son départ (racine, répertoire courant, répertoire personnel, précédent), une pastille par composant, puis l’état
+  qui suit (l’ancien répertoire porte « avant ») ; la légende de cette lecture se calcule d’après cet état.
+  - En mode `vm`, le repère est **réel** : avant chaque invite, le Bash de la VM décrit son répertoire courant,
+    `HOME`, `OLDPWD` et le contenu des répertoires voisins dans une séquence OSC invisible (`terminal/vm/contexte.bash`,
+    sans lancer de processus, environ 0,2 s par invite) que `terminal.js` relaie (événement `terminal-contexte`).
+  - Sinon (terminal fermé, VM qui démarre, compagnon), il est **déclaré** par la page : `contexte: (compte: "ada",
+    depart: "/home/ada", personnel: "/home/ada", arbre: (…), creations: (…))`. `arbre` liste les chemins absolus connus
+    (un répertoire finit par `/` ; `rep/.` le déclare vide, un répertoire sans entrée déclarée a un contenu inconnu) ;
+    `creations` dit ce qu’une commande crée (`("bash preparer.sh", ("/home/ada/atelier/",))`). Le repère rejoue les
+    `cd` de la page jusqu’au bloc qu’on lit, ou jusqu’à la dernière commande cliquée de ce bloc. `tester-vm.mjs`
+    compare ce contexte déclaré au contexte réel après chaque commande : il dit vrai pour la page suivie dans l’ordre.
+  - Le compagnon (le vrai shell de l’étudiant) ne décrit rien : le repère y reste déclaré, et le dit.
+
 ## Pages web : artefacts
 Un artefact est un petit logiciel interactif qui fait manipuler un concept : `<cours>/artefacts/<nom>/`.
 - `<nom>.typ` : une page `page-web(atelier: true, …)`, compacte, qui place l’artefact et son aide côte à côte :
@@ -217,7 +253,8 @@ tourne pas dans une VM de navigateur ; `terminal: ("vm", "compagnon")` pour un T
 proposé d’abord). Une page qui ne déclare rien reste telle quelle. Les sources des TP ne changent pas : `tp.js`
 pose un bouton « Exécuter » après chaque commande `$ ` (suites `\` comprises) des blocs `terminal[…]`, actif
 quand un terminal est ouvert ; un bouton « Terminal » du bandeau ouvre un volet en bas de la fenêtre, dont la page
-réserve la hauteur.
+réserve la hauteur. Sur une page de cours, le terminal est dans la colonne de droite (voir « Pages web : pages de
+cours »).
 - Mode `vm` : une VM Alpine Linux x86 dans l’onglet (v86), sans réseau ni installation. L’image se télécharge
   au clic sur « Démarrer la VM », avec sa progression, puis se range dans Cache Storage, sous une clé qui porte
   sa version (`cours-terminal-vm-<version>`) : une visite suivante ne télécharge rien.
@@ -228,7 +265,8 @@ réserve la hauteur.
   ni Python, `yq`, Docker, SSH : un TP qui en demande déclare `("compagnon",)`, ou dit à l’endroit voulu que
   l’étape demande le compagnon. Ses fichiers sont en mémoire : la taille d’un dossier dans `ls -l` n’est pas celle d’un disque.
 - Fichiers de départ d’un TP en mode `vm` (`preparer.sh`, `dojo/`…) : ils restent dans le dossier du TP, hors de
-  `corrige/`. `construire-vm.sh` embarque, de chaque TP dont l’énoncé déclare `"vm"`, ses fichiers hors `corrige/`,
+  `corrige/`. `construire-vm.sh` embarque, de chaque TP et de chaque page de cours dont la source déclare `"vm"`,
+  ses fichiers hors `corrige/`,
   `tester.sh`, `*.typ` et `index.html`, sous `/usr/share/cours/Cours-main/<chemin du dépôt>/`. Sans réseau, le
   `wget` et le `curl` de la VM (`vm/telecharger`) servent ces fichiers aux adresses que les énoncés emploient
   (`https://jmchantrein.github.io/Cours/<chemin>` et l’archive `…/archive/refs/heads/main.tar.gz`) : la première
@@ -241,6 +279,10 @@ réserve la hauteur.
 Fichiers de `terminal/` :
 - `terminal.js`, `terminal.css` : le volet, ajoutés par `theme-tp.typ` aux seules pages qui le déclarent ; le
   style n’emploie que les variables de la charte, et xterm.js reçoit ses couleurs de `--c-nuit`, `--c-texte-term`…
+  `terminal.js` signale `terminal-commande` (une commande cliquée part), `terminal-session` et `terminal-contexte`.
+- `contexte.js`, `contexte.css` : le repère de contexte des pages de cours ; `vm/contexte.bash` : sa description par
+  la VM. Le modèle (lecture d’un chemin, `cd`, contexte déclaré) est entre `// <modele>` et `// </modele>` :
+  `tester-vm.mjs` le reprend.
 - `dependances.txt` : version, SHA-256 et adresse de chaque fichier tiers ; `preparer.sh [--vm]` les télécharge
   dans `vendor/` et, avec `--vm`, construit l’image (`construire-vm.sh`, Docker ; `vm/init`, `vm/profil.sh`) et son
   manifeste `vendor/vm/manifeste.json`.
@@ -258,6 +300,8 @@ Tester, depuis la racine du dépôt, après `preparer.sh --vm` et `compagnon/con
 
     node commun/terminal/tester-vm.mjs               # démarre la VM dans Node, vérifie ses outils, puis rejoue
                                                      # chaque TP en mode vm (fichiers de départ, commandes de l’énoncé)
+                                                     # et chaque page de cours (chaque sortie, et le repère déclaré
+                                                     # contre le réel, après chaque commande)
     python3 -I commun/terminal/compagnon/tester.py   # protocole, jeton, origine, un seul client
     node commun/terminal/tester-navigateur.js        # Chromium : clics, deux modes, cache, refus, captures
 

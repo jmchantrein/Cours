@@ -166,8 +166,8 @@ Un *chemin* enchaîne des noms séparés par `/`. Sans `/` en tête, il est *rel
 courant. `atelier`, puis `notes`, étaient déjà des chemins relatifs, d’un seul nom.
 
 #predire[
-  Vous êtes dans `notes`. Où mène `cd ../projets/site` ? Suivez-le dans le repère avant de cliquer : `..` remonte d’un
-  cran.
+  Vous êtes dans `notes`. Où mène `cd ../projets/site` ? Cherchez-le dans le repère (`..` remonte d’un cran), puis
+  cliquez : le repère trace le chemin, pas à pas.
 ][#terminal[```console
 $ cd ../projets/site
 $ pwd

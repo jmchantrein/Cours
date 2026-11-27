@@ -2,8 +2,11 @@
    colonne qui reste en vue. N’emploie que les variables CSS de la charte : il suit la variante choisie.
    Le répertoire courant : gras, souligné, « ◀ vous êtes ici » ; un pas de la lecture d’un chemin : une pastille, carré
    bleu à chiffre blanc (comme dans les diapos) ; le répertoire personnel : « ~ ». La couleur ne fait que doubler. */
-.contexte { flex: none; max-height: 56%; overflow-y: auto; padding: .55rem .9rem .7rem; background: var(--c-fond);
-  border-bottom: 1px solid var(--c-filet); font-size: .8rem; line-height: 1.4; }
+/* En-tête, chemin et lecture de la commande restent en haut du cadre ; l’arbre défile dessous s’il est trop haut. */
+.contexte { flex: none; max-height: 58%; display: flex; flex-direction: column; overflow: hidden; padding: .55rem .9rem .5rem;
+  background: var(--c-fond); border-bottom: 1px solid var(--c-filet); font-size: .8rem; line-height: 1.4; }
+.contexte-corps { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.contexte-arbre { flex: 1; min-height: 3rem; overflow-y: auto; }
 .contexte-sans-script { margin: 0; color: var(--c-gris); }
 .contexte-entete { display: flex; flex-wrap: wrap; align-items: baseline; gap: .1rem .7rem; margin-bottom: .25rem; }
 .contexte-titre { font-size: .72rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--c-bleu); }
@@ -25,7 +28,7 @@
   border-left: 1px solid var(--c-commentaire); }
 .arbre .ligne { display: inline; }
 .arbre .nom { color: var(--c-encre); }
-.arbre .fichier > .ligne .nom { color: var(--c-ardoise); }
+.arbre .n-fichier > .ligne .nom { color: var(--c-ardoise); }
 .arbre .sur-chemin > .ligne > .nom { font-weight: 600; }
 .arbre .cache > .ligne > .nom, .arbre .puce.cache { color: var(--c-gris); font-style: italic; }
 .arbre .nom.ici { font-weight: 700; padding: 0 .2em; border-radius: .2rem; background: var(--c-bleu-clair);
@@ -48,7 +51,8 @@
   font-size: .7rem; font-weight: 700; line-height: 1; vertical-align: .08em; }
 
 /* La lecture de la commande cliquée : départ, un pas par composant, conclusion. */
-.contexte-lecture { margin-top: .45rem; padding-top: .4rem; border-top: 1px solid var(--c-filet); color: var(--c-encre); }
+.contexte-lecture { margin: .1rem 0 .45rem; padding: .3rem .6rem; border-radius: .35rem; background: var(--c-bleu-clair);
+  color: var(--c-encre); }
 .contexte-lecture p { margin: .15rem 0; }
 .contexte-lecture code { font-size: .92em; }
 .contexte-lecture .pas { display: flex; flex-wrap: wrap; gap: .15rem .9rem; margin: .25rem 0; padding: 0; list-style: none; }
