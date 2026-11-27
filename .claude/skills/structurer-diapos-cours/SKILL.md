@@ -14,6 +14,7 @@ Applique ces règles à toute création ou révision de diapos de cours. Elles p
 - Scinde une diapo trop dense en plusieurs diapos ; garde une taille de texte lisible.
 - Introduis un outil par un cas réel qui montre son intérêt, puis ses limites, démontrées.
 - Suis un fil rouge : un même exemple qui traverse les diapos.
+- Choisis des exemples qui mettent en avant des personnes invisibilisées, des minorités, des inégalités : des pionnières de l'informatique plutôt que des noms génériques.
 - Vérifie qu'aucune diapo n'en contredit une autre.
 - Signale un exemple d'école qui s'écarte des bonnes pratiques et place la bonne pratique à côté.
 - Présente des bonnes pratiques à jour et sourcées (documentation officielle, référentiels reconnus).
@@ -30,10 +31,12 @@ Applique ces règles à toute création ou révision de diapos de cours. Elles p
 - Sur une commande ou une sortie, relie chaque morceau à son explication : souligne, encadre ou pose une flèche légendée, un morceau par clic.
 - Avant de manipuler un fichier, montre qu'il existe, puis son contenu, puis la commande.
 - Avant d'introduire un concept, montre ceux qui le composent ; tiens pour acquis les prérequis annoncés du cours.
-- Affiche le contexte de l'action — où l'on est dans l'arborescence, sur quelle machine, sous quel compte — toujours au même endroit de la diapo.
+- Affiche le contexte de l'action — où l'on est dans l'arborescence, sur quelle machine, sous quel compte — là où le savoir change la compréhension, et seulement là.
+- Dessine ce contexte en arbre, dans une colonne à gauche, toujours à la même place et à la même largeur.
 - Garde une légende passée, grisée, quand la suite s'y rattache ; sinon efface-la au clic suivant.
 - Limite la charge : au plus cinq légendes à l'écran en même temps, la courante comprise ; au-delà, scinde la diapo.
 - Trace sans chevauchement : ni trait qui en croise un autre, ni texte recouvert.
+- Donne à chaque trait et à chaque flèche un contraste net avec son fond : clair sur un fond sombre, sombre sur un fond clair.
 - Quand un croisement est inévitable, décompose en étapes numérotées et marque l'étape en cours, par son numéro et par une mise en valeur.
 - Révèle ligne par ligne seulement ce qui décompose une explication ou une argumentation ; un sommaire ou une énumération s'affichent d'un coup.
 
