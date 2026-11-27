@@ -30,7 +30,12 @@ Applique ces règles à toute création ou révision de diapos de cours. Elles p
 - Sur une commande ou une sortie, relie chaque morceau à son explication : souligne, encadre ou pose une flèche légendée, un morceau par clic.
 - Avant de manipuler un fichier, montre qu'il existe, puis son contenu, puis la commande.
 - Avant d'introduire un concept, montre ceux qui le composent ; tiens pour acquis les prérequis annoncés du cours.
-- Garde les listes à puces pour ce qui ne se dessine pas : une énumération, un « À retenir ».
+- Affiche le contexte de l'action — où l'on est dans l'arborescence, sur quelle machine, sous quel compte — toujours au même endroit de la diapo.
+- Garde une légende passée, grisée, quand la suite s'y rattache ; sinon efface-la au clic suivant.
+- Limite la charge : au plus cinq légendes à l'écran en même temps, la courante comprise ; au-delà, scinde la diapo.
+- Trace sans chevauchement : ni trait qui en croise un autre, ni texte recouvert.
+- Quand un croisement est inévitable, décompose en étapes numérotées et marque l'étape en cours, par son numéro et par une mise en valeur.
+- Réserve les puces à ce qui décompose une explication ou une argumentation ; un sommaire, un titre ou une énumération courte s'en passent.
 
 ## Exercices et corrigés
 - Mets l'énoncé (« À vous ») sur une diapo et le corrigé sur la suivante.
