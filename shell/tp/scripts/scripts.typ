@@ -16,13 +16,14 @@
 
 #show: page-web.with(
   titre: [Du pipeline au script robuste],
-  surtitre: [Shell : Bash, sed et awk · travaux pratiques],
+  surtitre: [Fondements de l’administration système GNU/Linux · travaux pratiques],
   sous-titre: [Un pipeline sur le fichier du cours, puis des scripts qui reçoivent des arguments, rendent un code
     de sortie par erreur, passent ShellCheck et sont testés par Bats],
   auteur: [Jean-Mathieu Chantrein],
   date: [novembre 2026],
   illustration-couverture: "tube",
   terminal: ("vm", "compagnon"),
+  depart: (ici: "~"),   // état de départ : la VM l’installe à son démarrage
   liens: (
     ([Diapos du cours], pdf),
     ([Corrigés], "https://github.com/jmchantrein/Cours/tree/main/shell/tp/scripts/corrige"),

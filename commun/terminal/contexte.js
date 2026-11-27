@@ -238,7 +238,7 @@
   }
 
   // ---------- Sources et rendu ----------
-  const boutons = [...document.querySelectorAll("main .terminal .executer")];
+  const boutons = [...document.querySelectorAll("main .terminal:not([data-mode]) .executer")];
   const commandes = boutons.map(b => b.dataset.commande);
   const etats = etatsDeclares(declare, commandes);
   let reel = null;            // dernier état lu dans la VM
@@ -303,7 +303,7 @@
   document.addEventListener("terminal-session", e => {
     session = e.detail;
     const vm = e.detail.mode === "vm" && e.detail.ouverte;
-    if (!vm) { reel = null; enCours = 0; }
+    if (!vm || e.detail.reinitialise) { reel = null; enCours = 0; derniere = null; }
     sessionVM = vm;
     rendre();
   });

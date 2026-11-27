@@ -1,4 +1,4 @@
-// carte-progression.typ — la carte de progression du cours Shell, dessinée d’après progression.yaml.
+// carte-progression.typ — la carte de progression du cours « Fondements de l’administration système GNU/Linux », dessinée d’après progression.yaml.
 // Nœuds : les modules ; flèches : les prérequis directs qui ne se déduisent pas d’un autre (réduction
 // transitive) ; quatre marques par nœud : diapos (D), page de cours (P), TP (T), artefact (A).
 // Compilation, depuis la racine du dépôt :

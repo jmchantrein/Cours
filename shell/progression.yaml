@@ -1,4 +1,4 @@
-# progression.yaml — index de progression du cours « Shell : Bash, sed et awk » (version 2, proposition).
+# progression.yaml — index de progression du cours « Fondements de l’administration système GNU/Linux » (version 2, proposition).
 #
 # Un module (nœud) s’enseigne par un diaporama (`diapos`), par une page de cours (`page` : page web au format
 # des TP, avec le terminal à côté, où l’étudiant clique sur une commande et la voit s’exécuter), ou par les deux.
@@ -36,7 +36,7 @@
 #   courant dans l’arborescence, ce qu’il contient, variables).
 
 cours: shell
-titre: "Shell : Bash, sed et awk"
+titre: "Fondements de l’administration système GNU/Linux"
 public: "Un étudiant qui n’a jamais ouvert de terminal."
 
 modules:

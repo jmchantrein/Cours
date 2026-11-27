@@ -20,7 +20,7 @@ entrees=()
 
 # Terminal des pages web : xterm.js, v86 et ses BIOS (sommes dans dependances.txt), l'image Alpine de la VM
 # (Docker), démarrée une fois dans Node pour vérifier ses outils ; puis les exécutables statiques du compagnon
-# (Linux et macOS, amd64 et arm64), SHA256SUMS, et le test du protocole.
+# (Linux, amd64 et arm64), SHA256SUMS, et le test du protocole.
 if [ -f commun/terminal/preparer.sh ]; then
   echo "::group::Terminal, VM dans le navigateur"
   commun/terminal/preparer.sh --vm

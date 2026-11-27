@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # construire.sh — compile le compagnon (iadmin-terminal) en exécutables statiques, dans dist/ (ignoré par git,
-# publié par la CI avec le site) : linux/amd64, linux/arm64, darwin/amd64, darwin/arm64, plus SHA256SUMS et
-# les licences des modules Go qu'ils embarquent. Demande Go (version de go.mod) ; modules fixés par go.sum.
+# publié par la CI avec le site) : linux/amd64 et linux/arm64 (le compagnon ne sert que sous Linux), plus SHA256SUMS
+# et les licences des modules Go qu'ils embarquent. Demande Go (version de go.mod) ; modules fixés par go.sum.
 #
 # Usage : commun/terminal/compagnon/construire.sh
 set -euo pipefail
@@ -11,7 +11,7 @@ cd "$ICI"
 rm -rf dist
 mkdir -p dist
 go vet ./...
-for cible in linux/amd64 linux/arm64 darwin/amd64 darwin/arm64; do
+for cible in linux/amd64 linux/arm64; do
   CGO_ENABLED=0 GOOS=${cible%/*} GOARCH=${cible#*/} \
     go build -trimpath -buildvcs=false -ldflags "-s -w" -o "dist/iadmin-terminal-${cible%/*}-${cible#*/}" .
 done

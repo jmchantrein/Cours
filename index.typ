@@ -5,7 +5,7 @@
 
 #show: page-web.with(
   titre: [Cours],
-  surtitre: [Cours · LERIA],
+  surtitre: [Cours],
   sous-titre: [Diapositives, travaux pratiques et artefacts interactifs],
   auteur: [Jean-Mathieu Chantrein],
   racine: "",
@@ -28,7 +28,7 @@ Sept cours, à lire dans l’ordre de la page : les outils de l’administrateur
 = Les outils de l’administrateur
 
 #cartes(
-  carte([Shell : Bash, sed et awk], illustration: "tube")[
+  carte([Fondements de l’administration système GNU/Linux], illustration: "tube")[
     Les commandes, les tubes, les droits et les fichiers, les scripts robustes, puis sed et awk pour transformer
     du texte.
     #actions(

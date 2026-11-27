@@ -186,6 +186,8 @@
 #let terminal(titre: "Terminal", taille: px(20), hauteur: auto, corps) = block(
   width: 100%, height: hauteur, fill: c.nuit, radius: px(12), inset: (x: px(22), y: px(14)), {
     set text(fill: c.texte-term)
+    // du code dans le texte d’un terminal : clair, comme dans le bandeau (le bleu de la charte y serait illisible)
+    show raw.where(block: false): set text(fill: c.prompt)
     show raw.where(block: true): set text(size: taille)
     show raw.where(block: true): set block(above: px(4), below: px(4))
     show raw.line: l => {
@@ -333,7 +335,9 @@
 #let pose(x, y, corps) = place(top + left, dx: px(x), dy: px(y), corps)
 // Flèche sur un canevas, de (x1, y1) à la pointe (x2, y2), en px de la maquette, dans toute direction.
 // motif : autre motif de trait ("dotted", "dash-dotted"…), prioritaire sur tirets ; pointe : false, un simple trait.
-#let fleche-pose(x1, y1, x2, y2, couleur: c.ardoise, ep: 4, tirets: false, motif: none, pointe: true) = {
+// halo : une couleur (c.fond) qui borde le trait et la pointe : le trait garde son contraste sur un fond clair
+// comme sur un fond sombre (une flèche qui entre dans un cartouche de terminal, qui sort d’un processus).
+#let fleche-pose(x1, y1, x2, y2, couleur: c.ardoise, ep: 4, tirets: false, motif: none, pointe: true, halo: none) = {
   let (dx, dy) = (x2 - x1, y2 - y1)
   let l = calc.max(calc.sqrt(dx * dx + dy * dy), 0.001)
   let (ux, uy) = (dx / l, dy / l)
@@ -342,9 +346,15 @@
   let (nx, ny) = (-uy * p * 10 / 18, ux * p * 10 / 18)
   let dash = if motif != none { motif } else if tirets { "dashed" } else { none }
   let trait = if dash != none { (paint: couleur, thickness: px(ep), dash: dash) } else { px(ep) + couleur }
+  let fin = if pointe { (bx, by) } else { (x2, y2) }
+  let tete = ((px(x2), px(y2)), (px(bx + nx), px(by + ny)), (px(bx - nx), px(by - ny)))
+  if halo != none {
+    place(top + left, line(start: (px(x1), px(y1)), end: (px(fin.at(0)), px(fin.at(1))), stroke: (paint: halo, thickness: px(ep + 5), cap: "round")))
+    if pointe { place(top + left, polygon(fill: halo, stroke: (paint: halo, thickness: px(5), join: "round"), ..tete)) }
+  }
   if not pointe { place(top + left, line(start: (px(x1), px(y1)), end: (px(x2), px(y2)), stroke: trait)); return }
   place(top + left, line(start: (px(x1), px(y1)), end: (px(bx), px(by)), stroke: trait))
-  place(top + left, polygon(fill: couleur, (px(x2), px(y2)), (px(bx + nx), px(by + ny)), (px(bx - nx), px(by - ny))))
+  place(top + left, polygon(fill: couleur, ..tete))
 }
 
 // Canevas : hauteur fixe, éléments posés par pose(…) et fleche-pose(…) en coordonnées de la maquette.
@@ -394,7 +404,7 @@
 // (Nommée ici, car le paramètre `illustration` de page-titre masque la fonction de la charte.)
 #let illustration-couverture(nom) = illustration(nom, c, px(1))
 
-#let page-titre(titre, sous-titre, auteur, date, surtitre: "Cours · LERIA", illustration: "vm") = touying-slide-wrapper(self => {
+#let page-titre(titre, sous-titre, auteur, date, surtitre: "Cours", illustration: "vm") = touying-slide-wrapper(self => {
   self = utils.merge-dicts(self,
     config-common(subslide-preamble: none),
     config-page(fill: c.nuit, footer: none, margin: px(128)))
@@ -891,7 +901,9 @@
         let xc = p.xcs.at(j)
         if cote == "droite" {
           let yc = y + lh / 2
-          place(top + left, line(start: (s.x1 + px(4), yc), end: (lb + px(28), Ht + p.haut + a.etiq.h / 2), stroke: ep + coul))
+          // dans le cadre (sombre pour un terminal), le trait prend la couleur des marques ; dehors, celle des traits
+          place(top + left, line(start: (s.x1 + px(4), yc), end: (lb, yc), stroke: ep + marque))
+          place(top + left, line(start: (lb, yc), end: (lb + px(28), Ht + p.haut + a.etiq.h / 2), stroke: ep + coul))
         } else {
           let (bord, depart, arrivee) = if cote == "bas" {
             let yl = Ht + hb + g0b + p.r * (lhb + gl)
@@ -1036,7 +1048,7 @@
   } else { contenu }
   // lignes déjà présentes à l’état précédent (le contenu s’allonge) : elles passent en gris
   let anciens-de(nom, n) = {
-    if not actif or avant == none or nom not in avant.noeuds or not neuf("noeuds", nom) { return 0 }
+    if not actif or k == 1 or avant == none or nom not in avant.noeuds or not neuf("noeuds", nom) { return 0 }
     let a = avant.noeuds.at(nom).at("contenu", default: none)
     let b = n.at("contenu", default: none)
     if type(a) == array and type(b) == array and a.len() <= b.len() and b.slice(0, a.len()) == a { a.len() } else { 0 }
@@ -1121,10 +1133,10 @@
     // l’ancien tracé, en pointillé, si ses deux bouts existent encore
     if fort and ancien != none and (ancien.de, ancien.vers).all(b => b.split(".").at(0) in etat.noeuds) {
       let (a0, b0) = geometrie(ancien, avant.noeuds)
-      if a0 != a or b0 != b { fleche-pose(..a0, ..b0, couleur: c.gris, ep: 2, motif: "dotted") }
+      if a0 != a or b0 != b { fleche-pose(..a0, ..b0, couleur: c.gris, ep: 2, motif: "dotted", halo: c.fond) }
     }
     let motif = li.at("motif", default: if li.at("tirets", default: false) { "dashed" } else { none })
-    fleche-pose(..a, ..b, couleur: if fort { c.encre } else { c.ardoise }, ep: if fort { 6 } else { 3 }, motif: motif,
+    fleche-pose(..a, ..b, couleur: if fort { c.encre } else { c.ardoise }, ep: if fort { 6 } else { 3 }, motif: motif, halo: c.fond,
       pointe: li.at("fleche", default: true))
     if "etiquette" in li and li.etiquette != none {
       let t = li.at("pos", default: 0.5)

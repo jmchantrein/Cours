@@ -18,6 +18,13 @@
   const guide = racine + "commun/terminal/index.html";
   const PREFIXE_CACHE = "cours-terminal-vm-";
   const NOMS = { vm: "VM dans le navigateur", compagnon: "Mon shell (compagnon)" };
+  // L’état de départ de la page (page-web(depart: …)) : un script versionné du dépôt, ce qu’il crée, le répertoire
+  // d’arrivée. La VM le lance à son démarrage ; le compagnon le propose, sans rien lancer d’office.
+  const depart = document.body.dataset.depart || "", cree = document.body.dataset.departCree || "";
+  const ici = document.body.dataset.ici || "~";
+  const sur = /^[\w./-]+$/, surIci = /^[\w./~-]+$/;
+  const SITE = "https://jmchantrein.github.io/Cours/";
+  const commandeDepart = depart && `cd && curl -fsSLO ${SITE}${depart} && bash ${depart.split("/").pop()}`;
 
   function el(balise, attributs = {}, ...enfants) {
     const e = document.createElement(balise);
@@ -106,8 +113,11 @@
       el("p", {}, demarrer, " ", poids),
       el("p", {}, "Votre navigateur garde l’image en cache : les visites suivantes ne la téléchargent plus. Le démarrage prend ensuite une vingtaine de secondes ; une commande cliquée pendant ce temps attend l’invite."));
     m.ecran = el("div", { class: "terminal-ecran", hidden: true });
-    m.actions = [];
-    let manifeste = null, vm = null, xterm = null, phase = "arret", recents = "";
+    // Remettre à l’état de départ : la VM redémarre ; son système, en mémoire, repart de l’image, et le script de
+    // départ de la page s’y relance.
+    const remettre = el("button", { type: "button", title: "Redémarrer la VM : tout ce que vous avez fait s’efface, l’état de départ de la page est réinstallé" }, "Remettre à l’état de départ");
+    m.actions = [remettre];
+    let manifeste = null, vm = null, xterm = null, phase = "arret", recents = "", fichiers = null;
     const attente = [];
     const cacheDe = man => PREFIXE_CACHE + man.version;
 
@@ -196,27 +206,14 @@
         await chargerXterm();
         m.accueil.hidden = true; m.ecran.hidden = false;
         xterm = creerXterm(m.ecran, d => (phase === "prete" ? envoyer(d) : undefined));
-        const { fichiers, telecharges } = await telecharger(manifeste);
+        let telecharges;
+        ({ fichiers, telecharges } = await telecharger(manifeste));
         etat.textContent = (telecharges ? `${mo(telecharges)} téléchargés et rangés dans le cache. ` : "Image lue dans le cache du navigateur : rien à télécharger. ")
           + "Démarrage de la VM…";
         const libv86 = URL.createObjectURL(new Blob([fichiers["libv86.js"]], { type: "text/javascript" }));
         await script(libv86);
-        // Le tampon de sortie est vidé dans xterm par paquets, pas octet par octet.
-        let tampon = [], planifie = false;
-        const vider = () => { xterm.write(new Uint8Array(tampon)); tampon = []; planifie = false; };
-        vm = new window.V86({
-          wasm_fn: async env => (await WebAssembly.instantiate(fichiers["v86.wasm"], env)).instance.exports,
-          bios: { buffer: fichiers["seabios.bin"] }, vga_bios: { buffer: fichiers["vgabios.bin"] },
-          bzimage: { buffer: fichiers["vm/bzImage"] }, initrd: { buffer: fichiers["vm/initrd.gz"] },
-          cmdline: `console=ttyS0,115200 rdinit=/init quiet terminal=${xterm.cols}x${xterm.rows}`,
-          memory_size: manifeste.memoire_mo * 1024 * 1024, vga_memory_size: 2 * 1024 * 1024,
-          autostart: true, disable_keyboard: true, disable_mouse: true, disable_speaker: true,
-        });
-        phase = "demarrage";
-        vm.add_listener("serial0-output-byte", octet => {
-          tampon.push(octet); suivre(octet);
-          if (!planifie) { planifie = true; setTimeout(vider, 15); }
-        });
+        demarrerV86();
+        majActions();
         xterm.focus();
       } catch (erreur) {
         phase = "arret"; m.session = false; majBoutons(); demarrer.disabled = false;
@@ -225,6 +222,33 @@
         etat.textContent = "Échec du démarrage de la VM : " + erreur.message;
       }
     }
+    // La VM, avec l’état de départ de la page passé au noyau (vm/init le lance avant la première invite).
+    function demarrerV86() {
+      // Le tampon de sortie est vidé dans xterm par paquets, pas octet par octet.
+      let tampon = [], planifie = false;
+      const vider = () => { xterm.write(new Uint8Array(tampon)); tampon = []; planifie = false; };
+      const etatDepart = (sur.test(depart) ? ` depart=${depart}` : "") + (surIci.test(ici) ? ` ici=${ici}` : "");
+      vm = new window.V86({
+        wasm_fn: async env => (await WebAssembly.instantiate(fichiers["v86.wasm"], env)).instance.exports,
+        bios: { buffer: fichiers["seabios.bin"] }, vga_bios: { buffer: fichiers["vgabios.bin"] },
+        bzimage: { buffer: fichiers["vm/bzImage"] }, initrd: { buffer: fichiers["vm/initrd.gz"] },
+        cmdline: `console=ttyS0,115200 rdinit=/init quiet terminal=${xterm.cols}x${xterm.rows}${etatDepart}`,
+        memory_size: manifeste.memoire_mo * 1024 * 1024, vga_memory_size: 2 * 1024 * 1024,
+        autostart: true, disable_keyboard: true, disable_mouse: true, disable_speaker: true,
+      });
+      phase = "demarrage"; recents = "";
+      vm.add_listener("serial0-output-byte", octet => {
+        tampon.push(octet); suivre(octet);
+        if (!planifie) { planifie = true; setTimeout(vider, 15); }
+      });
+    }
+    remettre.addEventListener("click", () => {
+      if (!vm || !confirm("Remettre la VM à l’état de départ de la page ? Tout ce que vous y avez fait s’efface.")) return;
+      vm.destroy(); attente.length = 0; xterm.reset();
+      etat.textContent = "Redémarrage de la VM : l’état de départ de la page se réinstalle…";
+      signaler("terminal-session", { mode: "vm", ouverte: true, reinitialise: true });
+      demarrerV86(); xterm.focus();
+    });
     demarrer.addEventListener("click", lancer);
     // Rend faux si la commande attend l’invite (VM qui démarre).
     m.executer = commande => {
@@ -251,10 +275,16 @@
         "Ce mode relie la page à votre vrai shell : un clic sur « Exécuter » lance la commande sur votre machine, avec vos droits. Lisez chaque commande avant de cliquer."),
       el("p", {}, "1. ", lien, " (une fois). 2. Dans un terminal, lancez ", code("./iadmin-terminal local"), ". 3. Collez ici l’adresse qu’il affiche :"),
       formulaire,
-      el("p", {}, "Si le navigateur demande l’autorisation d’accéder au réseau local, acceptez : c’est ainsi que la page joint le compagnon, sur votre machine (127.0.0.1)."));
+      el("p", {}, "Si le navigateur demande l’autorisation d’accéder au réseau local, acceptez : c’est ainsi que la page joint le compagnon, sur votre machine (127.0.0.1)."),
+      commandeDepart ? el("p", {}, "État de départ : rien n’est installé d’office sur votre machine. Une fois connecté, le bouton « Installer l’état de départ » lance ",
+        code(commandeDepart), ...(cree ? [" ; le script crée ", code(cree), ", un dossier à part, et refuse d’écraser un dossier qui existe déjà."] : [])) : "");
     m.ecran = el("div", { class: "terminal-ecran", hidden: true });
     const deconnecter = el("button", { type: "button" }, "Déconnecter");
-    m.actions = [deconnecter];
+    const installer = el("button", { type: "button", title: commandeDepart || "" }, "Installer l’état de départ");
+    installer.addEventListener("click", () => {
+      if (confirm(`Lancer dans votre shell :\n${commandeDepart}\n${cree ? `Le script crée ${cree} (il refuse d’écraser un dossier existant).` : ""}`)) m.executer(commandeDepart);
+    });
+    m.actions = commandeDepart ? [installer, deconnecter] : [deconnecter];
     let socket = null, xterm = null;
     const envoyer = message => socket?.readyState === WebSocket.OPEN && (socket.send(JSON.stringify(message)), true);
 
@@ -340,6 +370,10 @@
     const etaitFerme = volet.hidden;
     ouvrir();
     if (!courant.session) { courant.inviter(); return; }
+    if (courant.id === "vm" && bouton.closest('[data-mode="compagnon"]')) {
+      etat.textContent = "Inutile dans la VM : l’état de départ de la page y est installé à son démarrage.";
+      return;
+    }
     const differee = courant.executer(bouton.dataset.commande) === false;
     signaler("terminal-commande", { commande: bouton.dataset.commande, bouton, mode: courant.id, differee });
     bouton.dataset.etat = "envoyee";

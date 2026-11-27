@@ -22,6 +22,7 @@
   date: [novembre 2026],
   illustration-couverture: "couches",
   terminal: ("vm", "compagnon"),
+  depart: (ici: "~"),   // état de départ : la VM l’installe à son démarrage
   liens: (
     ([Diapos du cours], pdf),
     ([TP suivant : Git à plusieurs], "../git-distant/index.html"),

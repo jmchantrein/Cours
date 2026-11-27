@@ -17,12 +17,13 @@
 
 #show: page-web.with(
   titre: [Droits, liens, recherche et archives],
-  surtitre: [Shell : Bash, sed et awk · travaux pratiques],
+  surtitre: [Fondements de l’administration système GNU/Linux · travaux pratiques],
   sous-titre: [Lire et régler les droits, comprendre le umask et les propriétaires, lier, chercher avec find, archiver avec tar],
   auteur: [Jean-Mathieu Chantrein],
   date: [novembre 2026],
   illustration-couverture: "couches",
   terminal: ("vm", "compagnon"),
+  depart: (script: "shell/tp/fichiers/preparer.sh", cree: "~/fichiers", ici: "~"),   // état de départ : la VM l’installe à son démarrage
   liens: (
     ([Diapos du cours], pdf),
     ([Corrigés], "https://github.com/jmchantrein/Cours/tree/main/shell/tp/fichiers/corrige"),
@@ -58,21 +59,22 @@ sont supposés connus. Il part d’un nouveau répertoire d’exemples, `~/fichi
 = Étape 1 : qui suis-je, que dit ls -l ? <etape-1>
 
 #bloc(role: "question")[Consignes][
-  - Téléchargez `preparer.sh` et lancez-le, comme au TP précédent.
+  - Dans le terminal de cette page (VM), `~/fichiers` est déjà là. Sur votre machine, téléchargez `preparer.sh` et
+    lancez-le, comme au TP précédent.
   - `id` : quel est votre nom de compte, votre groupe principal, vos autres groupes ?
   - Dans `~/fichiers`, lisez `ls -l`, puis `ls -l scripts` et `ls -ld coffre`. Pour chaque ligne : type, droits du
     propriétaire, du groupe, des autres. Qui peut lire `pionnieres.csv` ? Qui peut exécuter `scripts/bonjour.sh` ?
 ]
 
-#terminal[```console
+#terminal(compagnon: true)[```console
 $ cd
 $ wget https://jmchantrein.github.io/Cours/shell/tp/fichiers/preparer.sh
 $ bash preparer.sh
 Dossier de travail prêt : /home/ada/fichiers
 Pour y entrer : cd /home/ada/fichiers
 ```]
-#note(role: "pratique")[Dans le terminal de cette page, sans réseau, `wget` livre le même fichier, que l’image de la
-  VM embarque.]
+#note(role: "pratique")[Dans le terminal de cette page, la VM a lancé ce script à son démarrage ; « Remettre à l’état
+  de départ » le relance sur une VM neuve.]
 #fichier("preparer.sh", read("preparer.sh"))
 
 #indice(titre: [Indice : lire les droits])[

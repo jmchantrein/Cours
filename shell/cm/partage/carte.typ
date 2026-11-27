@@ -22,7 +22,7 @@
 }
 #let directs(m) = m.requiert.filter(p => not m.requiert.any(q => q != p and p in ancetres(q)))
 
-#let carte-progression(ici: none, l: 182, h: 112, px-x: 212, px-y: 140) = {
+#let carte-progression(ici: none, etiquette: [Vous êtes ici], l: 182, h: 112, px-x: 212, px-y: 140) = {
   let acquis = if ici != none { ancetres(ici) } else { () }
   let pos(m) = (m.carte.col * px-x, 30 + m.carte.lig * px-y)
   let ncol = calc.max(..mods.map(m => m.carte.col)) + 1
@@ -38,7 +38,7 @@
         let (xa, ya) = pos(module.at(p))
         let (xb, yb) = pos(m)
         fleche-pose(xa + l, point(sorties.at(p), m.id, ya), xb - 2, point(entrees.at(m.id), p, yb),
-          couleur: c.ardoise, ep: 3)
+          couleur: c.ardoise, ep: 3, halo: c.fond)
       }
     }
     for m in mods {
@@ -53,7 +53,7 @@
           text(size: px(19), weight: if est-ici { 700 } else { 500 }, hyphenate: false, m.titre))))
       if est-ici {
         pose(x, y - 34, box(fill: c.bleu, radius: (top: px(8)), inset: (x: px(10), y: px(4)),
-          text(size: px(20), weight: 700, fill: c.fond)[Vous êtes ici]))
+          text(size: px(20), weight: 700, fill: c.fond, etiquette)))
       }
       if est-acquis {
         pose(x + l - 70, y - 30, box(fill: roles.reponse.entete, radius: (top: px(8)), inset: (x: px(10), y: px(3)),

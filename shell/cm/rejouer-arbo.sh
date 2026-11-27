@@ -70,6 +70,7 @@ ls -a atelier
 EOF
 
 session "Changer de répertoire" <<'EOF'
+pwd
 cd atelier
 pwd
 cd notes

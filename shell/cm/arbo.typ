@@ -1,4 +1,4 @@
-// Module 1 du cours « Shell » : « Se repérer dans l’arborescence » — Typst + Touying, un diaporama par module.
+// Module 1 du cours « Fondements de l’administration système GNU/Linux » : « Se repérer dans l’arborescence » — Typst + Touying, un diaporama par module.
 // Compilation (depuis la racine du dépôt) :
 //   typst compile --root . --font-path commun/fonts shell/cm/arbo.typ build/shell/arbo.pdf
 //   (une variante : --input variante=dyslexie ; le site publie shell/cm/arbo-<variante>.pdf)
@@ -15,7 +15,7 @@
 
 #show: cours-theme.with(
   auteur: [Jean-Mathieu Chantrein],
-  titre-court: [Shell · Se repérer dans l’arborescence],
+  titre-court: [Administration système GNU/Linux · module 1],
 )
 
 #let versions = [Sortie réelle : conteneur debian:13-slim, bash 5.2.37, GNU coreutils 9.7, compte ada, \~/atelier préparé par preparer.sh ; rejouée par shell/cm/rejouer-arbo.sh.]
@@ -30,7 +30,7 @@
 // croisent aucune autre ligne.
 #let cmd(k, d, lignes, taille: px(28), ..ann) = des(k, d, terminal-annote(etape: k, taille: taille, lignes, ..ann))
 
-#couverture(illustration: "tube", surtitre: "Shell : Bash, sed et awk · module 1")[Se repérer dans l’arborescence][Où suis-je, que contient ce répertoire, comment aller ailleurs][Jean-Mathieu Chantrein][27 novembre 2026]
+#couverture(illustration: "tube", surtitre: "Fondements de l’administration système GNU/Linux · module 1")[Se repérer dans l’arborescence][Où suis-je, que contient ce répertoire, comment aller ailleurs][Jean-Mathieu Chantrein][27 novembre 2026]
 #speaker-note[Trente minutes. Module 1 de l’index shell/progression.yaml ; il tient pour acquis le module 0 (terminal, shell, invite, commande, option, argument). Les commandes sont celles de la page de cours du module et du TP « Premiers pas dans le shell » (étapes 2 et 4), sur l’arborescence de preparer.sh.]
 
 // ======================================================================
@@ -108,16 +108,16 @@
 == Changer de répertoire courant : cd
 
 #anime(
-  contexte: k => ici(if k <= 1 { at } else { at + "/notes" }, ici: [ici]),
-  commande-annotee(taille: px(30),
-    ("$ cd atelier", "$ pwd", "/home/ada/atelier", ("$ cd notes", 2), ("$ pwd", 2),
-      ("/home/ada/atelier/notes", 2), ("$ ls", 3), ("a-faire.txt  idees.txt\tlisezmoi.txt", 3)),
-    annote((ligne: 0, texte: "atelier"), cote: "droite", clic: 1, legende: [`cd` n’affiche rien : le répertoire courant change]),
-    annote("/home/ada/atelier/notes", cote: "droite", clic: 2, legende: [un cran plus bas, dans `notes`]),
-    annote("a-faire.txt", cote: "droite", clic: 3, legende: [`ls` montre désormais `notes`]),
+  contexte: k => ici(if k <= 1 { maison } else if k == 2 { at } else { at + "/notes" }, ici: [ici]),
+  commande-annotee(taille: px(28),
+    ("$ pwd", "/home/ada", ("$ cd atelier", 2), ("$ pwd", 2), ("/home/ada/atelier", 2), ("$ cd notes", 3), ("$ pwd", 3),
+      ("/home/ada/atelier/notes", 3), ("$ ls", 4), ("a-faire.txt  idees.txt\tlisezmoi.txt", 4)),
+    annote((ligne: 1, texte: "/home/ada"), cote: "droite", clic: 1, legende: [départ : le répertoire personnel, `~`]),
+    annote((ligne: 2, texte: "atelier"), cote: "droite", clic: 2, legende: [`cd` n’affiche rien : le répertoire courant change]),
+    annote("/home/ada/atelier/notes", cote: "droite", clic: 3, legende: [un cran plus bas, dans `notes`]),
+    annote((ligne: 9, texte: "lisezmoi.txt"), cote: "droite", clic: 4, legende: [`ls` : le contenu de `notes`]),
   ),
-
-  note: [#versions cd : change directory. On part de \~, où s’arrêtait la diapositive précédente. Un clic par commande : le repère bleu de la colonne suit le répertoire courant. cd sans erreur n’affiche rien ; pwd le confirme.],
+  note: [#versions cd : change directory. Un clic par commande : le repère bleu de la colonne suit le répertoire courant, à partir de \~, montré par pwd. cd sans erreur n’affiche rien ; pwd le confirme.],
 )
 
 == Un chemin relatif part du répertoire courant
@@ -220,7 +220,7 @@
       ("$ cd -", 5), ("/home/ada/atelier/projets/scripts", 5), ("$ cd ~/atelier", 6), ("$ ls notes/../projets/./site", 6), ("index.html", 6)),
     annote((ligne: 3, texte: "/home/ada/atelier/projets/scripts"), cote: "droite", clic: 2, legende: [#pastille(1) remonter, #pastille(2) #pastille(3) descendre]),
     annote((ligne: 6, texte: "/home/ada/atelier"), cote: "droite", clic: 3, legende: [deux crans plus haut]),
-    annote("brouillon-1.txt", cote: "droite", clic: 4, legende: [`./vieux` : `vieux`, depuis ici]),
+    annote("brouillon-2.txt", cote: "droite", clic: 4, legende: [`./vieux` : `vieux`, depuis ici]),
     annote((ligne: 10, texte: "/home/ada/atelier/projets/scripts"), cote: "droite", clic: 5, legende: [le répertoire d’avant `cd ../..`]),
     annote("index.html", cote: "droite", clic: 6, legende: [un détour : `projets/site`]),
   ),

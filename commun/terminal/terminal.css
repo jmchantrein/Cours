@@ -19,6 +19,10 @@
 .terminal .executer[aria-disabled="true"] { border-color: var(--c-commentaire); color: var(--c-commentaire); background: transparent; }
 .terminal .executer[data-etat="envoyee"] { background: var(--c-prompt); color: var(--c-nuit); }
 
+/* Commandes pour le seul shell de l’étudiant (installer l’état de départ chez soi) : la VM l’a déjà. */
+.terminal[data-mode="compagnon"]::before { content: "Sur votre machine (compagnon) : dans la VM, c’est déjà fait"; display: block;
+  margin-bottom: -.4rem; font-size: .75rem; font-weight: 600; color: var(--c-gris); }
+
 /* Volet */
 body.terminal-ouvert { padding-bottom: var(--terminal-hauteur); }
 @media (min-width: 72rem) {

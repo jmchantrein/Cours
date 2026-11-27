@@ -16,13 +16,14 @@
 
 #show: page-web.with(
   titre: [sed et awk : exercices progressifs],
-  surtitre: [Shell : Bash, sed et awk · travaux pratiques],
+  surtitre: [Fondements de l’administration système GNU/Linux · travaux pratiques],
   sous-titre: [Substituer, adresser, capturer et modifier avec sed ; filtrer, calculer et agréger avec awk ;
     puis durcir un fichier `sshd_config` avec les deux],
   auteur: [Jean-Mathieu Chantrein],
   date: [novembre 2026],
   illustration-couverture: "tube",
   terminal: ("vm", "compagnon"),
+  depart: (ici: "~"),   // état de départ : la VM l’installe à son démarrage
   liens: (
     ([Diapos du cours], pdf),
     ([Corrigés], "https://github.com/jmchantrein/Cours/tree/main/shell/tp/sed-awk/corrige"),

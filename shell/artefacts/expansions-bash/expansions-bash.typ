@@ -8,7 +8,7 @@
 
 #show: page-web.with(
   titre: [Avant d’exécuter, Bash réécrit la ligne],
-  surtitre: [Shell : Bash, sed et awk · artefact],
+  surtitre: [Fondements de l’administration système GNU/Linux · artefact],
   // La règle que l’artefact fait manipuler, toujours sous les yeux.
   sous-titre: [Bash découpe la ligne en mots, développe chaque mot, puis retire les guillemets : la commande reçoit la liste d’arguments
     qui en résulte. Les guillemets doubles empêchent le découpage et les chemins, les simples tout.

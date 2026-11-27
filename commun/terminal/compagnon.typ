@@ -44,7 +44,8 @@ télécharger, qui tourne sur l’ordinateur où s’ouvre votre navigateur : il
 = Télécharger le compagnon <installer>
 
 Une commande le télécharge dans le dossier courant et le rend exécutable ; rien d’autre n’est installé.
-Choisissez celle de votre système (`uname -sm` l’affiche) :
+Le compagnon fonctionne sous Linux (dont WSL sous Windows) ; choisissez la commande de votre processeur
+(`uname -m` l’affiche) :
 
 #let base = "https://jmchantrein.github.io/Cours/commun/terminal/compagnon/dist/"
 #let telecharger(cible) = raw("$ curl -fLo iadmin-terminal " + base + "iadmin-terminal-" + cible + " && chmod +x iadmin-terminal", lang: "console", block: true)
@@ -53,14 +54,11 @@ Choisissez celle de votre système (`uname -sm` l’affiche) :
   [*Système*], [*Commande*],
   [Linux x86_64, et WSL sous Windows], terminal(telecharger("linux-amd64")),
   [Linux arm64 (aarch64)], terminal(telecharger("linux-arm64")),
-  [macOS, processeur Apple], terminal(telecharger("darwin-arm64")),
-  [macOS, processeur Intel], terminal(telecharger("darwin-amd64")),
 )
 
 #indice(titre: [Vérifier la somme SHA-256 du fichier téléchargé])[
   Le site publie la somme de chaque exécutable dans
-  #link(base + "SHA256SUMS")[`SHA256SUMS`]. Comparez la ligne de votre système avec la somme du fichier
-  (sous macOS, `shasum -a 256` remplace `sha256sum`) :
+  #link(base + "SHA256SUMS")[`SHA256SUMS`]. Comparez la ligne de votre système avec la somme du fichier :
   #terminal[```console
   $ curl -fsSL https://jmchantrein.github.io/Cours/commun/terminal/compagnon/dist/SHA256SUMS | grep linux-amd64
   $ sha256sum iadmin-terminal

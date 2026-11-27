@@ -17,12 +17,13 @@
 
 #show: page-web.with(
   titre: [Premiers pas dans le shell],
-  surtitre: [Shell : Bash, sed et awk · travaux pratiques],
+  surtitre: [Fondements de l’administration système GNU/Linux · travaux pratiques],
   sous-titre: [Se repérer, se déplacer, lire l’aide, manipuler des fichiers, et brancher ses premiers tubes],
   auteur: [Jean-Mathieu Chantrein],
   date: [novembre 2026],
   illustration-couverture: "couches",
   terminal: ("vm", "compagnon"),
+  depart: (script: "shell/tp/premiers-pas/preparer.sh", cree: "~/atelier", ici: "~"),   // état de départ : la VM l’installe à son démarrage
   liens: (
     ([Diapos du cours], pdf),
     ([Corrigés], "https://github.com/jmchantrein/Cours/tree/main/shell/tp/premiers-pas/corrige"),
@@ -62,13 +63,14 @@ Le script `preparer.sh` crée le répertoire `~/atelier` (`~` désigne votre ré
 répertoire existant.
 
 #bloc(role: "question")[Consignes][
-  - Téléchargez `preparer.sh` dans votre répertoire personnel, puis lancez-le avec `bash`.
+  - Dans le terminal de cette page (VM), `~/atelier` est déjà là : la VM l’a créé à son démarrage. Sur votre
+    machine, téléchargez `preparer.sh` dans votre répertoire personnel, puis lancez-le avec `bash`.
   - Lancez `whoami`, puis `echo Bonjour`.
   - Comparez `echo Bonjour     tout     le     monde` et la même commande entre guillemets doubles. Combien
     d’arguments `echo` reçoit-il dans chaque cas ?
 ]
 
-#terminal[```console
+#terminal(compagnon: true)[```console
 $ cd
 $ wget https://jmchantrein.github.io/Cours/shell/tp/premiers-pas/preparer.sh
 $ bash preparer.sh
@@ -77,8 +79,8 @@ Pour y entrer : cd /home/ada/atelier
 ```]
 #note(role: "pratique")[
   Sans `wget`, `curl -O` suivi de la même adresse télécharge aussi le fichier. Pour repartir de zéro plus tard :
-  `rm -r ~/atelier`, puis `bash preparer.sh` à nouveau. Dans le terminal de cette page, sans réseau, `wget` et
-  `curl` livrent le même fichier, que l’image de la VM embarque. Le script, en entier :
+  `rm -r ~/atelier`, puis `bash preparer.sh` à nouveau ; dans le terminal de cette page, le bouton « Remettre à
+  l’état de départ » fait de même. Le script, en entier :
 ]
 #fichier("preparer.sh", read("preparer.sh"))
 

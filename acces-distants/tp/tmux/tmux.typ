@@ -20,6 +20,7 @@
   date: [novembre 2026],
   illustration-couverture: "tunnel",
   terminal: ("vm", "compagnon"),
+  depart: (ici: "~"),   // état de départ : la VM l’installe à son démarrage
   liens: (
     ([Diapos du cours], pdf),
     ([Corrigés], "https://github.com/jmchantrein/Cours/tree/main/acces-distants/tp/tmux/corrige"),

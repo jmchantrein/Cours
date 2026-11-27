@@ -237,8 +237,8 @@ async function connecter(page, url) {
   await attendreTexte(page, "Total : 3");
   ok("VM, deuxième visite : commandes exécutées");
 
-  // 7. TP en mode vm : la page propose le terminal et un « Exécuter » par commande ; sur deux TP, les clics de la
-  // première étape (téléchargement sans réseau, script de départ) posent les fichiers de départ, sous le compte ada.
+  // 7. TP en mode vm : la page propose le terminal et un « Exécuter » par commande ; sur deux TP, la VM démarre sur
+  // l’état de départ de la page (ses fichiers, sous le compte ada), et les commandes « chez soi » n’y s’exécutent pas.
   for (const nom of Object.keys(pages).filter(n => n.startsWith("tp-"))) {
     await page.goto(adresse(nom));
     const r = await page.evaluate(() => [document.body.dataset.terminal, document.querySelectorAll(".terminal .executer").length,
@@ -246,18 +246,22 @@ async function connecter(page, url) {
     verifier(r[0] === "vm compagnon" && r[1] > 0 && r[2], `${nom} : terminal « vm compagnon », ${r[1]} boutons « Exécuter »`);
   }
   for (const [nom, clics, attendu] of [
-    ["tp-premiers-pas", ["wget ", "bash preparer.sh", "whoami"], "Dossier de travail prêt : /home/ada/atelier"],
-    ["tp-vim", ["curl ", "ls dojo"], "1-survivre"],
+    ["tp-premiers-pas", ["cd ~/atelier", "ls -a"], ".reglages"],
+    ["tp-vim", ["ls dojo"], "1-survivre"],
   ]) {
     await page.goto(adresse(nom));
     await page.click(".terminal-lanceur");
     await page.locator(".terminal-accueil button.principal", { hasText: "Démarrer" }).click();
+    await attendreTexte(page, "État de départ installé", 180000);
+    const chezSoi = page.locator('.terminal[data-mode="compagnon"] .executer').first();
+    await chezSoi.click();
+    verifier(/Inutile dans la VM/.test(await etat(page).innerText()), `${nom} : la commande d’installation chez soi n’est pas lancée dans la VM`);
     for (const debut of clics) {   // une commande peut être dans un corrigé replié : on l'ouvre, comme le lecteur
       await executer(page, debut).evaluate(b => { for (let d = b.closest("details"); d; d = d.parentElement.closest("details")) d.open = true; });
       await executer(page, debut).click();
     }
     await attendreTexte(page, attendu, 120000);
-    ok(`${nom} : « ${clics.join(" », « ")} » cliqués dans la VM, fichiers de départ présents (${attendu})`);
+    ok(`${nom} : état de départ installé au démarrage, « ${clics.join(" », « ")} » cliqués sans préparation (${attendu})`);
   }
 
   // 8. Page de cours : sur un écran large, le terminal est dans la colonne de droite, ouvert d’emblée, sous le repère
@@ -276,16 +280,26 @@ async function connecter(page, url) {
     "page de cours 1280 × 650 : terminal ouvert à droite du texte, sous le repère, déclaré par la page (/home/ada)");
   await page.locator(".terminal-accueil button.principal", { hasText: "Démarrer" }).click();
   await etat(page).filter({ hasText: "VM prête" }).waitFor({ timeout: 180000 });
-  for (const debut of ["wget ", "bash preparer.sh", "cd atelier", "cd notes", "cd ../projets/site"]) {
+  await attendreTexte(page, "État de départ installé", 180000);
+  for (const debut of ["cd atelier", "cd notes", "cd ../projets/site"]) {
     await executer(page, debut).scrollIntoViewIfNeeded();
     await executer(page, debut).click();
-    await attendreTexte(page, debut.startsWith("cd ../") ? "~/atelier/projets/site$" : debut.startsWith("bash") ? "Dossier de travail" : debut, 120000);
+    await attendreTexte(page, debut.startsWith("cd ../") ? "~/atelier/projets/site$" : debut, 120000);
   }
   await attendre(2500);   // le tracé (une pastille toutes les 0,45 s), puis l’état qui suit
   r = await repere();
   verifier(r.source === "vm" && r.cwd === "/home/ada/atelier/projets/site" && r.ici === "site/" && r.pastilles === 3,
     `page de cours : repère lu dans la VM après « cd ../projets/site » (${r.cwd}, « vous êtes ici » sur ${r.ici}, ${r.pastilles} pastilles)`);
   await page.screenshot({ path: path.join(captures, "cours-arbo-1280x650.png") });
+  // « Remettre à l’état de départ » : la VM redémarre, l’état de départ se réinstalle, le repère repart de ~.
+  page.once("dialog", d => d.accept());
+  await page.locator(".terminal-actions button", { hasText: "Remettre" }).click();
+  await attendreTexte(page, "État de départ installé", 180000);
+  await etat(page).filter({ hasText: "VM prête" }).waitFor({ timeout: 180000 });
+  await attendre(1500);
+  r = await repere();
+  verifier(r.source === "vm" && r.cwd === "/home/ada" && await page.locator(".contexte .arbre .nom", { hasText: "atelier/" }).count() > 0,
+    "page de cours : « Remettre à l’état de départ » redémarre la VM, ~/atelier réinstallé, repère revenu à /home/ada");
   await page.setViewportSize({ width: 390, height: 800 });
   await attendre(400);
   r = await repere();

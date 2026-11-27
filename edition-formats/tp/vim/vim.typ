@@ -25,6 +25,7 @@
   date: [novembre 2026],
   illustration-couverture: "couches",
   terminal: ("vm", "compagnon"),
+  depart: (script: "edition-formats/tp/vim/preparer.sh", cree: "~/dojo", ici: "~"),   // état de départ : la VM l’installe à son démarrage
   liens: (
     ([Diapos du cours], pdf),
     ([Fichiers du dojo], "https://github.com/jmchantrein/Cours/tree/main/edition-formats/tp/vim/dojo"),
@@ -45,19 +46,22 @@ modes (#d("vim-modes")[Les modes de Vim et leurs transitions]), la grammaire op�
   - Le Vim complet, pas une version réduite : `sudo apt install vim`. Sur Debian, la commande `vi` peut être
     fournie par `vim-tiny`, une version réduite, sans `vimtutor` ; dans une image Alpine, `vi` est celui de
     BusyBox, réduit lui aussi.
-  - Les fichiers du dojo, dans `~/dojo` : la commande ci-dessous les extrait de l’archive du dépôt des cours.
+  - Les fichiers du dojo, dans `~/dojo` : dans le terminal de cette page (VM), ils sont déjà là ; sur votre machine,
+    la commande ci-dessous les extrait de l’archive du dépôt des cours.
 ]
 
-#terminal[```console
+#terminal(compagnon: true)[```console
 $ cd
 $ curl -fsSL https://github.com/jmchantrein/Cours/archive/refs/heads/main.tar.gz | tar -xz --strip-components=4 Cours-main/edition-formats/tp/vim/dojo
+```]
+
+#terminal[```console
 $ ls dojo
 1-survivre  2-vimrc  3-copier  4-remplacer  5-commenter  6-corriger
 ```]
 
-#note(role: "precaution")[Le terminal de cette page, quand il tourne dans une VM du navigateur, n’a pas de réseau :
-son `curl` livre pourtant ces fichiers, que l’image de la VM embarque. Si `curl` échoue ailleurs, travaillez dans
-votre propre terminal, ou téléchargez les fichiers un à un depuis le lien « Fichiers du dojo ».]
+#note(role: "precaution")[La VM du terminal de cette page pose le dojo à son démarrage (`preparer.sh`, à côté de
+l’énoncé). Si `curl` échoue sur votre machine, téléchargez les fichiers un à un depuis le lien « Fichiers du dojo ».]
 
 #bloc[La méthode, pour chaque kata][
   + Copiez le fichier de départ, ouvrez la copie dans Vim, transformez-la, enregistrez et quittez (`:wq`).

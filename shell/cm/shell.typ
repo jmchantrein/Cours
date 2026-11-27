@@ -1,4 +1,4 @@
-// Cours « Shell : Bash, sed et awk » — Typst + Touying.
+// Cours « Fondements de l’administration système GNU/Linux » (anciennement « Shell : Bash, sed et awk ») — Typst + Touying.
 // Compilation (depuis la racine du dépôt) :
 //   typst compile --root . --font-path commun/fonts shell/cm/shell.typ build/shell/shell.pdf
 // Une diapo = un titre `==` ; une section (surtitre bleu) = un titre `=`.
@@ -10,7 +10,7 @@
 
 #show: cours-theme.with(
   auteur: [Jean-Mathieu Chantrein],
-  titre-court: [Shell : Bash, sed et awk],
+  titre-court: [Fondements de l’administration système GNU/Linux],
 )
 
 // Un fichier d’exemple, affiché tel qu’il est dans exemples/ (celui que rejouer.sh exécute).
@@ -19,7 +19,7 @@
 // Version des outils, rappelée dans les notes de l’orateur.
 #let versions = [Sortie réelle : conteneur debian:13-slim (Debian 13.8), bash 5.2.37, locale C.UTF-8 (messages en anglais), rejouée par shell/cm/rejouer.sh.]
 
-#couverture(illustration: "tube")[Shell][Bash, sed et awk : les outils de l’administrateur][Jean-Mathieu Chantrein][25 novembre 2026]
+#couverture(illustration: "tube", surtitre: "Cours · le shell Bash, sed et awk")[Fondements][de l’administration système #box[GNU/Linux]][Jean-Mathieu Chantrein][25 novembre 2026]
 #speaker-note[Cours tiré des parties Bash, sed et awk du cours « Outils de l’administration système » (sources/outils\_admin\_sys/partie\_1) et des scripts d’exploration « subtilités de Bash ».]
 
 // ======================================================================
@@ -107,43 +107,6 @@
     annote((ligne: 11, texte: "cryptographie"), clic: 6, legende: [colonne 3 : `domaine`]),
   ),
   note: [#versions D’abord l’existence du fichier (ls), puis son contenu (cat), puis sa structure : un clic par élément. La colonne de gauche dit où l’on est : le répertoire de travail \~/atelier, qui contient les 31 fichiers d’exemple du cours (ls | wc -l) ; les TP le fournissent. Le fichier vient du dojo sed et awk du site (écrit pour lui, sans droits tiers) : 9 lignes, l’en-tête et 8 pionnières. « materiel » et « reseau » sont écrits sans accent exprès : l’exercice sed les corrige. Les lignes ne sont pas triées par année (Goldwasser après Perlman), exprès aussi : le tri sert dans l’exercice des tubes. Les colonnes n’ont pas de largeur fixe : seul le ; les sépare.],
-)
-
-== Lire une ligne de commande <ligne-de-commande>
-
-#anime(
-  contexte: atelier(voir: ("pionnieres.csv",)),
-  commande-annotee(taille: px(44),
-    ("$ wc -l pionnieres.csv", ("9 pionnieres.csv", 6)),
-    annote("$", cote: "haut", clic: 2, reste: true, legende: [l’invite : `$` pour un utilisateur, `#` pour root]),
-    annote("wc", cote: "haut", clic: 3, reste: true, legende: [la commande : `wc` compte (_word count_)]),
-    annote("-l", cote: "haut", clic: 4, reste: true, legende: [une option : `-l`, compter les lignes]),
-    annote((ligne: 0, texte: "pionnieres.csv"), cote: "haut", clic: 5, reste: true, legende: [un argument : ce sur quoi elle porte]),
-    annote("9", ligne: 1, clic: 6, reste: true, legende: [9 lignes : l’en-tête et 8 pionnières]),
-  ),
-  source-de: link("https://www.gnu.org/software/coreutils/manual/coreutils.html")[GNU coreutils, manuel],
-  note: [#versions Un morceau par clic. Le 9 se recompte sur le fichier vu à la diapositive précédente. Les espaces séparent les morceaux : c’est Bash qui coupe la ligne en mots (partie « Guillemets et expansions »).],
-)
-
-== Une option peut prendre un argument
-
-#let _tete = _l.slice(0, 3)
-#anime(
-  contexte: atelier(voir: ("pionnieres.csv",)),
-  scene(4, k => stack(spacing: px(18),
-    terminal-annote(etape: k, taille: px(26),
-      ("$ head -n 3 pionnieres.csv", .._tete.map(x => (x, 2))),
-      annote("-n 3", cote: "haut", clic: 1, legende: [l’option `-n` et *son* argument, `3` : trois lignes]),
-      annote((ligne: 0, texte: "pionnieres.csv"), cote: "haut", clic: 2, legende: [l’argument de `head` : le fichier]),
-    ),
-    des(k, 3, terminal-annote(etape: k, taille: px(26),
-      ("$ head --lines=3 pionnieres.csv", .._tete),
-      annote("--lines=3", cote: "haut", clic: 3, legende: [option longue : la même, en toutes lettres ; même sortie]),
-    )),
-    des(k, 4, note(role: "pratique", taille: px(24))[Se documenter : `man head` (le manuel ; `q` pour quitter), `head --help` (l’aide courte) ; `type cd` dit si `cd` est interne à Bash (alors `help cd`).]),
-  )),
-  source-de: link("https://www.gnu.org/software/coreutils/manual/html_node/head-invocation.html")[GNU coreutils, head invocation],
-  note: [#versions Le 3 n’est pas un fichier : c’est l’argument de l’option -n. Une option courte peut coller son argument (-n3) ; une option longue le donne après = (--lines=3) ou après une espace (--lines 3). Sortie de type cd : « cd is a shell builtin » ; de type wc : « wc is hashed (/usr/bin/wc) », un programme. Pour une commande interne : help cd, ou man bash.],
 )
 
 == Décoder une ligne de ls -l <ls-l>
@@ -263,7 +226,7 @@
 == Rediriger 1 ou 2 vers un fichier : > et 2> <redirections>
 
 // Fichier au-dessus du terminal pour 1, au-dessous pour 2 : les fils ne se croisent pas.
-#let ls-base = (x: 200, y: 160, l: 220, h: 240, genre: "processus", titre: "ls")
+#let ls-base = (x: 170, y: 160, l: 200, h: 240, genre: "processus", titre: "ls")
 #let fichier-haut = (x: 540, y: 0, l: 672, h: 100, genre: "fichier", taille: px(18))
 #let _cmd1 = "$ ls pionnieres.csv absent.txt > sortie.txt"
 #anime(
@@ -272,7 +235,7 @@
     voir: if k >= 5 { ("erreurs.txt",) } else if k >= 2 { ("sortie.txt",) } else { () }, absent: ("absent.txt",)),
   scene(5, k => schema-etats(hauteur: 590, etape: k, taille: px(24),
     noeuds: (
-      clavier: (..clavier, y: 225, l: 140), ls: ls-base,
+      clavier: (..clavier, y: 225, l: 120), ls: ls-base,
       ecran: (x: 540, y: 125, l: 672, h: 330, genre: "terminal", titre: "Terminal", taille: px(18), contenu: ()),
       txt: (x: 0, y: 470, l: 400, genre: "texte", taille: px(26), contenu: [Au départ, 1 et 2 vont à l’écran.]),
     ),
@@ -320,7 +283,7 @@
     voir: if k <= 3 { ("sortie.txt",) } else { ("pionnieres.csv",) }),
   scene(5, k => schema-etats(hauteur: 590, etape: k, taille: px(24),
     noeuds: (
-      clavier: (..clavier, y: 125, l: 140), ls: (..ls-base, y: 60),
+      clavier: (..clavier, y: 125, l: 120), ls: (..ls-base, y: 60),
       sortie: (..fichier-haut, h: 150, titre: "sortie.txt", contenu: ("pionnieres.csv",)),
       ecran: (x: 540, y: 180, l: 672, h: 230, genre: "terminal", titre: "Terminal", taille: px(19),
         contenu: ("$ ls pionnieres.csv > sortie.txt",)),

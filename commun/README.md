@@ -41,7 +41,7 @@ valeurs et les écarts sont en tête de `charte.typ`).
   `#colonnes(bloc[Titre][- point], bloc(role: "pratique")[Titre][- point])`
 - Note courte : `#note(role: "pratique")[...]` ; encadré à libellé : `#encadre(role: "precaution", libelle: [En vrai :])[...]`.
 - Plusieurs questions et réponses sur une diapo : `#corriges(note: […], (1, [question], reponse[…]), …)`.
-- Couverture : `#couverture(illustration: "vm")[titre][sous-titre][auteur][date]` ; clôture, même design et même
+- Couverture : `#couverture(illustration: "vm", surtitre: […])[titre][sous-titre][auteur][date]` (surtitre par défaut : « Cours ») ; clôture, même design et même
   illustration, en fin de cours : `#cloture(illustration: "vm")[Merci][Des questions ?][auteur][lien]`. Illustrations
   (dessinées dans `charte.typ`, une par cours) : `"vm"` (virtualisation : trois VM sur un hyperviseur), `"couches"`
   (conteneurisation : couches d’image), `"tube"` (shell : une invite, puis des lignes de texte filtrées par deux tubes `|`), `"graphe"` (git : main et
@@ -51,7 +51,8 @@ valeurs et les écarts sont en tête de `charte.typ`).
 - Corrigé de TP : `#corrige(n, [question], uncover("2-", reponse(terminal[...])))` ; la question porte le vert
   clair du rôle `question`, la réponse une barre vert foncé qui apparaît avec elle.
 - Machine lancée par la commande au-dessus, dans un terminal : `#cadre([VM (niveau 1)], niveau: 1)[...]`.
-- Terminal : `#terminal[```...```]` ; une ligne `$ ` colore l’invite, une ligne `# ` grise le commentaire.
+- Terminal : `#terminal[```...```]` ; une ligne `$ ` colore l’invite, une ligne `# ` grise le commentaire. Un code
+  en ligne (`` `ls` ``) posé dans un terminal prend la couleur du texte du terminal, non le bleu du texte courant.
 - Bandeau sombre (origine, éditeur) : `#bandeau[...]`.
 - Source d’un fait, en bas de diapo : `#source[#link("https://…")[…]]`.
 - Touche du clavier, dans le texte : `#touche[Échap]`, `#touche[Ctrl+b]`.
@@ -119,6 +120,11 @@ départ, une action, un état d’arrivée ; chaque clic fait avancer l’action
   pourquoi ; au dernier clic, la sortie réelle prouve le résultat (à droite, ou `sortie-dessous: true`). `arguments("Mon", "dossier")` dessine, dans une
   légende, les arguments qu’une commande reçoit.
 - Les distinctions tiennent sans la couleur : épaisseur, motif du trait, cadre, numéro, étiquette.
+- **Contraste des traits** : un trait se lit sur tout fond qu’il traverse, dans chaque variante, sans réglage à la main.
+  Les liens de `schema-etats` et les flèches de la carte de progression passent sur un halo de la couleur du fond
+  (`fleche-pose(…, halo: c.fond)`) : une flèche sombre qui entre dans un terminal ou en sort reste détachée du fond nuit.
+  Un trait de légende d’`annote` est clair (`c.prompt`) tant qu’il est dans le terminal, de la couleur de la légende
+  au-dehors ; les pastilles ont un liseré blanc. Un composant nouveau tire de même la couleur de ses traits de son fond.
 - Exemples : `shell/cm/shell.typ`, des sections « Bash · Les bases » à « Bash · Guillemets et expansions ».
 
 ## Animer une diapo
@@ -176,9 +182,10 @@ puis la notion suivante. Ce n’est ni un TP (pas d’énoncé, pas de corrigé 
 essaie ; les exercices longs restent au TP du module, vers lequel elle renvoie), ni un polycopié (ce qui se voit dans
 le terminal ne se redit pas). Elle suit les règles de progression de `structurer-diapos-cours` : prérequis en
 ouverture, pas de notion avant celles qui la composent, un fichier montré avant d’être manipulé. Un module peut avoir
-ses diapos et sa page : mêmes commandes, même arborescence, même vocabulaire. Exemple : `shell/pages/arbo/`.
+ses diapos et sa page : la page reprend les exemples des diapos, dans le même ordre (les diapos font foi), et y
+ajoute la pratique ; d’autres exemples vont au TP. Exemple : `shell/pages/arbo/`.
 
-- Page : `#show: page-web.with(cours: true, terminal: ("vm", "compagnon"), contexte: (…), …)`. Sur un écran large
+- Page : `#show: page-web.with(cours: true, terminal: ("vm", "compagnon"), depart: (…), contexte: (…), …)`. Sur un écran large
   (64 rem et plus), le texte défile à gauche et une colonne reste en vue à droite : le repère de contexte en haut,
   le terminal dessous, ouvert d’emblée ; terminal réduit, le repère prend la colonne. Sur un écran étroit, le repère
   se réduit à une ligne sous le bandeau (bouton « Arbre » pour le dessin) et le terminal redevient un volet en bas.
@@ -264,16 +271,23 @@ cours »).
   coreutils, Bash, less, grep et tmux : 0,4 Mo compressés). Elle n’a ni `shellcheck` (introuvable pour Alpine x86),
   ni Python, `yq`, Docker, SSH : un TP qui en demande déclare `("compagnon",)`, ou dit à l’endroit voulu que
   l’étape demande le compagnon. Ses fichiers sont en mémoire : la taille d’un dossier dans `ls -l` n’est pas celle d’un disque.
-- Fichiers de départ d’un TP en mode `vm` (`preparer.sh`, `dojo/`…) : ils restent dans le dossier du TP, hors de
-  `corrige/`. `construire-vm.sh` embarque, de chaque TP et de chaque page de cours dont la source déclare `"vm"`,
-  ses fichiers hors `corrige/`,
-  `tester.sh`, `*.typ` et `index.html`, sous `/usr/share/cours/Cours-main/<chemin du dépôt>/`. Sans réseau, le
-  `wget` et le `curl` de la VM (`vm/telecharger`) servent ces fichiers aux adresses que les énoncés emploient
-  (`https://jmchantrein.github.io/Cours/<chemin>` et l’archive `…/archive/refs/heads/main.tar.gz`) : la première
-  étape d’un énoncé (« téléchargez `preparer.sh` ») se clique telle quelle. Aucune copie n’est à maintenir dans
-  `commun/terminal/`.
+- **État de départ.** Une page (TP ou page de cours) qui déclare le mode `vm` déclare aussi l’état que ses
+  commandes supposent : `page-web(depart: (script: "shell/tp/premiers-pas/preparer.sh", cree: "~/atelier", ici: "~"))`.
+  `script` (chemin depuis la racine du dépôt) est un script versionné, dans le dossier d’une page, hors de `corrige/`,
+  qui crée dossiers, fichiers et contenus ; `ici` est le répertoire d’arrivée ; `(ici: "~")` seul : rien à créer.
+  `construire-vm.sh` embarque, de chaque TP et de chaque page de cours dont la source déclare `"vm"`, ses fichiers
+  hors `corrige/`, `tester.sh`, `*.typ` et `index.html`, sous `/usr/share/cours/Cours-main/<chemin du dépôt>/`.
+  La page passe `depart=` et `ici=` au noyau ; `vm/init` lance le script sous le compte `ada`, puis ouvre le shell
+  dans `ici` : l’état est en place avant la première invite, sans rien demander à l’étudiant. Le bouton
+  « Remettre à l’état de départ » redémarre la VM : son système, en mémoire, repart de l’image, et le script se
+  relance. Les commandes qui installent l’état chez soi vont dans `terminal(compagnon: true)` : la VM ne les
+  exécute pas (son « Exécuter » le dit) et `tester-vm.mjs` ne les rejoue pas. Sans réseau, le `wget` et le `curl`
+  de la VM (`vm/telecharger`) servent encore ces fichiers aux adresses du site et de l’archive du dépôt.
 - Mode `compagnon` : le vrai shell de l’étudiant, par l’exécutable `iadmin-terminal` (`terminal/compagnon/`, en Go),
-  qui écoute sur `127.0.0.1` avec un jeton à usage unique, une liste d’origines et un seul client. La page
+  qui écoute sur `127.0.0.1` avec un jeton à usage unique, une liste d’origines et un seul client ; il est construit
+  pour Linux seulement (amd64, arm64 ; WSL sous Windows). Rien n’y est installé d’office : le volet propose la
+  commande qui installe l’état de départ de la page (`cd && curl -fsSLO … && bash …`, qui crée un dossier à part,
+  `cree`), et le bouton « Installer l’état de départ » la lance après confirmation. La page
   [`terminal/compagnon.typ`](terminal/compagnon.typ) (publiée en `commun/terminal/`) explique son téléchargement.
 
 Fichiers de `terminal/` :
@@ -286,7 +300,7 @@ Fichiers de `terminal/` :
 - `dependances.txt` : version, SHA-256 et adresse de chaque fichier tiers ; `preparer.sh [--vm]` les télécharge
   dans `vendor/` et, avec `--vm`, construit l’image (`construire-vm.sh`, Docker ; `vm/init`, `vm/profil.sh`) et son
   manifeste `vendor/vm/manifeste.json`.
-- `compagnon/` : le code Go (`go.mod`, `go.sum`), `construire.sh` (exécutables statiques Linux et macOS, amd64 et
+- `compagnon/` : le code Go (`go.mod`, `go.sum`), `construire.sh` (exécutables statiques Linux, amd64 et
   arm64, et `SHA256SUMS`, dans `compagnon/dist/`), `tester.py` (protocole et refus).
 - `LICENCES.md` : licences et sources des composants publiés.
 
@@ -299,9 +313,10 @@ et `racine` suffit pour retrouver `commun/terminal/vendor/`. `APERCU_BRANCHE` aj
 Tester, depuis la racine du dépôt, après `preparer.sh --vm` et `compagnon/construire.sh` :
 
     node commun/terminal/tester-vm.mjs               # démarre la VM dans Node, vérifie ses outils, puis rejoue
-                                                     # chaque TP en mode vm (fichiers de départ, commandes de l’énoncé)
-                                                     # et chaque page de cours (chaque sortie, et le repère déclaré
-                                                     # contre le réel, après chaque commande)
+                                                     # chaque TP et page de cours en mode vm, dans une VM neuve démarrée
+                                                     # sur son état de départ (fichiers attendus, commandes de l’énoncé) ;
+                                                     # une page de cours : chaque sortie, le repère déclaré contre le
+                                                     # réel, et seule chaque section qui part de l’état de départ
     python3 -I commun/terminal/compagnon/tester.py   # protocole, jeton, origine, un seul client
     node commun/terminal/tester-navigateur.js        # Chromium : clics, deux modes, cache, refus, captures
 

@@ -22,11 +22,13 @@ import os from "node:os";
 import path from "node:path";
 
 const ici = import.meta.dirname;
+const utf8demarrage = s => Buffer.from(s, "latin1").toString("utf8");
 const racine = path.resolve(ici, "../..");
 const vendor = path.join(ici, "vendor");
 
 // ---------------------------------------------------------------- la VM, pilotée comme la page
-async function demarrerVM() {
+// etat : l'état de départ de la page (data-depart, data-ici), passé au noyau comme le fait terminal.js.
+async function demarrerVM(etat = {}) {
   const { V86 } = createRequire(import.meta.url)(path.join(vendor, "libv86.js"));
   const manifeste = JSON.parse(readFileSync(path.join(vendor, "vm/manifeste.json"), "utf8"));
   const lire = f => { const b = readFileSync(path.join(vendor, f)); return b.buffer.slice(b.byteOffset, b.byteOffset + b.length); };
@@ -35,7 +37,7 @@ async function demarrerVM() {
     wasm_fn: async env => (await WebAssembly.instantiate(lire("v86.wasm"), env)).instance.exports,
     bios: { buffer: lire("seabios.bin") }, vga_bios: { buffer: lire("vgabios.bin") },
     bzimage: { buffer: lire("vm/bzImage") }, initrd: { buffer: lire("vm/initrd.gz") },
-    cmdline: "console=ttyS0,115200 rdinit=/init quiet terminal=100x30",
+    cmdline: "console=ttyS0,115200 rdinit=/init quiet terminal=100x30" + (etat.depart ? ` depart=${etat.depart}` : "") + (etat.ici ? ` ici=${etat.ici}` : ""),
     memory_size: manifeste.memoire_mo * 1024 * 1024, autostart: true, disable_keyboard: true, disable_mouse: true,
   });
   let sortie = "", attente = null, compte = 0;
@@ -52,7 +54,8 @@ async function demarrerVM() {
     const minuteur = setTimeout(() => { attente = null; rate(new Error(`délai dépassé (${motif})`)); }, delai);
     attente = { motif, depuis, fini, minuteur };
   });
-  await attendre(/\x1b\]0;cours-terminal-pret\x07/, 240_000);
+  await attendre(/\x1b\]0;cours-terminal-pret\x07/, 300_000);
+  if (/Échec de l'installation de l'état de départ/.test(utf8demarrage(sortie))) throw new Error(`état de départ : échec de ${etat.depart}`);
   await attendre(INVITE, 60_000, sortie.indexOf("cours-terminal-pret\x07"));
   const secondes = ((Date.now() - debut) / 1000).toFixed(1);
   const utf8 = s => Buffer.from(s, "latin1").toString("utf8");
@@ -131,7 +134,7 @@ const normaliser = s => s.replace(/\x1b=/g, "").split("\n")
     .replace(/\/(root|home\/ada)\//g, "~/").replace(/\s+/g, " ").trim()).join("\n").trim();
 
 // ---------------------------------------------------------------- ce que chaque TP en mode vm doit montrer
-// existe     fichiers de départ présents après la première étape
+// existe     fichiers de l'état de départ, présents dès l'invite (la VM a lancé le script déclaré par la page)
 // sauter     commandes interactives ou qui demandent le compagnon (non rejouées)
 // fixtures   fichiers que l'étudiant écrit à la main (éditeur) : ceux du corrige/, posés dans <dossier> avant la commande
 //            qui correspond (la <fois>-ième fois ; sans « avant », avant toutes)
@@ -199,17 +202,26 @@ async function rejouerTP(tp) {
     execFileSync("typst", ["compile", "--root", racine, "--font-path", path.join(racine, "commun/fonts"), "--features", "html",
       "--format", "html", path.join(racine, tp, `${nom}.typ`), html], { stdio: ["ignore", "ignore", "ignore"] });
     const source = readFileSync(html, "utf8");
+    // L'état de départ que la page déclare (page-web(depart: …)), installé par la VM avant la première invite.
+    const attribut = n => (source.match(new RegExp(`<body[^>]* data-${n}="([^"]*)"`)) || [])[1];
+    const etatDepart = { depart: attribut("depart"), ici: attribut("ici") };
+    if (!etatDepart.ici) throw new Error("la page ne déclare pas son état de départ (page-web(depart: …))");
     const etapes = lireEnonce(source);
     if (!etapes.length) throw new Error("aucune commande trouvée dans l'énoncé");
     const declare = page && source.match(/<script type="application\/json" id="contexte-declare">([\s\S]*?)<\/script>/);
     const etatsPage = declare ? modele.etatsDeclares(JSON.parse(entites(declare[1])), etapes.map(e => e.commande)) : null;
     let rang = 0, contextesVerifies = 0;
-    const vm = await demarrerVM();
+    const vm = await demarrerVM(etatDepart);
     // Sans pager : les touches de fin de commande que ce script tape gêneraient less (git log, git config --list).
     await vm.executer("export PAGER=cat GIT_PAGER=cat");
     const echecs = [], sorties = [], derniere = new Map();
     let kata = null;
     const vues = new Map();
+    // L'état de départ, avant toute commande : les fichiers attendus sont là.
+    if (spec.existe) {
+      const t = (await vm.executer(`for f in ${spec.existe.join(" ")}; do test -e "$f" || echo MANQUE:$f; done`)).sortie;
+      if (/MANQUE/.test(t)) echecs.push(`état de départ incomplet : ${t.replace(/\n/g, " ")}`);
+    }
     for (const c of spec.debut || []) await vm.executer(c);
     for (const f of (spec.fixtures || []).filter(f => !f.avant)) await poser(vm, f.dossier, f.fichiers);
     for (const { commande, annonce } of etapes) {
@@ -252,14 +264,7 @@ async function rejouerTP(tp) {
       sorties.push(e); derniere.set(commande.split("\n")[0], e);
       if (r.bloque) echecs.push(`bloquée : ${commande.split("\n")[0]}`);
       else if (MOTIFS_ECHEC.test(r.sortie) && !MOTIFS_ECHEC.test(annonce) && !(spec.tolere || []).some(t => t.test(commande))) echecs.push(`échec inattendu : ${commande.split("\n")[0]} → ${r.sortie.split("\n")[0]}`);
-      // Fichiers de départ : vérifiés dès que la première étape a lancé son script ou extrait l'archive.
-      if (spec.existe && /^bash preparer\.sh|tar -xz/.test(commande) && !spec.verifie) {
-        spec.verifie = true;
-        const t = (await vm.executer(`for f in ${spec.existe.join(" ")}; do test -e "$f" || echo MANQUE:$f; done`)).sortie;
-        if (/MANQUE/.test(t)) echecs.push(`fichiers de départ absents : ${t.replace(/\n/g, " ")}`);
-      }
     }
-    if (spec.existe && !spec.verifie) echecs.push("la première étape n'a pas posé les fichiers de départ (ni preparer.sh ni tar)");
     // Première et dernière commande : la sortie annoncée (comparée sans les écarts connus).
     const comparables = sorties.filter(e => e.annonce && !(spec.ecarts || []).some(r => r.test(e.commande)));
     for (const e of [sorties[0], sorties.at(-1)]) {
@@ -276,7 +281,28 @@ async function rejouerTP(tp) {
       if (reussis !== 6) echecs.push(`katas réussis : ${reussis} sur 6`);
     }
     vm.fermer();
-    const lignes = page ? `${sorties.length} commandes rejouées, chaque sortie comparée à la page, contexte comparé après ${contextesVerifies} commandes`
+    // Page de cours : chaque section qui suppose l'état de départ tel quel (le contexte déclaré avant sa première commande
+    // est celui de l'arrivée) se rejoue seule, dans une VM neuve, sans les commandes qui la précèdent.
+    let sectionsSeules = 0;
+    if (page && etatsPage) {
+      const sections = source.split(/<h2[ >]/).slice(1).map(lireEnonce).filter(c => c.length);
+      const empreinte = e => JSON.stringify([e.cwd, e.dossiers]);
+      let debut = 0;
+      for (const cmds of sections) {
+        const i = debut; debut += cmds.length;
+        if (i === 0 || empreinte(etatsPage[i]) !== empreinte(etatsPage[0])) continue;
+        const vm2 = await demarrerVM(etatDepart);
+        await vm2.executer("export PAGER=cat GIT_PAGER=cat");
+        for (const { commande, annonce } of cmds) {
+          const r = await vm2.executer(commande);
+          const ls = /^ls(\s+-a)?(\s|$)/.test(commande);
+          if (ls ? motsLs(r.sortie) !== motsLs(annonce) : normaliser(r.sortie) !== normaliser(annonce))
+            echecs.push(`section rejouée seule, VM neuve : ${commande}\n    annoncé : ${JSON.stringify(normaliser(annonce))}\n    obtenu  : ${JSON.stringify(normaliser(r.sortie))}`);
+        }
+        vm2.fermer(); sectionsSeules++;
+      }
+    }
+    const lignes = page ? `${sorties.length} commandes rejouées, chaque sortie comparée à la page, contexte comparé après ${contextesVerifies} commandes, ${sectionsSeules} sections rejouées seules dans une VM neuve`
       : `${sorties.length} commandes rejouées, 1re et dernière comparées à l'énoncé`;
     return { tp, secondes: vm.secondes, resume: lignes, echecs, comparables: comparables.length };
   } finally { rmSync(tmp, { recursive: true, force: true }); }
