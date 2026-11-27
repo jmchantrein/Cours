@@ -28,21 +28,20 @@ Sept cours, à lire dans l’ordre de la page : les outils de l’administrateur
 = Les outils de l’administrateur
 
 #cartes(
-  carte([Fondements de l’administration système GNU/Linux], illustration: "tube")[
-    Les commandes, les tubes, les droits et les fichiers, les scripts robustes, puis sed et awk pour transformer
-    du texte.
-    #actions(
-      bouton(principal: true, [Diapositives], pdf("shell", "projection")),
-      bouton([Page de cours : Le terminal, le shell, la commande], "shell/pages/intro/"),
-      bouton([Page de cours : Se repérer dans l’arborescence], "shell/pages/arbo/"),
-      bouton([TP : Premiers pas dans le shell], "shell/tp/premiers-pas/"),
-      bouton([TP : Droits, liens, recherche et archives], "shell/tp/fichiers/"),
-      bouton([TP : Du pipeline au script robuste], "shell/tp/scripts/"),
-      bouton([TP : sed et awk : exercices progressifs], "shell/tp/sed-awk/"),
-      bouton([Artefact : Bash réécrit la ligne], "shell/artefacts/expansions-bash/"),
-    )
-    #rendus("shell")
-  ],
+  {
+    // Le cours shell : sa page, tirée de son index, mène à ses modules ; deux liens directs vers son début.
+    let index = yaml("shell/progression.yaml")
+    let premier = module-de(index, index.modules.sorted(key: m => m.ordre).first().id)
+    carte([#index.titre], illustration: "tube")[
+      Une suite de modules, du premier terminal ouvert aux scripts robustes, à sed et à awk ; chacun tient pour
+      acquis les précédents.
+      #actions(
+        bouton(principal: true, [Parcourir le cours, module par module], "shell/index.html"),
+        bouton([Module #premier.numero : #premier.titre], "shell/pages/" + premier.id + "/"),
+        bouton([TP : Premiers pas dans le shell], "shell/tp/premiers-pas/"),
+      )
+    ]
+  },
   carte([Éditer et structurer du texte], illustration: "texte")[
     Vim, Markdown, YAML et JSON : l’administrateur travaille en texte brut.
     #actions(

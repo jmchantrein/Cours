@@ -1,21 +1,22 @@
-// Module 1 du cours « Fondements de l’administration système GNU/Linux » : « Se repérer dans l’arborescence » — Typst + Touying, un diaporama par module.
+// Module `arbo` du cours « Fondements de l’administration système GNU/Linux » : « Se repérer dans l’arborescence » — Typst + Touying, un diaporama par module.
 // Compilation (depuis la racine du dépôt) :
 //   typst compile --root . --font-path commun/fonts shell/cm/arbo.typ build/shell/arbo.pdf
 //   (une variante : --input variante=dyslexie ; le site publie shell/cm/arbo-<variante>.pdf)
 // Contenu : les notions du module `arbo` de shell/progression.yaml, et rien de ce qui appartient aux suivants.
-// Il tient pour acquis le module `intro` (terminal, shell, invite, commande, option, argument).
+// Il tient pour acquis les modules `intro` (terminal, shell, invite, commande, option, argument) et `clavier`.
+// Numéros de module : lus dans l’index (partage/carte.typ : numero, module-ref), jamais écrits ici.
 // Fil rouge : l’arborescence que crée shell/tp/premiers-pas/preparer.sh sous ~/atelier (compte ada), celle de la VM du
 // terminal et de la page de cours du même module ; arbre dans partage/atelier.typ.
 // Sorties : rejouées par shell/cm/rejouer-arbo.sh dans un conteneur debian:13-slim (bash 5.2.37, coreutils 9.7),
 // sous le compte ordinaire ada, ls comme dans un terminal de 80 colonnes.
 
 #import "../../commun/theme-cours.typ": *
-#import "partage/carte.typ": carte-progression, module
+#import "partage/carte.typ": carte-progression, module, numero, module-ref, surtitre-module, pied-module
 #import "partage/atelier.typ": racine-tp
 
 #show: cours-theme.with(
   auteur: [Jean-Mathieu Chantrein],
-  titre-court: [Administration système GNU/Linux · module 1],
+  titre-court: pied-module("arbo"),
 )
 
 #let versions = [Sortie réelle : conteneur debian:13-slim, bash 5.2.37, GNU coreutils 9.7, compte ada, \~/atelier préparé par preparer.sh ; rejouée par shell/cm/rejouer-arbo.sh.]
@@ -30,8 +31,8 @@
 // croisent aucune autre ligne.
 #let cmd(k, d, lignes, taille: px(28), ..ann) = des(k, d, terminal-annote(etape: k, taille: taille, lignes, ..ann))
 
-#couverture(illustration: "tube", surtitre: "Fondements de l’administration système GNU/Linux · module 1")[Se repérer dans l’arborescence][Où suis-je, que contient ce répertoire, comment aller ailleurs][Jean-Mathieu Chantrein][27 novembre 2026]
-#speaker-note[Trente minutes. Module 1 de l’index shell/progression.yaml ; il tient pour acquis le module 0 (terminal, shell, invite, commande, option, argument). Les commandes sont celles de la page de cours du module et du TP « Premiers pas dans le shell » (étapes 2 et 4), sur l’arborescence de preparer.sh.]
+#couverture(illustration: "tube", surtitre: surtitre-module("arbo"))[Se repérer dans l’arborescence][Où suis-je, que contient ce répertoire, comment aller ailleurs][Jean-Mathieu Chantrein][27 novembre 2026]
+#speaker-note[Trente minutes. Module #numero("arbo") de l’index shell/progression.yaml ; il tient pour acquis les modules #numero("intro") (terminal, shell, invite, commande, option, argument) et #numero("clavier") (le clavier du shell). Les commandes sont celles de la page de cours du module et du TP « Premiers pas dans le shell » (étapes 2 et 4), sur l’arborescence de preparer.sh.]
 
 // ======================================================================
 = Ouverture
@@ -40,7 +41,7 @@
 
 #slide[
   #carte-progression(ici: "arbo")
-  #speaker-note[La carte est calculée à partir de l’index (shell/progression.yaml) : chaque module tient pour acquis ceux d’où partent ses flèches, et ceux-là seulement. On est au module 1 ; le module 0 est acquis.]
+  #speaker-note[La carte est calculée à partir de l’index (shell/progression.yaml) : chaque module tient pour acquis ceux d’où partent ses flèches, et ceux-là seulement. On est au module #numero("arbo") ; les modules #numero("intro") et #numero("clavier") sont acquis.]
 ]
 
 == Ce qu’on tient pour acquis
@@ -53,7 +54,7 @@
     annote("-a", clic: 3, reste: true, legende: [une option]),
     annote("notes", cote: "haut", clic: 4, reste: true, legende: [un argument]),
   ),
-  note(role: "retenir", taille: px(26))[Une hésitation ? C’est le module #module.at(_q.renvoi).ordre, « #module.at(_q.renvoi).titre » : à revoir avant la suite.],
+  note(role: "retenir", taille: px(26))[Une hésitation ? C’est le #module-ref(_q.renvoi) : à revoir avant la suite.],
   note: [La question vient de l’index (champ ouverture du module). Laisser répondre la salle avant de dévoiler, un mot par clic. Ce que fait -a, et ce qu’est notes, c’est l’objet de ce module.],
 )
 
@@ -246,7 +247,7 @@
       [`a/b`], [chemin relatif : depuis le répertoire courant]),
   )
   #v(px(24))
-  #note(role: "retenir", taille: px(26))[La colonne de gauche des diapos suivantes est cet arbre : le compte, le répertoire courant sur fond bleu, ce que la commande emploie encadré. Suite : module 2, « #module.at("fichiers").titre ».]
+  #note(role: "retenir", taille: px(26))[La colonne de gauche des diapos suivantes est cet arbre : le compte, le répertoire courant sur fond bleu, ce que la commande emploie encadré. Suite : #module-ref("fichiers").]
   #speaker-note[Une énumération : elle s’affiche d’un coup. Le TP « Premiers pas dans le shell » (étapes 2 et 4) et la page de cours du module reprennent ces commandes sur la même arborescence.]
 ]
 

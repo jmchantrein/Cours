@@ -208,7 +208,11 @@ async function rejouerTP(tp) {
     const attribut = n => (source.match(new RegExp(`<body[^>]* data-${n}="([^"]*)"`)) || [])[1];
     const etatDepart = { depart: attribut("depart"), ici: attribut("ici") };
     if (!etatDepart.ici) throw new Error("la page ne déclare pas son état de départ (page-web(depart: …))");
-    const etapes = lireEnonce(source);
+    // Les indices (repliés) donnent les commandes à écrire ou à exécuter ; le corrigé les rejoue avec ses sorties.
+    // Le rejeu suit l'énoncé sans les indices ; une commande d'indice que le corrigé ne contient pas se rejoue à la fin.
+    const INDICE = /<details class="indice">[\s\S]*?<\/details>/g;
+    const etapes = lireEnonce(source.replace(INDICE, ""));
+    const indices = [...source.matchAll(INDICE)].flatMap(m => lireEnonce(m[0]).map(e => e.commande));
     if (!etapes.length) throw new Error("aucune commande trouvée dans l'énoncé");
     const declare = page && source.match(/<script type="application\/json" id="contexte-declare">([\s\S]*?)<\/script>/);
     const etatsPage = declare ? modele.etatsDeclares(JSON.parse(entites(declare[1])), etapes.map(e => e.commande)) : null;
@@ -282,6 +286,14 @@ async function rejouerTP(tp) {
       const reussis = sorties.filter(e => /^diff -u attendu/.test(e.commande) && /^réussi$/m.test(e.sortie)).length;
       if (reussis !== 6) echecs.push(`katas réussis : ${reussis} sur 6`);
     }
+    const rejouees = new Set(etapes.map(e => e.commande));
+    let indicesSeuls = 0;
+    for (const commande of [...new Set(indices)].filter(c => !rejouees.has(c))) {
+      const r = await vm.executer(commande);
+      indicesSeuls++;
+      if (r.bloque) echecs.push(`bloquée (indice) : ${commande}`);
+      else if (MOTIFS_ECHEC.test(r.sortie) && !(spec.tolere || []).some(t => t.test(commande))) echecs.push(`échec (indice) : ${commande} → ${r.sortie.split("\n")[0]}`);
+    }
     vm.fermer();
     // Page de cours : chaque section qui suppose l'état de départ tel quel (le contexte déclaré avant sa première commande
     // est celui de l'arrivée) se rejoue seule, dans une VM neuve, sans les commandes qui la précèdent.
@@ -305,7 +317,7 @@ async function rejouerTP(tp) {
       }
     }
     const lignes = page ? `${sorties.length} commandes rejouées, chaque sortie comparée à la page, contexte comparé après ${contextesVerifies} commandes, ${sectionsSeules} sections rejouées seules dans une VM neuve`
-      : `${sorties.length} commandes rejouées, 1re et dernière comparées à l'énoncé`;
+      : `${sorties.length} commandes rejouées, 1re et dernière comparées à l'énoncé` + (indices.length ? `, ${indices.length} commandes d'indices (${indicesSeuls} hors corrigé, rejouées à la fin)` : "");
     return { tp, secondes: vm.secondes, resume: lignes, echecs, comparables: comparables.length };
   } finally { rmSync(tmp, { recursive: true, force: true }); }
 }

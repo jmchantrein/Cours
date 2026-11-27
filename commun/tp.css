@@ -237,6 +237,17 @@ html.js .predire:not([data-revele]) .predire-explication { display: none; }
   .plan-cours { display: flex; flex-direction: column; }
 }
 
+/* Page d’un cours : ses modules dans l’ordre de l’index, chacun avec ses supports. */
+.module { margin: 0 0 1.6rem; padding: 1rem 1.2rem; background: #fff; border: 1px solid var(--c-filet); border-radius: .6rem; }
+.module h2 { margin: 0 0 .4rem; padding: 0; border: 0; font-size: 1.25rem; }
+.module-numero { display: inline-block; margin-right: .5rem; color: var(--c-bleu); font-size: .8rem; font-weight: 700;
+  letter-spacing: .08em; text-transform: uppercase; }
+.module-but { margin: .3rem 0 .6rem; color: var(--c-ardoise); }
+.module .actions { margin: .4rem 0 0; }
+.a-venir { display: inline-flex; align-items: center; padding: .4rem .9rem; border: 1px dashed var(--c-filet); border-radius: .4rem;
+  color: var(--c-gris); font-size: .9rem; }
+[data-variante="dyslexie"] .module-numero { text-transform: none; }
+
 /* Expériences guidées : une à la fois (tp.js), ou toutes à la suite sans script. */
 .experience { margin: 0 0 .8rem; padding: .6rem .9rem; background: #fff; border: 1px solid var(--c-filet); border-radius: .5rem; }
 .pas-a-pas .experience-titre { display: none; }

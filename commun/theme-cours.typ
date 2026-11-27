@@ -1256,3 +1256,84 @@
     t.split(" ").map(y => text(font: mono, size: taille, tracking: 0pt, fill: if t == "∅" { c.gris } else { c.encre }, y))
       .join(text(font: mono, size: taille, fill: c.gris, "·"))
   })).join(h(px(6)))
+
+// ---------- Clavier : la ligne avant et après une touche ----------
+// Un écran de terminal (fond nuit) : des lignes (une ligne « $ … » colore l’invite) et le curseur, un pavé en vidéo
+// inverse sur le caractère qui le suit, comme à l’écran. curseur: (ligne, colonne) ; auto : après la fin de la
+// dernière ligne ; none : sans curseur. Une ligne vide : "".
+#let ecran-ligne(lignes, curseur: auto, taille: px(34), largeur: 100%) = block(width: largeur, fill: c.nuit,
+  radius: px(10), inset: (x: px(18), y: px(12)), {
+  set text(font: mono, size: taille, fill: c.texte-term, tracking: 0pt, spacing: 100%)
+  set par(leading: 0.5em)
+  let ins(x) = x.replace(" ", "\u{a0}")
+  let (lc, cc) = if curseur == auto { (lignes.len() - 1, lignes.last().clusters().len()) }
+    else if curseur == none { (-1, -1) } else { curseur }
+  let colore(t, premier) = if premier and t.starts-with("$") { text(fill: c.prompt, "$"); ins(t.slice(1)) } else { ins(t) }
+  for (i, l) in lignes.enumerate() {
+    let cl = l.clusters()
+    if i == lc {
+      colore(cl.slice(0, calc.min(cc, cl.len())).join(), true)
+      box(fill: c.texte-term, outset: (y: 0.12em), text(fill: c.nuit, if cc < cl.len() { ins(cl.at(cc)) } else { "\u{a0}" }))
+      if cc + 1 < cl.len() { ins(cl.slice(cc + 1).join()) }
+    } else { colore(l, true) }
+    if i < lignes.len() - 1 { linebreak() }
+  }
+})
+
+// Une rangée « avant → touche(s) → après », et sa légende numérotée : une transformation de la ligne par le clavier.
+// avant, apres : des lignes (curseur au bout), ou (lignes: (…), curseur: (l, c), taille: …).
+#let rangee-touche(n, avant, touches, apres, legende, colonnes: (px(540), px(180), px(540), 1fr), taille: px(34),
+  taille-legende: px(28)) = {
+  let ecran(e) = if type(e) == dictionary {
+    ecran-ligne(e.lignes, curseur: e.at("curseur", default: auto), taille: e.at("taille", default: taille)) }
+    else { ecran-ligne(e, taille: taille) }
+  grid(columns: colonnes, column-gutter: px(24), align: horizon,
+    ecran(avant),
+    align(center, text(size: taille, touches.map(x => touche(x)).join(h(px(8))) + h(px(10)) + sym.arrow.r)),
+    ecran(apres),
+    text(size: taille-legende)[#pastille(n) #legende])
+}
+
+// Une ligne de commande dessinée en grand, pour les raccourcis qui déplacent le curseur ou coupent un morceau.
+// Le curseur est un trait vertical avant le caractère d’indice `curseur` (la ligne a son invite « $ » en tête) ;
+// ancien : l’indice d’où il vient (son ancienne place en tirets, une flèche au-dessus de la ligne) ; retire :
+// (début, fin) d’un morceau coupé, laissé en place, barré et estompé ; ajoute : (début, fin) d’un morceau recollé,
+// souligné. Les traits sont clairs : ils passent sur le fond nuit.
+#let ligne-curseur(texte, curseur: none, ancien: none, retire: none, ajoute: none, taille: px(46)) = context {
+  let cl = texte.clusters()
+  let unite(s, ..args) = text(font: mono, size: taille, tracking: 0pt, spacing: 100%, ..args, s.replace(" ", "\u{a0}"))
+  let cw = measure(unite("0")).width
+  let lh = taille * 1.5
+  let voie = taille * 1.1
+  let (ix, iy) = (px(24), px(14))
+  let x(i) = ix + i * cw
+  let y0 = iy + voie
+  let dans(i, r) = r != none and i >= r.at(0) and i < r.at(1)
+  block(width: x(cl.len() + 1) + ix, height: y0 + lh + iy, fill: c.nuit, radius: px(10), {
+    for (i, ch) in cl.enumerate() {
+      let corps = if dans(i, retire) { unite(ch, fill: c.commentaire.darken(20%)) }
+        else if i == 0 and ch == "$" { unite(ch, fill: c.prompt) } else { unite(ch, fill: c.texte-term) }
+      place(top + left, dx: x(i), dy: y0, box(height: lh, align(horizon, corps)))
+    }
+    if retire != none {
+      place(top + left, line(start: (x(retire.at(0)), y0 + lh / 2), end: (x(retire.at(1)), y0 + lh / 2),
+        stroke: px(4) + c.commentaire.darken(20%)))
+    }
+    if ajoute != none {
+      place(top + left, line(start: (x(ajoute.at(0)), y0 + lh - px(4)), end: (x(ajoute.at(1)), y0 + lh - px(4)),
+        stroke: px(4) + c.prompt))
+    }
+    if ancien != none and ancien != curseur {
+      place(top + left, dx: x(ancien) - px(3), dy: y0 + px(4), rect(width: px(6), height: lh - px(8),
+        stroke: (paint: c.prompt, thickness: px(2), dash: "dashed")))
+      let (xa, xb, yv) = (x(ancien), x(curseur), iy + voie * 0.45)
+      place(top + left, line(start: (xa, y0), end: (xa, yv), stroke: px(3) + c.prompt))
+      place(top + left, line(start: (xa, yv), end: (xb, yv), stroke: px(3) + c.prompt))
+      place(top + left, line(start: (xb, yv), end: (xb, y0 - px(10)), stroke: px(3) + c.prompt))
+      place(top + left, polygon(fill: c.prompt, (xb - px(9), y0 - px(14)), (xb + px(9), y0 - px(14)), (xb, y0 + px(2))))
+    }
+    if curseur != none {
+      place(top + left, dx: x(curseur) - px(3), dy: y0 + px(2), rect(width: px(6), height: lh - px(4), fill: c.texte-term))
+    }
+  })
+}

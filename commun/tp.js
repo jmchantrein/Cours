@@ -28,9 +28,13 @@
     const finDe = new Map(cmds.map(c => [c.fin, c.texte]));
     const deCommande = new Set(cmds.flatMap(c => Array.from({ length: c.texte.split("\n").length }, (_, k) => c.fin - k)));
     const masquer = Boolean(code.closest(".predire"));
+    // Dans un indice ou un corrigé replié, « Écrire » dépose aussi la commande à l’invite, sans la valider :
+    // l’étudiant la relit, la complète, appuie sur Entrée.
+    const replie = Boolean(code.closest("details"));
     code.replaceChildren(...lignes.flatMap((ligne, i) => {
       const fin = i < lignes.length - 1 ? "\n" : "";
-      const apres = executable && finDe.has(i) ? [executer(finDe.get(i)), fin] : [fin];
+      const apres = executable && finDe.has(i)
+        ? [executer(finDe.get(i)), ...(replie && !finDe.get(i).includes("\n") ? [ecrire(finDe.get(i))] : []), fin] : [fin];
       if (ligne.startsWith("$ ")) return [span("invite", "$ "), ligne.slice(2), ...apres];
       if (ligne.startsWith("# ")) return [span("commentaire", ligne + fin)];
       if (masquer && !deCommande.has(i)) return [span("sortie-masquee", ligne + fin)];
@@ -52,6 +56,11 @@
     const b = document.createElement("button");
     b.type = "button"; b.className = "executer"; b.textContent = "Exécuter";
     b.dataset.commande = commande; b.setAttribute("aria-disabled", "true");
+    return b;
+  }
+  function ecrire(commande) {
+    const b = executer(commande);
+    b.className = "ecrire"; b.textContent = "Écrire";
     return b;
   }
   function span(classe, texte) {

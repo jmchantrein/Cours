@@ -14,7 +14,9 @@
 #   que les flèches qui ne s’en déduisent pas.
 # - `introduit` : chaque notion est introduite par un seul module, qui vient avant son premier emploi ; tout
 #   module ultérieur la tient pour acquise et renvoie au module qui l’introduit au lieu de la réexpliquer.
-# - `ordre` : l’ordre proposé des séances, compatible avec le graphe (d’autres ordres le sont aussi).
+# - `ordre` : l’ordre proposé des séances, compatible avec le graphe (d’autres ordres le sont aussi) ; c’est aussi le
+#   numéro du module, que les diaporamas lisent ici (shell/cm/partage/carte.typ) au lieu de l’écrire.
+# - `sous-titre` (facultatif) : le sous-titre de la couverture du diaporama.
 # - `carte` : place du nœud sur la carte (colonne = profondeur dans le graphe ; ligne choisie pour qu’aucune
 #   flèche ne traverse un nœud).
 # - `supports` : les supports recommandés pour enseigner le module, et `pourquoi`. Un diaporama sert ce qui
@@ -54,7 +56,6 @@ modules:
       - "commande, option (courte, longue), argument ; une option peut prendre un argument"
       - "`echo`"
       - "guillemets : un texte, un seul argument"
-      - "complétion (Tab), historique (flèche haut, Ctrl+R), abandonner une ligne (Ctrl+C)"
       - "se documenter : `man`, `--help`, `type`, `help`"
       - "la carte de progression du cours"
     sait-faire: "Lancer une commande avec options et arguments (`whoami`, `date -u`, `echo`), la décomposer en mots, et trouver une option dans `man`."
@@ -82,12 +83,46 @@ modules:
       etat: sans-objet
       raison: "Du vocabulaire et des gestes, pas une règle dont on prédit le résultat ; le seul mécanisme (la ligne coupée en mots) est celui du module expansions, qui a déjà son artefact."
 
-  - id: arbo
+  - id: clavier
     ordre: 1
-    titre: "Se repérer dans l’arborescence"
+    titre: "Le clavier du shell"
+    sous-titre: "Compléter, retrouver, corriger une ligne sans la retaper"
     carte: {col: 1, lig: 1}
-    duree: 30
+    duree: 20
     requiert: [intro]
+    introduit:
+      - "Readline : la bibliothèque qui tient la ligne en cours de frappe (raccourcis d’Emacs)"
+      - "compléter : Tab (commande, nom de fichier, option avec bash-completion), Tab Tab (les possibilités)"
+      - "retrouver : flèches haut et bas, Ctrl+R, `history`"
+      - "se déplacer dans la ligne : Ctrl+A, Ctrl+E, Ctrl+flèche (mot par mot)"
+      - "effacer et recoller : Ctrl+W, Ctrl+U, Ctrl+K, Ctrl+Y"
+      - "l’écran et la session : Ctrl+L, Ctrl+C (abandonner la ligne), Ctrl+D (fin de saisie, fermer le shell)"
+    sait-faire: "Corriger une longue ligne sans la retaper : la rappeler, aller au mot fautif, l’effacer, recoller ce qui a été coupé ; et prédire l’état de la ligne après chaque touche."
+    pourquoi: "À partir du module suivant, on tape des chemins et des commandes longues : compléter et rappeler évitent les fautes de frappe et le travail retapé."
+    ouverture:
+      - {question: "Avant Entrée, qui lit et tient la ligne que vous tapez : le terminal, ou le shell ?", renvoi: intro}
+    supports:
+      recommandes: [diapos, page]
+      pourquoi: "Chaque raccourci est une transformation de la ligne (la ligne avant, la touche, la ligne après) : le diaporama la dessine en salle. Mais un raccourci s’apprend en le faisant : la page de cours est le support principal, où l’étudiant refait chaque geste dans le terminal."
+    diapos:
+      etat: present
+      existant: "shell/cm/clavier.typ (la diapo « Le clavier du shell » du module intro y a été déplacée)"
+    page:
+      etat: a-faire
+      propose: "shell/pages/clavier : les gestes du diaporama dans le même ordre (pilote-shell/clavier-commandes.md), état de départ de premiers-pas (~/atelier) pour la complétion d’un nom de fichier."
+    tp:
+      etat: sans-objet
+      raison: "Des gestes, repris dans chaque TP suivant ; la page de cours les fait refaire un à un."
+    artefact:
+      etat: sans-objet
+      raison: "La page de cours, avec un vrai terminal, est déjà le simulateur."
+
+  - id: arbo
+    ordre: 2
+    titre: "Se repérer dans l’arborescence"
+    carte: {col: 2, lig: 1}
+    duree: 30
+    requiert: [clavier]   # on y tape des chemins : la complétion (Tab) et l’historique servent dès lors
     introduit:
       - "arborescence, racine `/`"
       - "répertoire courant, `pwd`"
@@ -123,9 +158,9 @@ modules:
       extension: "La règle de destination de `cp` et `mv` (vers un répertoire existant : dedans ; sinon : renommage) se joue sur le même arbre."
 
   - id: fichiers
-    ordre: 2
+    ordre: 3
     titre: "Regarder et agir sur des fichiers"
-    carte: {col: 2, lig: 1}
+    carte: {col: 3, lig: 1}
     duree: 40
     requiert: [arbo]
     introduit:
@@ -167,9 +202,9 @@ modules:
       - "`bash exemple_tests.bash` (<tests>) : le mot « script » et `bash fichier` sont introduits ici ; scripts ajoute shebang, droit x et ./"
 
   - id: droits
-    ordre: 3
+    ordre: 4
     titre: "Droits : qui peut lire, écrire, exécuter"
-    carte: {col: 3, lig: 0}
+    carte: {col: 4, lig: 0}
     duree: 40
     requiert: [fichiers]
     introduit:
@@ -211,9 +246,9 @@ modules:
       - "`chmod u+x` (<script-executable>) : vient après ce module"
 
   - id: retrouver
-    ordre: 4
+    ordre: 5
     titre: "Retrouver, lier, archiver"
-    carte: {col: 4, lig: 0}
+    carte: {col: 5, lig: 0}
     duree: 30
     requiert: [droits]   # les liens se lisent dans ls -l (type l, nombre de liens)
     introduit:
@@ -246,9 +281,9 @@ modules:
       geste: "L’étudiant crée un lien physique et un lien symbolique, puis supprime ou déplace l’original : il prédit si `cat` sur chaque lien réussit encore, et voit le compteur descendre, le lien symbolique pendre."
 
   - id: flux
-    ordre: 5
+    ordre: 6
     titre: "Flux, redirections et tubes"
-    carte: {col: 3, lig: 2}
+    carte: {col: 4, lig: 2}
     duree: 45
     requiert: [fichiers]
     introduit:
@@ -293,9 +328,9 @@ modules:
       geste: "L’étudiant range les morceaux d’une ligne (`> f`, `2>&1`, `| sort`) dans l’ordre qu’il veut, prédit où arrive chaque ligne (écran, fichier, tube), puis fait avancer Bash redirection par redirection : l’ordre inverse de `2>&1` laisse les erreurs à l’écran ; `sort f > f` donne un fichier vide."
 
   - id: langage
-    ordre: 6
+    ordre: 7
     titre: "Variables, codes de retour, tests, boucles"
-    carte: {col: 4, lig: 1}
+    carte: {col: 5, lig: 1}
     duree: 45
     requiert: [flux]   # codes de retour de commandes, grep -q
     introduit:
@@ -339,9 +374,9 @@ modules:
       - "« [[ … ]] : le test propre à Bash » : l’exemple `[[ $annee =~ ^[0-9]+$ ]]` passe dans regex"
 
   - id: expansions
-    ordre: 7
+    ordre: 8
     titre: "Guillemets et expansions : ce que Bash fait de la ligne"
-    carte: {col: 5, lig: 1}
+    carte: {col: 6, lig: 1}
     duree: 45
     requiert: [langage]
     introduit:
@@ -387,9 +422,9 @@ modules:
       existant: "expansions-bash"
 
   - id: scripts
-    ordre: 8
+    ordre: 9
     titre: "Écrire et lancer un script"
-    carte: {col: 6, lig: 0}
+    carte: {col: 7, lig: 0}
     duree: 40
     requiert: [expansions, droits, retrouver]   # chmod +x ; tar dans l’exemple de sauvegarde ; nano vient de fichiers
     introduit:
@@ -434,9 +469,9 @@ modules:
       - "<cron> : en annexe du cours, annoncée hors cadre (sa place est un cours d’administration système)"
 
   - id: robustesse
-    ordre: 9
+    ordre: 10
     titre: "Des scripts robustes : s’arrêter, se relire, se tester"
-    carte: {col: 7, lig: 0}
+    carte: {col: 8, lig: 0}
     duree: 45
     requiert: [scripts]
     introduit:
@@ -477,9 +512,9 @@ modules:
       geste: "L’étudiant place une commande qui échoue dans un contexte, coche `-e`, `-u`, `pipefail`, prédit « le script continue » ou « il s’arrête ici », puis l’exécute ; chaque réponse se confronte à Bash réel."
 
   - id: portee
-    ordre: 10
+    ordre: 11
     titre: "Fonctions, portée et processus enfants"
-    carte: {col: 7, lig: 1}
+    carte: {col: 8, lig: 1}
     duree: 30
     requiert: [scripts]
     introduit:
@@ -519,9 +554,9 @@ modules:
       geste: "L’étudiant avance un script ligne à ligne et, à chaque `echo`, écrit sa prévision ; l’artefact montre le cadre où l’affectation a eu lieu et celui où la lecture l’a trouvée — d’où « local ne protège que vers le haut »."
 
   - id: processus
-    ordre: 11
+    ordre: 12
     titre: "Processus et signaux : observer, suspendre, arrêter"
-    carte: {col: 4, lig: 3}
+    carte: {col: 5, lig: 3}
     duree: 30
     requiert: [flux]   # « processus » y est défini ; un nouveau nœud : le sujet ne tient dans aucun autre
     introduit:
@@ -555,9 +590,9 @@ modules:
       geste: "L’étudiant choisit un processus et un signal, prédit lesquels meurent, puis voit le signal se propager ; le cas du PID 1 qui reste debout prépare `--init` du cours conteneurisation."
 
   - id: regex
-    ordre: 12
+    ordre: 13
     titre: "Décrire un motif : expressions régulières"
-    carte: {col: 5, lig: 2}
+    carte: {col: 6, lig: 2}
     duree: 30
     requiert: [flux, langage]   # grep (flux) est le banc d’essai ; [[ =~ ]] suppose [[ … ]] (langage)
     introduit:
@@ -594,9 +629,9 @@ modules:
       geste: "L’étudiant modifie le motif un caractère à la fois et prédit quelles lignes restent ; il bascule basique / étendue et voit `+` changer de sens. Les testeurs d’expressions régulières abondent : l’intérêt propre est la comparaison joker / BRE / ERE."
 
   - id: sed
-    ordre: 13
+    ordre: 14
     titre: "sed : éditer un flux, ligne par ligne"
-    carte: {col: 6, lig: 2}
+    carte: {col: 7, lig: 2}
     duree: 45
     requiert: [regex, expansions]   # le script sed s’écrit entre guillemets simples
     introduit:
@@ -639,9 +674,9 @@ modules:
       geste: "L’étudiant fait défiler les lignes une à une, prédit pour chacune si la plage est ouverte et ce qui sortira ; il déplace les bornes d’une plage ou ajoute `-n` et `p` et voit les lignes doublées ou disparues."
 
   - id: awk
-    ordre: 14
+    ordre: 15
     titre: "awk : des colonnes, un motif, une action"
-    carte: {col: 7, lig: 2}
+    carte: {col: 8, lig: 2}
     duree: 45
     requiert: [sed]   # le cycle ligne par ligne ; regex et guillemets simples en découlent
     introduit:

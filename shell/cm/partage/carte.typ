@@ -22,7 +22,18 @@
 }
 #let directs(m) = m.requiert.filter(p => not m.requiert.any(q => q != p and p in ancetres(q)))
 
-#let carte-progression(ici: none, etiquette: [Vous êtes ici], l: 182, h: 112, px-x: 212, px-y: 140, taille: px(19)) = {
+// Numéro et titre d’un module, lus dans l’index : aucun diaporama ne les écrit en dur.
+//   #numero("arbo") → 2 ; #titre-de("arbo") → « Se repérer dans l’arborescence » ;
+//   #module-ref("arbo") → module 2, « Se repérer dans l’arborescence » ; surtitre et pied de page d’un module.
+#let numero(id) = module.at(id).ordre
+#let titre-de(id) = module.at(id).titre
+#let module-ref(id) = [module #numero(id), « #titre-de(id) »]
+#let surtitre-module(id) = prog.titre + " · module " + str(numero(id))
+#let pied-module(id) = [Administration système GNU/Linux · module #numero(id)]
+
+// Neuf colonnes tiennent dans la largeur d’une diapo (1 664 px) : nœud de 164 px, pas de 186 px ; la pastille du
+// numéro ouvre le titre, dans le même paragraphe, pour lui laisser toute la largeur du nœud.
+#let carte-progression(ici: none, etiquette: [Vous êtes ici], l: 164, h: 120, px-x: 186, px-y: 132, taille: px(18)) = {
   let acquis = if ici != none { ancetres(ici) } else { () }
   let pos(m) = (m.carte.col * px-x, 30 + m.carte.lig * px-y)
   let ncol = calc.max(..mods.map(m => m.carte.col)) + 1
@@ -45,12 +56,11 @@
       let (x, y) = pos(m)
       let est-ici = m.id == ici
       let est-acquis = m.id in acquis
-      pose(x, y, box(width: px(l), height: px(h), radius: px(10), inset: (x: px(10), y: px(8)),
+      pose(x, y, box(width: px(l), height: px(h), radius: px(10), inset: (x: px(10), y: px(6)),
         fill: if est-acquis { roles.reponse.fond } else if est-ici { roles.notion.fond } else { c.fond },
         stroke: if est-ici { px(5) + c.bleu } else if est-acquis { px(2) + roles.reponse.entete } else { px(1.5) + c.filet },
-        grid(columns: (auto, 1fr), column-gutter: px(8),
-          pastille(m.ordre, t: taille + px(1)),
-          text(size: taille, weight: if est-ici { 700 } else { 500 }, hyphenate: false, m.titre))))
+        text(size: taille, weight: if est-ici { 700 } else { 500 }, hyphenate: false,
+          [#pastille(m.ordre, t: taille) #m.titre])))
       if est-ici {
         pose(x, y - 34, box(fill: c.bleu, radius: (top: px(8)), inset: (x: px(10), y: px(4)),
           text(size: px(20), weight: 700, fill: c.fond, etiquette)))

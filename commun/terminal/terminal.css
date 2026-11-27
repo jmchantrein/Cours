@@ -18,6 +18,13 @@
 .terminal .executer:hover { background: var(--c-prompt); color: var(--c-nuit); }
 .terminal .executer[aria-disabled="true"] { border-color: var(--c-commentaire); color: var(--c-commentaire); background: transparent; }
 .terminal .executer[data-etat="envoyee"] { background: var(--c-prompt); color: var(--c-nuit); }
+/* « Écrire » (indices et corrigés) : la commande à l’invite, sans Entrée ; un crayon plutôt qu’un triangle. */
+.terminal .ecrire { margin-left: .4em; padding: 0 .45em; border: 1px dashed var(--c-prompt); border-radius: .25rem;
+  background: transparent; color: var(--c-prompt); font: inherit; font-size: .78em; line-height: 1.5; vertical-align: .05em;
+  cursor: pointer; user-select: none; position: relative; z-index: 1; }
+.terminal .ecrire::before { content: "✎ "; }
+.terminal .ecrire:hover, .terminal .ecrire[data-etat="envoyee"] { background: var(--c-prompt); color: var(--c-nuit); }
+.terminal .ecrire[aria-disabled="true"] { border-color: var(--c-commentaire); color: var(--c-commentaire); background: transparent; }
 
 /* Commandes pour le seul shell de l’étudiant (installer l’état de départ chez soi) : la VM l’a déjà. */
 .terminal[data-mode="compagnon"]::before { content: "Sur votre machine (compagnon) : dans la VM, c’est déjà fait"; display: block;
@@ -74,4 +81,4 @@ body.terminal-ouvert { padding-bottom: var(--terminal-hauteur); }
 
 [data-variante="dyslexie"] .terminal-volet { letter-spacing: .03em; }
 
-@media print { .terminal-volet, .terminal-lanceur, .terminal .executer { display: none; } body.terminal-ouvert { padding-bottom: 0; } }
+@media print { .terminal-volet, .terminal-lanceur, .terminal .executer, .terminal .ecrire { display: none; } body.terminal-ouvert { padding-bottom: 0; } }

@@ -13,6 +13,11 @@
 #import "../../../commun/theme-tp.typ": *
 
 #let diaporama = "../../cm/arbo-projection.pdf"
+// Numéros et titres des modules : lus dans l’index du cours (un module inséré renumérote la page).
+#let index = yaml("../../progression.yaml")
+#let ici = module-de(index, "arbo")
+#let mod(id) = module-de(index, id)
+#let vers(id) = "../../index.html#" + id
 #let tp = "../../tp/premiers-pas/index.html"
 
 // L’arborescence de la VM que la page parcourt : la racine, et ~/atelier tel que preparer.sh le crée.
@@ -28,7 +33,7 @@
 
 #show: page-web.with(
   titre: [Se repérer dans l’arborescence],
-  surtitre: [Fondements de l’administration système GNU/Linux · module 1 · page de cours],
+  surtitre: [#index.titre · module #ici.numero · page de cours],
   sous-titre: [Où suis-je, que contient ce répertoire, comment aller ailleurs],
   auteur: [Jean-Mathieu Chantrein],
   date: [novembre 2026],
@@ -38,7 +43,8 @@
   depart: (script: "shell/tp/premiers-pas/preparer.sh", cree: "~/atelier", ici: "~"),
   contexte: (compte: "ada", depart: "/home/ada", personnel: "/home/ada", arbre: arbre),
   liens: (
-    ([Module précédent : le terminal, le shell, la commande], "../intro/index.html"),
+    ([Le cours], "../../index.html"),
+    ([Module précédent : #mod(ici.precedent).titre], vers(ici.precedent)),
     ([Diaporama du module], diaporama),
     ([TP : Premiers pas dans le shell], tp),
   ),
@@ -62,8 +68,7 @@ il est lu dans la VM après chaque commande.
 #bloc(role: "question")[Ce que vous savez déjà][
   Dans `ls -a notes`, qu’est-ce qui est la commande, l’option, l’argument ?
   #corrige(titre: [Réponse])[
-    `ls` est la commande, `-a` une option, `notes` un argument. Une hésitation ? C’est le module 0, « Le terminal,
-    le shell, la commande » : voyez la diapo
+    `ls` est la commande, `-a` une option, `notes` un argument. Une hésitation ? C’est le #nom-module(index, "intro") : voyez la diapo
     #diapo("../../cm/intro-projection.pdf", "ligne-de-commande")[Lire une ligne de commande] et l’étape 1 du
     #link(tp + "#etape-1")[TP Premiers pas]. Ce que fait `-a`, et ce qu’est `notes`, c’est l’objet de cette page.
   ]
@@ -286,6 +291,6 @@ index.html
 #bloc(role: "pratique")[S’exercer][
   - Le TP #link(tp + "#etape-2")[Premiers pas dans le shell], étapes 2 (se repérer) et 4 (se déplacer), dans le même
     `atelier`, avec d’autres exemples.
-  - Module précédent : #link("../intro/index.html")[Le terminal, le shell, la commande].
-  - Module suivant : « Regarder et agir sur des fichiers », dans ce même atelier.
+  - Module précédent : #link(vers(ici.precedent))[#mod(ici.precedent).titre].
+  - Module suivant : #link(vers(ici.suivant))[#mod(ici.suivant).titre] ; tous les modules : #link("../../index.html")[le cours].
 ]

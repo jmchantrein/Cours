@@ -1,19 +1,20 @@
-// Module 0 du cours « Fondements de l’administration système GNU/Linux » : « Le terminal, le shell, la commande »
+// Module `intro` du cours « Fondements de l’administration système GNU/Linux » : « Le terminal, le shell, la commande »
 // — Typst + Touying, un diaporama par module.
 // Compilation (depuis la racine du dépôt) :
 //   typst compile --root . --font-path commun/fonts shell/cm/intro.typ build/shell/intro.pdf
 //   (une variante : --input variante=dyslexie ; le site publie shell/cm/intro-<variante>.pdf)
 // Contenu : les notions du module `intro` de shell/progression.yaml, pour qui n’a jamais ouvert de terminal ; et la
-// présentation du cours (pourquoi, carte, supports). Pas de colonne de contexte : l’arborescence vient au module 1.
+// présentation du cours (pourquoi, carte, supports). Pas de colonne de contexte : l’arborescence vient au module `arbo`.
+// Numéros de module : lus dans l’index (partage/carte.typ : numero, module-ref), jamais écrits ici.
 // Sorties : rejouées par shell/cm/rejouer-intro.sh comme dans la VM du terminal des pages web (Alpine 3.22.8, Bash
 // 5.2.37, GNU coreutils 9.7, mandoc ; machine « cours », compte ada) : la page de cours du module rejoue ces exemples.
 
 #import "../../commun/theme-cours.typ": *
-#import "partage/carte.typ": carte-progression, module, prog
+#import "partage/carte.typ": carte-progression, module, prog, numero, module-ref, surtitre-module, pied-module
 
 #show: cours-theme.with(
   auteur: [Jean-Mathieu Chantrein],
-  titre-court: [Administration système GNU/Linux · module 0],
+  titre-court: pied-module("intro"),
 )
 
 #let versions = [Sortie réelle, rejouée par shell/cm/rejouer-intro.sh comme dans la VM du terminal : Alpine 3.22.8, bash 5.2.37, GNU coreutils 9.7, machine « cours », compte ada.]
@@ -23,8 +24,8 @@
 // diapo tienne dans la même hauteur (la géométrie, elle, ne change pas).
 #let z(n) = px(if dys { n * 0.88 } else { n })
 
-#couverture(illustration: "tube", surtitre: "Fondements de l’administration système GNU/Linux · module 0")[Le terminal, le shell, la commande][Taper une commande, lire ce qu’elle répond, trouver de l’aide][Jean-Mathieu Chantrein][27 novembre 2026]
-#speaker-note[Trente minutes. Module 0 de l’index (shell/progression.yaml) : il ne suppose rien, et présente le cours. Les exemples sont ceux de la page de cours du module, que chacun rejoue dans le terminal de la page.]
+#couverture(illustration: "tube", surtitre: surtitre-module("intro"))[Le terminal, le shell, la commande][Taper une commande, lire ce qu’elle répond, trouver de l’aide][Jean-Mathieu Chantrein][27 novembre 2026]
+#speaker-note[Trente minutes. Premier module de l’index (shell/progression.yaml) : il ne suppose rien, et présente le cours. Les exemples sont ceux de la page de cours du module, que chacun rejoue dans le terminal de la page.]
 
 // ======================================================================
 = Le cours
@@ -56,7 +57,7 @@
         annote("{01..12}", cote: "haut", clic: 2, reste: true, legende: [Bash écrit les douze noms ; `ls` le prouve]),
       )),
     ),
-    des(k, 3, note(role: "retenir", taille: z(28))[#pastille(3) La ligne se relit, se corrige, se rejoue : sur dix machines, ou à chaque rentrée, c’est la même. Un serveur n’a ni écran ni souris : on l’administre ainsi, par des lignes de texte.]),
+    des(k, 3, note(role: "retenir", taille: z(28))[#pastille(3) La ligne se relit, se corrige, se rejoue : écrite une fois, elle refait la même chose demain, ou sur dix machines. Un serveur n’a ni écran ni souris : on l’administre ainsi, par des lignes de texte.]),
   )),
   note: [#versions Une tâche que chacun a déjà faite à la souris. On ne demande pas de comprendre la ligne : mkdir (make directory) crée des répertoires, -p crée aussi semestre, et {01..12} est une expansion de Bash (module « Guillemets et expansions »). Dans un terminal, ls range les noms en colonnes, comme ici (le relevé le demande par ls -C, sa sortie n’allant pas à un terminal). Le sujet du cours : administrer une machine GNU/Linux en ligne de commande, avec Bash, puis sed et awk. La connexion à distance (SSH) est l’objet d’un autre cours.],
 )
@@ -64,10 +65,10 @@
 == La carte du cours
 
 #slide[
-  #carte-progression(ici: "intro", etiquette: [Départ], h: 118, px-y: 130, taille: z(20))
+  #carte-progression(ici: "intro", etiquette: [Départ], h: 120, px-y: 126, taille: z(18))
   #v(px(6))
   #note(role: "retenir", taille: z(25))[À la fin : se repérer et agir sur les fichiers, gérer les droits, enchaîner des commandes par des tubes, écrire des scripts robustes, transformer du texte avec sed et awk. Chaque module tient pour acquis ceux d’où partent ses flèches.]
-  #speaker-note[La carte est calculée à partir de l’index (shell/progression.yaml) : quinze modules, numérotés dans l’ordre des séances ; une flèche va d’un module à celui qui en a besoin. On part du module 0 ; le module 1 (l’arborescence) suit.]
+  #speaker-note[La carte est calculée à partir de l’index (shell/progression.yaml) : #prog.modules.len() modules, numérotés dans l’ordre des séances ; une flèche va d’un module à celui qui en a besoin. On part du module #numero("intro") ; le #module-ref("clavier") suit, puis le #module-ref("arbo").]
 ]
 
 == Quatre supports pour chaque module
@@ -111,7 +112,7 @@
     des(k, 2, terminal-annote(etape: k, taille: z(66), taille-legende: z(32), (invite + "whoami",),
       annote("ada", cote: "haut", clic: 2, reste: true, legende: [le compte : qui tape]),
       annote("cours", clic: 3, reste: true, legende: [la machine]),
-      annote("~", cote: "haut", clic: 4, reste: true, legende: [où l’on est (module 1)]),
+      annote("~", cote: "haut", clic: 4, reste: true, legende: [où l’on est (module #numero("arbo"))]),
       annote("$", clic: 5, reste: true, legende: [`$` : compte ordinaire ; `#` : root, l’administrateur]),
       annote("whoami", cote: "haut", clic: 6, reste: true, legende: [la commande tapée ; sa réponse, dessous : `ada`]),
     )),
@@ -208,39 +209,6 @@
   note: [#versions echo affiche ses arguments, séparés par une espace. Sans guillemets, les cinq espaces ne font que séparer deux arguments ; entre guillemets, elles font partie de l’argument. Le détail (guillemets simples, doubles, ce que Bash fait de la ligne) : module « Guillemets et expansions ».],
 )
 
-== Le clavier du shell
-
-// Un écran de terminal, avant ou après une touche : lignes (l’invite abrégée en $), puis le curseur.
-#let _ecran(lignes, curseur: true) = block(width: 100%, fill: c.nuit, radius: px(10), inset: (x: px(18), y: px(12)), {
-  set text(font: mono, size: z(38), fill: c.texte-term, tracking: 0pt)
-  let t(x) = x.replace(" ", "\u{a0}")
-  for (i, l) in lignes.enumerate() {
-    if l.starts-with("$ ") { text(fill: c.prompt, "$"); t(l.slice(1)) } else { t(l) }
-    if i == lignes.len() - 1 and curseur { box(width: px(24), height: px(42), fill: c.texte-term, baseline: 20%) }
-    if i < lignes.len() - 1 { linebreak() }
-  }
-})
-#let _touches(..ts) = align(center, text(size: z(34), ts.pos().map(x => touche(x)).join(h(px(8))) + h(px(10)) + sym.arrow.r))
-#let _rangee(n, avant, touches, apres, legende) = grid(columns: (px(540), px(180), px(540), 1fr), column-gutter: px(24),
-  align: horizon, _ecran(avant), _touches(..touches), _ecran(apres), text(size: z(28))[#pastille(n) #legende])
-#anime(
-  scene(4, k => stack(spacing: px(22),
-    grid(columns: (px(540), px(180), px(540)), column-gutter: px(24),
-      text(size: z(26), fill: c.ardoise)[avant], [], text(size: z(26), fill: c.ardoise)[après]),
-    des(k, 1, _rangee(1, ("$ whoa",), ([Tab],), ("$ whoami ",), [un seul nom commence par `whoa` : #touche[Tab] l’achève])),
-    des(k, 2, _rangee(2, ("$ who",), ([Tab], [Tab]), ("who     whoami  whois", "$ who"),
-      [trois noms commencent par `who` : le second #touche[Tab] les montre])),
-    des(k, 3, _rangee(3, ("$ whoami", "ada", "$ "), ([↑],), ("$ whoami", "ada", "$ whoami"),
-      [la ligne précédente revient (l’historique) : Entrée la relance])),
-    des(k, 4, tableau((auto, 1fr), taille: z(28), inset: (x: px(14), y: px(10)),
-      ([Touche], [Effet]),
-      [#touche[Ctrl+R]], [cherche dans l’historique : quelques lettres, et la dernière ligne qui les contient revient],
-      [#touche[Ctrl+C]], [abandonne la ligne en cours, ou interrompt la commande qui tourne],
-    )),
-  )),
-  note: [#versions Un clic par touche ; ce qui s’affiche après Tab Tab est relevé dans un vrai terminal, Bash interactif de la VM (whois est un applet de BusyBox, présent dans Alpine). Ces raccourcis sont ceux de Readline, la bibliothèque d’édition de ligne de Bash (man bash, section READLINE). À refaire dans le terminal de la page de cours.],
-)
-
 == Se documenter : man, `--help`, type, help
 
 #let _man = ("DATE(1)                          User Commands                         DATE(1)", "",
@@ -310,7 +278,7 @@
     [aide], [`type`, puis `help` (interne) ou `man`, `--help` (programme)],
   )
   #v(px(28))
-  #note(role: "retenir", taille: z(28))[Suite : module 1, « #module.at("arbo").titre » : où est-on, et comment aller ailleurs.]
+  #note(role: "retenir", taille: z(28))[Suite : #module-ref("clavier") : compléter, retrouver, corriger une ligne sans la retaper. Puis #module-ref("arbo").]
   #speaker-note[Une énumération : elle s’affiche d’un coup.]
 ]
 

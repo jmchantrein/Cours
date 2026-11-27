@@ -241,6 +241,22 @@
 // Ce qu'il faut regarder après un clic : la sortie dans le terminal, ou l'arbre de contexte.
 #let regardez(corps) = _el("p", class: "regardez", corps)
 
+// ---------- Modules d’un cours, lus dans son index ----------
+// `#let mod = module-de.with(yaml("../../progression.yaml"))`, puis `mod("arbo").numero`, `mod("arbo").titre`,
+// `mod("arbo").suivant` (l’identifiant du module suivant dans l’ordre, ou none). Rien n’est écrit en dur : un module
+// inséré dans l’index renumérote les pages à leur prochaine compilation.
+#let module-de(index, id) = {
+  let mods = index.modules.sorted(key: m => m.ordre)
+  let i = mods.position(m => m.id == id)
+  assert(i != none, message: "module absent de l’index : " + id)
+  let m = mods.at(i)
+  (id: id, numero: m.ordre, titre: m.titre,
+   precedent: if i > 0 { mods.at(i - 1).id } else { none },
+   suivant: if i + 1 < mods.len() { mods.at(i + 1).id } else { none })
+}
+// « module N, « titre » » : le nom d’un module, tel que l’index le donne.
+#let nom-module(index, id) = { let m = module-de(index, id); [module #m.numero, « #m.titre »] }
+
 // ---------- Liens vers les autres supports ----------
 // Diapositive du cours magistral : `ancre` est l’étiquette posée sur son titre (`== Titre <ancre>`),
 // que Typst exporte comme destination nommée du PDF.

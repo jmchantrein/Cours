@@ -41,6 +41,8 @@ peut avoir ses diapos, sa page de cours, ou les deux.
   [Touying](https://github.com/touying-typ/touying) : `<cours>.typ` pour tout le cours, ou un par module
   (`arbo.typ`) ; la CI en compile les PDF `<nom>-<variante>.pdf`. Ce qu’ils importent se range dans un sous-dossier.
   Un exercice fait et corrigé en séance reste dans les diapos.
+- `<cours>/index.typ` : la page du cours, tirée de son index `<cours>/progression.yaml` quand il en a un : les
+  modules dans l’ordre, chacun avec ses supports ; compilée en `<cours>/index.html`.
 - `<cours>/pages/<module>/` : une page de cours, que l’étudiant suit à son rythme, les mains sur le terminal : une
   notion, la commande qui la montre, un clic, le résultat dans le terminal à côté, ce qu’il faut y regarder.
   `<module>.typ` la contient, compilée par la CI en page web `index.html`. Ni énoncé ni corrigé : les exercices

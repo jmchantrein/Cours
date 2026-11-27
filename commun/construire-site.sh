@@ -45,13 +45,23 @@ for src in */cm/*.typ; do
 done
 
 # Pages web : TP, pages de cours, artefacts, accueil, page du compagnon, chacune en index.html à côté de sa source.
-web() { typst compile --root . --font-path commun/fonts --features html --format html "${entrees[@]}" "$1" "$2"; }
+web() { typst compile --root . --font-path commun/fonts --features html --format html "${entrees[@]}" "${@:3}" "$1" "$2"; }
 for src in */tp/*/*.typ */pages/*/*.typ */artefacts/*/*.typ; do
   [ -f "$src" ] || continue
   dossier=$(dirname "$src")
   [ "$src" = "$dossier/$(basename "$dossier").typ" ] || continue
   echo "::group::$dossier/index.html"
   web "$src" "$dossier/index.html"
+  echo "::endgroup::"
+done
+# Page d'un cours (<cours>/index.typ, lue dans son progression.yaml) : la liste des supports présents, pour ne
+# poser aucun lien mort.
+for src in */index.typ; do
+  [ -f "$src" ] || continue
+  cours=${src%%/*}
+  existants=$(cd "$cours" && ls -d cm/*.typ pages/*/ tp/*/ artefacts/*/ 2>/dev/null | tr '\n' ' ')
+  echo "::group::$cours/index.html"
+  web "$src" "$cours/index.html" --input existants="$existants"
   echo "::endgroup::"
 done
 web index.typ index.html

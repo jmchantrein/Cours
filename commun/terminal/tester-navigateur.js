@@ -134,6 +134,18 @@ async function connecter(page, url) {
     await executer(page, debut).click();
     await attendreTexte(page, attendu, 15000);
     ok(`${nom} : « ${debut} » exécutée, sortie ${attendu}`);
+    if (nom === "libvirt") {
+      // « Écrire » (indice ou corrigé replié) : la commande à l’invite, sans Entrée.
+      const ecr = page.locator(".terminal .ecrire").first();
+      const texte = await ecr.getAttribute("data-commande");
+      await ecr.evaluate(b => { for (let d = b.closest("details"); d; d = d.parentElement.closest("details")) d.open = true; });
+      await ecr.click();
+      await attendreTexte(page, texte.slice(0, 30), 10000); await attendre(800);
+      const fin = (await ecran(page).innerText()).trimEnd().split("\n").filter(l => l.trim()).at(-1);
+      verifier(fin.endsWith(texte.trim()) && /écrite à l’invite/.test(await etat(page).innerText()),
+        `compagnon : « Écrire » dépose « ${texte} » à l’invite, sans l’exécuter`);
+      await page.keyboard.press("Control+C");
+    }
     for (const [largeur, hauteur] of [[1280, 650], [1920, 950]]) {
       await page.setViewportSize({ width: largeur, height: hauteur });
       await attendre(300);
@@ -251,6 +263,10 @@ async function connecter(page, url) {
   ]) {
     await page.goto(adresse(nom));
     await page.click(".terminal-lanceur");
+    if (nom === "tp-premiers-pas") {
+      await page.locator(".terminal .ecrire").first().evaluate(b => b.click());
+      verifier(/Démarrez d’abord/.test(await etat(page).innerText()), "VM : avant le démarrage, « Écrire » invite à démarrer");
+    }
     await page.locator(".terminal-accueil button.principal", { hasText: "Démarrer" }).click();
     await attendreTexte(page, "État de départ installé", 180000);
     const chezSoi = page.locator('.terminal[data-mode="compagnon"] .executer').first();
@@ -261,6 +277,17 @@ async function connecter(page, url) {
       await executer(page, debut).click();
     }
     await attendreTexte(page, attendu, 120000);
+    if (nom === "tp-premiers-pas") {
+      await etat(page).filter({ hasText: "VM prête" }).waitFor({ timeout: 60000 }).catch(() => {});
+      const ecr = page.locator('.terminal .ecrire[data-commande="ls -l journaux"]').first();
+      await ecr.evaluate(b => { for (let d = b.closest("details"); d; d = d.parentElement.closest("details")) d.open = true; });
+      await attendre(1500);
+      await ecr.click(); await attendre(1500);
+      let lignes = (await ecran(page).innerText()).trimEnd().split("\n").filter(l => l.trim());
+      const ecrite = /\$ ls -l journaux\s*$/.test(lignes.at(-1));
+      await page.keyboard.press("Enter"); await attendreTexte(page, "serveur-2026-novembre.log", 20000);
+      verifier(ecrite, "VM : « Écrire » dépose la commande à l’invite sans l’exécuter ; Entrée la lance");
+    }
     ok(`${nom} : état de départ installé au démarrage, « ${clics.join(" », « ")} » cliqués sans préparation (${attendu})`);
   }
 

@@ -25,6 +25,7 @@
   terminal: ("vm", "compagnon"),
   depart: (script: "shell/tp/premiers-pas/preparer.sh", cree: "~/atelier", ici: "~"),   // état de départ : la VM l’installe à son démarrage
   liens: (
+    ([Le cours], "../../index.html"),
     ([Diapos du cours], pdf),
     ([Corrigés], "https://github.com/jmchantrein/Cours/tree/main/shell/tp/premiers-pas/corrige"),
     ([TP suivant : droits et archives], "../fichiers/index.html"),
@@ -65,9 +66,10 @@ répertoire existant.
 #bloc(role: "question")[Consignes][
   - Dans le terminal de cette page (VM), `~/atelier` est déjà là : la VM l’a créé à son démarrage. Sur votre
     machine, téléchargez `preparer.sh` dans votre répertoire personnel, puis lancez-le avec `bash`.
-  - Lancez `whoami`, puis `echo Bonjour`.
-  - Comparez `echo Bonjour     tout     le     monde` et la même commande entre guillemets doubles. Combien
-    d’arguments `echo` reçoit-il dans chaque cas ?
+  - Faites afficher par le shell votre nom de compte, puis le mot `Bonjour`.
+  - Faites afficher `Bonjour     tout     le     monde`, avec ses espaces en trop : une fois sans guillemets, une
+    fois entre guillemets doubles. Combien d’arguments la commande reçoit-elle dans chaque cas ? Vérifiez à
+    l’écran : les espaces en trop restent-elles ?
 ]
 
 #terminal(compagnon: true)[```console
@@ -90,6 +92,17 @@ Pour y entrer : cd /home/ada/atelier
   #link("../../artefacts/expansions-bash/")[Avant d’exécuter, Bash réécrit la ligne] montre les arguments que la commande reçoit.
 ]
 
+#indice(titre: [Indice : quelles commandes ?])[
+  Une commande répond, en anglais, à la question « qui suis-je ? » ; une autre affiche ses arguments, tels qu’elle
+  les reçoit.
+]
+#indice(titre: [Dernier indice : les commandes, à écrire ou à exécuter])[#terminal[```console
+$ whoami
+$ echo Bonjour
+$ echo Bonjour     tout     le     monde
+$ echo "Bonjour     tout     le     monde"
+```]]
+
 #corrige[
   Sans guillemets, `echo` reçoit quatre arguments, qu’il affiche séparés d’une espace : les espaces en trop ont
   disparu avant même son lancement. Entre guillemets, il en reçoit un seul, espaces comprises.
@@ -100,9 +113,11 @@ Pour y entrer : cd /home/ada/atelier
 = Étape 2 : se repérer <etape-2>
 
 #bloc(role: "question")[Consignes][
-  - Entrez dans `~/atelier` avec `cd`, puis affichez le répertoire courant avec `pwd`.
-  - Listez son contenu avec `ls`, puis `ls -a`, puis `ls -l`. Quel fichier `ls` ne montrait-il pas ?
-  - Dans la sortie de `ls -l`, lesquels sont des répertoires ? Quelle est la taille de `pionnieres.csv` ?
+  - Entrez dans `~/atelier`, puis faites afficher le répertoire courant : vous devez lire `/home/ada/atelier` (votre
+    compte à la place d’`ada`).
+  - Listez son contenu ; puis tout son contenu, noms cachés compris ; puis son contenu en détail (type, droits,
+    taille, date). Quel fichier la première liste ne montrait-elle pas ?
+  - Dans le détail, lesquels sont des répertoires ? Quelle est la taille de `pionnieres.csv` ?
   - Listez le répertoire `notes` sans y entrer ; puis le détail de `journaux`. Quel journal est le plus gros ?
 ]
 
@@ -114,6 +129,16 @@ Pour y entrer : cd /home/ada/atelier
   Un nom qui commence par un point est caché : `ls` le tait, `ls -a` (_all_) le montre. `.` est le répertoire
   courant, `..` son parent.
 ]
+
+#indice(titre: [Dernier indice : les commandes, à écrire ou à exécuter])[#terminal[```console
+$ cd ~/atelier
+$ pwd
+$ ls
+$ ls -a
+$ ls -l
+$ ls notes
+$ ls -l journaux
+```]]
 
 #corrige[
   `ls -a` montre en plus `.reglages`, fichier caché, ainsi que `.` et `..`. Les lignes qui commencent par `d`
@@ -134,7 +159,7 @@ des commandes déjà lancées.
   - Tapez `whoa`, puis Tab : la complétion vaut aussi pour les commandes.
   - Rappelez la commande précédente avec la flèche vers le haut, puis cherchez la commande `wc` avec Ctrl+R
     (tapez `wc`, puis Entrée).
-  - Affichez l’historique avec `history`. Abandonnez une ligne commencée avec Ctrl+C, effacez l’écran avec Ctrl+L.
+  - Affichez l’historique (la commande porte son nom, en anglais). Abandonnez une ligne commencée avec Ctrl+C, effacez l’écran avec Ctrl+L.
 ]
 
 #indice(titre: [Indice : quand Tab ne complète pas])[
@@ -159,17 +184,34 @@ Un chemin *absolu* part de la racine `/` : `/home/ada/atelier/notes`. Un chemin 
 remplacé par le chemin absolu de votre répertoire personnel.
 
 #bloc(role: "question")[Consignes][
-  + Entrez dans `~/atelier/notes`. Rejoignez `~/atelier/projets/site` par un chemin relatif ; vérifiez avec `pwd`.
-  + Rejoignez le même répertoire par un chemin absolu.
-  + Depuis `projets/site`, listez `journaux` sans changer de répertoire.
-  + Depuis `~/atelier`, que désigne `notes/../projets/./site` ? Vérifiez avec `ls`.
-  + Allez dans `/tmp`, puis revenez au répertoire précédent avec `cd -`. Où vous mène `cd` sans argument ?
+  + Entrez dans `~/atelier/notes`. Rejoignez `~/atelier/projets/site` par un chemin relatif ; vérifiez où vous êtes :
+    `/home/ada/atelier/projets/site`.
+  + Rejoignez le même répertoire par un chemin absolu, et vérifiez de même.
+  + Depuis `projets/site`, listez `journaux` sans changer de répertoire : les deux journaux s’affichent.
+  + Depuis `~/atelier`, que désigne `notes/../projets/./site` ? Vérifiez en listant ce chemin.
+  + Allez dans `/tmp`, puis revenez au répertoire précédent en une commande courte. Où vous mène la commande de
+    déplacement sans argument ?
 ]
 
 #indice(titre: [Indice : relatif])[
   Depuis `notes`, il faut remonter d’un cran (`..`) pour atteindre `atelier`, puis descendre dans `projets`,
   puis dans `site`. Les morceaux d’un chemin se séparent par `/`.
 ]
+
+#indice(titre: [Dernier indice : les commandes, à écrire ou à exécuter])[#terminal[```console
+$ cd ~/atelier/notes
+$ cd ../projets/site
+$ pwd
+$ cd ~/atelier/projets/site
+$ pwd
+$ ls ../../journaux
+$ cd ~/atelier
+$ ls notes/../projets/./site
+$ cd /tmp
+$ cd -
+$ cd
+$ pwd
+```]]
 
 #corrige[
   + `cd ../projets/site`.
@@ -190,12 +232,13 @@ Personne ne retient toutes les options : le manuel est installé avec le systèm
 ligne de commande], bloc « Se documenter »).
 
 #bloc(role: "question")[Consignes][
-  - Ouvrez le manuel de `ls` avec `man ls`. Déplacez-vous avec les flèches et Espace ; cherchez le mot `size` avec
-    `/size`, puis Entrée ; `n` passe à l’occurrence suivante ; `q` quitte.
+  - Ouvrez le manuel de `ls`. Déplacez-vous avec les flèches et Espace ; cherchez le mot `size` avec `/size`,
+    puis Entrée ; `n` passe à l’occurrence suivante ; `q` quitte.
   - Trouvez l’option qui trie par taille, celle qui inverse l’ordre, et celle qui écrit les tailles en Kio ou Mio.
-    Essayez-les sur `journaux`.
-  - Comparez avec l’aide courte, `ls --help`.
-  - `type cd`, puis `type sort` : lequel est une commande interne de Bash ? Ouvrez son aide avec `help cd`.
+    Essayez-les sur `journaux` : le journal de 2026 vient d’abord, puis en dernier, puis sa taille s’écrit `71K`.
+  - Comparez avec l’aide courte de `ls`.
+  - Demandez au shell ce que sont `cd` et `sort` : lequel est une commande interne de Bash ? Ouvrez l’aide de
+    celle-là.
 ]
 
 #note(role: "precaution")[
@@ -207,6 +250,17 @@ ligne de commande], bloc « Se documenter »).
 #indice(titre: [Indice : les options])[
   Dans `man ls`, cherchez `sort by` : les options de tri sont regroupées. `--human-readable` a une forme courte.
 ]
+
+#indice(titre: [Dernier indice : les commandes, à écrire ou à exécuter])[#terminal[```console
+$ man ls
+$ ls -lS journaux
+$ ls -lSr journaux
+$ ls -lh journaux
+$ ls --help
+$ type cd
+$ type sort
+$ help cd
+```]]
 
 #corrige[
   `-S` trie par taille, du plus gros au plus petit ; `-r` (_reverse_) inverse l’ordre ; `-h`
@@ -223,11 +277,11 @@ ligne de commande], bloc « Se documenter »).
 Le fichier `pionnieres.csv` est le fil rouge du cours : #d("fil-rouge")[Le fil rouge : pionnieres.csv].
 
 #bloc(role: "question")[Consignes][
-  - Affichez `notes/a-faire.txt`, puis `pionnieres.csv`, avec `cat`.
+  - Affichez en entier `notes/a-faire.txt`, puis `pionnieres.csv`.
   - N’affichez que les trois premières lignes de `pionnieres.csv`, puis les deux dernières.
   - Combien de lignes compte `pionnieres.csv` ? Et le journal de 2026 ?
   - À quelle heure le journal de 2026 a-t-il enregistré sa dernière requête ?
-  - Ouvrez ce journal avec `less`. Cherchez la première erreur (`ERROR`) : à quelle heure est-elle ? Et la
+  - Ouvrez ce journal dans un afficheur page par page. Cherchez la première erreur (`ERROR`) : à quelle heure est-elle ? Et la
     suivante ? Quittez.
 ]
 
@@ -235,6 +289,16 @@ Le fichier `pionnieres.csv` est le fil rouge du cours : #d("fil-rouge")[Le fil r
   `head` affiche le début, `tail` la fin ; `-n 3` en fixe le nombre de lignes. `wc -l` compte les lignes. Dans
   `less`, on se déplace et on cherche comme dans `man` (`/`, `n`, `q`) : `man` affiche ses pages avec `less`.
 ]
+
+#indice(titre: [Dernier indice : les commandes, à écrire ou à exécuter])[#terminal[```console
+$ cat notes/a-faire.txt
+$ cat pionnieres.csv
+$ head -n 3 pionnieres.csv
+$ tail -n 2 pionnieres.csv
+$ wc -l pionnieres.csv
+$ wc -l journaux/serveur-2026-novembre.log
+$ tail -n 1 journaux/serveur-2026-novembre.log
+```]]
 
 #corrige[
   `pionnieres.csv` compte 9 lignes : l’en-tête et huit pionnières. Le journal en compte 1 500, et sa dernière
@@ -268,6 +332,20 @@ Le fichier `pionnieres.csv` est le fil rouge du cours : #d("fil-rouge")[Le fil r
   un répertoire. `mv` déplace et renomme : renommer, c’est déplacer vers un autre nom. `touch` crée un fichier vide.
   `rm` supprime un fichier ; `rmdir` un répertoire vide seulement.
 ]
+
+#indice(titre: [Dernier indice : les commandes, à écrire ou à exécuter])[#terminal[```console
+$ cd ~/atelier
+$ mkdir -p archives/2025
+$ cp pionnieres.csv archives/pionnieres-copie.csv
+$ mv archives/pionnieres-copie.csv archives/pionnieres-v1.csv
+$ mv journaux/serveur-2025-novembre.log archives/2025/
+$ cp -r notes archives/notes-sauvegarde
+$ touch notes/brouillon.txt
+$ ls notes
+$ rm notes/brouillon.txt
+$ rmdir vieux
+$ rm -r vieux
+```]]
 
 #corrige[
   `rmdir` refuse un répertoire qui contient encore des fichiers : `Directory not empty`. `rm -r` le supprime avec son
@@ -309,6 +387,19 @@ la suivante (#d("tubes")[Le tube branche une sortie sur une entrée]).
   La 4#super[e] ligne est la dernière des quatre premières. `tail -n +2` affiche à partir de la ligne 2 ;
   `sort -t';' -k2 -n` trie sur la 2#super[e] colonne, séparée par `;`, en nombres.
 ]
+
+#indice(titre: [Dernier indice : les commandes, à écrire ou à exécuter])[#terminal[```console
+$ cd ~/atelier
+$ ls -l > liste.txt
+$ cat liste.txt
+$ echo "- relire les diapos" >> notes/a-faire.txt
+$ ls pionnieres.csv absent.txt
+$ ls pionnieres.csv absent.txt 2> erreurs.txt
+$ grep ERROR journaux/serveur-2026-novembre.log | wc -l
+$ head -n 4 pionnieres.csv | tail -n 1
+$ tail -n +2 pionnieres.csv | sort -t';' -k2 -n | head -n 3
+$ grep ERROR journaux/serveur-2026-novembre.log | tail -n 3 > dernieres-erreurs.txt
+```]]
 
 #corrige[
   + Bash crée et vide `liste.txt` avant de lancer `ls` : `ls` le voit donc, encore vide.

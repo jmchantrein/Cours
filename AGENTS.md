@@ -24,6 +24,11 @@ l’organisation et la compilation dans [`README.md`](README.md).
   données ; place les autres exemples au TP.
 - Après une modification d’une page de cours, lance `node commun/terminal/tester-vm.mjs --tp <cours>/pages/<module>`,
   puis suis-la dans un navigateur, de 1280 × 650 à 1920 × 950, en cliquant chaque commande dans l'ordre.
+- Dans un énoncé de TP, dis ce qu’il faut obtenir et comment le vérifier ; place la commande dans un indice ou un
+  corrigé replié, d’où « Écrire » la dépose à l’invite et « Exécuter » la lance : l’étudiant tape. Une page de
+  cours, elle, montre ses commandes à cliquer.
+- Tire la page d’un cours (`<cours>/index.typ`) et les numéros de module de son index `progression.yaml`
+  (`module-de`) : n’écris aucun numéro ni titre de module en dur.
 - Écris chaque corrigé de TP comme un fichier réel sous `corrige/`, affiché par `fichier(…)` dans un bloc `corrige`.
 - Aligne un TP sur son cours : mêmes commandes, même vocabulaire ; renvoie aux diapos par `diapo(…)`.
 - Déclare les paquets `apt` qu’un harnais demande à son hôte dans `paquets-apt.txt`, à côté de lui ; la CI les installe.

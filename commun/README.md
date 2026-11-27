@@ -121,6 +121,12 @@ départ, une action, un état d’arrivée ; chaque clic fait avancer l’action
   `·` : une espace dans un mot, `∅` : un mot vide. À chaque clic, ce qui change est encadré et une seule note dit
   pourquoi ; au dernier clic, la sortie réelle prouve le résultat (à droite, ou `sortie-dessous: true`). `arguments("Mon", "dossier")` dessine, dans une
   légende, les arguments qu’une commande reçoit.
+- **Touche du clavier** : `#rangee-touche(n, ("$ whoa",), ([Tab],), ("$ whoami ",), [légende])` dessine la ligne avant,
+  la ou les touches, la ligne après, et la légende numérotée ; `ecran-ligne(lignes, curseur: (ligne, colonne))` est
+  l’écran seul, curseur en pavé comme dans un terminal. `#ligne-curseur("$ echo …", curseur: 36, ancien: 47,
+  retire: (36, 47), ajoute: none)` dessine une ligne en grand, le curseur en trait, son saut (flèche au-dessus de la
+  ligne, ancienne place en tirets), le morceau coupé (laissé en place, barré) ou recollé (souligné). Exemple :
+  `shell/cm/clavier.typ`.
 - Les distinctions tiennent sans la couleur : épaisseur, motif du trait, cadre, numéro, étiquette.
 - **Contraste des traits** : un trait se lit sur tout fond qu’il traverse, dans chaque variante, sans réglage à la main.
   Les liens de `schema-etats` et les flèches de la carte de progression passent sur un halo de la couleur du fond
@@ -170,6 +176,12 @@ par son navigateur. Le nom du rôle et son pictogramme sont écrits dans chaque 
 - Terminal : `#terminal[```console … ```]` ; une ligne `$ ` est une commande, une ligne `# ` un commentaire.
   Le bouton « Copier » ne copie que les commandes.
 - À la demande : `#indice[…]`, `#indice(titre: […])[…]`, puis `#corrige[…]`. Ils sont repliés, et omis à l’impression.
+- L’étudiant tape : la consigne dit ce qu’il faut obtenir et comment le vérifier, sans montrer la commande. Les
+  commandes vont dans des indices gradués (un qui oriente, puis `#indice(titre: [Dernier indice : les commandes…])`
+  avec un `terminal[…]` de commandes seules) et au corrigé. Une commande d’une ligne repliée dans un indice ou un
+  corrigé reçoit, à côté d’« Exécuter », un bouton « Écrire » qui la dépose à l’invite sans Entrée (VM et compagnon ;
+  terminal fermé, il invite à le démarrer). `tester-vm.mjs` rejoue l’énoncé sans les indices (les corrigés
+  comprises), puis, à la fin, les commandes d’indices absentes des corrigés. Exemple : `shell/tp/premiers-pas/`.
 - Fichier de corrigé : `#fichier("corrige/…/Dockerfile", read("corrige/…/Dockerfile"))` ; la page montre le
   fichier que `tester.sh` vérifie.
 - Renvoi vers une diapo : poser une étiquette sur son titre dans le cours (`== Titre <ancre>`), puis
@@ -217,6 +229,14 @@ ajoute la pratique ; d’autres exemples vont au TP. Exemple : `shell/pages/arbo
     `cd` de la page jusqu’au bloc qu’on lit, ou jusqu’à la dernière commande cliquée de ce bloc. `tester-vm.mjs`
     compare ce contexte déclaré au contexte réel après chaque commande : il dit vrai pour la page suivie dans l’ordre.
   - Le compagnon (le vrai shell de l’étudiant) ne décrit rien : le repère y reste déclaré, et le dit.
+
+## Pages web : la page d’un cours
+`<cours>/index.typ` (compilée en `<cours>/index.html`) présente le cours module par module : titre, numéro, ce qu’on
+y apprend (`sait-faire`) et un lien par support présent (diaporama `cm/<module>.typ`, page de cours, TP et artefacts
+que l’index nomme dans `existant`) ; un support prévu (`a-faire`) s’affiche « à venir ». Tout se lit dans
+`progression.yaml` ; `construire-site.sh` passe la liste des fichiers présents (`--input existants=…`), pour ne
+poser aucun lien mort. Dans une page, `module-de(index, id)` rend le numéro, le titre, le précédent et le suivant
+d’un module ; `nom-module(index, id)` l’écrit. Exemple : `shell/index.typ`.
 
 ## Pages web : artefacts
 Un artefact est un petit logiciel interactif qui fait manipuler un concept : `<cours>/artefacts/<nom>/`.

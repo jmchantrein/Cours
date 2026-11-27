@@ -257,6 +257,8 @@
       attente.push(texte); etat.textContent = "Commande en attente : la VM démarre…";
       return false;
     };
+    // Écrire : la commande à l’invite, sans Entrée (attend l’invite si la VM démarre).
+    m.ecrire = commande => { if (phase === "prete") envoyer(commande); else attente.push(commande); xterm?.focus(); };
     m.inviter = () => { etat.textContent = "Démarrez d’abord la VM, puis cliquez à nouveau sur « Exécuter »."; demarrer.focus(); };
     m.montrer = () => { if (phase === "prete") etat.textContent = "VM prête : les commandes cliquées s’exécutent ici."; };
     return m;
@@ -325,6 +327,7 @@
     });
     deconnecter.addEventListener("click", () => socket?.close());
     m.executer = commande => envoyer({ type: "input", data: commande.replace(/\n/g, "\r") + "\r" });
+    m.ecrire = commande => { envoyer({ type: "input", data: commande }); xterm?.focus(); };
     m.inviter = () => { etat.textContent = "Connectez d’abord le compagnon, puis cliquez à nouveau sur « Exécuter »."; adresse.focus(); };
     m.montrer = () => { if (m.session) etat.textContent = "Connecté à votre shell : les commandes cliquées s’exécutent sur votre machine."; };
     return m;
@@ -341,9 +344,10 @@
     const ouverte = courant.session;
     signaler("terminal-session", { mode: courant.id, ouverte });
     lanceur.dataset.session = ouverte ? "ouverte" : "";
-    for (const b of document.querySelectorAll(".terminal .executer")) {
+    for (const b of document.querySelectorAll(".terminal :is(.executer, .ecrire)")) {
       b.setAttribute("aria-disabled", String(!ouverte));
-      b.title = ouverte ? `Exécuter dans le terminal (${NOMS[courant.id]})` : "Ouvrez d’abord le terminal (bandeau, en haut)";
+      b.title = !ouverte ? "Ouvrez d’abord le terminal (bandeau, en haut)" : b.classList.contains("ecrire")
+        ? `Écrire à l’invite, sans valider : relisez, puis Entrée (${NOMS[courant.id]})` : `Exécuter dans le terminal (${NOMS[courant.id]})`;
     }
   }
   function choisir(m) {
@@ -365,13 +369,19 @@
   if (cote && matchMedia("(min-width: 64rem)").matches) ouvrir();
 
   document.addEventListener("click", evenement => {
-    const bouton = evenement.target.closest(".terminal .executer");
+    const bouton = evenement.target.closest(".terminal :is(.executer, .ecrire)");
     if (!bouton) return;
     const etaitFerme = volet.hidden;
     ouvrir();
     if (!courant.session) { courant.inviter(); return; }
     if (courant.id === "vm" && bouton.closest('[data-mode="compagnon"]')) {
       etat.textContent = "Inutile dans la VM : l’état de départ de la page y est installé à son démarrage.";
+      return;
+    }
+    if (bouton.classList.contains("ecrire")) {
+      courant.ecrire(bouton.dataset.commande);
+      etat.textContent = "Commande écrite à l’invite : relisez-la, complétez-la au besoin, puis Entrée.";
+      bouton.dataset.etat = "envoyee"; setTimeout(() => delete bouton.dataset.etat, 700);
       return;
     }
     const differee = courant.executer(bouton.dataset.commande) === false;

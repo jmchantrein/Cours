@@ -12,11 +12,16 @@
 #import "../../../commun/theme-tp.typ": *
 
 #let diaporama = "../../cm/intro-projection.pdf"
-#let suivant = "../arbo/index.html"
+// Numéros et titres des modules : lus dans l’index du cours (un module inséré renumérote la page).
+#let index = yaml("../../progression.yaml")
+#let ici = module-de(index, "intro")
+#let mod(id) = module-de(index, id)
+// Un module se rejoint par la page du cours, où sont ses supports.
+#let vers(id) = "../../index.html#" + id
 
 #show: page-web.with(
   titre: [Le terminal, le shell, la commande],
-  surtitre: [Fondements de l’administration système GNU/Linux · module 0 · page de cours],
+  surtitre: [#index.titre · module #ici.numero · page de cours],
   sous-titre: [Taper une commande, la lire, se faire aider],
   auteur: [Jean-Mathieu Chantrein],
   date: [novembre 2026],
@@ -26,7 +31,8 @@
   depart: (ici: "~"),
   liens: (
     ([Diaporama du module], diaporama),
-    ([Module suivant : se repérer dans l’arborescence], suivant),
+    ([Le cours], "../../index.html"),
+    ([Module suivant : #mod(ici.suivant).titre], vers(ici.suivant)),
   ),
 )
 
@@ -45,7 +51,7 @@ Cette page reprend les exemples du #link(diaporama)[diaporama du module], dans l
 = Pourquoi la ligne de commande <pourquoi>
 
 Une démonstration, pour commencer : une seule ligne crée douze répertoires, un par séance. Vous saurez la lire au
-module 7 ; ici, regardez seulement ce qu’elle fait.
+module #mod("expansions").numero ; ici, regardez seulement ce qu’elle fait.
 
 #terminal[```console
 $ mkdir -p semestre/seance-{01..12}
@@ -53,8 +59,8 @@ $ ls semestre
 seance-01  seance-03  seance-05  seance-07  seance-09  seance-11
 seance-02  seance-04  seance-06  seance-08  seance-10  seance-12
 ```]
-#regardez[*Dans le terminal*, douze noms, écrits par une seule ligne. Une ligne se relit, se corrige, se rejoue :
-sur dix machines, ou à chaque rentrée, c’est la même. Un serveur n’a ni écran ni souris : on l’administre ainsi.]
+#regardez[*Dans le terminal*, douze noms, écrits par une seule ligne. La ligne se relit, se corrige, se rejoue :
+demain, ou sur dix machines, c’est la même. Un serveur n’a ni écran ni souris : on l’administre ainsi.]
 
 = Une fenêtre de terminal <terminal>
 
@@ -66,7 +72,7 @@ $ whoami
 ada
 ```]
 #regardez[*Dans le terminal*, l’invite `ada@cours:~$` se lit morceau par morceau : `ada`, le compte, qui tape ;
-`cours`, la machine ; `~`, où l’on est (le module 1 en parlera) ; `$`, un compte ordinaire (`#` pour root,
+`cours`, la machine ; `~`, où l’on est (le module #mod("arbo").numero en parlera) ; `$`, un compte ordinaire (`#` pour root,
 l’administrateur). Après l’invite, la commande tapée ; dessous, sa réponse : `ada`.]
 
 = De la frappe au résultat <frappe>
@@ -223,5 +229,5 @@ echo is a shell builtin
 
 #bloc(role: "pratique")[Ensuite][
   - Le #link(diaporama)[diaporama du module].
-  - Module suivant : #link(suivant)[Se repérer dans l’arborescence].
+  - Module suivant : #link(vers(ici.suivant))[#mod(ici.suivant).titre] ; tous les modules : #link("../../index.html")[le cours].
 ]
