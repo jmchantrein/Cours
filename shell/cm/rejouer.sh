@@ -92,7 +92,15 @@ bats --version
 EOF
 
 # ---------- Ouverture ----------
+session "À quoi servent sed et awk" <<'EOF'
+cat services.conf
+sed -i 's/autostart = yes/autostart = no/' services.conf
+cat services.conf
+awk '$1 == "port" { print $3 }' services.conf
+EOF
+
 session "Le fil rouge : existence, puis contenu" <<'EOF'
+ls | wc -l
 ls pionnieres.csv
 cat pionnieres.csv
 EOF
@@ -209,6 +217,9 @@ annee=1843
 [ "$annee" -lt 1900 -a -f pionnieres.csv ] && echo "les deux"
 [[ $annee -lt 1900 && -f pionnieres.csv ]] && echo "les deux"
 [[ $annee =~ ^[0-9]+$ ]] && echo "un nombre"
+vide=
+[[ $vide = Ada ]] || echo "faux, sans erreur"
+[ $vide = Ada ] || echo "faux"
 [-f pionnieres.csv]
 EOF
 
@@ -241,6 +252,18 @@ mkdir labo && cd labo
 touch ada.txt grace.txt hedy.txt
 nom="Grace     Hopper"
 printf '[%s]\n' ~ {1..2} $nom "$nom" *.txt "*.txt" $((6 * 7)) "$(echo ok)"
+EOF
+
+session "Voir les arguments reçus" <<'EOF'
+printf '[%s]\n' un deux "trois quatre"
+EOF
+
+session "Une ligne réécrite" <<'EOF'
+mkdir labo && cd labo
+touch ada.txt grace.txt hedy.txt
+p="Ada Lovelace"
+printf '[%s]\n' {a,b} $p "$p" *.txt '$p'
+printf '[%s]\n' $p "$p" '$p' *.txt "*.txt" '*.txt'
 EOF
 
 session "Découpage en mots et glob" <<'EOF'

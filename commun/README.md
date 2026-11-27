@@ -69,30 +69,51 @@ valeurs et les écarts sont en tête de `charte.typ`).
 
 ## Dessiner une transformation
 Une diapo montre une transformation (skill `structurer-diapos-cours`, « Schémas et mise en scène ») : un état de
-départ, une action, un état d’arrivée ; chaque clic fait avancer l’action. Trois composants de `theme-cours.typ` :
+départ, une action, un état d’arrivée ; chaque clic fait avancer l’action. Composants de `theme-cours.typ` :
 
 - **Scène** : `#anime(scene(n, k => …))` occupe n clics ; le dessin est une fonction du clic k (1 à n, puis n + 1 :
   l’état final, sans plus rien mettre en valeur). Terminal et schéma qui avancent ensemble se placent dans la même
   scène : `scene(5, k => grid(columns: 2, terminal-annote(…, etape: k), schema-etats(…, etape: k)))`.
+- **Contexte** : `#anime(contexte: contexte(chemin: "/home/ada/atelier", contenu: ("f.csv", "scripts/"), voir: ("f.csv",)), …)`
+  pose un bandeau d’une ligne dans la marge du haut, au-dessus du surtitre : même place sur chaque diapo, sans prendre
+  celle du sujet. Il dit le compte (`compte`, `machine` pour une session distante ou un conteneur), le répertoire
+  courant dans l’arborescence, ce qu’il contient (`autres` : le nombre d’entrées non montrées), les variables
+  (`variables: (("p", "Ada"),)`) ; `voir` encadre ce que la commande emploie (`"$p"` pour une variable), `absent`
+  barre ce qui n’existe pas. Quand une commande le change (`cd`, fichier créé), `contexte: k => contexte(…)` (k : le
+  clic de la diapo). `corriges(contexte: …)` aussi.
 - **Commande ou sortie annotée** : `#anime(commande-annotee(("$ wc -l f", ("9 f", 3)), annote("wc", legende: [la commande]), annote("-l", legende: [une option])))`.
   Une ligne paraît au clic donné (`("texte", clic)`, ou par morceaux `(("$ cut …", 1), (" | sort", 2))`) ; chaque
   `annote(…)` désigne un morceau par son texte (`"-l"`, `(ligne: 2, texte: ";", n: 1)`, `(ligne: 2, cols: (3, 7))`),
   l’encadre au clic où il paraît, puis le souligne, et le relie à sa légende. Les légendes se placent seules,
-  d’après la colonne du morceau, sur des rangées qui ne se chevauchent pas ; `cote: "haut" | "bas" | "droite"`.
-  Plusieurs morceaux : une légende commune, ou `pont: true` (un champ relié à ce qu’il concerne : `rwx` ↔ `ada`).
+  d’après la colonne du morceau, sur des rangées où aucun trait ne coupe une légende ; `cote: "haut" | "bas" | "droite"`
+  (à droite : les légendes trop proches sont décalées vers le bas). Une légende passée reste, grisée, si l’annotation
+  en cours porte sur la même ligne (la suite décompose cette ligne), sinon elle s’efface ; `reste: true | false`
+  l’impose. Au plus cinq légendes à l’écran : au-delà, les plus anciennes s’effacent — mieux, scinder la diapo.
   Sans `legende` : une marque seule (`garde: true` la laisse encadrée : la démonstration d’un corrigé).
   `fond: "fichier"` : sur fond clair, avec `nom:` en tête. Hors `anime` : `terminal-annote(…, etape: k)`.
 - **Schéma à états** : `#schema-etats(etape: k, hauteur: 500, noeuds: (…), liens: (…), etats: ((:), (liens: (s1: (vers: "f.g"))), …))`.
-  Des nœuds nommés, en px de la maquette (`x`, `y`, `l`, `h`, `genre`) : `"processus"` (prises 0, 1, 2 numérotées ;
-  `attente: true` : pas encore lancé), `"terminal"`, `"fichier"` (`titre`, `pied`, `contenu` : des lignes ; `()` : vide),
-  `"flux"` (ce qui circule dans un tube), `"boite"`, `"texte"` (une légende qui change avec l’état). Un lien va de
-  `"nœud.prise"` à `"nœud.prise"` (prises du genre, `ports: (nom: ("g", 0.3))`, ou `g`, `d`, `h`, `b`) ; options
-  `etiquette`, `donnee` (ce qui circule, sur fond de terminal), `tirets` (le flux 2), `motif: "dotted"` (voie non suivie),
-  `fort`. Chaque état ne dit que ce qui change (`none` retire) ; ce qui change est encadré ou épaissi, et un lien
-  rebranché laisse son ancien tracé en pointillé. Les distinctions tiennent sans la couleur : épaisseur, motif du
-  trait, cadre, numéro de prise, étiquette.
-- Exemples : `shell/cm/shell.typ`, sections « Bash · Les bases » et « Bash · Flux et tubes » (ligne de `ls -l`
-  décodée champ par champ, redirections, ordre des redirections, tube, codes de retour).
+  Des nœuds nommés, en px de la maquette (`x`, `y`, `l`, `h`), ou en cases (`grille: (x: 340, y: 130, ecart: 40)`,
+  puis `col`, `lig`, `larg`, `haut`) : `"processus"` (prises 0, 1, 2 numérotées ; `attente: true` : pas encore lancé),
+  `"terminal"`, `"fichier"` (`titre`, `pied`, `contenu` : des lignes ; `()` : vide), `"flux"` (ce qui circule dans un
+  tube), `"boite"` (`attente: true` : commande non lancée), `"texte"` (une légende qui change avec l’état ;
+  `role: "danger"` lui donne le fond et le pictogramme d’un rôle). `marque: (i, …)` encadre des lignes d’un contenu.
+  Un lien va de `"nœud.prise"` à `"nœud.prise"` (prises du genre, `ports: (nom: ("g", 0.3))`, ou `g`, `d`, `h`, `b`) ;
+  options `etiquette`, `donnee` (ce qui circule, sur fond de terminal), `tirets` (le flux 2), `motif: "dotted"` (voie non
+  suivie), `fort`. Chaque état ne dit que ce qui change (`none` retire).
+- **Repère d’étape** : ce qui change au clic k porte une pastille, carré bleu à chiffre blanc (`pastille(n)`), distincte
+  des prises rondes et blanches : au coin d’une boîte, dans l’en-tête d’un fichier, devant la légende, en face de la
+  première ligne nouvelle d’un terminal, dont les lignes précédentes passent en gris ; un lien changé s’épaissit et
+  laisse son ancien tracé en pointillé. `numero: k => …` règle la numérotation (défaut : l’état 1 est le départ, sans
+  numéro ; `k => k` s’il est déjà une action). Le même numéro peut ouvrir une légende d’`annote` (`[#pastille(2) …]`).
+- **Ligne réécrite par Bash** : `#anime(reecriture-anime(commande: "$ printf …", rangs: (r1, …, r6), notes: (…), sortie: (…)))`.
+  Une rangée par étape de l’expansion (Mots, Accolades, Tilde $ $( ), Découpage, Chemins, Guillemets : les noms de
+  l’artefact `shell/artefacts/expansions-bash/`) ; un mot `(origine, "texte", genre)` reste dans la colonne du mot tapé
+  dont il vient ; genre `"x"` : produit par une expansion (fond teinté), `"q"` : protégé par des guillemets (souligné) ;
+  `·` : une espace dans un mot, `∅` : un mot vide. À chaque clic, ce qui change est encadré et une seule note dit
+  pourquoi ; au dernier clic, la sortie réelle prouve le résultat. `arguments("Mon", "dossier")` dessine, dans une
+  légende, les arguments qu’une commande reçoit.
+- Les distinctions tiennent sans la couleur : épaisseur, motif du trait, cadre, numéro, étiquette.
+- Exemples : `shell/cm/shell.typ`, des sections « Bash · Les bases » à « Bash · Guillemets et expansions ».
 
 ## Animer une diapo
 Les apparitions suivent la skill `structurer-diapos-cours` : bloc par bloc, puis puce par puce.
@@ -100,7 +121,7 @@ Les apparitions suivent la skill `structurer-diapos-cours` : bloc par bloc, puis
   Un bloc apparaît avec sa première puce, chaque puce suivante au clic suivant ; un contenu quelconque compte pour un clic.
 - Mise en page libre : `#slide(repeat: n, self => { let (uncover,) = utils.methods(self); … })`, avec
   `bloc-anime(b, debut, uncover)` pour un bloc, `lignes(uncover: uncover, …)` pour une ligne par clic.
-- Dans `anime`, éléments à plusieurs clics : `lignes-anime(…)` (une ligne par clic), `plan-anime(…)`,
+- Dans `anime`, éléments à plusieurs clics : `lignes-anime(…)` (une ligne par clic), `plan-anime(…)` (le sommaire : titres et descriptions, sans numéro ni puce),
   `terminal-etapes([```…```], [```…```])` (un morceau de terminal par clic), et `pas(n, (uncover, debut) => …)`
   pour une mise en page libre.
 - Notes de l’orateur d’une diapo animée : paramètre `note:` de `anime`, ou `utils.speaker-note(self: self)[…]`.

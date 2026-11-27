@@ -237,15 +237,14 @@
       montre(i, text(size: taille, v)))).flatten())
 }
 
-// Plan du cours : numéro, titre de partie, description.
+// Plan du cours : titre de partie, description ; sans numéro ni puce (un sommaire n’en a pas besoin).
 #let plan-cours(uncover: none, ..parties) = {
   let ps = parties.pos()
   let montre(i, x) = if uncover == none { x } else { uncover(str(i + 1) + "-", x) }
-  grid(columns: (px(96), 1fr), align: horizon, column-gutter: px(40),
+  grid(columns: (1fr,), align: horizon,
     inset: (y: px(16)),
     stroke: (x, y) => if y < ps.len() - 1 { (bottom: px(1) + c.filet) },
     ..ps.enumerate().map(((i, (t, d))) => (
-      montre(i, text(size: px(64), weight: 600, fill: c.bleu, str(i + 1))),
       montre(i, { text(size: px(40), weight: 600, t); linebreak(); text(size: px(32), fill: c.ardoise, d) }),
     )).flatten())
 }
@@ -266,10 +265,11 @@
 
 // Plusieurs questions et leurs réponses sur une diapo : la question reste visible, chaque réponse apparaît
 // à son clic. items : (n, [question], reponse[…]) ; la réponse s’écrit avec reponse(…).
-#let corriges(note: none, ..items) = {
+#let corriges(note: none, contexte: none, ..items) = {
   let qa = items.pos()
   slide(repeat: qa.len() + 1, self => {
     let (uncover,) = utils.methods(self)
+    if contexte != none { place(top + left, dy: -px(104), block(width: 100%, contexte)) }
     for (i, it) in qa.enumerate() {
       corrige(it.at(0), it.at(1), uncover(str(i + 2) + "-", it.at(2)))
       if i < qa.len() - 1 { v(px(16)) }
@@ -441,6 +441,50 @@
 // #cloture(illustration: …)[Merci][Des questions ?][auteur][contact ou lien]
 #let cloture(..args) = page-titre(..args)
 
+// ---------- Contexte d’une commande ----------
+// Où l’on est quand la commande s’exécute : compte (et machine), répertoire courant dans l’arborescence, ce qu’il
+// contient, variables définies. Un bandeau d’une ligne, dans la marge du haut de la diapo (paramètre contexte: d’anime
+// et de corriges), toujours au même endroit ; ce qui concerne la commande est encadré (voir), ce qui n’existe pas est
+// barré, en tirets (absent).
+//   contexte(chemin: "/home/ada/atelier", contenu: ("pionnieres.csv", "scripts/"), voir: ("pionnieres.csv",),
+//     autres: 37, variables: (("p", "Ada Lovelace"),))
+// machine : une machine distante, un conteneur (pour les autres cours) ; autres : nombre d’entrées non montrées.
+#let contexte(compte: "ada", machine: none, chemin: "/home/ada", contenu: (), voir: (), absent: (), autres: 0,
+  variables: (), taille: px(21)) = {
+  let m(x, ..a) = text(font: mono, size: taille, tracking: 0pt, ..a, x.replace(" ", "\u{a0}"))
+  let puce(x, fort: false, manque: false) = box(inset: (x: px(8), y: px(3)), radius: px(6), baseline: 20%,
+    fill: if manque { none } else { c.fond },
+    stroke: if fort { px(2.5) + c.encre } else if manque { (paint: c.gris, thickness: px(1.5), dash: "dashed") }
+      else { px(1) + c.filet },
+    if manque { strike(stroke: px(1.5) + c.gris, m(x, fill: c.gris)) }
+    else { m(x, fill: c.encre, weight: if fort { 600 } else { 400 }) })
+  let segs = chemin.split("/").filter(x => x != "")
+  let sep = text(fill: c.gris, size: taille)[ › ]
+  block(width: 100%, fill: c.espace, radius: px(10), inset: (x: px(16), y: px(8)), {
+    set par(leading: 0.5em)
+    text(size: px(18), weight: 600, tracking: px(1), fill: c.gris, maj("contexte"))
+    h(px(14))
+    m(compte + if machine != none { "@" + machine } else { "" }, fill: c.ardoise)
+    h(px(12))
+    m("/", fill: c.gris)
+    for (i, sg) in segs.enumerate() {
+      if i > 0 { m("/", fill: c.gris) }
+      if i == segs.len() - 1 { box(stroke: (bottom: px(2.5) + c.bleu), outset: (bottom: px(2)), m(sg, weight: 700, fill: c.encre)) }
+      else { m(sg, fill: c.ardoise) }
+    }
+    if contenu.len() + absent.len() > 0 or autres > 0 {
+      h(px(8)); text(size: taille, fill: c.gris)[contient]; h(px(8))
+      for x in contenu { puce(x, fort: x in voir); h(px(6)) }
+      for x in absent { box(puce(x, manque: true)); h(px(6)) }
+      if autres > 0 { text(size: taille * 0.9, fill: c.gris)[\+ #autres autres] }
+    }
+    if variables.len() > 0 {
+      h(px(16)); text(size: taille, fill: c.gris)[variables]; h(px(8))
+      for (n, val) in variables { puce(n + "=" + val, fort: ("$" + n) in voir); h(px(6)) }
+    }
+  })
+}
+
 // ---------- Animation : bloc par bloc, puis puce par puce ----------
 // Les apparitions passent par uncover (le contenu caché garde sa place) : seules des apparitions,
 // exportables en PDF. Un bloc apparaît avec sa première puce, chaque puce suivante au clic suivant.
@@ -480,7 +524,9 @@
 
 // Diapo animée : les éléments (rangées de blocs, ou contenu quelconque) apparaissent dans l’ordre,
 // bloc par bloc puis puce par puce ; un contenu quelconque (bandeau, schéma) compte pour un clic.
-#let anime(espacement: px(24), note: none, source-de: none, ..elements) = {
+// contexte : le bandeau de contexte (voir contexte(…)), en tête de diapo, toujours au même endroit ; un contenu, ou une
+// fonction du clic de la diapo (k => contexte(…)) quand une commande le change.
+#let anime(espacement: px(24), note: none, source-de: none, contexte: none, ..elements) = {
   let plan = ()
   let s = 1
   for e in elements.pos() {
@@ -496,6 +542,11 @@
   }
   slide(repeat: s - 1, self => {
     let (uncover,) = utils.methods(self)
+    // dans la marge du haut, au-dessus du surtitre : même place sur chaque diapo, sans prendre celle du sujet
+    if contexte != none {
+      place(top + left, dy: -px(104), block(width: 100%,
+        if type(contexte) == function { contexte(self.subslide) } else { contexte }))
+    }
     for (i, (e, d)) in plan.enumerate() {
       if i > 0 { v(espacement) }
       if type(e) == dictionary and "rang" in e {
@@ -539,13 +590,23 @@
 // Au clic où il paraît, le morceau est encadré et sa légende aussi ; ensuite, il reste souligné (garde: true :
 // encadré). Sans legende : seulement la marque. pont: true (plusieurs morceaux) : le trait part du premier morceau,
 // et un pont, de l’autre côté du cadre, le relie aux suivants (un champ et ce qui le concerne, sur la même ligne).
-#let annote(..cibles, legende: none, cote: "bas", clic: auto, ligne: auto, garde: false, pont: false) = (
-  cibles: cibles.pos(), legende: legende, cote: cote, clic: clic, ligne: ligne, garde: garde, pont: pont)
+// Une légende passée reste, grisée, si l’annotation en cours porte sur la même ligne (la suite décompose cette ligne) ;
+// sinon elle s’efface. reste: true ou false impose l’un ou l’autre. Au plus cinq légendes à l’écran : les plus anciennes
+// s’effacent au-delà (mieux : scinder la diapo).
+#let annote(..cibles, legende: none, cote: "bas", clic: auto, ligne: auto, garde: false, pont: false, reste: auto) = (
+  cibles: cibles.pos(), legende: legende, cote: cote, clic: clic, ligne: ligne, garde: garde, pont: pont, reste: reste)
+
+// Tabulations développées comme dans un terminal (arrêts toutes les 8 colonnes).
+#let _tabs(s) = if not s.contains("\t") { s } else {
+  let r = ""
+  for ch in s.clusters() { if ch == "\t" { r += " " * (8 - calc.rem(r.clusters().len(), 8)) } else { r += ch } }
+  r
+}
 
 // Une ligne : "texte" (clic 1), ("texte", clic), ou des morceaux ((“texte”, clic), …) qui paraissent l’un après l’autre.
 #let _morceaux-ligne(l) = {
-  if type(l) == str { ((l, 1),) }
-  else if type(l) == array and l.len() == 2 and type(l.at(0)) == str and type(l.at(1)) == int { ((l.at(0), l.at(1)),) }
+  if type(l) == str { ((_tabs(l), 1),) }
+  else if type(l) == array and l.len() == 2 and type(l.at(0)) == str and type(l.at(1)) == int { ((_tabs(l.at(0)), l.at(1)),) }
   else { l.map(m => if type(m) == str { (m, 1) } else { m }) }
 }
 // Clic de chaque annotation (auto : celui qui suit la précédente) et nombre de clics de la scène.
@@ -611,7 +672,9 @@
       let corps(actif, w) = box(width: w, inset: (x: px(10), y: px(5)), radius: px(6), fill: c.fond,
         stroke: if actif { px(2.5) + c.encre } else { none },
         text(size: taille-legende, fill: if actif { c.encre } else { c.ardoise }, a.legende))
-      let w = calc.min(measure(corps(true, auto)).width, largeur-legende)
+      // à droite du cadre : la place qui reste jusqu’au bord
+      let wmax = if a.cote == "droite" { calc.max(px(200), W - lb - px(28)) } else { largeur-legende }
+      let w = calc.min(measure(corps(true, auto)).width, wmax)
       (corps: corps, w: w, h: measure(corps(true, w)).height)
     }
     (..a, spans: spans, clic: k, etiq: etiq)
@@ -636,19 +699,33 @@
     for (i, a) in ordre {
       let (w, h) = (a.etiq.w, a.etiq.h)
       let xcs = (if a.pont { a.spans.slice(0, 1) } else { a.spans }).map(s => (s.x0 + s.x1) / 2)
-      let lx = if xcs.len() == 1 { a.spans.at(0).x0 - px(10) } else { xcs.sum() / xcs.len() - w / 2 }
-      lx = calc.max(0pt, calc.min(lx, W - w))
       let m = calc.min(px(16), w / 2)
-      let att = xcs.map(x => calc.max(lx + m, calc.min(x, lx + w - m)))
-      let traits = xcs.zip(att).map(((x, p)) => (calc.min(x, p) - px(4), calc.max(x, p) + px(4)))
-      let gene(r, strict) = places.any(p => (p.r == r and chevauche((lx, lx + w), p.ix))
-          or (strict and p.r < r and traits.any(t => chevauche(t, p.ix)))
-          or (strict and p.r > r and p.traits.any(t => chevauche(t, (lx, lx + w)))))
-      let r = 0
-      while r < 8 and gene(r, true) { r += 1 }
-      // sans rangée parfaite : la première où la légende ne chevauche aucune autre
-      if r == 8 { r = 0; while gene(r, false) { r += 1 } }
-      places.push((i: i, r: r, ix: (lx, lx + w), lx: lx, att: att, xcs: xcs, traits: traits))
+      // positions essayées : alignée sur le début du morceau, puis sur sa fin (vers la gauche), puis centrée
+      let xm = xcs.sum() / xcs.len()
+      let candidats = if xcs.len() == 1 {
+        (a.spans.at(0).x0 - px(10), a.spans.at(0).x1 + px(10) - w, xm - w / 2)
+      } else { (xm - w / 2,) }
+      let essai(lx0) = {
+        let lx = calc.max(0pt, calc.min(lx0, W - w))
+        let att = xcs.map(x => calc.max(lx + m, calc.min(x, lx + w - m)))
+        let traits = xcs.zip(att).map(((x, p)) => (calc.min(x, p) - px(4), calc.max(x, p) + px(4)))
+        let gene(r, strict) = places.any(p => (p.r == r and chevauche((lx, lx + w), p.ix))
+            or (strict and p.r < r and traits.any(t => chevauche(t, p.ix)))
+            or (strict and p.r > r and p.traits.any(t => chevauche(t, (lx, lx + w)))))
+        let r = 0
+        while r < 8 and gene(r, true) { r += 1 }
+        (r: r, lx: lx, att: att, traits: traits, gene: gene)
+      }
+      let essais = candidats.map(essai)
+      let bon = essais.filter(e => e.r < 8)
+      let choix = if bon.len() > 0 { bon.sorted(key: e => e.r).first() } else {
+        // aucune rangée sans croisement : la première où la légende ne chevauche aucune autre
+        let e = essais.first()
+        let r = 0
+        while (e.gene)(r, false) { r += 1 }
+        (..e, r: r)
+      }
+      places.push((i: i, r: choix.r, ix: (choix.lx, choix.lx + w), lx: choix.lx, att: choix.att, xcs: xcs, traits: choix.traits))
     }
     places
   }
@@ -659,8 +736,17 @@
   let (lhh, lhb) = (hl("haut"), hl("bas"))
   let Ht = if rangees(haut) > 0 { g0h + rangees(haut) * (lhh + gl) } else { g0h - px(22) }
   let Hb = if rangees(bas) > 0 { g0b + rangees(bas) * (lhb + gl) } else { g0b - px(22) }
-  let droite = anns.filter(a => a.etiq != none and a.cote == "droite")
-  let Hd = calc.max(0pt, ..droite.map(a => a.spans.at(0).yt + lh / 2 + a.etiq.h / 2))
+  // à droite : chaque légende en face de sa ligne, poussée vers le bas si elle chevaucherait la précédente
+  let droite = anns.enumerate().filter(((i, a)) => a.etiq != none and a.cote == "droite")
+    .sorted(key: ((i, a)) => a.spans.at(0).yt / 1pt)
+  let hauts-d = (:)
+  let bas-prec = -1000pt
+  for (i, a) in droite {
+    let t = calc.max(a.spans.at(0).yt + lh / 2 - a.etiq.h / 2, bas-prec + px(6))
+    hauts-d.insert(str(i), t)
+    bas-prec = t + a.etiq.h
+  }
+  let Hd = calc.max(0pt, bas-prec)
 
   block(width: W, height: calc.max(Ht + hb + Hb, Ht + Hd), {
     // le cadre et ses lignes
@@ -717,7 +803,7 @@
         let xc = p.xcs.at(j)
         if cote == "droite" {
           let yc = y + lh / 2
-          place(top + left, line(start: (s.x1 + px(4), yc), end: (lb + px(28), yc), stroke: ep + coul))
+          place(top + left, line(start: (s.x1 + px(4), yc), end: (lb + px(28), Ht + p.haut + a.etiq.h / 2), stroke: ep + coul))
         } else {
           let (bord, depart, arrivee) = if cote == "bas" {
             let yl = Ht + hb + g0b + p.r * (lhb + gl)
@@ -734,13 +820,24 @@
         let e = (a.etiq.corps)(actif, a.etiq.w)
         if cote == "bas" { place(top + left, dx: p.lx, dy: Ht + hb + g0b + p.r * (lhb + gl), e) }
         else if cote == "haut" { place(top + left, dx: p.lx, dy: Ht - g0h - p.r * (lhh + gl) - a.etiq.h, e) }
-        else { place(top + left, dx: lb + px(28), dy: Ht + a.spans.at(0).yt + lh / 2 - a.etiq.h / 2, e) }
+        else { place(top + left, dx: lb + px(28), dy: Ht + p.haut, e) }
       }
     }
+    // Ce qui reste à l’écran : l’annotation en cours, et les précédentes rattachées (même ligne, ou reste: true),
+    // au plus cinq légendes.
+    let parues = anns.enumerate().filter(((i, a)) => a.clic <= etape)
+    let derniere = if parues.len() > 0 { calc.max(..parues.map(((i, a)) => a.clic)) } else { 0 }
+    let lignes-de(a) = a.spans.map(s => s.l)
+    let courantes = parues.filter(((i, a)) => a.clic == derniere).map(((i, a)) => lignes-de(a)).flatten()
+    let gardees = parues.filter(((i, a)) => a.clic == derniere or a.reste == true
+      or (a.reste == auto and lignes-de(a).any(l => l in courantes)))
+    let avec = gardees.filter(((i, a)) => a.etiq != none)
+    let trop = avec.sorted(key: ((i, a)) => a.clic).slice(0, calc.max(0, avec.len() - 5)).map(((i, a)) => i)
+    let visibles = gardees.map(((i, a)) => i).filter(i => i not in trop)
     for (i, a) in anns.enumerate() {
-      if a.clic > etape { continue }
+      if i not in visibles { continue }
       let p = if a.etiq == none { none } else if a.cote == "haut" { haut.find(q => q.i == i) }
-        else if a.cote == "bas" { bas.find(q => q.i == i) } else { (xcs: a.spans.map(s => s.x1)) }
+        else if a.cote == "bas" { bas.find(q => q.i == i) } else { (xcs: a.spans.map(s => s.x1), haut: hauts-d.at(str(i))) }
       dessiner(a, p, a.cote)
     }
   })
@@ -752,6 +849,12 @@
   scene(n, k => terminal-annote(lignes, ..args, etape: k))
 }
 
+// ---------- Repère d’étape ----------
+// Le numéro de l’étape en cours, posé sur ce qu’elle change (et devant sa légende) : un carré bleu à chiffre blanc,
+// distinct des prises rondes et blanches des processus.
+#let pastille(n, t: px(22)) = box(fill: c.bleu, stroke: px(2) + c.fond, radius: px(6), inset: (x: t * 0.32, y: t * 0.12),
+  baseline: 15%, text(size: t, weight: 700, fill: c.fond, tracking: 0pt, str(n)))
+
 // ---------- Schéma à états ----------
 // Des nœuds nommés, des liens entre eux, et une suite d’états dont chacun ne dit que ce qui change.
 //   schema-etats(hauteur: 300, etape: k,
@@ -759,17 +862,22 @@
 //              ecran: (x: 700, y: 60, l: 400, h: 120, genre: "terminal", contenu: ("$ ls",))),
 //     liens: (sortie: (de: "ls.1", vers: "ecran")),
 //     etats: ((:), (liens: (sortie: (vers: "f")), noeuds: (f: (x: …, genre: "fichier", titre: "sortie.txt")))))
-// Coordonnées en px de la maquette. Genres : "processus" (fond nuit, prises 0 à gauche, 1 et 2 à droite, numérotées ;
-// attente: true : pas encore lancé, en tirets ; ports: (…) pour d’autres prises), "terminal" (lignes, invite colorée),
-// "fichier" (nom en tête, pied à droite, contenu en lignes ; () : vide), "flux" (ce qui circule dans un tube : cadre en
-// tirets, sans nom), "boite" (défaut : titre, sous-titre), "texte" (un texte libre, de largeur l).
+// Position : x, y, l, h en px de la maquette ; ou, avec grille: (x: pas, y: pas, ecart: px), col, lig (et larg, haut,
+// en cases) : le nœud occupe sa case moins l’écart. Genres : "processus" (fond nuit, prises 0 à gauche, 1 et 2 à droite,
+// numérotées ; attente: true : pas encore lancé, en tirets ; ports: (…) pour d’autres prises), "terminal" (lignes,
+// invite colorée), "fichier" (nom en tête, pied à droite, contenu en lignes ; () : vide), "flux" (ce qui circule dans un
+// tube : cadre en tirets, sans nom), "boite" (défaut : titre, sous-titre ; attente: true), "texte" (une légende, de
+// largeur l). marque: (i, …) encadre des lignes du contenu (celle dont parle une légende).
 // Un lien va de "nœud.prise" (ou "nœud" : le côté qui fait face) à "nœud.prise" ; prises : celles du genre, ou
 // g, d, h, b (milieu d’un côté) ; options : etiquette, pos (0 à 1, place de l’étiquette), donnee (ce qui circule,
 // sur fond de terminal ; pos-donnee), tirets, motif ("dotted" : voie non suivie), fleche, fort (impose ou retire
 // la mise en valeur).
-// État k = état k − 1 + etats.at(k − 1) ; une valeur none retire le nœud ou le lien. Ce qui change au clic k est
-// mis en valeur (trait épais, cadre) ; un lien qui change de bout laisse son ancien tracé en pointillé.
-#let schema-etats(hauteur: 300, noeuds: (:), liens: (:), etats: ((:),), etape: 1000, taille: px(22)) = context {
+// État k = état k − 1 + etats.at(k − 1) ; une valeur none retire le nœud ou le lien. Repère d’étape : ce qui change
+// au clic k porte le numéro numero(k) (défaut k − 1 : l’état 1 est le départ) — pastille sur le nœud, devant la
+// légende, en face de la première ligne nouvelle d’un terminal, dont les lignes précédentes passent en gris ; un lien
+// changé s’épaissit, et laisse son ancien tracé en pointillé.
+#let schema-etats(hauteur: 300, noeuds: (:), liens: (:), etats: ((:),), etape: 1000, taille: px(22), grille: none,
+  numero: k => if k > 1 { k - 1 }) = context {
   let appliquer(s, patch) = {
     for genre in ("noeuds", "liens") {
       for (nom, v) in patch.at(genre, default: (:)) {
@@ -779,12 +887,22 @@
     }
     s
   }
+  // position en grille : col, lig, larg, haut → x, y, l, h
+  let placer(n) = if grille != none and "col" in n {
+    let e = grille.at("ecart", default: 40)
+    (..n, x: n.col * grille.x, y: n.lig * grille.y, l: n.at("larg", default: 1) * grille.x - e,
+      h: n.at("haut", default: 1) * grille.y - e)
+  } else { n }
   let k = calc.max(1, calc.min(etape, etats.len()))
   let etat = (noeuds: noeuds, liens: liens)
   let avant = none
   for i in range(k) { avant = etat; etat = appliquer(etat, etats.at(i)) }
+  etat.noeuds = etat.noeuds.pairs().map(((nom, n)) => (nom, placer(n))).to-dict()
+  if avant != none { avant.noeuds = avant.noeuds.pairs().map(((nom, n)) => (nom, placer(n))).to-dict() }
   // au-delà du dernier état (scène finie, ou dessin statique), rien n’est mis en valeur
-  let change = if k >= 2 and etape <= etats.len() { etats.at(k - 1) } else { (:) }
+  let actif = etape <= etats.len() and (k >= 2 or numero(1) != none)
+  let change = if actif { etats.at(k - 1) } else { (:) }
+  let num = if actif { numero(k) } else { none }
   let neuf(genre, nom) = nom in change.at(genre, default: (:)) and change.at(genre).at(nom) != none
 
   let prises-genre(n) = n.at("ports", default: if n.at("genre", default: "boite") == "processus" {
@@ -800,28 +918,54 @@
     if prise != none { return point(n, prise, 0.5) }
     let (cx, cy) = centre(n)
     let (ox, oy) = autre
-    let (dx, dy) = ((ox - cx) / n.l, (oy - cy) / n.h)
+    let (dx, dy) = ((ox - cx) / n.l, (oy - cy) / calc.max(n.at("h", default: 1), 1))
     point(n, if calc.abs(dx) >= calc.abs(dy) { if dx > 0 { "d" } else { "g" } } else { if dy > 0 { "b" } else { "h" } }, 0.5)
   }
   let geometrie(lien, ns) = {
     let cible(s) = centre(ns.at(s.split(".").at(0)))
     (bout(lien.de, ns, cible(lien.vers)), bout(lien.vers, ns, cible(lien.de)))
   }
-  let ligne-mono(s, t, sombre) = {
+  let ligne-mono(s, t, sombre, gris) = {
     let ins(x) = x.replace(" ", "\u{a0}")  // les espaces en tête comptent
     text(font: mono, size: t, tracking: 0pt, spacing: 100%,
-      if type(s) != str { s } else if not sombre { ins(s) }
+      if type(s) != str { s }
+      else if gris { text(fill: if sombre { c.commentaire.darken(25%) } else { c.gris }, ins(s)) }
+      else if not sombre { ins(s) }
       else if s.starts-with("$ ") { text(fill: c.prompt, "$"); text(fill: c.texte-term, ins(s.slice(1))) }
       else if s.starts-with("# ") { text(fill: c.commentaire, ins(s)) } else { text(fill: c.texte-term, ins(s)) })
   }
-  let lignes(contenu, t, sombre) = if type(contenu) == array {
-    stack(spacing: t * 0.45, ..contenu.map(s => ligne-mono(s, t, sombre)))
+  // Lignes à pas fixe : anciennes (grisées), marques (encadrées), pastille en face de la première ligne nouvelle.
+  let pas-ligne(t) = t * 1.42
+  let lignes(contenu, t, sombre, largeur, anciens: 0, marques: (), pastille-a: none) = if type(contenu) == array {
+    let pl = pas-ligne(t)
+    box(width: largeur, height: contenu.len() * pl, {
+      for (i, s) in contenu.enumerate() {
+        place(top + left, dy: i * pl, box(height: pl, align(horizon, ligne-mono(s, t, sombre, i < anciens))))
+        if i in marques {
+          let w = measure(ligne-mono(s, t, sombre, false)).width
+          place(top + left, dx: -px(5), dy: i * pl, rect(width: w + px(10), height: pl,
+            stroke: px(3) + (if sombre { c.prompt } else { c.bleu }), radius: px(5)))
+        }
+      }
+      if pastille-a != none and pastille-a < contenu.len() {
+        place(top + right, dy: pastille-a * pl + (pl - t * 1.3) / 2, pastille(num, t: t * 0.9))
+      }
+    })
   } else { contenu }
+  // lignes déjà présentes à l’état précédent (le contenu s’allonge) : elles passent en gris
+  let anciens-de(nom, n) = {
+    if not actif or avant == none or nom not in avant.noeuds or not neuf("noeuds", nom) { return 0 }
+    let a = avant.noeuds.at(nom).at("contenu", default: none)
+    let b = n.at("contenu", default: none)
+    if type(a) == array and type(b) == array and a.len() <= b.len() and b.slice(0, a.len()) == a { a.len() } else { 0 }
+  }
 
   let noeud(nom, n) = {
     let genre = n.at("genre", default: "boite")
     let t = n.at("taille", default: taille)
     let (lw, hw) = (px(n.l), px(n.at("h", default: 0)))
+    let nv = neuf("noeuds", nom) and num != none
+    let marques = n.at("marque", default: ())
     let corps = if genre == "processus" {
       let attente = n.at("attente", default: false)
       let fond-p = if attente { none } else { c.nuit }
@@ -834,28 +978,37 @@
           ..if "sous" in n { (text(size: px(22), fill: if attente { c.gris } else { c.texte-term }, n.sous),) }
         )))
     } else if genre == "terminal" {
+      let anc = anciens-de(nom, n)
+      let ct = n.at("contenu", default: ())
       rect(width: lw, height: hw, fill: c.nuit, radius: px(12), inset: (x: px(16), y: px(12)),
         align(left + top, {
           if "titre" in n { text(size: px(18), weight: 600, tracking: px(2), fill: c.prompt, maj(n.titre)); v(px(6), weak: true) }
-          lignes(n.at("contenu", default: ()), t, true)
+          lignes(ct, t, true, lw - px(32), anciens: anc, marques: marques,
+            pastille-a: if nv and type(ct) == array and ct.len() > anc { anc })
         }))
     } else if genre == "fichier" {
+      let anc = anciens-de(nom, n)
       box(width: lw, height: hw, fill: c.espace, stroke: px(1.5) + c.filet, radius: px(10), clip: true, stack(
         block(width: 100%, height: px(38), fill: c.filet, inset: (x: px(12)), align(horizon, {
           text(font: mono, size: px(20), weight: 600, fill: c.ardoise, tracking: 0pt, n.at("titre", default: nom))
+          if nv { h(px(10)); pastille(num, t: px(19)) }
           if "pied" in n { h(1fr); text(size: px(18), fill: c.ardoise, n.pied) }
         })),
         block(width: 100%, inset: (x: px(12), y: px(10)), {
           let ct = n.at("contenu", default: none)
-          if ct == () { text(size: px(19), fill: c.gris)[(vide)] } else if ct != none { lignes(ct, t, false) }
+          if ct == () { text(size: px(19), fill: c.gris)[(vide)] }
+          else if ct != none { lignes(ct, t, false, lw - px(24), anciens: anc, marques: marques) }
         }),
       ))
     } else if genre == "flux" {
       // ce qui circule (dans un tube) : pas un fichier, un cadre en tirets sans nom
       rect(width: lw, height: hw, stroke: (paint: c.gris, thickness: px(2), dash: "dashed"), radius: px(10),
-        inset: (x: px(14), y: px(10)), align(left + top, lignes(n.at("contenu", default: ()), t, false)))
+        inset: (x: px(14), y: px(10)), align(left + top,
+          lignes(n.at("contenu", default: ()), t, false, lw - px(28), marques: marques)))
     } else if genre == "texte" {
-      box(width: lw, text(size: t, n.at("contenu", default: [])))
+      let corps-t = { if nv { pastille(num, t: t * 0.9); h(t * 0.4) }; n.at("contenu", default: []) }
+      // role : la légende prend le fond et le pictogramme d’un rôle (precaution, danger…)
+      if n.at("role", default: none) != none { box(width: lw, note(role: n.role, taille: t, corps-t)) } else { box(width: lw, text(size: t, corps-t)) }
     } else {
       // boîte ; attente: true : ce qui n’a pas lieu (commande non lancée), en tirets, sans fond
       let attente = n.at("attente", default: false)
@@ -867,9 +1020,9 @@
           ..if "sous" in n { (text(size: px(22), fill: if attente { c.gris } else { c.ardoise }, n.sous),) })))
     }
     place(top + left, dx: px(n.x), dy: px(n.y), corps)
-    if neuf("noeuds", nom) and genre != "texte" {
-      place(top + left, dx: px(n.x - 8), dy: px(n.y - 8), rect(width: lw + px(16), height: hw + px(16),
-        stroke: px(3.5) + c.encre, radius: px(14)))
+    // pastille au coin d’une boîte ou d’un processus changés (les autres genres la portent dans leur contenu)
+    if nv and genre in ("processus", "boite") {
+      place(top + left, dx: px(n.x + n.l - 16), dy: px(n.y - 16), pastille(num))
     }
   }
   // prises numérotées (0, 1, 2…) : celles des processus seulement ; les autres ne sont que des points d’attache
@@ -880,7 +1033,7 @@
       align(center + horizon, text(font: mono, size: px(24), weight: 700, fill: c.encre, tracking: 0pt, p))))
   } }
   let lien(nom, li) = {
-    let fort = if etape > etats.len() { false } else { li.at("fort", default: neuf("liens", nom)) }
+    let fort = if not actif { false } else { li.at("fort", default: neuf("liens", nom)) }
     let (a, b) = geometrie(li, etat.noeuds)
     let ancien = if avant != none { avant.liens.at(nom, default: none) }
     // l’ancien tracé, en pointillé, si ses deux bouts existent encore
@@ -895,7 +1048,7 @@
       let t = li.at("pos", default: 0.5)
       let (x, y) = (a.at(0) + t * (b.at(0) - a.at(0)), a.at(1) + t * (b.at(1) - a.at(1)))
       let e = box(fill: c.fond, inset: (x: px(8), y: px(4)), radius: px(6),
-        stroke: if fort { px(2.5) + c.encre } else { px(1) + c.filet }, text(size: taille, li.etiquette))
+        stroke: if fort { px(2.5) + c.encre } else { px(1) + c.filet }, text(size: li.at("taille", default: taille), li.etiquette))
       let m = measure(e)
       place(top + left, dx: px(x) - m.width / 2, dy: px(y) - m.height / 2, e)
     }
@@ -917,3 +1070,84 @@
     for (nom, n) in etat.noeuds { prises(nom, n) }
   })
 }
+
+// ---------- Ligne réécrite par Bash ----------
+// Les six étapes de l’expansion, une rangée par étape (mêmes noms et même ordre que l’artefact expansions-bash) :
+// chaque mot reste dans la colonne du mot tapé dont il vient ; à l’étape en cours, ce qui change est encadré, et sa
+// légende dit pourquoi. Un mot : (origine, "texte") ou (origine, "texte", genre) ; genre "x" : produit par une
+// expansion (fond teinté), "q" : protégé par des guillemets (souligné), "xq" : les deux. Une espace dans un mot
+// s’écrit « · » ; un mot vide, « ∅ ». La commande tapée est en tête ; sortie (lignes) : la preuve, au dernier clic.
+//   ligne-reecrite(etape: k, commande: "$ printf '[%s]\n' $p", rangs: (r1, …, r6), notes: (n1, …, n6), sortie: (…))
+#let noms-expansion = ("Mots", "Accolades", "Tilde, $, $( )", "Découpage", "Chemins", "Guillemets")
+#let ligne-reecrite(etape: 1000, commande: none, rangs: (), notes: (), sortie: none, taille: px(22),
+  largeur-sortie: px(290), note-fin: none) = context layout(dispo => {
+  let k = etape
+  let fini = k > rangs.len() + (if sortie != none { 1 } else { 0 })
+  let m(x, ..a) = text(font: mono, size: taille, tracking: 0pt, ..a, x.replace(" ", "\u{a0}"))
+  let norm(w) = (o: w.at(0), t: w.at(1), g: if w.len() > 2 { w.at(2) } else { "" })
+  let rs = rangs.map(r => r.map(norm))
+  let origines = rs.first().map(w => w.o).dedup()
+  let puce(w, etat) = {
+    // etat : "courant" (changé à l’étape en cours), "present", "passe"
+    let teinte = w.g.contains("x")
+    let corps = if w.t == "∅" { m("∅", fill: c.gris) } else {
+      let txt = w.t.split("·").map(x => m(x, fill: if etat == "passe" { c.ardoise } else { c.encre }))
+        .join(m("·", fill: c.gris))
+      if w.g.contains("q") { underline(stroke: px(2.5) + c.bleu, offset: px(4), txt) } else { txt }
+    }
+    box(inset: (x: px(7), y: px(6)), radius: px(5), baseline: 25%,
+      fill: if teinte { c.appli } else { c.fond },
+      stroke: if etat == "courant" { px(3) + c.encre } else { px(1) + c.filet },
+      corps)
+  }
+  let groupe(r, o) = r.filter(w => w.o == o)
+  let gap = px(8)
+  let largeur-groupe(ws) = if ws.len() == 0 { 0pt } else {
+    ws.map(w => measure(puce(w, "present")).width).sum() + gap * (ws.len() - 1) }
+  let lo = origines.map(o => calc.max(..rs.map(r => largeur-groupe(groupe(r, o)))))
+  let lab-l = px(270)
+  let gg = px(18)
+  let rangee(i) = {
+    let r = rs.at(i)
+    let courant = i + 1 == k
+    let passe = i + 1 < k or fini
+    grid(columns: (lab-l, ..lo), column-gutter: gg, align: horizon,
+      text(size: px(23), fill: if courant { c.encre } else { c.ardoise }, weight: if courant { 700 } else { 400 },
+        { pastille(i + 1, t: px(20)); h(px(10)); noms-expansion.at(i) }),
+      ..origines.map(o => {
+        let ws = groupe(r, o)
+        let prec = if i > 0 { groupe(rs.at(i - 1), o) } else { () }
+        let change = i == 0 or ws != prec
+        ws.map(w => puce(w, if courant and change { "courant" } else if passe { "passe" } else { "present" })).join(h(gap))
+      }))
+  }
+  let hr = measure(rangee(0)).height
+  let corps-rangs = stack(spacing: px(24), ..range(rs.len()).map(i => if i + 1 <= k { rangee(i) } else { hide(rangee(i)) }))
+  let note-courante = if k >= 1 and k <= notes.len() { notes.at(k - 1) } else if k > rs.len() { note-fin }
+  let a-droite = sortie != none
+  stack(spacing: px(14),
+    if commande != none { terminal(titre: none, taille: px(26), raw(commande, block: true)) },
+    grid(columns: if a-droite { (1fr, largeur-sortie) } else { (1fr,) }, column-gutter: px(24),
+      corps-rangs,
+      ..if a-droite {
+        let t = terminal(titre: none, taille: px(19), raw(sortie.join("\n"), block: true))
+        (if k > rs.len() { t } else { hide(t) },)
+      }),
+    block(height: px(80), width: 100%, if note-courante != none {
+      text(size: px(27), { if k <= rs.len() { pastille(k, t: px(24)); h(px(10)) }; note-courante })
+    }),
+  )
+})
+#let reecriture-anime(..args) = {
+  let n = args.named().rangs.len() + if args.named().at("sortie", default: none) != none { 1 } else { 0 }
+  scene(n, k => ligne-reecrite(..args, etape: k))
+}
+
+// Les arguments que reçoit une commande, dans le même dessin que la ligne réécrite : arguments("Mon", "dossier") ;
+// une espace dans un argument s’affiche « · », un argument vide « ∅ ».
+#let arguments(taille: px(21), ..ms) = ms.pos().map(x => box(inset: (x: px(7), y: px(3)), radius: px(5), baseline: 22%,
+  fill: c.fond, stroke: px(1.5) + c.encre, {
+    let t = if x == "" { "∅" } else { x }
+    t.split(" ").map(y => text(font: mono, size: taille, tracking: 0pt, fill: if t == "∅" { c.gris } else { c.encre }, y))
+      .join(text(font: mono, size: taille, fill: c.gris, "·"))
+  })).join(h(px(6)))
