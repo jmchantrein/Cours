@@ -33,6 +33,7 @@ Sept cours, à lire dans l’ordre de la page : les outils de l’administrateur
     du texte.
     #actions(
       bouton(principal: true, [Diapositives], pdf("shell", "projection")),
+      bouton([Page de cours : Le terminal, le shell, la commande], "shell/pages/intro/"),
       bouton([Page de cours : Se repérer dans l’arborescence], "shell/pages/arbo/"),
       bouton([TP : Premiers pas dans le shell], "shell/tp/premiers-pas/"),
       bouton([TP : Droits, liens, recherche et archives], "shell/tp/fichiers/"),

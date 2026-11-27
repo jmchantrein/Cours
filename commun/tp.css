@@ -203,6 +203,13 @@ html:has(body.atelier) { font-size: 93.75%; }
 .page-cours h2 { margin-top: 2.4rem; font-size: 1.45rem; }
 .page-cours main > h2:first-child { margin-top: 0; }
 /* Ce qu’il faut regarder après un clic : une flèche vers la colonne de droite (vers le haut sur un écran étroit). */
+kbd { display: inline-block; padding: 0 .4em; border: 1px solid var(--c-filet); border-bottom-width: 2px; border-radius: .3rem;
+  background: #fff; color: var(--c-encre); font-size: .85em; line-height: 1.5; white-space: nowrap; }
+/* Page de cours sans repère de contexte (pas d’arborescence dans le module) : terminal fermé, la colonne s’efface. */
+@media (min-width: 64rem) {
+  body.page-cours:not(.terminal-ouvert):not(:has(.contexte)) { --cote: 0px; }
+  body.page-cours:not(.terminal-ouvert):not(:has(.contexte)) .cote { border: 0; }
+}
 .regardez { margin: .5rem 0 1.1rem; padding-left: 1.6rem; position: relative; color: var(--c-ardoise); }
 .regardez::before { content: "→"; position: absolute; left: .2rem; top: 0; color: var(--c-bleu); font-weight: 700; }
 .regardez strong { color: var(--c-encre); }

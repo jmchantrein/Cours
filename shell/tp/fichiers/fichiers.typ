@@ -300,7 +300,7 @@ l’archive, `-z` compresse ou décompresse avec gzip. `.tar.gz` dit ce qui a é
 #indice(titre: [Indice : les options])[
   `tar -tzf archive` liste ; `-C répertoire` extrait ailleurs que dans le répertoire courant. `gzip -k` garde
   l’original ; `zcat` décompresse vers la sortie standard. Le script :
-  #d("sauvegarder-répertoire")[Exemple : sauvegarder un répertoire].
+  #d("sauvegarder-dossier")[Exemple : sauvegarder un répertoire].
 ]
 
 #bloc(role: "danger")[Supprimer avant d’avoir vérifié l’archive][

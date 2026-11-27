@@ -35,7 +35,7 @@
 
 Ce TP s’adresse à qui ouvre un terminal pour la première fois. Vous y tapez des commandes dans un répertoire
 d’exemples créé pour l’occasion : vous pouvez tout y casser, un script le recrée. Chaque commande suit la forme
-présentée en cours : #d("ligne-de-commande")[Lire une ligne de commande].
+présentée en cours : #diapo("../../cm/intro-projection.pdf", "ligne-de-commande")[Lire une ligne de commande].
 
 #bloc(role: "pratique")[Prérequis][
   - Un terminal Bash : sur Debian ou Ubuntu, l’application « Terminal » ; sinon, le terminal de cette page.
@@ -186,7 +186,7 @@ remplacé par le chemin absolu de votre répertoire personnel.
 
 = Étape 5 : lire l’aide <etape-5>
 
-Personne ne retient toutes les options : le manuel est installé avec le système (#d("ligne-de-commande")[Lire une
+Personne ne retient toutes les options : le manuel est installé avec le système (#diapo("../../cm/intro-projection.pdf", "ligne-de-commande")[Lire une
 ligne de commande], bloc « Se documenter »).
 
 #bloc(role: "question")[Consignes][

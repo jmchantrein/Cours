@@ -197,6 +197,10 @@ ajoute la pratique ; d’autres exemples vont au TP. Exemple : `shell/pages/arbo
 - Prédire : `#predire[question][#terminal[…]][explication]`, un bloc du rôle `question` ; la sortie annoncée et
   l’explication restent masquées jusqu’à ce que la commande soit exécutée (ou « Voir la sortie sans exécuter »).
 - `#pastille(n)` : le carré bleu à chiffre blanc d’un pas, dans le texte comme dans le repère.
+- `#touche[Tab]` : une touche, pour les gestes que l’étudiant tape lui-même (complétion, historique) : un clic
+  n’envoie qu’une ligne, il ne montre pas la complétion.
+- Sans arborescence à montrer (module `intro`), la page ne déclare pas `contexte` : pas de repère, la colonne ne
+  porte que le terminal, et s’efface quand on le réduit.
 - **Repère de contexte** (`terminal/contexte.js`, `terminal/contexte.css`) : un arbre dessiné qui dit où l’on est,
   toujours au même endroit : la racine, le chemin jusqu’au répertoire courant (« ◀ vous êtes ici ») et jusqu’au
   répertoire personnel (`~`), le contenu du répertoire courant ; un répertoire replié nomme son contenu en petit, les

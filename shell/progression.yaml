@@ -72,8 +72,8 @@ modules:
       manque:
         - "ce qu’est un terminal, un shell, une commande ; le compte et l’invite ; pourquoi la ligne de commande ; la carte"
     page:
-      etat: a-faire
-      propose: "shell/pages/intro : `whoami`, `date`, `date -u`, `echo` avec et sans guillemets, Tab, flèche haut, Ctrl+R, `man date`, `type cd`."
+      etat: present
+      existant: "shell/pages/intro/intro.typ : les exemples du diaporama, dans le même ordre ; le clavier (Tab, Tab Tab, flèche haut, Ctrl+R, Ctrl+C) tapé par l’étudiant ; l’exercice en prédictions."
     tp:
       etat: partiel
       existant: "premiers-pas, étapes 1 (whoami, echo, guillemets), 3 (complétion, historique), 5 (man, --help, type)"

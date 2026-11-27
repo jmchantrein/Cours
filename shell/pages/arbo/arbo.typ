@@ -38,6 +38,7 @@
   depart: (script: "shell/tp/premiers-pas/preparer.sh", cree: "~/atelier", ici: "~"),
   contexte: (compte: "ada", depart: "/home/ada", personnel: "/home/ada", arbre: arbre),
   liens: (
+    ([Module précédent : le terminal, le shell, la commande], "../intro/index.html"),
     ([Diaporama du module], diaporama),
     ([TP : Premiers pas dans le shell], tp),
   ),
@@ -63,7 +64,7 @@ il est lu dans la VM après chaque commande.
   #corrige(titre: [Réponse])[
     `ls` est la commande, `-a` une option, `notes` un argument. Une hésitation ? C’est le module 0, « Le terminal,
     le shell, la commande » : voyez la diapo
-    #diapo("../../cm/shell-projection.pdf", "ligne-de-commande")[Lire une ligne de commande] et l’étape 1 du
+    #diapo("../../cm/intro-projection.pdf", "ligne-de-commande")[Lire une ligne de commande] et l’étape 1 du
     #link(tp + "#etape-1")[TP Premiers pas]. Ce que fait `-a`, et ce qu’est `notes`, c’est l’objet de cette page.
   ]
 ]
@@ -285,5 +286,6 @@ index.html
 #bloc(role: "pratique")[S’exercer][
   - Le TP #link(tp + "#etape-2")[Premiers pas dans le shell], étapes 2 (se repérer) et 4 (se déplacer), dans le même
     `atelier`, avec d’autres exemples.
+  - Module précédent : #link("../intro/index.html")[Le terminal, le shell, la commande].
   - Module suivant : « Regarder et agir sur des fichiers », dans ce même atelier.
 ]

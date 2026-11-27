@@ -170,6 +170,8 @@ const SPECS = {
 // Pages de cours : comme SPECS ; la page annonce chaque sortie (ecarts : celles qu'on ne compare pas).
 const SPECS_PAGES = {
   "shell/pages/arbo": { existe: ["~/atelier/pionnieres.csv", "~/atelier/.reglages"] },
+  // L'heure : la page en annonce la forme ; le manuel s'affiche dans le pager, sans sortie annoncée.
+  "shell/pages/intro": { ecarts: [/^date -u \+%H:%M$/, /^man /], attendu: [[/^date -u \+%H:%M$/, /^\d\d:\d\d$/m]] },
 };
 // Le modèle du repère de contexte (contexte.js, entre <modele> et </modele>) : une seule source pour la page et le test.
 const contextejs = readFileSync(path.join(ici, "contexte.js"), "utf8");

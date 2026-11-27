@@ -236,6 +236,8 @@
 ]
 // Pastille d’un pas (carré bleu à chiffre blanc), celle du repère de contexte et des diapos : `#pastille(2)`.
 #let pastille(n) = _el("span", class: "pastille", str(n))
+// Une touche du clavier, dans le texte : `#touche[Tab]`, `#touche[Ctrl+R]`.
+#let touche(corps) = _el("kbd", corps)
 // Ce qu'il faut regarder après un clic : la sortie dans le terminal, ou l'arbre de contexte.
 #let regardez(corps) = _el("p", class: "regardez", corps)
 
