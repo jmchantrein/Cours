@@ -20,6 +20,8 @@ l’organisation et la compilation dans [`README.md`](README.md).
   dans `build/` et ouvre-la dans un navigateur.
 - Écris une page de cours avec `page-web(cours: true, …)` : une notion, la commande qui la montre, ce qu’il faut
   regarder (`regardez`) ; les exercices longs restent au TP, et une question y prend la forme `predire`.
+- Reprends dans une page de cours exactement les exemples des diapos du module : mêmes commandes, même ordre, mêmes
+  données ; place les autres exemples au TP.
 - Après une modification d’une page de cours, lance `node commun/terminal/tester-vm.mjs --tp <cours>/pages/<module>`,
   puis suis-la dans un navigateur, de 1280 × 650 à 1920 × 950, en cliquant chaque commande dans l'ordre.
 - Écris chaque corrigé de TP comme un fichier réel sous `corrige/`, affiché par `fichier(…)` dans un bloc `corrige`.

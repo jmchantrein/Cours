@@ -19,7 +19,7 @@ const verifier = (condition, texte) => { if (!condition) throw new Error("échec
 // ---------- Pages ----------
 const essai = `#import "../../commun/theme-tp.typ": *
 #show: page-web.with(titre: [Essai du terminal], surtitre: [Page d’essai (build/)], racine: "../../",
-  terminal: ("vm", "compagnon"))
+  terminal: ("vm", "compagnon"), depart: (ici: "~"))
 = Commandes <commandes>
 #terminal[\`\`\`console
 $ printf 'a;1\\nb;2\\n' > t.csv

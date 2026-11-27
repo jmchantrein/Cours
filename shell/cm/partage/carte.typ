@@ -22,7 +22,7 @@
 }
 #let directs(m) = m.requiert.filter(p => not m.requiert.any(q => q != p and p in ancetres(q)))
 
-#let carte-progression(ici: none, etiquette: [Vous êtes ici], l: 182, h: 112, px-x: 212, px-y: 140) = {
+#let carte-progression(ici: none, etiquette: [Vous êtes ici], l: 182, h: 112, px-x: 212, px-y: 140, taille: px(19)) = {
   let acquis = if ici != none { ancetres(ici) } else { () }
   let pos(m) = (m.carte.col * px-x, 30 + m.carte.lig * px-y)
   let ncol = calc.max(..mods.map(m => m.carte.col)) + 1
@@ -49,8 +49,8 @@
         fill: if est-acquis { roles.reponse.fond } else if est-ici { roles.notion.fond } else { c.fond },
         stroke: if est-ici { px(5) + c.bleu } else if est-acquis { px(2) + roles.reponse.entete } else { px(1.5) + c.filet },
         grid(columns: (auto, 1fr), column-gutter: px(8),
-          pastille(m.ordre, t: px(20)),
-          text(size: px(19), weight: if est-ici { 700 } else { 500 }, hyphenate: false, m.titre))))
+          pastille(m.ordre, t: taille + px(1)),
+          text(size: taille, weight: if est-ici { 700 } else { 500 }, hyphenate: false, m.titre))))
       if est-ici {
         pose(x, y - 34, box(fill: c.bleu, radius: (top: px(8)), inset: (x: px(10), y: px(4)),
           text(size: px(20), weight: 700, fill: c.fond, etiquette)))

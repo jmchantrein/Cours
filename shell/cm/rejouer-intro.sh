@@ -60,6 +60,12 @@ printf '\n######## Invite de la VM (PS1 de commun/terminal/vm/profil.sh)\n'
 # shellcheck disable=SC2016
 bash --norc -c 'PS1="\u@\h:\w\\$ "; printf "%s\n" "${PS1@P}"'
 
+# Dans un terminal, ls range les noms en colonnes ; ici sa sortie va dans un tube : -C demande les mêmes colonnes.
+session "Pourquoi la ligne de commande (ls -C : les colonnes de ls dans un terminal)" <<'EOF'
+mkdir -p semestre/seance-{01..12}
+ls -C semestre
+EOF
+
 session "Une fenêtre de terminal ; de la frappe au résultat" <<'EOF'
 whoami
 EOF
@@ -76,6 +82,13 @@ EOF
 session "Les guillemets : un texte, un seul argument" <<'EOF'
 echo Grace     Hopper
 echo "Grace     Hopper"
+EOF
+
+# Tab, puis Tab Tab : les noms de commande que Readline propose (relevés dans un vrai terminal, Bash interactif ;
+# compgen -c en donne la liste, celle qu'affiche le second Tab).
+session "Le clavier du shell : ce que Tab complète" <<'EOF'
+compgen -c whoa | sort -u
+compgen -c who | sort -u
 EOF
 
 session "Se documenter" <<'EOF'

@@ -107,6 +107,8 @@ départ, une action, un état d’arrivée ; chaque clic fait avancer l’action
   Un lien va de `"nœud.prise"` à `"nœud.prise"` (prises du genre, `ports: (nom: ("g", 0.3))`, ou `g`, `d`, `h`, `b`) ;
   options `etiquette`, `donnee` (ce qui circule, sur fond de terminal), `tirets` (le flux 2), `motif: "dotted"` (voie non
   suivie), `fort`. Chaque état ne dit que ce qui change (`none` retire).
+  `echelle: 1.25` agrandit tout le schéma (nœuds, textes, traits) sans changer ses coordonnées : pour occuper la hauteur
+  de la diapo. Commande annotée : `taille:` (le terminal) et `taille-legende:` ; carte de progression : `taille:`.
 - **Repère d’étape** : ce qui change au clic k porte une pastille, carré bleu à chiffre blanc (`pastille(n)`), distincte
   des prises rondes et blanches : au coin d’une boîte, dans l’en-tête d’un fichier, devant la légende, en face de la
   première ligne nouvelle d’un terminal, dont les lignes précédentes passent en gris ; un lien changé s’épaissit et

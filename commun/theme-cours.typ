@@ -970,7 +970,7 @@
 // au clic k porte le numéro numero(k) (défaut k − 1 : l’état 1 est le départ) — pastille sur le nœud, devant la
 // légende, en face de la première ligne nouvelle d’un terminal, dont les lignes précédentes passent en gris ; un lien
 // changé s’épaissit, et laisse son ancien tracé en pointillé.
-#let schema-etats(hauteur: 300, noeuds: (:), liens: (:), etats: ((:),), etape: 1000, taille: px(22), grille: none,
+#let _schema-etats(hauteur: 300, noeuds: (:), liens: (:), etats: ((:),), etape: 1000, taille: px(22), grille: none,
   numero: k => if k > 1 { k - 1 }) = context {
   let appliquer(s, patch) = {
     for genre in ("noeuds", "liens") {
@@ -1163,6 +1163,13 @@
     for (nom, li) in etat.liens { lien(nom, li) }
     for (nom, n) in etat.noeuds { prises(nom, n) }
   })
+}
+
+// echelle: agrandit tout le schéma (nœuds, textes, traits, pastilles) d’un même facteur, pour occuper la hauteur de la
+// diapo sans recalculer ses coordonnées ; hauteur et coordonnées restent celles de la maquette à l’échelle 1.
+#let schema-etats(echelle: 1, ..args) = if echelle == 1 { _schema-etats(..args) } else {
+  layout(dispo => scale(echelle * 100%, origin: top + left, reflow: true,
+    block(width: dispo.width / echelle, _schema-etats(..args))))
 }
 
 // ---------- Ligne réécrite par Bash ----------
