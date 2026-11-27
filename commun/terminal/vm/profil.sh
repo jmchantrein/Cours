@@ -5,3 +5,5 @@
 export LANG=C.UTF-8 TERM=${TERM:-xterm-256color}
 PS1='\u@\h:\w\$ '
 umask 002   # comme une session Debian : chaque compte a son groupe (TP « Droits »)
+# Bash décrit, avant chaque invite, où il est : la page en tire l'arbre de contexte (séquence invisible, voir le fichier).
+if [ -n "${BASH_VERSION:-}" ] && [ -r /etc/cours-contexte.bash ]; then . /etc/cours-contexte.bash; fi

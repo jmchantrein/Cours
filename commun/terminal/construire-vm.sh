@@ -6,9 +6,9 @@
 # Usage : commun/terminal/construire-vm.sh <dossier de sortie>
 # Produit : bzImage (noyau), initrd.gz (tout le système), paquets.txt (paquets, versions et licences), version.
 #
-# Fichiers de départ : l'image reprend, de chaque TP dont l'énoncé déclare le mode « vm » (page-web(terminal: …)),
-# les fichiers de son dossier hors corrige/, tester.sh, *.typ et index.html (preparer.sh, dojo/…), sous
-# /usr/share/cours/Cours-main/<cours>/tp/<tp>/. Aucune copie à maintenir : la source reste le dossier du TP.
+# Fichiers de départ : l'image reprend, de chaque TP et de chaque page de cours dont la source déclare le mode « vm »
+# (page-web(terminal: …)), les fichiers de son dossier hors corrige/, tester.sh, *.typ et index.html (preparer.sh,
+# dojo/…), sous /usr/share/cours/Cours-main/<cours>/tp/<tp>/ ou <cours>/pages/<module>/. Aucune copie à maintenir : la source reste le dossier du TP.
 # Sans réseau, wget et curl de la VM (vm/telecharger) servent ces fichiers pour les adresses du site des cours et
 # de l'archive du dépôt, de sorte que la première étape d'un énoncé se tape telle quelle.
 set -euo pipefail
@@ -33,10 +33,12 @@ paquets=(
 
 command -v docker >/dev/null || { echo "construire-vm.sh : Docker est requis" >&2; exit 1; }
 
-# Fichiers de départ des TP en mode « vm », rassemblés comme l'archive du dépôt (Cours-main/<chemin du dépôt>).
+# Fichiers de départ des TP et des pages de cours en mode « vm », rassemblés comme l'archive du dépôt
+# (Cours-main/<chemin du dépôt>).
 depart=$(mktemp -d)
 trap 'rm -rf "$depart"' EXIT
-for enonce in "$ICI"/../../*/tp/*/*.typ; do
+for enonce in "$ICI"/../../*/tp/*/*.typ "$ICI"/../../*/pages/*/*.typ; do
+  [ -f "$enonce" ] || continue
   grep -Eq 'terminal: *\([^)]*"vm"' "$enonce" || continue
   tp=$(dirname "$enonce")
   cible="$depart/Cours-main/${tp#"$ICI"/../../}"
@@ -59,6 +61,7 @@ docker run --rm --platform linux/386 --name "terminal-vm-$$" "${reseau[@]}" \
     apk add --no-cache --no-scripts "$@"
     install -m 0755 /cours/init /init
     install -m 0644 /cours/profil.sh /etc/profile.d/cours.sh
+    install -m 0644 /cours/contexte.bash /etc/cours-contexte.bash
     install -m 0755 /cours/telecharger /usr/local/bin/wget
     ln -s wget /usr/local/bin/curl
     mkdir -p /usr/share/cours

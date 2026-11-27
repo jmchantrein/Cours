@@ -74,13 +74,19 @@ départ, une action, un état d’arrivée ; chaque clic fait avancer l’action
 - **Scène** : `#anime(scene(n, k => …))` occupe n clics ; le dessin est une fonction du clic k (1 à n, puis n + 1 :
   l’état final, sans plus rien mettre en valeur). Terminal et schéma qui avancent ensemble se placent dans la même
   scène : `scene(5, k => grid(columns: 2, terminal-annote(…, etape: k), schema-etats(…, etape: k)))`.
-- **Contexte** : `#anime(contexte: contexte(chemin: "/home/ada/atelier", contenu: ("f.csv", "scripts/"), voir: ("f.csv",)), …)`
-  pose un bandeau d’une ligne dans la marge du haut, au-dessus du surtitre : même place sur chaque diapo, sans prendre
-  celle du sujet. Il dit le compte (`compte`, `machine` pour une session distante ou un conteneur), le répertoire
-  courant dans l’arborescence, ce qu’il contient (`autres` : le nombre d’entrées non montrées), les variables
-  (`variables: (("p", "Ada"),)`) ; `voir` encadre ce que la commande emploie (`"$p"` pour une variable), `absent`
-  barre ce qui n’existe pas. Quand une commande le change (`cd`, fichier créé), `contexte: k => contexte(…)` (k : le
-  clic de la diapo). `corriges(contexte: …)` aussi.
+- **Arborescence** : `#arbre(racine, courant: "/home/ada/atelier", voir: (…), parcours: (…), ouverts: (…), caches: (…))`
+  dessine un arbre de répertoires (un nœud : `"fichier"` ou `("rep", (enfants…))`, la racine `("/", (…))`), chaque
+  niveau relié à son parent par un trait coudé. Il montre le chemin jusqu’au répertoire courant, ses frères et son
+  contenu ; une ligne grise compte le reste (« + 18 autres »). Le répertoire courant est sur fond bleu (`ici: [ici]`
+  ajoute un texte), ce qu’emploie la commande est encadré (`voir`), un chemin suivi est numéroté nœud par nœud
+  (`parcours`), un nom `"- absent.txt"` est barré (n’existe pas), `etiquettes: ("/home/ada": raw("~"))` ajoute un texte.
+- **Contexte** : `#anime(contexte: contexte(racine, courant: …, variables: (("p", "Ada"),)), …)` pose une colonne à
+  gauche de la diapo, toujours à la même place, de la même largeur et de la même hauteur (`largeur-contexte`,
+  `hauteur-contexte`) : le compte (`compte`, `machine` pour une session distante ou un conteneur), l’arbre (paramètres
+  d’`arbre`), les variables. Quand une commande la change (`cd`, fichier créé), `contexte: k => contexte(…)` (k : le
+  clic de la diapo) ; `corriges(contexte: …)` aussi. Le reste de la diapo dispose de 1 212 px de large au lieu de 1 664 :
+  un schéma en px s’y redessine. Un titre sur deux lignes fait déborder la colonne : le garder sur une ligne.
+  Exemples : `shell/cm/arbo.typ` (le module qui l’enseigne), `shell/cm/shell.typ` (`ctx(…)` y construit l’arbre).
 - **Commande ou sortie annotée** : `#anime(commande-annotee(("$ wc -l f", ("9 f", 3)), annote("wc", legende: [la commande]), annote("-l", legende: [une option])))`.
   Une ligne paraît au clic donné (`("texte", clic)`, ou par morceaux `(("$ cut …", 1), (" | sort", 2))`) ; chaque
   `annote(…)` désigne un morceau par son texte (`"-l"`, `(ligne: 2, texte: ";", n: 1)`, `(ligne: 2, cols: (3, 7))`),
@@ -110,7 +116,7 @@ départ, une action, un état d’arrivée ; chaque clic fait avancer l’action
   l’artefact `shell/artefacts/expansions-bash/`) ; un mot `(origine, "texte", genre)` reste dans la colonne du mot tapé
   dont il vient ; genre `"x"` : produit par une expansion (fond teinté), `"q"` : protégé par des guillemets (souligné) ;
   `·` : une espace dans un mot, `∅` : un mot vide. À chaque clic, ce qui change est encadré et une seule note dit
-  pourquoi ; au dernier clic, la sortie réelle prouve le résultat. `arguments("Mon", "dossier")` dessine, dans une
+  pourquoi ; au dernier clic, la sortie réelle prouve le résultat (à droite, ou `sortie-dessous: true`). `arguments("Mon", "dossier")` dessine, dans une
   légende, les arguments qu’une commande reçoit.
 - Les distinctions tiennent sans la couleur : épaisseur, motif du trait, cadre, numéro, étiquette.
 - Exemples : `shell/cm/shell.typ`, des sections « Bash · Les bases » à « Bash · Guillemets et expansions ».
@@ -119,9 +125,10 @@ départ, une action, un état d’arrivée ; chaque clic fait avancer l’action
 Les apparitions suivent la skill `structurer-diapos-cours` : bloc par bloc, puis puce par puce.
 - Cas courant : `#anime(rang(bloc[…][…], bloc[…][…]), rang(bloc(role: "retenir")[…][…]), bandeau[…], note: […], source-de: […])`.
   Un bloc apparaît avec sa première puce, chaque puce suivante au clic suivant ; un contenu quelconque compte pour un clic.
+  Une énumération ou un énoncé, qui ne décomposent pas une explication, s’affichent d’un coup : `bloc(revele: "bloc")`.
 - Mise en page libre : `#slide(repeat: n, self => { let (uncover,) = utils.methods(self); … })`, avec
   `bloc-anime(b, debut, uncover)` pour un bloc, `lignes(uncover: uncover, …)` pour une ligne par clic.
-- Dans `anime`, éléments à plusieurs clics : `lignes-anime(…)` (une ligne par clic), `plan-anime(…)` (le sommaire : titres et descriptions, sans numéro ni puce),
+- Dans `anime`, éléments à plusieurs clics : `lignes-anime(…)` (une ligne par clic), `plan-anime(…)` (le plan, une partie par clic ; un sommaire s’affiche plutôt d’un coup : `#slide[#plan-cours(…)]`),
   `terminal-etapes([```…```], [```…```])` (un morceau de terminal par clic), et `pas(n, (uncover, debut) => …)`
   pour une mise en page libre.
 - Notes de l’orateur d’une diapo animée : paramètre `note:` de `anime`, ou `utils.speaker-note(self: self)[…]`.

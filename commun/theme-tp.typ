@@ -77,11 +77,21 @@
 // terminal : les modes du terminal de la page (commun/terminal/), par ordre de préférence : "vm" (VM Linux dans
 // le navigateur), "compagnon" (le vrai shell de l’étudiant). Par exemple ("compagnon",) pour un TP Docker,
 // ("vm", "compagnon") pour un TP shell. none : pas de terminal, la page reste telle quelle.
+// cours : page de cours (<cours>/pages/<module>/) : le texte à gauche et, sur un écran large, une colonne à droite qui
+// reste en vue, avec le repère de contexte puis le terminal ; sur un écran étroit, le repère se réduit à une ligne sous
+// le bandeau et le terminal redevient un volet en bas. Le sommaire est une boîte en tête du texte.
+// contexte : le repère de contexte d'une page de cours (terminal/contexte.js), un arbre dessiné qui dit où l'on est.
+// En mode vm, il est lu dans la VM après chaque commande ; sinon, il est déclaré par la page :
+//   (compte: "ada", depart: "/home/ada", arbre: ("/home/ada/atelier/", "/home/ada/atelier/notes/a-faire.txt", …),
+//    creations: (("bash preparer.sh", ("/home/ada/atelier/",)), …))
+// arbre : les chemins absolus connus (un répertoire finit par « / ») ; creations : ce qu'une commande de la page crée
+// (absent tant qu'elle n'est pas passée) ; depart : le répertoire courant au début de la page.
 // Aperçu d’une branche (commun/construire-site.sh, `--input apercu=<branche>`) : le bandeau le dit.
 #let _apercu = sys.inputs.at("apercu", default: none)
 #let depot = "https://github.com/jmchantrein/Cours"
 #let page-web(titre: none, surtitre: none, sous-titre: none, auteur: none, date: none, racine: "../../../",
-  liens: (), sommaire: true, illustration-couverture: none, atelier: false, terminal: none, corps) = {
+  liens: (), sommaire: true, illustration-couverture: none, atelier: false, terminal: none, cours: false,
+  contexte: none, corps) = {
   let modes = if terminal == none { () } else if type(terminal) == str { (terminal,) } else { terminal }
   assert(modes.len() > 0 or terminal == none, message: "terminal : au moins un mode, ou none")
   assert(modes.all(m => m in ("vm", "compagnon")), message: "terminal : les modes sont \"vm\" et \"compagnon\"")
@@ -100,9 +110,10 @@
       #_el("meta", none, charset: "utf-8")
       #_el("meta", none, name: "viewport", content: "width=device-width, initial-scale=1")
       #_el("title", titre)
-      #_el("style", polices + _css-charte + read("tp.css") + if modes != () { read("terminal/terminal.css") })
+      #_el("style", polices + _css-charte + read("tp.css") + if modes != () { read("terminal/terminal.css") }
+        + if contexte != none { read("terminal/contexte.css") })
     ]
-    #_el("body", class: if atelier { "atelier" } else if sommaire { "avec-sommaire" } else { "simple" },
+    #_el("body", class: if atelier { "atelier" } else if cours { "page-cours" } else if sommaire { "avec-sommaire" } else { "simple" },
       data: if modes != () { (terminal: modes.join(" "), racine: racine) } else { (:) })[
       #_el("header", class: "bandeau")[
         #_el("a", class: "accueil", href: racine + "index.html")[Cours]
@@ -119,31 +130,47 @@
             }).join())
         ]
       ]
-      // En-tête : la couverture des diapos (fond nuit, surtitre, titre, illustration du cours).
-      #_el("div", class: "couverture")[
-        #_el("div", class: "couverture-texte")[
-          #if surtitre != none { _el("p", class: "surtitre", surtitre) }
-          #_el("h1", titre)
-          #if sous-titre != none { _el("p", class: "sous-titre", sous-titre) }
-          #if auteur != none { _el("p", class: "auteur", [#auteur#if date != none [ · #date]]) }
+      #let texte = [
+        // En-tête : la couverture des diapos (fond nuit, surtitre, titre, illustration du cours).
+        #_el("div", class: "couverture")[
+          #_el("div", class: "couverture-texte")[
+            #if surtitre != none { _el("p", class: "surtitre", surtitre) }
+            #_el("h1", titre)
+            #if sous-titre != none { _el("p", class: "sous-titre", sous-titre) }
+            #if auteur != none { _el("p", class: "auteur", [#auteur#if date != none [ · #date]]) }
+          ]
+          #if illustration-couverture != none { _dessin-couverture(illustration-couverture) }
         ]
-        #if illustration-couverture != none { _dessin-couverture(illustration-couverture) }
-      ]
-      #_el("div", class: "page")[
-        #if sommaire { outline(title: [Sommaire], depth: 1) }
-        #_el("main", corps)
-      ]
-      #_el("footer", class: "pied")[
-        #_el("p")[
-          Une erreur, une idée ?
-          #_el("a", href: depot + "/issues")[Ouvrez une issue] ou proposez une pull request sur le
-          #_el("a", href: depot)[dépôt] : les propositions rédigées par une IA, ou avec son aide, sont acceptées
-          elles aussi.
+        #_el("div", class: "page")[
+          #if sommaire { outline(title: [Sommaire], depth: 1) }
+          #_el("main", corps)
         ]
-        #_el("p")[Contenus sous licence #_el("a", href: "https://creativecommons.org/licenses/by-nc-sa/4.0/deed.fr")[CC BY-NC-SA 4.0].]
+        #_el("footer", class: "pied")[
+          #_el("p")[
+            Une erreur, une idée ?
+            #_el("a", href: depot + "/issues")[Ouvrez une issue] ou proposez une pull request sur le
+            #_el("a", href: depot)[dépôt] : les propositions rédigées par une IA, ou avec son aide, sont acceptées
+            elles aussi.
+          ]
+          #_el("p")[Contenus sous licence #_el("a", href: "https://creativecommons.org/licenses/by-nc-sa/4.0/deed.fr")[CC BY-NC-SA 4.0].]
+        ]
       ]
+      // Page de cours : le texte, et la colonne qui reste en vue (le repère de contexte ; terminal.js y place le terminal).
+      #if cours {
+        _el("div", class: "plan-cours")[
+          #_el("div", class: "texte-cours", texte)
+          #_el("aside", class: "cote", attrs: ("aria-label": "Où vous êtes, et le terminal"))[
+            #if contexte != none {
+              _el("section", class: "contexte", attrs: ("aria-label": "Où vous êtes dans l’arborescence"),
+                _el("p", class: "contexte-sans-script")[Le repère de contexte a besoin de JavaScript.])
+              _el("script", type: "application/json", id: "contexte-declare", json.encode(contexte, pretty: false))
+            }
+          ]
+        ]
+      } else { texte }
       #_el("script", read("tp.js"))
       #if modes != () { _el("script", read("terminal/terminal.js")) }
+      #if contexte != none { _el("script", read("terminal/contexte.js")) }
     ]
   ]
 }
@@ -182,6 +209,22 @@
     #raw(contenu.trim("\n", at: end), lang: langage, block: true)
   ]
 }
+
+// ---------- Pages de cours ----------
+// Prédire avant de cliquer : la question, puis un terminal dont la sortie reste masquée (tp.js) jusqu'à ce que la
+// commande soit exécutée, ou jusqu'au bouton « Voir la sortie » ; l'explication, facultative, paraît avec elle.
+// Sans script, tout est visible.
+//   #predire[question][#terminal[```console …```]][explication]
+#let predire(question, corps, ..explication) = _el("section", class: "bloc predire", data: (role: "question"))[
+  #_el("p", class: "bloc-titre")[#_el("span", class: "role", roles-def.at("question").nom) Prédisez, puis cliquez]
+  #question
+  #corps
+  #if explication.pos().len() > 0 { _el("div", class: "predire-explication", explication.pos().first()) }
+]
+// Pastille d’un pas (carré bleu à chiffre blanc), celle du repère de contexte et des diapos : `#pastille(2)`.
+#let pastille(n) = _el("span", class: "pastille", str(n))
+// Ce qu'il faut regarder après un clic : la sortie dans le terminal, ou l'arbre de contexte.
+#let regardez(corps) = _el("p", class: "regardez", corps)
 
 // ---------- Liens vers les autres supports ----------
 // Diapositive du cours magistral : `ancre` est l’étiquette posée sur son titre (`== Titre <ancre>`),

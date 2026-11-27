@@ -62,6 +62,12 @@ body.terminal-ouvert { padding-bottom: var(--terminal-hauteur); }
 /* xterm.css peint le défilement en noir : on le remet au fond du terminal. */
 .terminal-ecran .xterm .xterm-viewport { background-color: var(--c-nuit); scrollbar-color: var(--c-commentaire) var(--c-nuit); }
 
+/* Page de cours, écran large : le terminal est dans la colonne de droite, sous le repère de contexte, à côté du texte. */
+@media (min-width: 64rem) {
+  body.page-cours.terminal-ouvert { padding-bottom: 0; }
+  .page-cours .cote .terminal-volet { position: static; flex: 1; min-height: 0; height: auto; box-shadow: none; }
+}
+
 [data-variante="dyslexie"] .terminal-volet { letter-spacing: .03em; }
 
 @media print { .terminal-volet, .terminal-lanceur, .terminal .executer { display: none; } body.terminal-ouvert { padding-bottom: 0; } }

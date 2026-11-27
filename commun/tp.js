@@ -1,5 +1,5 @@
 // tp.js — comportements des pages web : variante d’affichage, terminaux, copie des commandes,
-// sommaire qui suit la lecture, expériences pas à pas.
+// sommaire qui suit la lecture, expériences pas à pas, questions « prédisez » des pages de cours.
 (() => {
   document.documentElement.classList.add("js");
   // Variante d’affichage : choisie par le lecteur, mémorisée dans son navigateur.
@@ -19,20 +19,35 @@
 
   // Terminaux : l’invite `$ ` et les commentaires `# ` sont mis en évidence. Sur une page qui déclare un
   // terminal (page-web(terminal: …)), chaque commande reçoit un bouton « Exécuter », que terminal.js relie.
+  // Dans une question « prédisez » (page de cours), la sortie est masquée jusqu’à ce que la commande soit exécutée.
   const executable = Boolean(document.body.dataset.terminal);
   for (const code of document.querySelectorAll(".terminal pre code")) {
     const lignes = code.textContent.split("\n");
     const cmds = commandes(lignes);
     code.dataset.commandes = cmds.map(c => c.texte).join("\n");
     const finDe = new Map(cmds.map(c => [c.fin, c.texte]));
+    const deCommande = new Set(cmds.flatMap(c => Array.from({ length: c.texte.split("\n").length }, (_, k) => c.fin - k)));
+    const masquer = Boolean(code.closest(".predire"));
     code.replaceChildren(...lignes.flatMap((ligne, i) => {
       const fin = i < lignes.length - 1 ? "\n" : "";
       const apres = executable && finDe.has(i) ? [executer(finDe.get(i)), fin] : [fin];
       if (ligne.startsWith("$ ")) return [span("invite", "$ "), ligne.slice(2), ...apres];
       if (ligne.startsWith("# ")) return [span("commentaire", ligne + fin)];
+      if (masquer && !deCommande.has(i)) return [span("sortie-masquee", ligne + fin)];
       return [ligne, ...apres];
     }));
   }
+  for (const question of document.querySelectorAll(".predire")) {
+    const voir = document.createElement("button");
+    voir.type = "button"; voir.className = "predire-voir"; voir.textContent = "Voir la sortie sans exécuter";
+    voir.addEventListener("click", () => { question.dataset.revele = ""; });
+    question.querySelector(".terminal")?.after(voir);
+  }
+  // Une commande exécutée dans le terminal (terminal.js) dévoile la sortie annoncée de sa question.
+  document.addEventListener("terminal-commande", e => {
+    const question = e.detail.bouton?.closest(".predire");
+    if (question) question.dataset.revele = "";
+  });
   function executer(commande) {
     const b = document.createElement("button");
     b.type = "button"; b.className = "executer"; b.textContent = "Exécuter";
@@ -90,6 +105,11 @@
       pre.append(bouton);
     }
   }
+
+  // Hauteur du bandeau, pour ce qui reste en vue juste dessous (la colonne d’une page de cours).
+  const bandeau = document.querySelector(".bandeau");
+  const mesurer = () => document.documentElement.style.setProperty("--bandeau-h", bandeau.offsetHeight + "px");
+  if (bandeau) { mesurer(); addEventListener("resize", mesurer); }
 
   // Sommaire : l’étape en cours de lecture est marquée, et une barre montre l’avancement dans la page.
   const sommaire = document.querySelector('nav[role="doc-toc"]');

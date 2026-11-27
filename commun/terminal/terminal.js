@@ -5,6 +5,10 @@
 //   puis se range dans Cache Storage sous une clé qui porte sa version ;
 // - "compagnon" : le vrai shell de l’étudiant, par l’exécutable iadmin-terminal (compagnon/, WebSocket sur 127.0.0.1, jeton).
 // Les fichiers tiers (xterm.js, v86, image) sont dans vendor/, construit par preparer.sh, chargés à la demande.
+// Sur une page de cours (page-web(cours: true)), le terminal se place dans la colonne `.cote`, à côté du texte ; il est
+// ouvert d’emblée sur un écran large. Événements, pour le repère de contexte (contexte.js) et tp.js :
+// « terminal-commande » (une commande cliquée part dans le terminal), « terminal-session » (une session s’ouvre ou se
+// ferme), « terminal-contexte » (le shell de la VM a décrit où il est : séquence OSC 6973, voir vm/contexte.bash).
 (() => {
   const modes = (document.body.dataset.terminal || "").split(" ").filter(m => m === "vm" || m === "compagnon");
   const bandeau = document.querySelector(".bandeau");
@@ -39,7 +43,9 @@
         : el("span", {}, NOMS[modes[0]]),
       etat, actions, reduire),
     corps);
-  document.body.append(volet);
+  const cote = document.querySelector(".page-cours .cote");
+  (cote || document.body).append(volet);
+  const signaler = (nom, detail) => document.dispatchEvent(new CustomEvent(nom, { detail }));
 
   const ouvrir = () => {
     volet.hidden = false; document.body.classList.add("terminal-ouvert");
@@ -80,6 +86,9 @@
     const fit = new window.FitAddon.FitAddon();
     t.loadAddon(fit); t.open(ecran); fit.fit();
     t.onData(saisie);
+    // La VM décrit, avant chaque invite, le répertoire courant et ce qui l’entoure (vm/contexte.bash) : la séquence
+    // n’affiche rien ; son contenu part au repère de contexte de la page.
+    t.parser.registerOscHandler(6973, texte => { signaler("terminal-contexte", { texte }); return true; });
     const suivre = new ResizeObserver(() => { if (!ecran.hidden && ecran.clientWidth) { fit.fit(); taille(t.cols, t.rows); } });
     suivre.observe(ecran);
     terminaux.add(t);
@@ -298,6 +307,7 @@
   function majActions() { actions.replaceChildren(...courant.actions.filter(() => courant.session)); }
   function majBoutons() {
     const ouverte = courant.session;
+    signaler("terminal-session", { mode: courant.id, ouverte });
     lanceur.dataset.session = ouverte ? "ouverte" : "";
     for (const b of document.querySelectorAll(".terminal .executer")) {
       b.setAttribute("aria-disabled", String(!ouverte));
@@ -318,6 +328,9 @@
   }
   choixModes.forEach((b, i) => b.addEventListener("click", () => choisir(tous[i])));
   choisir(courant);
+  // Page de cours, écran large : le terminal est en vue dès l’arrivée, à côté du texte (rien ne se télécharge avant
+  // « Démarrer la VM »).
+  if (cote && matchMedia("(min-width: 64rem)").matches) ouvrir();
 
   document.addEventListener("click", evenement => {
     const bouton = evenement.target.closest(".terminal .executer");
@@ -326,10 +339,11 @@
     ouvrir();
     if (!courant.session) { courant.inviter(); return; }
     courant.executer(bouton.dataset.commande);
+    signaler("terminal-commande", { commande: bouton.dataset.commande, bouton, mode: courant.id });
     bouton.dataset.etat = "envoyee";
     setTimeout(() => delete bouton.dataset.etat, 700);
     // Le volet qui s’ouvre ne doit pas cacher la commande cliquée.
-    if (etaitFerme) {
+    if (etaitFerme && getComputedStyle(volet).position === "fixed") {
       const bas = bouton.getBoundingClientRect().bottom, limite = volet.getBoundingClientRect().top;
       if (bas > limite) scrollBy({ top: bas - limite + 16 });
     }

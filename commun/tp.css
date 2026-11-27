@@ -187,6 +187,49 @@ html:has(body.atelier) { font-size: 93.75%; }
   .aide { overflow-y: auto; }
 }
 
+/* ---------- Page de cours : le texte, et une colonne qui reste en vue (repère de contexte, terminal) ---------- */
+.page-cours .couverture { padding: 1.1rem 1.5rem 1.3rem; }
+.page-cours .couverture-texte { flex-basis: 46rem; }
+.page-cours .couverture .surtitre { margin-bottom: .35rem; font-size: .72rem; }
+.page-cours .couverture h1 { font-size: clamp(1.6rem, 2.6vw, 2.2rem); }
+.page-cours .couverture .sous-titre { margin-top: .35rem; font-size: 1rem; }
+.page-cours .couverture .auteur { margin-top: .6rem; font-size: .8rem; }
+.page-cours .couverture > .couverture-dessin { display: none; }
+.page-cours .page { max-width: 46rem; padding: 1.4rem 1.5rem 3rem; }
+/* Le sommaire d’une page de cours : une boîte compacte, les sections à la suite. */
+.page-cours nav[role="doc-toc"] { padding: .6rem .9rem; font-size: .82rem; }
+.page-cours nav[role="doc-toc"] ol { display: flex; flex-wrap: wrap; gap: .1rem .2rem; list-style: none; }
+.page-cours nav[role="doc-toc"] a { padding: .1rem .5rem; border-left: 0; border-radius: .3rem; }
+.page-cours h2 { margin-top: 2.4rem; font-size: 1.45rem; }
+.page-cours main > h2:first-child { margin-top: 0; }
+/* Ce qu’il faut regarder après un clic : une flèche vers la colonne de droite (vers le haut sur un écran étroit). */
+.regardez { margin: .5rem 0 1.1rem; padding-left: 1.6rem; position: relative; color: var(--c-ardoise); }
+.regardez::before { content: "→"; position: absolute; left: .2rem; top: 0; color: var(--c-bleu); font-weight: 700; }
+.regardez strong { color: var(--c-encre); }
+/* Prédire avant de cliquer : la sortie et l’explication restent masquées jusqu’à l’exécution (tp.js). */
+.predire .terminal pre { margin-bottom: .4rem; }
+.predire:not([data-revele]) .sortie-masquee { display: none; }
+.predire-voir { margin: 0 0 .4rem; padding: .15rem .7rem; border: 1px solid var(--question-entete); border-radius: .3rem;
+  background: var(--c-fond); color: var(--c-encre); font: inherit; font-size: .82rem; cursor: pointer; }
+.predire-voir:hover { border-color: var(--c-bleu); }
+.predire[data-revele] .predire-voir { display: none; }
+.predire-explication > :first-child { margin-top: .3rem; }
+.predire-explication > :last-child { margin-bottom: 0; }
+html.js .predire:not([data-revele]) .predire-explication { display: none; }
+@media (min-width: 64rem) {
+  body.page-cours { --cote: clamp(24rem, 44vw, 52rem); }
+  body.page-cours:not(.terminal-ouvert) { --cote: clamp(19rem, 27vw, 27rem); }
+  .plan-cours { flex: 1; display: grid; grid-template-columns: minmax(0, 1fr) var(--cote); align-items: start; }
+  .texte-cours { min-width: 0; min-height: calc(100vh - var(--bandeau-h, 2.6rem)); display: flex; flex-direction: column; }
+  .texte-cours .page { flex: 1; width: 100%; }
+  .cote { position: sticky; top: var(--bandeau-h, 2.6rem); height: calc(100vh - var(--bandeau-h, 2.6rem)); display: flex;
+    flex-direction: column; min-width: 0; border-left: 1px solid var(--c-filet); background: var(--c-fond); }
+}
+@media (max-width: 63.99rem) {
+  .cote { position: sticky; top: var(--bandeau-h, 2.6rem); z-index: 2; order: -1; }
+  .plan-cours { display: flex; flex-direction: column; }
+}
+
 /* Expériences guidées : une à la fois (tp.js), ou toutes à la suite sans script. */
 .experience { margin: 0 0 .8rem; padding: .6rem .9rem; background: #fff; border: 1px solid var(--c-filet); border-radius: .5rem; }
 .pas-a-pas .experience-titre { display: none; }
@@ -215,6 +258,9 @@ html:has(body.atelier) { font-size: 93.75%; }
 /* ---------- Impression : l’énoncé seul, sans indices ni corrigés. ---------- */
 @media print {
   .bandeau, .copier, details, .pied, nav[role="doc-toc"] { display: none; }
+  .predire .sortie-masquee { display: inline; }
+  .predire-voir { display: none; }
+  html.js .predire .predire-explication { display: block; }
   html { font-size: 11pt; background: #fff; }
   .couverture { background: none; color: var(--c-encre); padding: 0 0 1rem; }
   .couverture-dessin { display: none; }

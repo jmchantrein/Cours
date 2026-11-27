@@ -1,14 +1,20 @@
 // tester-vm.mjs — démarre l'image de la VM dans Node (v86 de vendor/), exécute des commandes par le port série,
 // comme la page, et vérifie leurs sorties. Usage, après preparer.sh --vm, depuis n'importe où :
 //   node commun/terminal/tester-vm.mjs [outil …]   les outils de construire-vm.sh (ou ceux nommés), le compte ada,
-//                                                  puis le rejeu de chaque TP en mode vm (4 TP en parallèle)
-//   node commun/terminal/tester-vm.mjs --tp <cours>/tp/<tp>   le rejeu d'un seul TP
+//                                                  puis le rejeu de chaque TP et de chaque page de cours en mode vm
+//                                                  (4 à la fois)
+//   node commun/terminal/tester-vm.mjs --tp <cours>/tp/<tp>   le rejeu d'un seul TP (ou --tp <cours>/pages/<module>)
 //
 // Rejeu d'un TP : le script compile son énoncé en HTML (typst), en lit les blocs terminal avec le découpage de
 // commandes de commun/tp.js (une commande = ce que le bouton « Exécuter » envoie), et envoie chaque commande à
 // la VM, dans l'ordre, jusqu'à l'invite suivante. Il vérifie ensuite, par TP (SPECS ci-dessous) : les fichiers de
 // départ, la première et la dernière commande contre la sortie annoncée, et qu'aucune commande n'échoue sans que
 // l'énoncé le dise (« command not found », « No such file »…).
+// Rejeu d'une page de cours (<cours>/pages/<module>/) : même lecture, mais plus stricte, car la page promet que chaque
+// commande cliquée dans l'ordre donne ce qu'elle annonce : la sortie de chaque commande est comparée à l'annonce (pour
+// `ls`, les noms, quelle que soit la largeur du terminal), et le repère de contexte que la page déclare (le modèle de
+// contexte.js) au contexte réel que la VM décrit après chaque commande (vm/contexte.bash) : répertoire courant, et
+// contenu de chaque répertoire que la page déclare.
 import { createRequire } from "node:module";
 import { readFileSync, readdirSync, existsSync, mkdtempSync, rmSync } from "node:fs";
 import { execFileSync, spawn } from "node:child_process";
@@ -70,7 +76,11 @@ async function demarrerVM() {
       const p = lignes.findIndex(l => /^[\w-]+@cours:\S*[$#] /.test(l));
       lignes = lignes.slice(p >= 0 ? p + commande.split("\n").length : 0);
       if (lignes.length && /^[\w-]+@cours:\S*[$#] ?$/.test(lignes.at(-1))) lignes.pop();
-      return { sortie: lignes.join("\n"), bloque };
+      // Le contexte que le shell décrit avant l'invite qui suit la commande (séquence OSC 6973 de vm/contexte.bash).
+      // La dernière avant la ligne FIN_n : la première de la tranche suit encore la commande précédente.
+      const brut = utf8(sortie.slice(depuis)), finBrut = marque ? brut.search(new RegExp(`[\\r\\n]${marque}\\r?\\n`)) : -1;
+      const contextes = [...(finBrut >= 0 ? brut.slice(0, finBrut) : brut).matchAll(/\x1b\]6973;([^\x07]*)\x07/g)].map(m => m[1]);
+      return { sortie: lignes.join("\n"), bloque, contexte: contextes.at(-1) ?? null };
     },
     fermer: () => vm.destroy(),
   };
@@ -154,6 +164,16 @@ const SPECS = {
       [/^tmux list-windows -t atelier/, /edition[\s\S]*surveillance/]] },
 };
 
+// Pages de cours : comme SPECS ; la page annonce chaque sortie (ecarts : celles qu'on ne compare pas).
+const SPECS_PAGES = {
+  "shell/pages/arbo": { existe: ["~/atelier/pionnieres.csv", "~/atelier/.reglages"] },
+};
+// Le modèle du repère de contexte (contexte.js, entre <modele> et </modele>) : une seule source pour la page et le test.
+const contextejs = readFileSync(path.join(ici, "contexte.js"), "utf8");
+const modele = new Function(contextejs.slice(contextejs.indexOf("// <modele>"), contextejs.indexOf("// </modele>"))
+  + "; return { lireRapport, etatsDeclares, lecture };")();
+const motsLs = s => normaliser(s).split(/\s+/).filter(Boolean).sort().join(" ");
+
 const MOTIFS_ECHEC = /command not found|No such file or directory|not found$|Permission denied$/m;
 
 // Pose des fichiers dans la VM : base64 par morceaux (une ligne de terminal tient 4096 caractères). Les noms
@@ -170,15 +190,20 @@ async function poser(vm, dossier, fichiers) {
 }
 
 async function rejouerTP(tp) {
-  const spec = SPECS[tp] || {};
+  const page = /\/pages\//.test(tp);
+  const spec = (page ? SPECS_PAGES[tp] : SPECS[tp]) || {};
   const nom = path.basename(tp);
   const tmp = mkdtempSync(path.join(os.tmpdir(), "terminal-tp-"));
   try {
     const html = path.join(tmp, "index.html");
     execFileSync("typst", ["compile", "--root", racine, "--font-path", path.join(racine, "commun/fonts"), "--features", "html",
       "--format", "html", path.join(racine, tp, `${nom}.typ`), html], { stdio: ["ignore", "ignore", "ignore"] });
-    const etapes = lireEnonce(readFileSync(html, "utf8"));
+    const source = readFileSync(html, "utf8");
+    const etapes = lireEnonce(source);
     if (!etapes.length) throw new Error("aucune commande trouvée dans l'énoncé");
+    const declare = page && source.match(/<script type="application\/json" id="contexte-declare">([\s\S]*?)<\/script>/);
+    const etatsPage = declare ? modele.etatsDeclares(JSON.parse(entites(declare[1])), etapes.map(e => e.commande)) : null;
+    let rang = 0, contextesVerifies = 0;
     const vm = await demarrerVM();
     // Sans pager : les touches de fin de commande que ce script tape gêneraient less (git log, git config --list).
     await vm.executer("export PAGER=cat GIT_PAGER=cat");
@@ -202,6 +227,28 @@ async function rejouerTP(tp) {
       }
       const r = await vm.executer(commande, avant ? 120_000 : 60_000, avant);
       const e = { commande, annonce, sortie: r.sortie, bloque: r.bloque };
+      rang++;
+      if (page) {
+        // Chaque sortie annoncée ; pour ls (sans -l), les mêmes noms, rangés en colonnes selon la largeur du terminal.
+        const ls = /^ls(\s+-a)?(\s|$)/.test(commande) && !/^ls -l/.test(commande);
+        if (!(spec.ecarts || []).some(x => x.test(commande)) && (ls ? motsLs(r.sortie) !== motsLs(annonce) : normaliser(r.sortie) !== normaliser(annonce)))
+          echecs.push(`sortie différente de la page : ${commande}\n    annoncé : ${JSON.stringify(normaliser(annonce))}\n    obtenu  : ${JSON.stringify(normaliser(r.sortie))}`);
+        // Le contexte déclaré par la page, après cette commande, contre celui que décrit la VM.
+        if (etatsPage) {
+          if (!r.contexte) echecs.push(`pas de contexte décrit par la VM après : ${commande}`);
+          else {
+            const reel = modele.lireRapport(r.contexte), dit = etatsPage[rang];
+            if (reel.cwd !== dit.cwd) echecs.push(`contexte : après « ${commande} », la page dit ${dit.cwd}, la VM ${reel.cwd}`);
+            for (const [chemin, d] of Object.entries(dit.dossiers)) {
+              const v = reel.dossiers[chemin];
+              if (d.total == null || !v) continue;
+              const a = d.entrees.map(x => x.nom + (x.dossier ? "/" : "")).join(" "), b = v.entrees.map(x => x.nom + (x.dossier ? "/" : "")).join(" ");
+              if (a !== b) echecs.push(`contexte : après « ${commande} », ${chemin} contient selon la page « ${a} », selon la VM « ${b} »`);
+            }
+            contextesVerifies++;
+          }
+        }
+      }
       sorties.push(e); derniere.set(commande.split("\n")[0], e);
       if (r.bloque) echecs.push(`bloquée : ${commande.split("\n")[0]}`);
       else if (MOTIFS_ECHEC.test(r.sortie) && !MOTIFS_ECHEC.test(annonce) && !(spec.tolere || []).some(t => t.test(commande))) echecs.push(`échec inattendu : ${commande.split("\n")[0]} → ${r.sortie.split("\n")[0]}`);
@@ -229,20 +276,21 @@ async function rejouerTP(tp) {
       if (reussis !== 6) echecs.push(`katas réussis : ${reussis} sur 6`);
     }
     vm.fermer();
-    const lignes = `${sorties.length} commandes rejouées, 1re et dernière comparées à l'énoncé`;
+    const lignes = page ? `${sorties.length} commandes rejouées, chaque sortie comparée à la page, contexte comparé après ${contextesVerifies} commandes`
+      : `${sorties.length} commandes rejouées, 1re et dernière comparées à l'énoncé`;
     return { tp, secondes: vm.secondes, resume: lignes, echecs, comparables: comparables.length };
   } finally { rmSync(tmp, { recursive: true, force: true }); }
 }
 
-// ---------------------------------------------------------------- les TP en mode vm : leur énoncé le déclare
-function tpEnModeVm() {
+// ---------------------------------------------------------------- TP et pages de cours en mode vm : leur source le déclare
+function enModeVm(nature) {
   const sortie = [];
   for (const cours of readdirSync(racine)) {
-    const dossierTP = path.join(racine, cours, "tp");
-    if (!existsSync(dossierTP)) continue;
-    for (const tp of readdirSync(dossierTP)) {
-      const source = path.join(dossierTP, tp, `${tp}.typ`);
-      if (existsSync(source) && /terminal: *\([^)]*"vm"/.test(readFileSync(source, "utf8"))) sortie.push(`${cours}/tp/${tp}`);
+    const dossier = path.join(racine, cours, nature);
+    if (!existsSync(dossier)) continue;
+    for (const tp of readdirSync(dossier)) {
+      const source = path.join(dossier, tp, `${tp}.typ`);
+      if (existsSync(source) && /terminal: *\([^)]*"vm"/.test(readFileSync(source, "utf8"))) sortie.push(`${cours}/${nature}/${tp}`);
     }
   }
   return sortie;
@@ -261,10 +309,12 @@ if (argument === "--tp") {
   await testerImage(outils);
   if (process.argv.slice(2).length) process.exit(0);
   // Le rejeu des TP : un processus par TP (la VM de v86 est monothread), quatre à la fois.
-  const file = tpEnModeVm(); const manquants = Object.keys(SPECS).filter(t => !file.includes(t));
+  const tps = enModeVm("tp"), pages = enModeVm("pages");
+  const manquants = Object.keys(SPECS).filter(t => !tps.includes(t));
   if (manquants.length) { console.error(`SPECS cite des TP qui ne déclarent pas le mode vm : ${manquants.join(", ")}`); process.exit(1); }
-  const sansSpec = file.filter(t => !(t in SPECS));
+  const sansSpec = tps.filter(t => !(t in SPECS));
   if (sansSpec.length) { console.error(`TP en mode vm sans entrée dans SPECS (tester-vm.mjs) : ${sansSpec.join(", ")}`); process.exit(1); }
+  const file = [...pages, ...tps];
   let echecs = 0;
   const lancer = tp => new Promise(fini => {
     let texte = "";
@@ -274,7 +324,7 @@ if (argument === "--tp") {
   });
   const attente = [...file];
   await Promise.all(Array.from({ length: 4 }, async () => { for (let tp; (tp = attente.shift());) await lancer(tp); }));
-  if (echecs) { console.error(`${echecs} TP en échec`); process.exit(1); }
-  console.log(`${file.length} TP en mode vm rejoués dans la VM.`);
+  if (echecs) { console.error(`${echecs} TP ou pages en échec`); process.exit(1); }
+  console.log(`${tps.length} TP et ${pages.length} page(s) de cours en mode vm rejoués dans la VM.`);
   process.exit(0);
 }
