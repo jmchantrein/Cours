@@ -35,7 +35,7 @@ Applique ces règles à toute création ou révision de diapos de cours. Elles p
 - Limite la charge : au plus cinq légendes à l'écran en même temps, la courante comprise ; au-delà, scinde la diapo.
 - Trace sans chevauchement : ni trait qui en croise un autre, ni texte recouvert.
 - Quand un croisement est inévitable, décompose en étapes numérotées et marque l'étape en cours, par son numéro et par une mise en valeur.
-- Réserve les puces à ce qui décompose une explication ou une argumentation ; un sommaire, un titre ou une énumération courte s'en passent.
+- Révèle ligne par ligne seulement ce qui décompose une explication ou une argumentation ; un sommaire ou une énumération s'affichent d'un coup.
 
 ## Exercices et corrigés
 - Mets l'énoncé (« À vous ») sur une diapo et le corrigé sur la suivante.
@@ -58,7 +58,7 @@ Applique ces règles à toute création ou révision de diapos de cours. Elles p
 - Commente dans le terminal chaque ligne non évidente.
 
 ## Animations
-- Fais avancer un schéma ou une annotation plutôt qu'une liste ; quand une diapo reste une liste, révèle-la bloc par bloc, puis puce par puce.
+- Fais avancer un schéma ou une annotation plutôt qu'une liste ; une liste qui ne décompose ni explication ni argumentation s'affiche d'un coup.
 - Fais apparaître les étapes séquentielles l'une après l'autre et la synthèse en dernier.
 - Synchronise chaque explication avec l'élément qu'elle explique.
 - Aligne chaque étiquette en face de l'élément qu'elle désigne.
