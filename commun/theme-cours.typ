@@ -98,9 +98,11 @@
 // ---------- Blocs colorés ----------
 // bloc(...) décrit un bloc ; colonnes(...) les pose côte à côte, à hauteur égale.
 // role : notion (défaut), pratique, retenir, precaution, avertissement, danger (voir roles-def).
-#let bloc(titre, role: "notion", poids: 1, taille: px(28), taille-titre: px(28), corps) = {
+// revele : "puce" (défaut, dans anime : une puce par clic) ou "bloc" (le bloc entier d’un coup : une énumération,
+// un énoncé d’exercice, qui ne décomposent pas une explication).
+#let bloc(titre, role: "notion", poids: 1, taille: px(28), taille-titre: px(28), revele: "puce", corps) = {
   assert(role in roles, message: "rôle inconnu : " + role + " (attendu : " + roles.keys().join(", ") + ")")
-  (titre: titre, role: role, poids: poids, taille: taille, taille-titre: taille-titre, corps: corps)
+  (titre: titre, role: role, poids: poids, taille: taille, taille-titre: taille-titre, corps: corps, revele: revele)
 }
 
 // En-tête d’un rôle : pictogramme puis titre.
@@ -124,6 +126,15 @@
 #let colonnes(gouttiere: px(32), ..blocs) = rangee(gouttiere: gouttiere,
   poids: blocs.pos().map(b => b.poids),
   ..blocs.pos().map(b => h => rendre-bloc(b, hauteur: h)))
+
+// Colonne de contexte (voir contexte(…), plus bas) : même largeur et même hauteur sur toutes les diapos.
+#let largeur-contexte = px(420)
+#let hauteur-contexte = px(630)
+// Le corps d’une diapo à contexte : la colonne à gauche, le reste à droite.
+#let avec-contexte(ctx, corps) = if ctx == none { corps } else {
+  // hauteur fixe : celle du corps d’une diapo sous un titre d’une ligne
+  grid(columns: (largeur-contexte, 1fr), column-gutter: px(36), block(height: hauteur-contexte, ctx), corps)
+}
 
 #let espace = v(px(24))
 
@@ -237,14 +248,16 @@
       montre(i, text(size: taille, v)))).flatten())
 }
 
-// Plan du cours : titre de partie, description ; sans numéro ni puce (un sommaire n’en a pas besoin).
+// Plan du cours : numéro, titre de partie, description. Un sommaire s’affiche d’un coup : plan-cours(…) sans
+// uncover ; plan-anime (une partie par clic) reste pour les cours qui l’emploient.
 #let plan-cours(uncover: none, ..parties) = {
   let ps = parties.pos()
   let montre(i, x) = if uncover == none { x } else { uncover(str(i + 1) + "-", x) }
-  grid(columns: (1fr,), align: horizon,
+  grid(columns: (px(96), 1fr), align: horizon, column-gutter: px(40),
     inset: (y: px(16)),
     stroke: (x, y) => if y < ps.len() - 1 { (bottom: px(1) + c.filet) },
     ..ps.enumerate().map(((i, (t, d))) => (
+      montre(i, text(size: px(64), weight: 600, fill: c.bleu, str(i + 1))),
       montre(i, { text(size: px(40), weight: 600, t); linebreak(); text(size: px(32), fill: c.ardoise, d) }),
     )).flatten())
 }
@@ -260,7 +273,7 @@
 #let filet-corrige = line(length: 100%, stroke: px(2) + rgb("#C9D6EA"))
 
 // La réponse s’écrit reponse(...) dans le cours, à l’intérieur de son uncover : la barre apparaît avec elle.
-#let corrige(n, q, rep) = grid(columns: (px(700), 1fr), column-gutter: px(32),
+#let corrige(n, q, rep, gauche: px(700)) = grid(columns: (gauche, 1fr), column-gutter: px(32),
   question(n, q), rep)
 
 // Plusieurs questions et leurs réponses sur une diapo : la question reste visible, chaque réponse apparaît
@@ -269,11 +282,10 @@
   let qa = items.pos()
   slide(repeat: qa.len() + 1, self => {
     let (uncover,) = utils.methods(self)
-    if contexte != none { place(top + left, dy: -px(104), block(width: 100%, contexte)) }
-    for (i, it) in qa.enumerate() {
-      corrige(it.at(0), it.at(1), uncover(str(i + 2) + "-", it.at(2)))
+    avec-contexte(contexte, for (i, it) in qa.enumerate() {
+      corrige(it.at(0), it.at(1), uncover(str(i + 2) + "-", it.at(2)), gauche: if contexte != none { px(420) } else { px(700) })
       if i < qa.len() - 1 { v(px(16)) }
-    }
+    })
     if note != none { utils.speaker-note(self: self, note) }
   })
 }
@@ -441,49 +453,126 @@
 // #cloture(illustration: …)[Merci][Des questions ?][auteur][contact ou lien]
 #let cloture(..args) = page-titre(..args)
 
-// ---------- Contexte d’une commande ----------
-// Où l’on est quand la commande s’exécute : compte (et machine), répertoire courant dans l’arborescence, ce qu’il
-// contient, variables définies. Un bandeau d’une ligne, dans la marge du haut de la diapo (paramètre contexte: d’anime
-// et de corriges), toujours au même endroit ; ce qui concerne la commande est encadré (voir), ce qui n’existe pas est
-// barré, en tirets (absent).
-//   contexte(chemin: "/home/ada/atelier", contenu: ("pionnieres.csv", "scripts/"), voir: ("pionnieres.csv",),
-//     autres: 37, variables: (("p", "Ada Lovelace"),))
-// machine : une machine distante, un conteneur (pour les autres cours) ; autres : nombre d’entrées non montrées.
-#let contexte(compte: "ada", machine: none, chemin: "/home/ada", contenu: (), voir: (), absent: (), autres: 0,
-  variables: (), taille: px(21)) = {
-  let m(x, ..a) = text(font: mono, size: taille, tracking: 0pt, ..a, x.replace(" ", "\u{a0}"))
-  let puce(x, fort: false, manque: false) = box(inset: (x: px(8), y: px(3)), radius: px(6), baseline: 20%,
-    fill: if manque { none } else { c.fond },
-    stroke: if fort { px(2.5) + c.encre } else if manque { (paint: c.gris, thickness: px(1.5), dash: "dashed") }
-      else { px(1) + c.filet },
-    if manque { strike(stroke: px(1.5) + c.gris, m(x, fill: c.gris)) }
-    else { m(x, fill: c.encre, weight: if fort { 600 } else { 400 }) })
-  let segs = chemin.split("/").filter(x => x != "")
-  let sep = text(fill: c.gris, size: taille)[ › ]
-  block(width: 100%, fill: c.espace, radius: px(10), inset: (x: px(16), y: px(8)), {
-    set par(leading: 0.5em)
-    text(size: px(18), weight: 600, tracking: px(1), fill: c.gris, maj("contexte"))
-    h(px(14))
-    m(compte + if machine != none { "@" + machine } else { "" }, fill: c.ardoise)
-    h(px(12))
-    m("/", fill: c.gris)
-    for (i, sg) in segs.enumerate() {
-      if i > 0 { m("/", fill: c.gris) }
-      if i == segs.len() - 1 { box(stroke: (bottom: px(2.5) + c.bleu), outset: (bottom: px(2)), m(sg, weight: 700, fill: c.encre)) }
-      else { m(sg, fill: c.ardoise) }
-    }
-    if contenu.len() + absent.len() > 0 or autres > 0 {
-      h(px(8)); text(size: taille, fill: c.gris)[contient]; h(px(8))
-      for x in contenu { puce(x, fort: x in voir); h(px(6)) }
-      for x in absent { box(puce(x, manque: true)); h(px(6)) }
-      if autres > 0 { text(size: taille * 0.9, fill: c.gris)[\+ #autres autres] }
-    }
-    if variables.len() > 0 {
-      h(px(16)); text(size: taille, fill: c.gris)[variables]; h(px(8))
-      for (n, val) in variables { puce(n + "=" + val, fort: ("$" + n) in voir); h(px(6)) }
+// ---------- Repère d’étape ----------
+// Le numéro de l’étape en cours, posé sur ce qu’elle change (et devant sa légende) : un carré bleu à chiffre blanc,
+// distinct des prises rondes et blanches des processus.
+#let pastille(n, t: px(22)) = box(fill: c.bleu, stroke: px(2) + c.fond, radius: px(6), inset: (x: t * 0.32, y: t * 0.12),
+  baseline: 15%, text(size: t, weight: 700, fill: c.fond, tracking: 0pt, str(n)))
+
+// ---------- Arborescence ----------
+// Un arbre de répertoires dessiné : chaque niveau en retrait, relié à son parent par un trait coudé (jamais croisé).
+// Données : un nœud est un nom de fichier ("notes.txt"), ou un répertoire (nom, (enfants…)) ; la racine est
+// ("/", (…)). Un nom qui commence par « + » (« + 18 autres ») est une ligne grise : ce qu’on ne montre pas ; par
+// « - » (« - absent.txt »), un nom qu’une commande emploie mais qui n’existe pas : barré, en tirets.
+//   arbre(racine, courant: "/home/ada/atelier", depuis: "/", ouverts: ("/home/ada/atelier/notes",),
+//     voir: ("/home/ada/atelier/pionnieres.csv",), parcours: (…), etiquettes: ("/home/ada": [~]), ici: [vous êtes ici])
+// Ce qui se montre : le chemin de `depuis` jusqu’au répertoire courant (et jusqu’à ce que désignent voir et
+// parcours), les frères du répertoire courant, son contenu, et le contenu des répertoires `ouverts` ; ailleurs, une
+// ligne grise compte ce qui est caché. caches: true montre les noms qui commencent par un point.
+// Marques (la forme double la couleur) : le répertoire courant sur fond bleu, en gras ; voir : encadré ;
+// caches: true, ou la liste des répertoires dont on montre les noms cachés (ls -a) ;
+// parcours : la suite des répertoires traversés par un chemin, numérotés dans l’ordre (pastilles) ; etiquettes :
+// un texte gris après le nom ; ici : un texte après le répertoire courant.
+#let _nom-chemin(parent, nom) = if parent == "/" { "/" + nom } else { parent + "/" + nom }
+#let _noeud(n) = if type(n) == str { (nom: n, enfants: none) } else { (nom: n.at(0), enfants: n.at(1)) }
+#let _parent(ch) = { let segs = ch.split("/").filter(x => x != ""); if segs.len() <= 1 { "/" } else { "/" + segs.slice(0, -1).join("/") } }
+#let _sous(ch, p) = p == ch or (if ch == "/" { true } else { p.starts-with(ch + "/") })
+// les lignes visibles, en profondeur d’abord
+#let _rangs-arbre(n, chemin, prof, mode, caches, vers) = {
+  let nn = _noeud(n)
+  let rows = ((chemin: chemin, nom: nn.nom, prof: prof, dir: nn.enfants != none, gris: nn.nom.starts-with("+ "),
+    absent: nn.nom.starts-with("- ")),)
+  if nn.enfants == none { return rows }
+  let m = mode(chemin)
+  if m == "ferme" { return rows }
+  let tus = 0
+  for e in nn.enfants {
+    let en = _noeud(e)
+    if en.nom.starts-with(".") and not (caches == true or (type(caches) == array and chemin in caches)) { continue }
+    let ce = _nom-chemin(chemin, en.nom)
+    if m == "tout" or en.nom.starts-with("+ ") or en.nom.starts-with("- ") or vers.any(p => _sous(ce, p)) {
+      rows += _rangs-arbre(e, ce, prof + 1, mode, caches, vers) }
+    else { tus += 1 }
+  }
+  if tus > 0 { rows.push((chemin: chemin + "/+", nom: "+ " + str(tus) + if tus > 1 { " autres" } else { " autre" },
+    prof: prof + 1, dir: false, gris: true, absent: false)) }
+  rows
+}
+#let arbre(racine, courant: none, depuis: "/", ouverts: (), voir: (), caches: false, parcours: (), etiquettes: (:),
+  ici: none, taille: px(24)) = context {
+  let vers = (if courant != none { (courant,) } else { () }) + voir + parcours
+  // les frères du répertoire courant, sauf à la racine (trop nombreux : une ligne grise les compte)
+  let mode(ch) = if ch in ouverts or ch == courant or (courant != none and ch == _parent(courant) and ch != "/") { "tout" }
+    else if vers.any(p => _sous(ch, p)) { "chemin" } else { "ferme" }
+  // le nœud d’où l’on part
+  let trouve(n, ch) = {
+    if ch == depuis { return n }
+    let nn = _noeud(n)
+    if nn.enfants == none { return none }
+    for e in nn.enfants { let r = trouve(e, _nom-chemin(ch, _noeud(e).nom)); if r != none { return r } }
+    none
+  }
+  let base = trouve(racine, "/")
+  assert(base != none, message: "arbre : chemin introuvable : " + depuis)
+  let rows = _rangs-arbre(base, depuis, 0, mode, caches, vers)
+  let rh = taille * 1.62
+  let ind = taille * 1.2
+  let m(x, ..a) = text(font: mono, size: taille, tracking: 0pt, ..a, x)
+  let nums(ch) = parcours.enumerate().filter(((i, p)) => p == ch).map(((i, p)) => i + 1)
+  block(width: 100%, height: rows.len() * rh, {
+    for (i, r) in rows.enumerate() {
+      let y = i * rh
+      let x = r.prof * ind
+      // trait coudé vers le parent (la ligne précédente de profondeur prof - 1)
+      if r.prof > 0 {
+        let jp = range(i).rev().find(j => rows.at(j).prof == r.prof - 1)
+        let xv = (r.prof - 1) * ind + ind * 0.42
+        place(top + left, line(start: (xv, jp * rh + rh * 0.82), end: (xv, y + rh / 2), stroke: px(2) + c.gris))
+        place(top + left, line(start: (xv, y + rh / 2), end: (x - px(3), y + rh / 2), stroke: px(2) + c.gris))
+      }
+      let nom = if i == 0 and depuis != "/" { depuis } else if r.dir and r.nom != "/" { r.nom + "/" } else { r.nom }
+      let est-courant = r.chemin == courant
+      let corps = if r.gris { text(size: taille * 0.95, fill: c.gris, nom) }
+        else if r.absent { strike(stroke: px(2) + c.gris, m(nom.slice(2), fill: c.gris)) }
+        else { m(nom, weight: if r.dir or est-courant { 700 } else { 400 }, fill: if est-courant { c.fond } else { c.encre }) }
+      let etiquette = box(inset: (x: px(6), y: px(3)), radius: px(6), baseline: 22%,
+        fill: if est-courant { c.bleu } else { none },
+        stroke: if r.chemin in voir { px(3) + c.encre } else if r.absent { (paint: c.gris, thickness: px(1.5), dash: "dashed") } else { none }, corps)
+      let apres = (
+        ..nums(r.chemin).map(n => pastille(n, t: taille * 0.85)),
+        ..if r.chemin in etiquettes { (text(size: taille * 0.95, fill: c.ardoise, etiquettes.at(r.chemin)),) },
+        ..if est-courant and ici != none { (text(size: taille * 0.95, weight: 700, fill: c.bleu, [◀ #ici]),) },
+      )
+      place(top + left, dx: x, dy: y, box(height: rh, align(horizon, { etiquette; for a in apres { h(px(8)); a } })))
     }
   })
 }
+
+// ---------- Contexte d’une commande ----------
+// Où l’on est quand la commande s’exécute : une colonne à gauche de la diapo (paramètre contexte: d’anime et de
+// corriges), toujours à la même place et de la même largeur (largeur-contexte) : le compte (et la machine), l’arbre
+// autour du répertoire courant (voir arbre(…) : le répertoire courant sur fond bleu, ce que la commande emploie
+// encadré), puis les variables définies. Les paramètres d’arbre(…) passent tels quels.
+//   contexte(arbo, courant: "/home/ada/atelier", depuis: "/home/ada", voir: ("/home/ada/atelier/f.csv",),
+//     variables: (("p", "Ada Lovelace"),))
+// Quand une commande le change (cd, fichier créé, variable affectée) : contexte: k => contexte(…), k le clic de la diapo.
+#let contexte(racine, compte: "ada", machine: none, variables: (), taille: px(24), ..args) = block(width: 100%,
+  height: 100%, fill: c.espace, radius: px(12), inset: (x: px(16), y: px(14)), clip: true, {
+  let m(x, ..a) = text(font: mono, size: taille, tracking: 0pt, ..a, x)
+  text(size: taille, fill: c.gris)[compte] + h(px(10)) + m(compte + if machine != none { "@" + machine } else { "" }, weight: 600)
+  v(px(10))
+  arbre(racine, taille: taille, ..args)
+  if variables.len() > 0 {
+    let voir = args.named().at("voir", default: ())
+    v(px(14))
+    text(size: taille, fill: c.gris)[variables]
+    v(px(6), weak: true)
+    for (n, val) in variables {
+      block(above: px(6), box(inset: (x: px(6), y: px(3)), radius: px(6), stroke: if ("$" + n) in voir { px(3) + c.encre } else { none },
+        m(n + "=" + val, fill: c.encre)))
+    }
+  }
+})
 
 // ---------- Animation : bloc par bloc, puis puce par puce ----------
 // Les apparitions passent par uncover (le contenu caché garde sa place) : seules des apparitions,
@@ -491,7 +580,8 @@
 #let _morceaux(corps) = if corps.func() == [].func() { corps.children } else { (corps,) }
 #let _puce(e) = e.func() in (list.item, enum.item)
 // Nombre de clics d’un bloc : un par puce, au moins un.
-#let etapes-bloc(b) = calc.max(1, _morceaux(b.corps).filter(_puce).len())
+#let etapes-bloc(b) = if b.at("revele", default: "puce") == "bloc" { 1 } else {
+  calc.max(1, _morceaux(b.corps).filter(_puce).len()) }
 
 #let _corps-anime(corps, debut, uncover) = {
   show list: set block(spacing: 0.5em)
@@ -506,7 +596,8 @@
 
 // Un bloc animé à partir du clic `debut`.
 #let bloc-anime(b, debut, uncover, hauteur: auto) = uncover(str(debut) + "-",
-  rendre-bloc((..b, corps: _corps-anime(b.corps, debut, uncover)), hauteur: hauteur))
+  if b.at("revele", default: "puce") == "bloc" { rendre-bloc(b, hauteur: hauteur) }
+  else { rendre-bloc((..b, corps: _corps-anime(b.corps, debut, uncover)), hauteur: hauteur) })
 
 // Une rangée de blocs côte à côte, à hauteur égale, pour anime().
 #let rang(gouttiere: px(32), ..blocs) = (rang: blocs.pos(), gouttiere: gouttiere)
@@ -542,12 +633,9 @@
   }
   slide(repeat: s - 1, self => {
     let (uncover,) = utils.methods(self)
-    // dans la marge du haut, au-dessus du surtitre : même place sur chaque diapo, sans prendre celle du sujet
-    if contexte != none {
-      place(top + left, dy: -px(104), block(width: 100%,
-        if type(contexte) == function { contexte(self.subslide) } else { contexte }))
-    }
-    for (i, (e, d)) in plan.enumerate() {
+    // contexte : une colonne à gauche, même place et même largeur sur chaque diapo
+    let ctx = if contexte == none { none } else if type(contexte) == function { contexte(self.subslide) } else { contexte }
+    avec-contexte(ctx, for (i, (e, d)) in plan.enumerate() {
       if i > 0 { v(espacement) }
       if type(e) == dictionary and "rang" in e {
         rangee(gouttiere: e.gouttiere, poids: e.rang.map(b => b.poids),
@@ -555,7 +643,7 @@
       } else if type(e) == dictionary and "etapes" in e { (e.rendu)(uncover, d) }
       else if type(e) == dictionary and "scene" in e { etape-scene(self, d, e) }
       else { uncover(str(d) + "-", e) }
-    }
+    })
     if source-de != none { source(source-de) }
     if note != none { utils.speaker-note(self: self, note) }
   })
@@ -849,12 +937,6 @@
   scene(n, k => terminal-annote(lignes, ..args, etape: k))
 }
 
-// ---------- Repère d’étape ----------
-// Le numéro de l’étape en cours, posé sur ce qu’elle change (et devant sa légende) : un carré bleu à chiffre blanc,
-// distinct des prises rondes et blanches des processus.
-#let pastille(n, t: px(22)) = box(fill: c.bleu, stroke: px(2) + c.fond, radius: px(6), inset: (x: t * 0.32, y: t * 0.12),
-  baseline: 15%, text(size: t, weight: 700, fill: c.fond, tracking: 0pt, str(n)))
-
 // ---------- Schéma à états ----------
 // Des nœuds nommés, des liens entre eux, et une suite d’états dont chacun ne dit que ce qui change.
 //   schema-etats(hauteur: 300, etape: k,
@@ -1080,7 +1162,7 @@
 //   ligne-reecrite(etape: k, commande: "$ printf '[%s]\n' $p", rangs: (r1, …, r6), notes: (n1, …, n6), sortie: (…))
 #let noms-expansion = ("Mots", "Accolades", "Tilde, $, $( )", "Découpage", "Chemins", "Guillemets")
 #let ligne-reecrite(etape: 1000, commande: none, rangs: (), notes: (), sortie: none, taille: px(22),
-  largeur-sortie: px(290), note-fin: none) = context layout(dispo => {
+  largeur-sortie: px(290), note-fin: none, sortie-dessous: false) = context layout(dispo => {
   let k = etape
   let fini = k > rangs.len() + (if sortie != none { 1 } else { 0 })
   let m(x, ..a) = text(font: mono, size: taille, tracking: 0pt, ..a, x.replace(" ", "\u{a0}"))
@@ -1124,18 +1206,22 @@
   let hr = measure(rangee(0)).height
   let corps-rangs = stack(spacing: px(24), ..range(rs.len()).map(i => if i + 1 <= k { rangee(i) } else { hide(rangee(i)) }))
   let note-courante = if k >= 1 and k <= notes.len() { notes.at(k - 1) } else if k > rs.len() { note-fin }
-  let a-droite = sortie != none
+  let a-droite = sortie != none and not sortie-dessous
+  let t-sortie = if sortie != none { terminal(titre: none, taille: px(19), raw(sortie.join("\n"), block: true)) }
+  let note-txt = if note-courante != none {
+    text(size: px(27), { if k <= rs.len() { pastille(k, t: px(24)); h(px(10)) }; note-courante }) }
   stack(spacing: px(14),
     if commande != none { terminal(titre: none, taille: px(26), raw(commande, block: true)) },
     grid(columns: if a-droite { (1fr, largeur-sortie) } else { (1fr,) }, column-gutter: px(24),
       corps-rangs,
-      ..if a-droite {
-        let t = terminal(titre: none, taille: px(19), raw(sortie.join("\n"), block: true))
-        (if k > rs.len() { t } else { hide(t) },)
-      }),
-    block(height: px(80), width: 100%, if note-courante != none {
-      text(size: px(27), { if k <= rs.len() { pastille(k, t: px(24)); h(px(10)) }; note-courante })
-    }),
+      ..if a-droite { (if k > rs.len() { t-sortie } else { hide(t-sortie) },) }),
+    // sortie dessous : au dernier clic, la preuve prend la place de la note, à côté de la note de fin
+    if sortie-dessous and sortie != none {
+      let hb = calc.max(px(80), measure(block(width: largeur-sortie, t-sortie)).height)
+      block(height: hb, width: 100%, if k > rs.len() {
+        grid(columns: (largeur-sortie, 1fr), column-gutter: px(24), t-sortie, note-txt)
+      } else { note-txt })
+    } else { block(height: px(80), width: 100%, note-txt) },
   )
 })
 #let reecriture-anime(..args) = {

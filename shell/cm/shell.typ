@@ -27,13 +27,15 @@
 
 == Plan du cours
 
-#anime(plan-anime(
+#slide[#plan-cours(
   ([Bash : les bases], [Lire une commande et `ls -l`, flux et tubes, variables, tests, boucles]),
   ([Bash : guillemets et expansions], [Ce que Bash fait de la ligne avant de l’exécuter]),
   ([Bash : des scripts robustes], [Exécuter, recevoir des arguments, cron, `set -euo pipefail`, ShellCheck, Bats, portée de `local`]),
   ([sed et awk], [Le cycle de sed, le modèle d’awk, sur un même fichier de données]),
   ([Annexe, puis pour rappel], [Mémo des guillemets, pour aller plus loin ; l’essentiel du cours]),
-), note: [Un exercice fait en séance dans chaque partie. Les TP et les artefacts reprennent les diapositives étiquetées (ordre des expansions, redirections, cycle de sed, modèle d’awk).])
+)
+  #speaker-note[Un exercice fait en séance dans chaque partie. Les TP et les artefacts reprennent les diapositives étiquetées (ordre des expansions, redirections, cycle de sed, modèle d’awk).]
+]
 
 // ======================================================================
 = Bash · Les bases
@@ -42,13 +44,29 @@
 
 // Un élément d’une scène qui paraît au clic d (avant : caché, sa place gardée).
 #let des(k, d, x) = if k >= d { x } else { hide(x) }
-// Contexte : le répertoire de travail ~/atelier (31 fichiers d’exemple, copiés de shell/cm/exemples/), ou un autre.
-#let atelier(contenu: ("pionnieres.csv",), total: 31, ..args) = contexte(chemin: "/home/ada/atelier",
+// Contexte : la colonne de gauche (voir contexte dans commun/theme-cours.typ), autour de ~/atelier (31 fichiers
+// d’exemple, copiés de shell/cm/exemples/) ou d’un répertoire voisin. ctx(chemin, contenu, voir, absent, autres,
+// variables) dessine l’arbre depuis ~ : les répertoires du chemin, le contenu montré du répertoire courant (un nom
+// qui finit par / est un répertoire), ce qui manque (barré) et une ligne grise pour les autres.
+#let ctx(chemin: "/home/ada/atelier", contenu: (), voir: (), absent: (), autres: 0, variables: ()) = {
+  let segs = chemin.split("/").filter(x => x != "").slice(2)  // après /home/ada
+  let entree(x) = if x.ends-with("/") { (x.slice(0, -1), ()) } else { x }
+  let noeud = (segs.last(), contenu.map(entree) + absent.map(x => "- " + x)
+    + if autres > 0 { ("+ " + str(autres) + if autres > 1 { " autres" } else { " autre" },) } else { () })
+  for (i, sg) in segs.slice(0, -1).enumerate().rev() {
+    // un répertoire au-dessus du courant : atelier y garde ses 31 fichiers, comptés
+    noeud = (sg, (noeud, ..if sg == "atelier" { ("+ 31 autres",) } else { () }))
+  }
+  let ada = (noeud, ..if segs.first() != "atelier" { (("atelier", ()),) } else { () })
+  let plein(x) = if x.starts-with("$") { x } else { chemin + "/" + x.trim("/", at: end) }
+  contexte(("/", (("home", (("ada", ada),)),)), courant: chemin, depuis: "/home/ada", voir: voir.map(plein),
+    variables: variables, etiquettes: ("/home/ada": raw("~")))
+}
+#let atelier(contenu: ("pionnieres.csv",), total: 31, ..args) = ctx(chemin: "/home/ada/atelier",
   contenu: contenu, autres: total - contenu.len(), ..args)
 #let _conf = read("exemples/services.conf").trim(at: end).split("\n")
 #let _conf-no = _conf.map(l => l.replace("autostart = yes", "autostart = no"))
 #anime(
-  contexte: k => atelier(contenu: ("services.conf",), voir: ("services.conf",)),
   scene(3, k => schema-etats(hauteur: 500, etape: k, taille: px(21),
     noeuds: (
       term: (x: 0, y: 0, l: 840, h: 240, genre: "terminal", titre: "Terminal", contenu: ()),
@@ -80,7 +98,7 @@
 #let _l = read("exemples/pionnieres.csv").trim(at: end).split("\n")
 #anime(
   contexte: atelier(voir: ("pionnieres.csv",)),
-  commande-annotee(taille: px(24),
+  commande-annotee(taille: px(21),
     ("$ ls pionnieres.csv", "pionnieres.csv", ("$ cat pionnieres.csv", 2), .._l.map(x => (x, 2))),
     annote((ligne: 1, texte: "pionnieres.csv"), cote: "droite", clic: 1, legende: [`ls` le trouve : le fichier existe]),
     annote((ligne: 3, texte: _l.at(0)), cote: "droite", clic: 3, reste: true, legende: [la première ligne, l’en-tête, nomme les colonnes]),
@@ -88,7 +106,7 @@
     annote((ligne: 11, texte: "1982"), clic: 5, legende: [colonne 2 : `annee`]),
     annote((ligne: 11, texte: "cryptographie"), clic: 6, legende: [colonne 3 : `domaine`]),
   ),
-  note: [#versions D’abord l’existence du fichier (ls), puis son contenu (cat), puis sa structure : un clic par élément. Le bandeau du haut dit où l’on est : le répertoire de travail ~/atelier, qui contient les 31 fichiers d’exemple du cours (ls | wc -l) ; les TP le fournissent. Le fichier vient du dojo sed et awk du site (écrit pour lui, sans droits tiers) : 9 lignes, l’en-tête et 8 pionnières. « materiel » et « reseau » sont écrits sans accent exprès : l’exercice sed les corrige. Les lignes ne sont pas triées par année (Goldwasser après Perlman), exprès aussi : le tri sert dans l’exercice des tubes. Les colonnes n’ont pas de largeur fixe : seul le ; les sépare.],
+  note: [#versions D’abord l’existence du fichier (ls), puis son contenu (cat), puis sa structure : un clic par élément. La colonne de gauche dit où l’on est : le répertoire de travail \~/atelier, qui contient les 31 fichiers d’exemple du cours (ls | wc -l) ; les TP le fournissent. Le fichier vient du dojo sed et awk du site (écrit pour lui, sans droits tiers) : 9 lignes, l’en-tête et 8 pionnières. « materiel » et « reseau » sont écrits sans accent exprès : l’exercice sed les corrige. Les lignes ne sont pas triées par année (Goldwasser après Perlman), exprès aussi : le tri sert dans l’exercice des tubes. Les colonnes n’ont pas de largeur fixe : seul le ; les sépare.],
 )
 
 == Lire une ligne de commande <ligne-de-commande>
@@ -113,12 +131,12 @@
 #anime(
   contexte: atelier(voir: ("pionnieres.csv",)),
   scene(4, k => stack(spacing: px(18),
-    terminal-annote(etape: k, taille: px(28),
+    terminal-annote(etape: k, taille: px(26),
       ("$ head -n 3 pionnieres.csv", .._tete.map(x => (x, 2))),
       annote("-n 3", cote: "haut", clic: 1, legende: [l’option `-n` et *son* argument, `3` : trois lignes]),
       annote((ligne: 0, texte: "pionnieres.csv"), cote: "haut", clic: 2, legende: [l’argument de `head` : le fichier]),
     ),
-    des(k, 3, terminal-annote(etape: k, taille: px(28),
+    des(k, 3, terminal-annote(etape: k, taille: px(26),
       ("$ head --lines=3 pionnieres.csv", .._tete),
       annote("--lines=3", cote: "haut", clic: 3, legende: [option longue : la même, en toutes lettres ; même sortie]),
     )),
@@ -135,13 +153,13 @@
   "-rwxr-x--- 1 ada etudiants  174 Nov 25 09:53 sauvegarde.sh",
   "drwxr-xr-x 2 ada ada       4096 Nov 25 10:01 scripts",
 )
-#let demo(..args) = contexte(chemin: "/home/ada/demo", contenu: ("pionnieres.csv", "sauvegarde.sh", "scripts/"), ..args)
+#let demo(..args) = ctx(chemin: "/home/ada/demo", contenu: ("pionnieres.csv", "sauvegarde.sh", "scripts/"), ..args)
 #anime(
   contexte: demo(voir: ("sauvegarde.sh",)),
   scene(7, k => stack(spacing: px(20),
     terminal-annote(etape: k, taille: px(21), ("$ ls -l", "total 12", .._ls),
       annote((ligne: 3, texte: _ls.at(1)), clic: 2, garde: true)),
-    des(k, 2, terminal-annote(etape: k, taille: px(36), (_ls.at(1),),
+    des(k, 2, terminal-annote(etape: k, taille: px(31), (_ls.at(1),),
       annote((0, 1), cote: "haut", clic: 3, legende: [type : `-` fichier ordinaire, `d` répertoire]),
       annote("rwxr-x---", clic: 4, legende: [les droits : trois triplets (diapositive suivante)]),
       annote(" 1 ", clic: 5, legende: [nombre de liens]),
@@ -150,14 +168,14 @@
     )),
   )),
   source-de: link("https://www.gnu.org/software/coreutils/manual/html_node/What-information-is-listed.html")[GNU coreutils, What information is listed],
-  note: [#versions La ligne de sauvegarde.sh est agrandie dessous, puis décodée un champ par clic ; propriétaire et groupe sont à la diapositive suivante, avec les droits qui les concernent. Le répertoire ~/demo est préparé pour l’exemple (session « Décoder ls -l » de rejouer.sh) ; le groupe etudiants est créé pour lui (groupadd, puis chgrp). Dans un terminal en français, la date s’écrit « nov. 25 09:55 ». Pour un lien symbolique, le type est l. Le nombre de liens d’un répertoire compte ses sous-répertoires plus deux (lui-même et « . »).],
+  note: [#versions La ligne de sauvegarde.sh est agrandie dessous, puis décodée un champ par clic ; propriétaire et groupe sont à la diapositive suivante, avec les droits qui les concernent. Le répertoire \~/demo est préparé pour l’exemple (session « Décoder ls -l » de rejouer.sh) ; le groupe etudiants est créé pour lui (groupadd, puis chgrp). Dans un terminal en français, la date s’écrit « nov. 25 09:55 ». Pour un lien symbolique, le type est l. Le nombre de liens d’un répertoire compte ses sous-répertoires plus deux (lui-même et « . »).],
 )
 
 == Les droits : trois triplets, pour trois classes
 
 #anime(
   contexte: demo(voir: ("sauvegarde.sh",)),
-  commande-annotee(taille: px(40), (_ls.at(1),),
+  commande-annotee(taille: px(31), (_ls.at(1),),
     annote("rwx", clic: 2, reste: true, legende: [#pastille(1) lire (`r`), écrire (`w`), exécuter (`x`)]),
     annote("ada", cote: "haut", clic: 2, reste: true, legende: [#pastille(1) le propriétaire]),
     annote("r-x", clic: 3, reste: true, legende: [#pastille(2) lire, exécuter ; `-` : droit absent]),
@@ -171,7 +189,7 @@
 
 #anime(
   contexte: demo(),
-  rang(bloc(role: "question")[À vous][
+  rang(bloc(role: "question", revele: "bloc")[À vous][
     + Sur la ligne de `scripts` : qui peut y *entrer* (`cd`), qui peut y *créer* un fichier ?
     + Un membre du groupe etudiants peut-il *modifier* `sauvegarde.sh` ? *L’exécuter* ?
     + Un autre utilisateur peut-il *lire* `pionnieres.csv` ?
@@ -187,7 +205,7 @@
 
 // Une ligne de ls -l, ses triplets utiles encadrés : la démonstration d’une réponse.
 #let preuve(lignes, ..morceaux, texte) = stack(spacing: px(8),
-  terminal-annote(taille: px(23), lignes, ..morceaux.pos().map(m => annote(m, garde: true))),
+  terminal-annote(taille: px(20), lignes, ..morceaux.pos().map(m => annote(m, garde: true))),
   text(size: px(24), texte))
 #corriges(contexte: demo(), note: [La question reste affichée ; un clic par réponse, avec la ligne qui la démontre, triplets en cause encadrés. Octal : chaque chiffre est la somme des droits d’une classe. #versions],
   (1, [Sur `scripts` : qui peut y entrer, qui peut y créer un fichier ?],
@@ -213,7 +231,6 @@
 #let clavier = (x: 0, y: 200, l: 210, h: 110, titre: [Clavier])
 #let erreur-ls = "ls: cannot access 'absent.txt': No such file or directory"
 #anime(
-  contexte: atelier(voir: ("pionnieres.csv",), absent: ("absent.txt",)),
   scene(3, k => schema-etats(hauteur: 560, etape: k, taille: px(24),
     noeuds: (
       ls: (x: 340, y: 130, l: 260, h: 250, genre: "processus", titre: "ls", sous: [un processus]),
@@ -246,8 +263,8 @@
 == Rediriger 1 ou 2 vers un fichier : > et 2> <redirections>
 
 // Fichier au-dessus du terminal pour 1, au-dessous pour 2 : les fils ne se croisent pas.
-#let ls-base = (x: 330, y: 160, l: 250, h: 240, genre: "processus", titre: "ls")
-#let fichier-haut = (x: 860, y: 0, l: 804, h: 100, genre: "fichier", taille: px(21))
+#let ls-base = (x: 200, y: 160, l: 220, h: 240, genre: "processus", titre: "ls")
+#let fichier-haut = (x: 540, y: 0, l: 672, h: 100, genre: "fichier", taille: px(18))
 #let _cmd1 = "$ ls pionnieres.csv absent.txt > sortie.txt"
 #anime(
   contexte: k => atelier(contenu: ("pionnieres.csv", ..if k >= 2 { ("sortie.txt",) }, ..if k >= 5 { ("erreurs.txt",) }),
@@ -255,9 +272,9 @@
     voir: if k >= 5 { ("erreurs.txt",) } else if k >= 2 { ("sortie.txt",) } else { () }, absent: ("absent.txt",)),
   scene(5, k => schema-etats(hauteur: 590, etape: k, taille: px(24),
     noeuds: (
-      clavier: (..clavier, y: 225), ls: ls-base,
-      ecran: (x: 860, y: 125, l: 804, h: 330, genre: "terminal", titre: "Terminal", taille: px(21), contenu: ()),
-      txt: (x: 0, y: 470, l: 560, genre: "texte", taille: px(26), contenu: [Au départ, 1 et 2 vont à l’écran.]),
+      clavier: (..clavier, y: 225, l: 140), ls: ls-base,
+      ecran: (x: 540, y: 125, l: 672, h: 330, genre: "terminal", titre: "Terminal", taille: px(18), contenu: ()),
+      txt: (x: 0, y: 470, l: 400, genre: "texte", taille: px(26), contenu: [Au départ, 1 et 2 vont à l’écran.]),
     ),
     liens: (
       e0: (de: "clavier", vers: "ls.0"),
@@ -284,7 +301,7 @@
       (noeuds: (
         ecran: (contenu: (_cmd1, erreur-ls, "$ cat sortie.txt", "pionnieres.csv",
           "$ ls pionnieres.csv absent.txt 2> erreurs.txt", "pionnieres.csv")),
-        erreurs: (x: 860, y: 480, l: 804, h: 100, genre: "fichier", taille: px(21), titre: "erreurs.txt", contenu: (erreur-ls,)),
+        erreurs: (x: 540, y: 480, l: 672, h: 100, genre: "fichier", taille: px(18), titre: "erreurs.txt", contenu: (erreur-ls,)),
         txt: (contenu: [`2> erreurs.txt` : c’est 2, cette fois, qui part dans un fichier ; 1 reste à l’écran.]),
       ), liens: (
         s1: (vers: "ecran.g", etiquette: none),
@@ -293,7 +310,7 @@
     ),
   )),
   source-de: link("https://www.gnu.org/software/bash/manual/html_node/Redirections.html")[Bash Reference Manual, Redirections],
-  note: [#versions Un clic par étape, numérotée sur le schéma et devant sa légende : Bash branche, puis ls s’exécute ; cat montre le fichier ; puis 2>, branché et exécuté d’un même clic. Le bandeau du haut montre sortie.txt, puis erreurs.txt, apparaître dans le répertoire. L’ancien branchement reste en pointillé au clic où il change. Une redirection s’écrit n’importe où dans la commande, mais par convention à la fin. > est l’abréviation de 1>. Si sortie.txt existait, son contenu serait perdu (diapositives suivantes).],
+  note: [#versions Un clic par étape, numérotée sur le schéma et devant sa légende : Bash branche, puis ls s’exécute ; cat montre le fichier ; puis 2>, branché et exécuté d’un même clic. La colonne de gauche montre sortie.txt, puis erreurs.txt, apparaître dans le répertoire. L’ancien branchement reste en pointillé au clic où il change. Une redirection s’écrit n’importe où dans la commande, mais par convention à la fin. > est l’abréviation de 1>. Si sortie.txt existait, son contenu serait perdu (diapositives suivantes).],
 )
 
 == Ajouter ou lire : >> et <
@@ -303,11 +320,11 @@
     voir: if k <= 3 { ("sortie.txt",) } else { ("pionnieres.csv",) }),
   scene(5, k => schema-etats(hauteur: 590, etape: k, taille: px(24),
     noeuds: (
-      clavier: (..clavier, y: 125), ls: (..ls-base, y: 60),
+      clavier: (..clavier, y: 125, l: 140), ls: (..ls-base, y: 60),
       sortie: (..fichier-haut, h: 150, titre: "sortie.txt", contenu: ("pionnieres.csv",)),
-      ecran: (x: 860, y: 180, l: 804, h: 230, genre: "terminal", titre: "Terminal", taille: px(21),
+      ecran: (x: 540, y: 180, l: 672, h: 230, genre: "terminal", titre: "Terminal", taille: px(19),
         contenu: ("$ ls pionnieres.csv > sortie.txt",)),
-      txt: (x: 860, y: 440, l: 804, genre: "texte", taille: px(26), contenu: [Un premier `ls … > sortie.txt` y a écrit un nom.]),
+      txt: (x: 540, y: 440, l: 672, genre: "texte", taille: px(26), contenu: [Un premier `ls … > sortie.txt` y a écrit un nom.]),
     ),
     liens: (
       e0: (de: "clavier", vers: "ls.0"),
@@ -330,7 +347,7 @@
         ls: (titre: "wc"),
         ecran: (contenu: ("$ wc -l pionnieres.csv", "9 pionnieres.csv")),
         sortie: none,
-        csv: (x: 0, y: 420, l: 560, h: 120, genre: "fichier", titre: "pionnieres.csv", pied: [9 lignes], taille: px(21),
+        csv: (x: 0, y: 420, l: 470, h: 120, genre: "fichier", titre: "pionnieres.csv", pied: [9 lignes], taille: px(19),
           contenu: ("nom;annee;domaine;contribution", "# …"), ports: (arg: ("h", 0.8), entree: ("h", 0.3))),
         txt: (contenu: [Avec un argument, `wc` ouvre lui-même le fichier : il en connaît le nom, et l’affiche.]),
       ), liens: (
@@ -368,8 +385,6 @@
 // le fichier au-dessus de l’écran : 1 (prise du haut) monte vers lui, 2 descend vers l’écran, sans croisement
 #let fichier-sortie = (x: 340, y: 0, l: 670, h: 110, genre: "fichier", titre: "sortie.txt", taille: px(18), contenu: ())
 #anime(
-  contexte: k => atelier(contenu: ("pionnieres.csv", ..if k >= 2 { ("sortie.txt",) }), total: if k >= 2 { 32 } else { 31 },
-    voir: if k >= 2 { ("sortie.txt",) } else { () }, absent: ("absent.txt",)),
   scene(9, k => stack(spacing: px(12),
     scenario(k, 1, "$ ls pionnieres.csv absent.txt > sortie.txt 2>&1", (
       annote("> sortie.txt", clic: 2, cote: "haut", legende: [#pastille(1) 1 → `sortie.txt`]),
@@ -409,7 +424,6 @@
   "nom;annee;domaine;contribution",
 )
 #anime(
-  contexte: atelier(contenu: ("pionnieres.csv", "copie.csv"), total: 32, voir: ("copie.csv",)),
   scene(4, k => schema-etats(hauteur: 600, etape: k, taille: px(24),
     noeuds: (
       term: (x: 0, y: 0, l: 470, h: 390, genre: "terminal", titre: "Terminal", taille: px(19),
@@ -458,7 +472,6 @@
 #let _flux = (x, contenu, genre: "flux") => (x: x, y: 180, l: 300, h: 275, genre: genre, contenu: contenu, taille: px(20))
 #let _barre = text(size: px(34), weight: 700, raw("|"))
 #anime(
-  contexte: atelier(voir: ("pionnieres.csv",)),
   scene(6, k => stack(spacing: px(18),
     terminal-annote(etape: k, taille: px(26),
       ((("$ cut -d';' -f3 pionnieres.csv", 1), (" | sort", 3), (" | uniq -c", 4), (" | sort -rn", 5)),),
@@ -496,7 +509,6 @@
 
 #let _voie = (x, y, titre) => (x: x, y: y, l: 240, h: 90, titre: titre)
 #anime(
-  contexte: atelier(voir: ("pionnieres.csv",), absent: ("absent.txt",)),
   scene(5, k => schema-etats(hauteur: 530, etape: k, taille: px(26), numero: k => k,
     noeuds: (
       term: (x: 0, y: 0, l: 1664, h: 200, genre: "terminal", titre: "Terminal", taille: px(25),
@@ -543,7 +555,7 @@
 
 #anime(
   contexte: atelier(voir: ("pionnieres.csv",)),
-  rang(bloc(role: "question")[À vous][
+  rang(bloc(role: "question", revele: "bloc")[À vous][
     + En un seul pipeline : le *nombre de domaines distincts* (colonne 3), sans compter l’en-tête
     + En un seul pipeline : les *trois lignes les plus récentes* (année la plus grande)
   ]),
@@ -564,7 +576,7 @@
 
 #corriges(contexte: atelier(voir: ("pionnieres.csv",)), note: [#versions La réponse 1 montre d’abord la liste qu’elle compte. Le module « Bash : les bases » du site annonçait 6 domaines distincts : la commande en donne 7 sur ce fichier. -k2 trie à partir de la colonne 2 ; -n compare 1985 et 1982 comme des nombres.],
   (1, [Le nombre de domaines distincts, sans l’en-tête],
-    reponse(terminal(titre: none, taille: px(19))[```
+    reponse(terminal(titre: none, taille: px(18))[```
       $ cut -d';' -f3 pionnieres.csv | tail -n +2 | sort -u
       calcul
       cryptographie
@@ -577,7 +589,7 @@
       7
       ```])),
   (2, [Les trois lignes les plus récentes],
-    reponse(terminal-annote(taille: px(20), largeur-legende: px(420),
+    reponse(terminal-annote(taille: px(18), largeur-legende: px(420),
       ("$ tail -n +2 pionnieres.csv | sort -t';' -k2 -rn | head -n 3",
        "Perlman Radia;1985;reseau;protocole spanning tree",
        "Goldwasser Shafi;1982;cryptographie;chiffrement probabiliste",
@@ -595,10 +607,10 @@
 
 #let _path = "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 #anime(
-  contexte: k => contexte(chemin: "/home/ada/atelier",
+  contexte: k => ctx(chemin: "/home/ada/atelier",
     variables: (("nom", "Ada"), ..if k >= 4 { (("HOME", "/home/ada"), ("USER", "ada")) }, ..if k >= 5 { (("PATH", "/usr/local/sbin:…"),) }),
     voir: if k <= 2 { ("$nom",) } else if k == 4 { ("$HOME", "$USER") } else if k == 5 { ("$PATH",) } else { () }),
-  commande-annotee(taille: px(24),
+  commande-annotee(taille: px(21),
     ("$ nom='Ada'", ("$ echo \"Bonjour $nom\"", 2), ("Bonjour Ada", 2), ("$ nom = Ada", 3),
       ("bash: nom: command not found", 3), ("$ echo \"$HOME $USER\"", 4), ("/home/ada ada", 4),
       ("$ echo \"$PATH\"", 5), (_path, 5)),
@@ -609,7 +621,7 @@
     annote(_path, cote: "droite", clic: 5, legende: [`PATH` : les répertoires où Bash cherche les commandes]),
   ),
   source-de: link("https://www.gnu.org/software/bash/manual/html_node/Shell-Parameters.html")[Bash Reference Manual, Shell Parameters],
-  note: [#versions Une commande par clic ; le bandeau montre les variables définies. Les noms en majuscules sont l’usage pour les variables d’environnement (HOME, PATH) ; pour ses propres variables, les minuscules évitent d’en écraser une par accident. "\$nom" lit la valeur sans la découper (partie suivante). Exemple d’origine : nom="Charlie" ; echo "Bonjour \$nom".],
+  note: [#versions Une commande par clic ; la colonne de gauche montre les variables définies. Les noms en majuscules sont l’usage pour les variables d’environnement (HOME, PATH) ; pour ses propres variables, les minuscules évitent d’en écraser une par accident. "\$nom" lit la valeur sans la découper (partie suivante). Exemple d’origine : nom="Charlie" ; echo "Bonjour \$nom".],
 )
 
 == if et test : [ est une commande <tests>
@@ -643,7 +655,7 @@
     _ops([Chaînes], [`-z "$s"`], [vide], [`-n "$s"`], [non vide], [`"$a" = "$b"`], [égales], [`"$a" != "$b"`], [différentes]),
     _ops([Nombres], [`-eq`, `-ne`], [égal, différent], [`-lt`, `-le`], [inférieur (ou égal)], [`-gt`, `-ge`], [supérieur (ou égal)]),
   ),
-  terminal-annote(taille: px(23),
+  terminal-annote(taille: px(20),
     ("$ [ \"$annee\" -lt 1900 ] && echo \"XIXe siècle\"", "XIXe siècle",
      "$ [ \"$annee\" -lt 1900 -a -f pionnieres.csv ] && echo \"les deux\"", "les deux"),
     annote("-a", cote: "droite", legende: none),
@@ -657,7 +669,7 @@
 
 #anime(
   contexte: atelier(voir: ("pionnieres.csv",), variables: (("annee", "1843"), ("vide", ""))),
-  commande-annotee(taille: px(22),
+  commande-annotee(taille: px(19),
     ("$ [[ $annee -lt 1900 && -f pionnieres.csv ]] && echo \"les deux\"", "les deux",
      ("$ [[ $annee =~ ^[0-9]+$ ]] && echo \"un nombre\"", 3), ("un nombre", 3),
      ("$ vide=", 4), ("$ [[ $vide = Ada ]] || echo \"faux, sans erreur\"", 4), ("faux, sans erreur", 4),
@@ -678,7 +690,7 @@
   contexte: k => atelier(contenu: ("pionnieres.csv", "services.conf"),
     voir: if k == 2 { ("pionnieres.csv", "services.conf") } else if k == 3 { ("pionnieres.csv", "$fichier") } else if k == 4 { ("services.conf", "$fichier") } else { () },
     variables: if k == 3 { (("fichier", "pionnieres.csv"),) } else if k >= 4 { (("fichier", "services.conf"),) } else { () }),
-  commande-annotee(taille: px(24),
+  commande-annotee(taille: px(19),
     ("$ for fichier in *.csv *.conf; do echo \"Fichier : $fichier\"; done", ("Fichier : pionnieres.csv", 3),
       ("Fichier : services.conf", 4), ("$ echo {1..5}", 5), ("1 2 3 4 5", 5)),
     annote("*.csv *.conf", cote: "haut", clic: 2, legende: [la liste : Bash la remplace d’abord par les noms qui correspondent]),
@@ -687,13 +699,13 @@
     annote("1 2 3 4 5", cote: "droite", clic: 5, legende: [`{1..5}` : une suite de mots, sans lire le disque]),
   ),
   source-de: link("https://www.gnu.org/software/bash/manual/html_node/Looping-Constructs.html")[Bash Reference Manual, Looping Constructs],
-  note: [#versions Syntaxe : for var in liste; do … done. Le bandeau montre la variable de boucle à chaque tour. {1..5} : l’expansion des accolades produit la suite, sans rien lire sur le disque ; for i in {1..5} fait cinq tours.],
+  note: [#versions Syntaxe : for var in liste; do … done. La colonne montre la variable de boucle à chaque tour. {1..5} : l’expansion des accolades produit la suite, sans rien lire sur le disque ; for i in {1..5} fait cinq tours.],
 )
 
 == Boucles : while, tant que le test réussit
 
 #anime(
-  contexte: k => contexte(chemin: "/home/ada/atelier", voir: ("$compteur",),
+  contexte: k => ctx(chemin: "/home/ada/atelier", voir: ("$compteur",),
     variables: (("compteur", str(calc.min(calc.max(k, 1), 4))),)),
   commande-annotee(taille: px(24),
     ("$ compteur=1", "$ while [ \"$compteur\" -le 3 ]; do", "    echo \"Itération $compteur\"",
@@ -706,13 +718,13 @@
     annote("42 3 1", cote: "droite", clic: 6, legende: [`$(( … ))` : calcul entier ; `/` tronque, `%` donne le reste]),
   ),
   source-de: link("https://www.gnu.org/software/bash/manual/html_node/Shell-Arithmetic.html")[Bash Reference Manual, Shell Arithmetic],
-  note: [#versions Syntaxe : while condition; do … done. La boucle est celle du cours d’origine, avec la variable entre guillemets. Le bandeau montre compteur après chaque tour. \$(( … )) : l’arithmétique entière du shell (7 / 2 vaut 3, % est le reste).],
+  note: [#versions Syntaxe : while condition; do … done. La boucle est celle du cours d’origine, avec la variable entre guillemets. La colonne montre compteur après chaque tour. \$(( … )) : l’arithmétique entière du shell (7 / 2 vaut 3, % est le reste).],
 )
 
 == for sur \$(ls) : un nom à espace se coupe en deux <for-ls>
 
 #anime(
-  contexte: k => contexte(chemin: "/home/ada/atelier/rapports", contenu: ("mon rapport.txt", "notes.txt"),
+  contexte: k => ctx(chemin: "/home/ada/atelier/rapports", contenu: ("mon rapport.txt", "notes.txt"),
     voir: if k >= 2 { ("mon rapport.txt",) } else { () }),
   commande-annotee(taille: px(24),
     ("$ touch \"mon rapport.txt\" notes.txt", ("$ for f in $(ls *.txt); do echo \"[$f]\"; done", 2), ("[mon]", 2),
@@ -732,7 +744,7 @@
 == Voir les arguments reçus : `printf '[%s]\n'`
 
 #anime(
-  contexte: contexte(chemin: "/home/ada/atelier"),
+
   commande-annotee(taille: px(34),
     ("$ printf '[%s]\\n' un deux \"trois quatre\"", ("[un]", 4), ("[deux]", 4), ("[trois quatre]", 4)),
     annote("'[%s]\\n'", cote: "haut", clic: 2, reste: true, legende: [le format : `%s` reçoit un argument, entre crochets, puis `\n`]),
@@ -745,7 +757,7 @@
 
 == Avant d’exécuter, Bash réécrit la ligne <ordre-expansions>
 
-#let labo(contenu: ("ada.txt", "grace.txt", "hedy.txt"), ..args) = contexte(chemin: "/home/ada/atelier/labo", contenu: contenu, ..args)
+#let labo(contenu: ("ada.txt", "grace.txt", "hedy.txt"), ..args) = ctx(chemin: "/home/ada/atelier/labo", contenu: contenu, ..args)
 #let _p = (("p", "Ada Lovelace"),)
 #anime(
   contexte: k => labo(variables: _p, voir: if k == 3 { ("$p",) } else if k == 5 { ("ada.txt", "grace.txt", "hedy.txt") } else { () }),
@@ -769,10 +781,10 @@
       [Hors guillemets, `*.txt` devient les noms des fichiers qui correspondent.],
       [Les guillemets sont retirés : printf reçoit neuf arguments après le format.],
     ),
-    note-fin: [La preuve : une ligne par argument reçu.],
+    note-fin: [La preuve : une ligne par argument reçu. *À retenir :* seules les étapes 2, 4 et 5 multiplient les mots ; les guillemets doubles empêchent 4 et 5, les simples toutes.],
+    sortie-dessous: true, taille: px(21),
     sortie: ("[a]", "[b]", "[Ada]", "[Lovelace]", "[Ada Lovelace]", "[ada.txt]", "[grace.txt]", "[hedy.txt]", "[$p]"),
   ),
-  note(role: "retenir", taille: px(23))[Seules les étapes 2, 4 et 5 multiplient les mots ; les guillemets doubles empêchent 4 et 5, les simples toutes.],
   source-de: link("https://www.gnu.org/software/bash/manual/html_node/Shell-Expansions.html")[Bash Reference Manual, Shell Expansions],
   note: [#versions Un clic par étape ; les noms des étapes sont ceux de l’artefact « Avant d’exécuter, Bash réécrit la ligne ». Fond teinté : produit par une expansion ; souligné : protégé par des guillemets ; « · » : une espace dans un mot. Ordre donné par man bash (bash 5.2), section EXPANSION : « brace expansion ; tilde expansion, parameter and variable expansion, arithmetic expansion, and command substitution (done in a left-to-right fashion) ; word splitting ; and pathname expansion ». La substitution de processus \<( … ) se fait en même temps que l’étape 3, et la suppression des guillemets vient en dernier. Le découpage (étape 4) ne porte que sur les résultats de \$, \$( ) et \$(( )) hors guillemets, pas sur ceux de \~. Seules les accolades, le découpage et les chemins peuvent multiplier les mots (sauf "\$\@", qui donne un mot par argument).],
 )
@@ -780,7 +792,6 @@
 == Les guillemets décident des expansions <guillemets>
 
 #anime(
-  contexte: k => labo(variables: _p, voir: if k == 3 { ("$p",) } else if k == 5 { ("ada.txt", "grace.txt", "hedy.txt") } else { () }),
   reecriture-anime(
     commande: "$ printf '[%s]\\n' $p \"$p\" '$p' *.txt \"*.txt\" '*.txt'",
     rangs: (
@@ -830,7 +841,6 @@
   ("$ printf '[%s]\\n' *.txt \"*.txt\" '*.txt'", "[ada.txt]", "[grace.txt]", "[*.txt]", "[*.txt]"),
 )
 #anime(
-  contexte: k => labo(contenu: ("ada.txt", "grace.txt"), variables: _p),
   scene(6, k => grid(columns: (1fr, px(820)), column-gutter: px(28),
     table(columns: (1.9fr, 0.7fr, 0.7fr, 0.7fr), stroke: none, inset: (x: px(10), y: px(12)), align: (left + horizon, center + horizon, center + horizon, center + horizon),
       fill: (x, y) => if y == 0 { c.bleu.transparentize(82%) } else if y == calc.min(k, 6) and k <= 6 { c.appli },
@@ -846,7 +856,7 @@
   note: [#versions Une ligne du tableau par clic, avec à droite la commande qui l’établit : la même écriture sans guillemets, entre doubles, entre simples. Le découpage se lit sur la preuve des commandes : `$(echo un deux)` donne deux arguments sans guillemets, un seul entre doubles. Le répertoire labo de cette session ne contient que ada.txt et grace.txt. Entre guillemets doubles, l’antislash garde un sens devant \$, \`, ", \\ et le saut de ligne ; entre simples, rien n’a de sens : on ne peut pas y écrire une apostrophe. Le tilde n’est développé qu’en début de mot, hors guillemets.],
 )
 
-== Découpage en mots et chemins : la ligne qui a l’air juste
+== Découpage, chemins : la ligne qui a l’air juste
 
 #anime(
   contexte: k => labo(contenu: if k >= 4 { ("ada.txt", "grace.txt", "hedy.txt") } else { () },
@@ -868,11 +878,11 @@
 == Deux erreurs classiques sans guillemets
 
 #anime(
-  contexte: k => contexte(chemin: if k == 3 { "/home/ada/atelier/Mon dossier important" } else { "/home/ada/atelier" },
+  contexte: k => ctx(chemin: if k == 3 { "/home/ada/atelier/Mon dossier important" } else { "/home/ada/atelier" },
     contenu: if k == 3 { () } else { ("Mon dossier important/",) }, autres: if k == 3 { 0 } else { 31 },
     variables: (("dossier", "Mon dossier important"), ..if k >= 4 { (("nom", ""),) }),
     voir: if k <= 3 { ("$dossier", "Mon dossier important/") } else { ("$nom",) }),
-  commande-annotee(taille: px(21),
+  commande-annotee(taille: px(18),
     ("$ dossier=\"Mon dossier important\"", "$ mkdir \"$dossier\"", ("$ cd $dossier", 2), ("bash: cd: too many arguments", 2),
       ("$ cd \"$dossier\" && pwd", 3), ("/home/ada/atelier/Mon dossier important", 3), ("$ nom=", 4),
       ("$ [ $nom = \"Etudiant\" ] && echo \"Bonjour, $nom\"", 4), ("bash: [: =: unary operator expected", 4),
@@ -883,7 +893,7 @@
     annote((ligne: 10, texte: "test exécuté, réponse : non"), cote: "droite", clic: 5, reste: true, legende: [`[` reçoit #arguments("", "=", "Etudiant", "]")]),
   ),
   source-de: link("https://mywiki.wooledge.org/BashPitfalls")[Greg’s Wiki, BashPitfalls],
-  note: [#versions Exemples du cours d’origine (diapositive « Exemples d’erreurs sans guillemets »). Le bandeau suit le cd réussi, puis revient au répertoire de départ pour la seconde erreur (une autre session du relevé). Sans guillemets, la variable vide disparaît à l’étape 4 : [ reçoit = Etudiant ], et l’opérateur = n’a pas d’opérande à gauche ; avec guillemets, l’argument vide (∅) reste.],
+  note: [#versions Exemples du cours d’origine (diapositive « Exemples d’erreurs sans guillemets »). La colonne suit le cd réussi, puis revient au répertoire de départ pour la seconde erreur (une autre session du relevé). Sans guillemets, la variable vide disparaît à l’étape 4 : [ reçoit = Etudiant ], et l’opérateur = n’a pas d’opérande à gauche ; avec guillemets, l’argument vide (∅) reste.],
 )
 
 == Simples, doubles, et la troisième écriture `$'…'`
@@ -910,7 +920,7 @@
 == Les accolades délimitent le nom de la variable <accolades>
 
 #anime(
-  contexte: k => contexte(chemin: "/home/ada/atelier",
+  contexte: k => ctx(chemin: "/home/ada/atelier",
     variables: (("fichier", "rapport"), ("ext", "txt"), ..if k >= 4 { (("chemin", "/usr/local/bin"),) }),
     voir: if k == 3 { ("$fichier", "$ext") } else if k == 5 { ("$chemin",) } else { () }),
   commande-annotee(taille: px(24),
@@ -931,7 +941,7 @@
 
 #anime(
   contexte: labo(variables: _p),
-  rang(bloc(role: "question")[À vous : prévoyez la sortie de chaque ligne][
+  rang(bloc(role: "question", revele: "bloc")[À vous : prévoyez la sortie de chaque ligne][
     + `printf '[%s]\n' $p`
     + `printf '[%s]\n' "$p"`
     + `printf '[%s]\n' '$p'`
@@ -945,7 +955,7 @@
       $ p="Ada Lovelace"
       ```]
   ]),
-  note: [À faire en direct : chacun écrit sa prévision, puis on exécute. Le répertoire ne contient que les trois fichiers créés par touch (bandeau). L’artefact « Avant d’exécuter, Bash réécrit la ligne » permet de vérifier chaque étape.],
+  note: [À faire en direct : chacun écrit sa prévision, puis on exécute. Le répertoire ne contient que les trois fichiers créés par touch (colonne de gauche). L’artefact « Avant d’exécuter, Bash réécrit la ligne » permet de vérifier chaque étape.],
 )
 
 == Combien de mots : corrigé (1/2)
