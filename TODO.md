@@ -46,10 +46,12 @@ Qt (licence à régler avec Vincent Barichard), ia-apprentissage, intro-ordinate
 - [ ] Publication, après la fusion dans `main` : resserrer la règle de déploiement de l’environnement `github-pages` (`**` autorise toute branche ; `claude/**` suffit aux aperçus) ; vérifier les liens absolus vers la production que l’aperçu ne peut pas servir (fichiers de départ des TP premiers-pas, fichiers, yaml-json, vim, ssh, wireguard ; exécutables et `SHA256SUMS` du compagnon)
 
 ### Reprise de la mise en scène (décidée le 2026-11-26)
-Constat de l’auteur : les diapos migrées sont des suites de terminaux et de puces (cours Shell : 82 diapos, aucun schéma dessiné), et les artefacts copient la forme du premier. À reprendre, cours par cours et pas à pas, par des agents Opus au minimum : schémas, états qui changent au clic, commandes annotées, prérequis d’abord (règles ajoutées à `structurer-diapos-cours`). Les faits vérifiés, les sorties rejouées, les corrigés et les simulateurs se gardent.
-- [ ] Cours Shell — pilote : sections « Bash · Les bases » et « Bash · Flux et tubes » (14 diapos), composants de la charte pour une commande annotée et un schéma à états, illustration de couverture propre au cours ; à faire valider par l’auteur avant la suite
-- [ ] Cours Shell — le reste des diapos, puis l’artefact « expansions Bash » reconçu (forme propre au sujet, cadre commun au site)
-- [ ] Les six autres cours et leurs artefacts, après validation de la méthode sur le cours Shell
+Constat de l’auteur : les diapos migrées sont des suites de terminaux et de puces, et les artefacts copient la forme du premier. À reprendre, cours par cours et pas à pas, par des agents Opus au minimum : schémas, états qui changent au clic, commandes annotées, contexte en arbre, prérequis d’abord (règles dans `structurer-diapos-cours`). Les faits vérifiés, les sorties rejouées, les corrigés et les simulateurs se gardent.
+Décisions du 2026-11-27 : le cours Shell devient quatorze modules progressifs partant de zéro (`shell/progression.yaml`, découpage validé) ; chaque module tient pour acquis les précédents et y renvoie ; quatre supports possibles par module, aucun obligatoire sauf qu’il en faut un pour enseigner — diaporama, page de cours (page web avec le terminal à côté), TP, artefact.
+- [ ] Cours Shell — index version 2 : supports recommandés par module ; trous à combler (un éditeur avant les scripts, processus et signaux, place de `grep`, notions employées avant d’être présentées)
+- [ ] Cours Shell — module `arbo` en deux formats, pour comparaison par l’auteur : diaporama séparé (`shell/cm/arbo.typ`, avec la colonne de contexte en arbre) et page de cours (`shell/pages/arbo/`, terminal à côté)
+- [ ] Cours Shell — les treize autres modules, dans l’ordre de l’index, après l’avis de l’auteur sur le premier ; découpage de `shell/cm/shell.typ` ; artefacts reconçus là où le sujet s’y prête
+- [ ] Les six autres cours, après validation de la méthode sur le cours Shell
 
 ## Fait
 
