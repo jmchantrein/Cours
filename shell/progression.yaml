@@ -1,27 +1,39 @@
-# progression.yaml — index de progression du cours « Shell : Bash, sed et awk » (proposition, à valider).
+# progression.yaml — index de progression du cours « Shell : Bash, sed et awk » (version 2, proposition).
 #
-# Un module (nœud) = une séance courte, avec ses diapos ; un TP quand il y a un savoir-faire à exercer ; un artefact
-# quand le module énonce un modèle manipulable (un état, une transformation ou une règle dont l’étudiant peut
-# prédire le résultat, puis le vérifier). Sinon la case reste vide, avec sa raison.
+# Un module (nœud) s’enseigne par un diaporama (`diapos`), par une page de cours (`page` : page web au format
+# des TP, avec le terminal à côté, où l’étudiant clique sur une commande et la voit s’exécuter), ou par les deux.
+# Il peut avoir en plus un TP (`tp`, quand il y a un savoir-faire à exercer) et un artefact (`artefact`, quand
+# le module énonce un modèle manipulable). Aucun support n’est dû, sauf `diapos` ou `page`.
 #
 # Format : YAML, lu par `yaml("progression.yaml")` de Typst sans paquet externe ; il se relit et se modifie à la
 # main, accepte des commentaires, et ne porte que des données (la carte et les ouvertures s’en calculent).
 #
 # Règles :
-# - `requiert` : les modules dont celui-ci dépend directement, pour une raison dite en commentaire quand elle
-#   n’est pas évidente. Ce qui est acquis à l’entrée d’un module est la fermeture transitive de `requiert` ;
-#   la carte ne dessine que les flèches qui ne s’en déduisent pas.
-# - `introduit` : chaque notion est introduite par un seul module ; tout module ultérieur la tient pour acquise et
-#   renvoie au module qui l’introduit au lieu de la réexpliquer.
+# - `requiert` : les modules dont celui-ci dépend directement (la raison en commentaire quand elle n’est pas
+#   évidente). L’acquis à l’entrée d’un module est la fermeture transitive de `requiert` ; la carte ne dessine
+#   que les flèches qui ne s’en déduisent pas.
+# - `introduit` : chaque notion est introduite par un seul module, qui vient avant son premier emploi ; tout
+#   module ultérieur la tient pour acquise et renvoie au module qui l’introduit au lieu de la réexpliquer.
 # - `ordre` : l’ordre proposé des séances, compatible avec le graphe (d’autres ordres le sont aussi).
-# - `carte` : place du nœud sur la carte (colonne = profondeur dans le graphe, ligne choisie pour qu’aucune
+# - `carte` : place du nœud sur la carte (colonne = profondeur dans le graphe ; ligne choisie pour qu’aucune
 #   flèche ne traverse un nœud).
-# - États d’un support (`diapos.etat`, `tp.etat`, `artefact.etat`) : present (le matériau existe et couvre le
-#   module), partiel (il existe en partie, ou est à remettre en ordre), a-faire, sans-objet (avec `raison`).
-# - `ouverture` : « ce qu’on tient pour acquis », posé à la salle en ouverture de module : une question par
+# - `supports` : les supports recommandés pour enseigner le module, et `pourquoi`. Un diaporama sert ce qui
+#   s’explique par un schéma qui se transforme devant la salle ; une page de cours, ce qui s’apprend en tapant et
+#   en observant soi-même, commande après commande ; les deux quand l’explication en salle et la reprise à son
+#   rythme servent chacune.
+# - États (`diapos.etat`, `page.etat`, `tp.etat`, `artefact.etat`) : present (le matériau existe et couvre le
+#   module), partiel (il existe en partie, ou est à remettre en ordre), a-faire (recommandé, absent),
+#   sans-objet (non recommandé, avec `raison`) ; pour un artefact seulement : possible (un modèle s’y prête,
+#   avec `priorite` ; rien n’est décidé).
+# - `ouverture` : en ouverture de module, la carte « vous êtes ici », puis une question à la salle par
 #   prérequis direct, chacune renvoyant au module qui y répond.
+# - `corrections` : ce qu’il faut déplacer ou ajouter dans le matériau existant pour que chaque notion soit
+#   introduite avant son premier emploi.
 # - Les diapos actuelles sont désignées par l’étiquette de leur titre (`<ancre>` de shell/cm/shell.typ) ou, sans
-#   étiquette, par leur titre ; les TP par leur dossier et leurs étapes.
+#   étiquette, par leur titre ; les TP par leur dossier et leurs étapes ; les pages de cours par
+#   shell/pages/<module>/<module>.typ.
+# - Le repère de contexte des diapos et des pages : l’arbre dessiné dans une colonne à gauche (compte, répertoire
+#   courant dans l’arborescence, ce qu’il contient, variables).
 
 cours: shell
 titre: "Shell : Bash, sed et awk"
@@ -39,33 +51,36 @@ modules:
       - "terminal (émulateur de terminal)"
       - "shell, Bash"
       - "invite (`$` compte ordinaire, `#` root)"
-      - "commande, option (courte, longue), argument"
-      - "une option peut prendre un argument"
+      - "commande, option (courte, longue), argument ; une option peut prendre un argument"
+      - "`echo`"
       - "guillemets : un texte, un seul argument"
-      - "complétion (Tab) et historique (flèche haut, Ctrl+R)"
+      - "complétion (Tab), historique (flèche haut, Ctrl+R), abandonner une ligne (Ctrl+C)"
       - "se documenter : `man`, `--help`, `type`, `help`"
       - "la carte de progression du cours"
     sait-faire: "Lancer une commande avec options et arguments (`whoami`, `date -u`, `echo`), la décomposer en mots, et trouver une option dans `man`."
     pourquoi: "Un serveur n’a pas d’interface graphique et s’administre à distance ; une commande se rejoue, se compose et s’automatise, un clic non."
     ouverture: []
+    supports:
+      recommandes: [diapos, page]
+      pourquoi: "Les diapos pour la salle : pourquoi la ligne de commande, la carte, ce qu’est un terminal et un shell (un schéma). La page pour les premières commandes, que chacun tape et voit répondre : c’est le premier contact avec le terminal."
     diapos:
       etat: partiel
       existant:
-        - "Bash, sed, awk : à quoi ils servent (motivation ; à garder comme démonstration, mais elle montre le bandeau de contexte et un fichier avant que l’arborescence soit vue)"
-        - "<ligne-de-commande> Lire une ligne de commande (porte sur pionnieres.csv : à refaire sur une commande sans fichier, ou à déplacer dans fichiers)"
-        - "Une option peut prendre un argument (même remarque : `head -n 3 pionnieres.csv`)"
+        - "Bash, sed, awk : à quoi ils servent (démonstration d’ouverture, à annoncer comme telle : elle montre sed et awk sur un fichier avant qu’ils soient enseignés)"
+        - "<ligne-de-commande> Lire une ligne de commande (porte sur pionnieres.csv : à refaire sur une commande sans fichier)"
+        - "Une option peut prendre un argument (`head -n 3 pionnieres.csv` : même remarque)"
       manque:
-        - "ce qu’est un terminal, un shell, une commande ; le compte et l’invite"
-        - "pourquoi la ligne de commande en administration système"
-        - "complétion et historique (seul le TP premiers-pas les fait)"
-        - "la carte de progression, « vous êtes ici »"
+        - "ce qu’est un terminal, un shell, une commande ; le compte et l’invite ; pourquoi la ligne de commande ; la carte"
+    page:
+      etat: a-faire
+      propose: "shell/pages/intro : `whoami`, `date`, `date -u`, `echo` avec et sans guillemets, Tab, flèche haut, Ctrl+R, `man date`, `type cd`."
     tp:
       etat: partiel
       existant: "premiers-pas, étapes 1 (whoami, echo, guillemets), 3 (complétion, historique), 5 (man, --help, type)"
-      propose: "La première partie de premiers-pas, sans fichier : l’étape 1 télécharge preparer.sh, ce qui suppose déjà wget, cd et ~ ; la déplacer au début du module arbo."
+      propose: "Le téléchargement de preparer.sh (étape 1) suppose cd, ~ et wget : il passe au module fichiers."
     artefact:
       etat: sans-objet
-      raison: "Le module pose du vocabulaire et des gestes, pas une règle dont on prédit le résultat ; le seul mécanisme (la ligne coupée en mots) est celui du module expansions, qui a déjà son artefact."
+      raison: "Du vocabulaire et des gestes, pas une règle dont on prédit le résultat ; le seul mécanisme (la ligne coupée en mots) est celui du module expansions, qui a déjà son artefact."
 
   - id: arbo
     ordre: 1
@@ -81,57 +96,75 @@ modules:
       - "`cd`, `cd -`, `cd` seul"
       - "chemin absolu, chemin relatif"
       - "`.` et `..`"
-      - "le bandeau de contexte des diapos (compte, répertoire courant, contenu)"
+      - "le repère de contexte : l’arbre à gauche des diapos"
     sait-faire: "Dire où il est, aller dans un répertoire par un chemin absolu puis relatif, et prédire ce que désigne `notes/../projets/./site` avant de le vérifier avec `ls`."
     ouverture:
       - {question: "Dans `ls -a notes`, qu’est-ce qui est la commande, l’option, l’argument ?", renvoi: intro}
+    supports:
+      recommandes: [page, diapos]
+      pourquoi: "Se déplacer s’apprend en tapant `cd` et en regardant `pwd` répondre : la page d’abord. Un diaporama court présente en salle l’arbre de gauche, que toutes les diapos suivantes affichent : il faut l’avoir lu une fois."
     diapos:
       etat: a-faire
       existant: []
       manque:
-        - "aucune diapo n’enseigne l’arborescence, `pwd`, `cd`, les chemins : le bandeau de contexte les emploie dès la deuxième diapo"
+        - "aucune diapo n’enseigne l’arborescence, `pwd`, `cd`, les chemins ; le repère de contexte les suppose dès la deuxième diapo"
+        - "une diapo courte : l’arbre de gauche, ce qu’il montre, comment `cd` y déplace le répertoire courant"
+    page:
+      etat: a-faire
+      propose: "shell/pages/arbo : pwd, ls, ls -a, cd par chemin absolu puis relatif, cd -, cd seul, sur le répertoire ~/atelier de premiers-pas."
     tp:
       etat: partiel
-      existant: "premiers-pas, étapes 2 (se repérer) et 4 (se déplacer) ; le téléchargement de preparer.sh (étape 1)"
+      existant: "premiers-pas, étapes 2 (se repérer) et 4 (se déplacer)"
     artefact:
-      etat: a-faire
+      etat: possible
+      priorite: haute
       modele: "Un arbre de répertoires et un curseur « vous êtes ici » ; un chemin se résout composant par composant, de la racine (absolu) ou du curseur (relatif)."
       geste: "L’étudiant tape un chemin et prédit le nœud d’arrivée ; le curseur parcourt l’arbre un composant à la fois (`..` remonte, `.` reste). En sens inverse : il clique un nœud cible et écrit le chemin relatif qui y mène."
-      extension: "La règle de destination de `cp` et `mv` (vers un répertoire existant : dedans ; sinon : renommage) se joue sur le même arbre (module fichiers)."
+      extension: "La règle de destination de `cp` et `mv` (vers un répertoire existant : dedans ; sinon : renommage) se joue sur le même arbre."
 
   - id: fichiers
     ordre: 2
     titre: "Regarder et agir sur des fichiers"
     carte: {col: 2, lig: 1}
-    duree: 30
+    duree: 40
     requiert: [arbo]
     introduit:
       - "fichier texte ; le fil rouge pionnieres.csv"
       - "`cat`, `less`"
-      - "`head`, `tail` (`-n`)"
-      - "`wc` (`-l`)"
+      - "`head`, `tail` (`-n`), `wc` (`-l`)"
       - "`mkdir`, `touch`"
       - "`cp`, `mv` (copier, déplacer, renommer)"
       - "`rm`, `rm -r` : sans corbeille"
       - "jokers : `*`, `?`, `[…]`"
-    sait-faire: "Montrer qu’un fichier existe, afficher son contenu ou ses premières lignes, le compter ; créer, copier, déplacer et supprimer des fichiers et des répertoires, un à un ou par un joker."
+      - "éditer un fichier dans le terminal : `nano` (ouvrir, écrire, enregistrer, quitter)"
+      - "`wget` : télécharger un fichier"
+      - "fichier de commandes (script), lancé par `bash fichier`"
+    sait-faire: "Montrer qu’un fichier existe, l’afficher, le compter ; le créer et le modifier avec nano ; copier, déplacer et supprimer des fichiers, un à un ou par un joker ; lancer un fichier de commandes avec `bash`."
     ouverture:
       - {question: "Vous êtes dans `~/atelier/notes` : que désigne `../pionnieres.csv` ?", renvoi: arbo}
+    supports:
+      recommandes: [page]
+      pourquoi: "Rien à expliquer par un schéma : chaque commande s’apprend en la tapant et en regardant le fichier apparaître, changer, disparaître. La page fait cela, nano compris (le terminal de la VM l’a)."
     diapos:
-      etat: partiel
+      etat: sans-objet
+      raison: "La page suffit. Les diapos actuelles qui en relèvent vont à la page, ou ouvrent le premier diaporama qui emploie le fil rouge (flux)."
       existant:
         - "<fil-rouge> Le fil rouge : pionnieres.csv (ls, cat)"
-        - "Une option peut prendre un argument (head)"
         - "<ligne-de-commande> Lire une ligne de commande (wc -l)"
-      manque:
-        - "`tail`, `less`, `mkdir`, `touch`, `cp`, `mv`, `rm` : `touch` et `mkdir` sont employés (<for-ls>, « Deux erreurs classiques sans guillemets ») sans avoir été présentés"
-        - "les jokers : employés dès <boucles> (`*.csv`), présentés seulement dans le TP fichiers (étape 8)"
+        - "Une option peut prendre un argument (head)"
+    page:
+      etat: a-faire
+      propose: "shell/pages/fichiers : wget et bash preparer.sh ; cat, less, head, tail, wc sur pionnieres.csv ; mkdir, touch, cp, mv, rm ; *.csv ; nano : créer notes/idees.txt, l’enregistrer, le relire avec cat ; bash sur un fichier de deux commandes."
     tp:
       etat: partiel
-      existant: "premiers-pas, étapes 6 (afficher) et 7 (créer, copier, déplacer, supprimer) ; fichiers, étape 8 (partie jokers)"
+      existant: "premiers-pas, étapes 1 (wget, bash preparer.sh), 6 (afficher) et 7 (créer, copier, déplacer, supprimer) ; fichiers, étape 8 (partie jokers)"
+      propose: "Une étape nano dans premiers-pas : modifier un fichier de l’atelier, vérifier avec cat."
     artefact:
       etat: sans-objet
-      raison: "Pas de modèle propre : afficher ne transforme rien ; la seule règle à prédire (où atterrit `cp`/`mv`) s’ajoute à l’artefact de l’arborescence, qui a déjà l’arbre."
+      raison: "Afficher ne transforme rien ; la seule règle à prédire (où atterrit `cp`/`mv`) s’ajoute à l’artefact possible de l’arborescence, qui a déjà l’arbre."
+    corrections:
+      - "`touch` et `mkdir` (<for-ls>, « Deux erreurs classiques sans guillemets ») et les jokers (<boucles>) : employés après ce module, plus avant"
+      - "`bash exemple_tests.bash` (<tests>) : le mot « script » et `bash fichier` sont introduits ici ; scripts ajoute shebang, droit x et ./"
 
   - id: droits
     ordre: 3
@@ -151,6 +184,9 @@ modules:
     sait-faire: "Dire, d’après une ligne de `ls -l`, si un compte donné peut lire, modifier, exécuter un fichier ou entrer dans un répertoire, puis régler ces droits avec `chmod`."
     ouverture:
       - {question: "Comment montrer que `sauvegarde.sh` existe, sans l’ouvrir ?", renvoi: fichiers}
+    supports:
+      recommandes: [diapos, page]
+      pourquoi: "Les diapos pour décoder `ls -l` et la règle du triplet qui décide, devant la salle, avec l’exercice. La page pour `chmod` et `umask`, qu’on comprend en les tapant et en relisant `ls -l` après chaque commande."
     diapos:
       etat: partiel
       existant:
@@ -158,15 +194,21 @@ modules:
         - "Les droits : trois triplets, pour trois classes"
         - "<exercice-ls-l> À vous : décoder ls -l, et son corrigé"
       manque:
-        - "`chmod` : la notation octale n’apparaît que dans une question de l’exercice, la symbolique (`chmod u+x`) dans <script-executable>, sans présentation"
-        - "droits d’un répertoire (seulement dans les notes de l’orateur), `umask`, `chown` : seul le TP fichiers les fait"
+        - "les droits d’un répertoire (aujourd’hui dans les notes de l’orateur)"
+    page:
+      etat: a-faire
+      propose: "shell/pages/droits : id, chmod en symbolique puis en octal, ls -l après chaque commande ; umask et le mode d’un fichier créé ; chown refusé sans sudo."
     tp:
       etat: present
       existant: "fichiers, étapes 1 à 6"
     artefact:
-      etat: a-faire
+      etat: possible
+      priorite: moyenne
       modele: "Un mode (les dix caractères de `ls -l`), un propriétaire, un groupe ; un compte et ses groupes ; une action (lire, modifier, exécuter, entrer, créer dedans). Un seul triplet décide, le premier qui s’applique."
-      geste: "L’étudiant choisit un compte et une action, prédit « permis » ou « refusé », puis voit le triplet qui décide s’allumer — y compris le cas qui surprend : le propriétaire refusé alors que son groupe aurait le droit. Il tape `chmod g-w,o=` ou `640` et voit les bits basculer ; un `umask` donne le mode d’un fichier créé."
+      geste: "L’étudiant choisit un compte et une action, prédit « permis » ou « refusé », puis voit le triplet qui décide s’allumer — y compris le propriétaire refusé alors que son groupe aurait le droit. Il tape `chmod g-w,o=` ou `640` et voit les bits basculer ; un `umask` donne le mode d’un fichier créé."
+    corrections:
+      - "`chmod 640` (question 4 de <exercice-ls-l>) : la notation octale doit être présentée avant l’exercice (diapo ou page), pas seulement par l’indice r = 4"
+      - "`chmod u+x` (<script-executable>) : vient après ce module"
 
   - id: retrouver
     ordre: 4
@@ -184,19 +226,24 @@ modules:
     sait-faire: "Retrouver des fichiers par leur nom, leur type ou leur date ; créer une archive compressée, la lister, l’extraire ailleurs ; dire ce que devient un lien quand on supprime l’original."
     ouverture:
       - {question: "Que dit le 2e champ de `ls -l`, et le premier caractère `l` ?", renvoi: droits}
+    supports:
+      recommandes: [page]
+      pourquoi: "find et tar s’apprennent en les lançant et en lisant ce qu’ils trouvent ou archivent. Les liens ont un modèle (noms et inodes) qu’un schéma de la page, ou l’artefact possible, suffit à montrer."
     diapos:
-      etat: a-faire
+      etat: sans-objet
+      raison: "La page suffit ; `tar` est aujourd’hui seulement employé dans <sauvegarder-dossier>, qui vient après."
       existant: []
-      manque:
-        - "aucune diapo : `tar` est employé dans <sauvegarder-dossier> (avec une explication en note), `find` et les liens seulement dans le TP fichiers"
+    page:
+      etat: a-faire
+      propose: "shell/pages/retrouver : find par nom, type, date ; ln et ln -s, puis rm de l’original, avec ls -li ; tar -czf, tar -tzf, tar -xzf -C."
     tp:
       etat: present
       existant: "fichiers, étapes 7 à 9 (8 : la partie find)"
     artefact:
-      etat: a-faire
+      etat: possible
+      priorite: basse
       modele: "Des noms (entrées de répertoire) qui pointent sur des inodes, avec leur compteur de liens ; un lien symbolique est un nom dont le contenu est un chemin."
       geste: "L’étudiant crée un lien physique et un lien symbolique, puis supprime ou déplace l’original : il prédit si `cat` sur chaque lien réussit encore, et voit le compteur descendre, le lien symbolique pendre."
-      priorite: "basse"
 
   - id: flux
     ordre: 5
@@ -205,18 +252,22 @@ modules:
     duree: 45
     requiert: [fichiers]
     introduit:
-      - "processus"
+      - "processus : un programme en cours d’exécution"
       - "flux standards : 0 entrée, 1 sortie, 2 erreur"
       - "redirections `>`, `2>`, `>>`, `<`"
       - "ordre des redirections, `2>&1`"
       - "`>` vide le fichier avant de lancer la commande"
       - "tube `|`"
-      - "filtre : `sort`, `uniq`, `cut`, `grep` (sur un texte fixe)"
-    sait-faire: "Envoyer la sortie et les erreurs d’une commande où il veut, et composer en un pipeline un traitement de pionnieres.csv (compter par domaine, garder les trois plus récentes)."
+      - "filtres : `sort`, `uniq`, `cut`"
+      - "`grep` : garder les lignes qui contiennent un texte (`-v`, `-c`, `-i`, `-n`, `-q`)"
+    sait-faire: "Envoyer la sortie et les erreurs d’une commande où il veut, et composer en un pipeline un traitement de pionnieres.csv (compter par domaine, garder les trois plus récentes, les lignes qui contiennent `ERROR`)."
     ouverture:
       - {question: "Que montre `head -n 3 pionnieres.csv` ? Et `wc -l` sur le même fichier ?", renvoi: fichiers}
+    supports:
+      recommandes: [diapos]
+      pourquoi: "Le sujet est un schéma qui se transforme : des processus dont on rebranche les prises 0, 1, 2 devant la salle. Les diapos le font déjà ; les TP premiers-pas et scripts font taper les pipelines."
     diapos:
-      etat: present
+      etat: partiel
       existant:
         - "<flux-standards> Trois flux par processus"
         - "<redirections> Rediriger 1 ou 2 vers un fichier : > et 2>"
@@ -226,15 +277,20 @@ modules:
         - "<tubes> Le tube branche une sortie sur une entrée"
         - "<exercice-tubes> À vous : deux pipelines, et son corrigé"
       manque:
-        - "`grep` : employé dès <codes-retour> (`grep -q`) sans présentation"
+        - "une diapo `grep`, filtre de lignes sur un texte fixe, avant <codes-retour> qui emploie `grep -q`"
         - "« processus » est nommé sans être défini"
+    page:
+      etat: sans-objet
+      raison: "Ce qui se tape ici (pipelines) est dans les TP ; la page n’ajouterait que la répétition des diapos."
     tp:
       etat: present
       existant: "premiers-pas, étape 8 ; scripts, étape 2 (trois pipelines)"
+      propose: "Une consigne grep dans premiers-pas, étape 8 : les lignes ERROR du journal, leur nombre."
     artefact:
-      etat: a-faire
+      etat: possible
+      priorite: haute
       modele: "La table des descripteurs d’un processus (0, 1, 2 → clavier, écran, fichier) que Bash réécrit de gauche à droite avant de lancer la commande ; `2>&1` copie la destination de 1 à cet instant ; `>` vide le fichier à ce moment-là."
-      geste: "L’étudiant range les morceaux d’une ligne (`> f`, `2>&1`, `| sort`) dans l’ordre qu’il veut, prédit où arrive chaque ligne (écran, fichier, tube), puis fait avancer Bash redirection par redirection et lit le résultat : l’ordre inverse de `2>&1` laisse les erreurs à l’écran ; `sort f > f` donne un fichier vide."
+      geste: "L’étudiant range les morceaux d’une ligne (`> f`, `2>&1`, `| sort`) dans l’ordre qu’il veut, prédit où arrive chaque ligne (écran, fichier, tube), puis fait avancer Bash redirection par redirection : l’ordre inverse de `2>&1` laisse les erreurs à l’écran ; `sort f > f` donne un fichier vide."
 
   - id: langage
     ordre: 6
@@ -250,11 +306,14 @@ modules:
       - "`if` et `test` : `[` est une commande"
       - "opérateurs de test (`-f`, `-d`, `-lt`, `=`)"
       - "`[[ … ]]`"
-      - "boucles `for` et `while`"
+      - "boucles `for` (sur une liste écrite, sur `*.csv`) et `while`"
       - "arithmétique `$(( … ))`"
     sait-faire: "Écrire, au terminal, une boucle qui traite chaque fichier `*.csv` et un test qui agit selon le code de retour d’une commande."
     ouverture:
       - {question: "Dans `cut -d';' -f3 pionnieres.csv | sort`, que reçoit `sort` sur son entrée ?", renvoi: flux}
+    supports:
+      recommandes: [diapos, page]
+      pourquoi: "Les diapos pour ce qui se montre en salle : `[` est une commande, la voie suivie par `&&` et `||` selon le code de retour. La page pour les variables, tests et boucles, qu’on retient en les tapant et en modifiant une valeur pour voir ce qui change."
     diapos:
       etat: partiel
       existant:
@@ -265,18 +324,19 @@ modules:
         - "[[ … ]] : le test propre à Bash"
         - "<boucles> Boucles : for, un tour par mot"
         - "Boucles : while, tant que le test réussit"
-      manque:
-        - "<tests> lance un script (`bash exemple_tests.bash`) avant que le module scripts ait dit ce qu’est un script"
-        - "<boucles> emploie les accolades `{1..5}` et <for-ls> la substitution `$(ls)`, toutes deux expliquées dans expansions"
-        - "`[[ =~ ]]` emploie une expression régulière avant le module regex"
-        - "<for-ls> (for sur $(ls)) relève d’expansions : il y illustre le découpage en mots"
-    tp:
+    page:
       etat: a-faire
-      existant: "aucun en propre : les tests et boucles ne s’exercent qu’à l’intérieur des scripts (scripts, étape 3)"
-      propose: "Quelques boucles et tests au terminal, sur les fichiers de l’atelier, avant d’écrire un script."
+      propose: "shell/pages/langage : affecter, lire, echo \"$PATH\" ; une commande, puis echo $? ; [ -f … ] && … ; for sur une liste et sur *.csv ; while avec un compteur et $(( ))."
+    tp:
+      etat: sans-objet
+      raison: "La page fait taper chaque construction ; le TP scripts (étape 3) les reprend dans un script."
     artefact:
       etat: sans-objet
-      raison: "Ce sont des constructions de syntaxe ; les pièges qui se prédisent (`[ $vide = Ada ]`, `for f in $(ls)`) sont des expansions, déjà jouables dans l’artefact expansions-bash."
+      raison: "Des constructions de syntaxe ; les pièges qui se prédisent (`[ $vide = Ada ]`, `for f in $(ls)`) sont des expansions, déjà jouables dans l’artefact expansions-bash."
+    corrections:
+      - "<boucles> : `{1..5}` en sort (les accolades sont introduites par expansions) ; `for i in 1 2 3` le remplace"
+      - "<for-ls> (`for f in $(ls)`) passe dans expansions, après la substitution de commande et le découpage en mots"
+      - "« [[ … ]] : le test propre à Bash » : l’exemple `[[ $annee =~ ^[0-9]+$ ]]` passe dans regex"
 
   - id: expansions
     ordre: 7
@@ -298,6 +358,9 @@ modules:
     ouverture:
       - {question: "`p=\"Ada Lovelace\"` : que vaut `$p`, et que montre `echo \"$p\"` ?", renvoi: langage}
       - {question: "Que désigne `*.txt` ?", renvoi: fichiers}
+    supports:
+      recommandes: [diapos]
+      pourquoi: "La ligne réécrite par Bash, étape par étape, est un schéma qui se transforme devant la salle ; l’artefact existant sert la reprise à son rythme, mieux qu’une page."
     diapos:
       etat: present
       existant:
@@ -312,10 +375,13 @@ modules:
         - "<exercice-expansions> À vous : combien de mots ?, et ses corrigés"
         - "Annexe : <memo-guillemets> Mémo : guillemets et expansions"
       manque:
-        - "<for-ls> à rattacher ici (aujourd’hui dans « Variables, tests, boucles »)"
+        - "<for-ls> à rattacher ici (aujourd’hui dans « Variables, tests, boucles »), comme exemple du découpage en mots"
+    page:
+      etat: sans-objet
+      raison: "L’artefact expansions-bash fait déjà rejouer chaque ligne à son rythme."
     tp:
       etat: sans-objet
-      raison: "Le savoir-faire (prédire les mots) s’exerce en séance (exercice « combien de mots ? ») et dans l’artefact ; les TP scripts et sed-awk l’appliquent ensuite (`\"$dossier\"/*`, scripts sed entre simples)."
+      raison: "Le savoir-faire (prédire les mots) s’exerce en séance (exercice « combien de mots ? ») et dans l’artefact ; les TP scripts et sed-awk l’appliquent ensuite."
     artefact:
       etat: present
       existant: "expansions-bash"
@@ -325,20 +391,24 @@ modules:
     titre: "Écrire et lancer un script"
     carte: {col: 6, lig: 0}
     duree: 40
-    requiert: [expansions, droits, retrouver]   # chmod +x ; tar dans l’exemple de sauvegarde
+    requiert: [expansions, droits, retrouver]   # chmod +x ; tar dans l’exemple de sauvegarde ; nano vient de fichiers
     introduit:
-      - "script, shebang `#!/bin/bash`"
+      - "shebang `#!/bin/bash`"
       - "droit `x` et `./` : un script n’est pas dans `PATH`"
       - "`exit` : le code de retour d’un script"
       - "arguments `$1`, `$#`"
       - "tous les arguments : `\"$@\"`"
-      - "saisie `read -r`, et `<<<` pour la donner sans la taper"
+      - "saisie `read -r`"
+      - "chaîne ici `<<<` : donner une saisie sans la taper"
       - "cas réel : sauvegarder un répertoire"
     sait-faire: "Écrire un script exécutable qui reçoit ses données en arguments, vérifie qu’elles existent et sort avec un code de retour documenté."
     ouverture:
       - {question: "`./bonjour.sh` répond « Permission denied » : que montre `ls -l bonjour.sh` ?", renvoi: droits}
       - {question: "Combien d’arguments reçoit `cmd \"$dossier\"` si dossier vaut `Mon dossier` ?", renvoi: expansions}
-    externe-requis: "un éditeur de texte dans le terminal (cours edition-formats, Vim ; ou nano)"
+      - {question: "Comment créer `bonjour.sh` et y écrire deux lignes, sans quitter le terminal ?", renvoi: fichiers}
+    supports:
+      recommandes: [page, diapos]
+      pourquoi: "Écrire un script, le lancer, le voir refusé puis accepté s’apprend à son clavier : la page en premier. Les diapos existantes restent pour la salle quand la séance est projetée (le cas de la sauvegarde, `\"$@\"` contre `$*`)."
     diapos:
       etat: present
       existant:
@@ -348,16 +418,20 @@ modules:
         - "<arguments-tous> Tous les arguments : \"$@\""
         - "<saisie-ou-arguments> Saisie interactive ou arguments"
         - "<sauvegarder-dossier> Exemple : sauvegarder un répertoire"
-        - "<cron> Digression : planifier avec cron (hors shell : voir la note)"
-      manque:
-        - "`<<<` est employé sans être présenté (seulement en note)"
-        - "le TP fichiers renvoie à une étiquette inexistante, `sauvegarder-répertoire` (la diapo porte `sauvegarder-dossier`)"
+        - "<cron> Digression : planifier avec cron (annexe, hors cadre)"
+    page:
+      etat: a-faire
+      propose: "shell/pages/scripts : nano bonjour.sh, bash bonjour.sh, ./bonjour.sh refusé, chmod u+x, ./bonjour.sh ; exit et echo $? ; $1, $#, \"$@\" ; read -r et <<<."
     tp:
       etat: present
       existant: "scripts, étapes 1, 3, 4 et le début de 5"
     artefact:
       etat: sans-objet
       raison: "Ce qu’un script reçoit (`$1`, `\"$@\"`) est un cas des expansions, jouable dans expansions-bash ; le reste (shebang, droit x) est une procédure, pas un modèle."
+    corrections:
+      - "<saisie-ou-arguments> : `<<<` est expliqué seulement dans la note de l’orateur ; le montrer sur la diapo"
+      - "TP fichiers, étape 9 : le renvoi `sauvegarder-répertoire` vise une étiquette absente ; la diapo porte `sauvegarder-dossier`"
+      - "<cron> : en annexe du cours, annoncée hors cadre (sa place est un cours d’administration système)"
 
   - id: robustesse
     ordre: 9
@@ -376,6 +450,9 @@ modules:
     sait-faire: "Durcir un script (`set -euo pipefail`), le faire relire par ShellCheck, corriger ce qu’il signale, et écrire un test Bats qui vérifie un code de retour et une sortie."
     ouverture:
       - {question: "Que vaut `$?` après `./copie.sh source-absente` ?", renvoi: scripts}
+    supports:
+      recommandes: [diapos]
+      pourquoi: "Les limites de `set -e` et la lecture d’un rapport ShellCheck s’expliquent devant la salle, sur un script affiché ; le TP scripts fait le reste au clavier."
     diapos:
       etat: present
       existant:
@@ -387,20 +464,24 @@ modules:
         - "Digression : qu’est-ce qu’un test unitaire ?"
         - "<bats> Tester un script avec Bats"
         - "<exercice-scripts> À vous : deux scripts, et ses corrigés"
+    page:
+      etat: sans-objet
+      raison: "Le TP scripts (étapes 5 à 7) fait déjà lancer chaque outil ; ShellCheck n’est pas dans la VM du terminal."
     tp:
       etat: present
       existant: "scripts, étapes 5 à 7"
     artefact:
-      etat: a-faire
+      etat: possible
+      priorite: moyenne
       modele: "La règle d’arrêt de `set -e` : une commande qui échoue arrête le script, sauf si elle est testée (`if`, `while`, à gauche de `&&` ou `||`, après `!`), dans un tube sans `pipefail`, ou dans une substitution affectée à `local`."
-      geste: "L’étudiant place une commande qui échoue dans un contexte, coche `-e`, `-u`, `pipefail`, prédit « le script continue » ou « il s’arrête ici », puis l’exécute ; chaque réponse se confronte à Bash réel, comme verifier-bash.js le fait pour les expansions."
+      geste: "L’étudiant place une commande qui échoue dans un contexte, coche `-e`, `-u`, `pipefail`, prédit « le script continue » ou « il s’arrête ici », puis l’exécute ; chaque réponse se confronte à Bash réel."
 
   - id: portee
     ordre: 10
     titre: "Fonctions, portée et processus enfants"
     carte: {col: 7, lig: 1}
     duree: 30
-    requiert: [scripts]   # processus (flux) et variables (langage) en découlent
+    requiert: [scripts]
     introduit:
       - "fonction, et `main()`"
       - "`local` ne protège que vers le haut"
@@ -411,6 +492,9 @@ modules:
     sait-faire: "Ranger un script en fonctions appelées par `main`, et prédire ce qu’affiche une variable après une fonction, un sous-shell ou un script lancé."
     ouverture:
       - {question: "`./script.sh` fait `cd /tmp` : où est votre terminal ensuite ?", renvoi: scripts}
+    supports:
+      recommandes: [diapos]
+      pourquoi: "La portée se comprend en prédisant ce qu’affiche un script (la devinette) puis en le voyant démontrer devant la salle ; c’est le format des diapos actuelles."
     diapos:
       etat: present
       existant:
@@ -421,21 +505,61 @@ modules:
         - "<sous-shell> Sous-shell : une copie de tout"
         - "Nouveau processus : seul l’environnement passe"
         - "<exercice-local> À vous : que va afficher devinette.bash ?, et son corrigé"
+    page:
+      etat: sans-objet
+      raison: "La devinette se joue en salle ; la reprise à son rythme revient au TP ou à l’artefact possible."
     tp:
       etat: partiel
       existant: "scripts, étape 8 (une fonction par tâche, et main)"
       propose: "Une étape sur la portée : prédire, puis vérifier, ce qu’affichent des variables après fonction, sous-shell et script enfant."
     artefact:
-      etat: a-faire
+      etat: possible
+      priorite: haute
       modele: "Des cadres de variables empilés : le shell, chaque appel de fonction (ses `local`), un sous-shell (copie complète), un processus enfant (seules les variables exportées) ; une lecture cherche du cadre courant vers le bas de la pile."
       geste: "L’étudiant avance un script ligne à ligne et, à chaque `echo`, écrit sa prévision ; l’artefact montre le cadre où l’affectation a eu lieu et celui où la lecture l’a trouvée — d’où « local ne protège que vers le haut »."
 
-  - id: regex
+  - id: processus
     ordre: 11
-    titre: "Décrire un motif : expressions régulières"
+    titre: "Processus et signaux : observer, suspendre, arrêter"
     carte: {col: 4, lig: 3}
     duree: 30
-    requiert: [flux]   # grep est le banc d’essai
+    requiert: [flux]   # « processus » y est défini ; un nouveau nœud : le sujet ne tient dans aucun autre
+    introduit:
+      - "PID, processus parent, `ps` (`ps -ef`, `ps -o pid,ppid,cmd`)"
+      - "PID 1 : l’ancêtre de tous, celui qui récolte les orphelins"
+      - "premier plan, arrière-plan : `&`, `jobs`, `fg`, `bg`, Ctrl+Z"
+      - "signal : un message du noyau à un processus"
+      - "Ctrl+C envoie SIGINT au processus de premier plan"
+      - "`kill` : SIGTERM (demander), SIGKILL (imposer)"
+      - "un processus tué par un signal n rend le code 128 + n"
+    sait-faire: "Lancer une commande longue en arrière-plan, la retrouver par son PID, l’arrêter proprement par `kill`, et dire pourquoi un processus ignore SIGTERM quand il est PID 1."
+    ouverture:
+      - {question: "Dans `cut … | sort`, combien de processus tournent ?", renvoi: flux}
+    supports:
+      recommandes: [page]
+      pourquoi: "Lancer `sleep 300 &`, le voir dans `ps`, l’arrêter : chaque geste se fait et s’observe au terminal ; la page le fait taper dans l’ordre. La VM du terminal a `ps` complet (procps-ng)."
+    diapos:
+      etat: sans-objet
+      raison: "Aucun schéma qui se transforme ne vaut ici la sortie réelle de `ps` ; un diaporama peut venir plus tard si la séance est projetée."
+      existant: []
+    page:
+      etat: a-faire
+      propose: "shell/pages/processus : sleep 300 & ; jobs ; ps -o pid,ppid,cmd ; kill %1 ; echo $? (143) ; Ctrl+Z, bg, fg ; Ctrl+C sur sleep (130) ; ps -p 1."
+    tp:
+      etat: sans-objet
+      raison: "Les gestes s’exercent dans la page même ; un exercice final (retrouver et arrêter un processus gourmand) y suffit."
+    artefact:
+      etat: possible
+      priorite: basse
+      modele: "Un arbre de processus et le trajet d’un signal : qui l’envoie (Ctrl+C au groupe de premier plan, kill à un PID), qui le reçoit, ce que fait le processus (action par défaut, capture, ignorance) ; PID 1 n’a pas d’action par défaut."
+      geste: "L’étudiant choisit un processus et un signal, prédit lesquels meurent, puis voit le signal se propager ; le cas du PID 1 qui reste debout prépare `--init` du cours conteneurisation."
+
+  - id: regex
+    ordre: 12
+    titre: "Décrire un motif : expressions régulières"
+    carte: {col: 5, lig: 2}
+    duree: 30
+    requiert: [flux, langage]   # grep (flux) est le banc d’essai ; [[ =~ ]] suppose [[ … ]] (langage)
     introduit:
       - "expression régulière, motif"
       - "caractère quelconque `.`, ancres `^` et `$`"
@@ -443,27 +567,34 @@ modules:
       - "répétitions `*`, `+`, `?`, `{n,m}`"
       - "basiques ou étendues : `grep -E`"
       - "un joker n’est pas une expression régulière"
+      - "Bash aussi : `[[ $x =~ motif ]]`"
     sait-faire: "Écrire le motif qui retient exactement les lignes voulues d’un fichier (les erreurs d’un journal, les années d’une colonne), et le vérifier avec `grep`."
     ouverture:
       - {question: "Comment garder, d’un fichier, les lignes qui contiennent `ERROR` ?", renvoi: flux}
       - {question: "Que désigne `*.log` dans `ls *.log` ?", renvoi: fichiers}
+    supports:
+      recommandes: [page]
+      pourquoi: "Un motif s’apprend par essais : on change un caractère et on regarde quelles lignes `grep --color` retient. La page fait cela sur le journal de l’atelier."
     diapos:
-      etat: partiel
+      etat: sans-objet
+      raison: "La page suffit ; la diapo <sed-regex> (basiques ou étendues) peut y passer, ou rester dans sed comme rappel renvoyé ici."
       existant:
         - "<sed-regex> Expressions régulières : basiques ou étendues (aujourd’hui dans sed)"
-      manque:
-        - "les expressions régulières sont employées par `[[ =~ ]]` (langage) avant d’être présentées, puis dans sed et awk ; aucune diapo ne les montre avec grep"
+    page:
+      etat: a-faire
+      propose: "shell/pages/regex : grep --color sur journaux/serveur-2026-novembre.log et pionnieres.csv ; ., ^, $, [0-9], *, puis -E et + ; *.log contre .*\\.log ; [[ $annee =~ ^[0-9]+$ ]]."
     tp:
       etat: a-faire
-      existant: "aucun : les journaux de premiers-pas (journaux/serveur-2026-novembre.log) s’y prêtent"
+      existant: "aucun : les journaux de premiers-pas s’y prêtent"
+      propose: "Une série courte de motifs à écrire, avec un corrigé par motif ; ou une première étape au TP sed-awk."
     artefact:
-      etat: a-faire
+      etat: possible
+      priorite: basse
       modele: "Un motif confronté aux lignes d’un fichier : pour chaque ligne, retenue ou non, et la partie qui correspond ; les mêmes caractères changent de sens entre basique et étendue, et entre joker et expression régulière."
-      geste: "L’étudiant modifie le motif un caractère à la fois et prédit quelles lignes restent ; il bascule basique / étendue et voit `+` changer de sens."
-      priorite: "basse : les testeurs d’expressions régulières abondent ; l’intérêt propre est la comparaison joker / BRE / ERE"
+      geste: "L’étudiant modifie le motif un caractère à la fois et prédit quelles lignes restent ; il bascule basique / étendue et voit `+` changer de sens. Les testeurs d’expressions régulières abondent : l’intérêt propre est la comparaison joker / BRE / ERE."
 
   - id: sed
-    ordre: 12
+    ordre: 13
     titre: "sed : éditer un flux, ligne par ligne"
     carte: {col: 6, lig: 2}
     duree: 45
@@ -481,6 +612,9 @@ modules:
     ouverture:
       - {question: "Quelles lignes retient `grep -E '^[A-Z][a-z]+ '` ?", renvoi: regex}
       - {question: "Pourquoi `'s/$p/x/'` ne lit-il pas la variable p ?", renvoi: expansions}
+    supports:
+      recommandes: [diapos]
+      pourquoi: "Le cycle de sed (une ligne entre, les commandes adressées s’appliquent, elle sort) est un schéma qui se transforme devant la salle ; le TP sed-awk fait la pratique."
     diapos:
       etat: present
       existant:
@@ -492,19 +626,20 @@ modules:
         - "<sed-in-place> -i : modifier le fichier, avec une copie de secours"
         - "<sed-captures> Groupes de capture : réutiliser ce qu’on a trouvé"
         - "<exercice-sed> À vous : sed sur les données, et ses corrigés"
-      manque:
-        - "<sed-regex> passe au module regex"
-        - "« Bash, sed, awk : à quoi ils servent » emploie déjà `sed -i` : c’est une démonstration d’introduction, à annoncer comme telle"
+    page:
+      etat: sans-objet
+      raison: "Le TP sed-awk fait taper chaque commande, étape par étape."
     tp:
       etat: present
       existant: "sed-awk, étapes 1 à 5, et 11 (durcir sshd_config)"
     artefact:
-      etat: a-faire
+      etat: possible
+      priorite: moyenne
       modele: "Le cycle : chaque ligne entre dans l’espace de travail, les commandes dont l’adresse la vise s’appliquent dans l’ordre, la ligne sort (sauf `-n`) ; une plage s’ouvre sur sa première adresse et se ferme sur la seconde."
       geste: "L’étudiant fait défiler les lignes une à une, prédit pour chacune si la plage est ouverte et ce qui sortira ; il déplace les bornes d’une plage ou ajoute `-n` et `p` et voit les lignes doublées ou disparues."
 
   - id: awk
-    ordre: 13
+    ordre: 14
     titre: "awk : des colonnes, un motif, une action"
     carte: {col: 7, lig: 2}
     duree: 45
@@ -521,6 +656,9 @@ modules:
     ouverture:
       - {question: "Que fait sed d’une ligne qu’aucune adresse ne vise ?", renvoi: sed}
       - {question: "`cut -d';' -f3` : que fait-il, et que ne sait-il pas faire ?", renvoi: flux}
+    supports:
+      recommandes: [diapos]
+      pourquoi: "Le modèle d’awk (la ligne découpée en champs, le motif qui l’allume, l’action qui accumule) se dessine et s’anime devant la salle ; le TP sed-awk fait la pratique."
     diapos:
       etat: present
       existant:
@@ -532,41 +670,45 @@ modules:
         - "<awk-tableaux> Tableaux associatifs : compter par domaine"
         - "<awk-regex> Filtrer par expression régulière : ~"
         - "<exercice-awk> À vous : awk sur les données, et ses corrigés"
+    page:
+      etat: sans-objet
+      raison: "Le TP sed-awk fait taper chaque commande, étape par étape."
     tp:
       etat: present
       existant: "sed-awk, étapes 6 à 10"
     artefact:
-      etat: a-faire
+      etat: possible
+      priorite: moyenne
       modele: "Le fichier vu comme une grille : `-F` découpe chaque enregistrement en champs ; le motif allume des lignes ; l’action écrit dans des variables et un tableau associatif qui persistent d’une ligne à l’autre ; `END` lit ce qui reste."
-      geste: "L’étudiant change le séparateur et voit la grille se recouper ; il écrit un motif (`$2 > 1950`, `$3 ~ /^l/`) et prédit les lignes allumées, puis le contenu du tableau après la dernière ligne ; le cas `\"10\" < \"9\"` (comparaison de chaînes) se joue en changeant le type d’un champ."
+      geste: "L’étudiant change le séparateur et voit la grille se recouper ; il écrit un motif (`$2 > 1950`, `$3 ~ /^l/`) et prédit les lignes allumées, puis le contenu du tableau après la dernière ligne ; le cas `\"10\" < \"9\"` se joue en changeant le type d’un champ."
 
-# Ce qui sort du shell au sens strict, et où il se range (décision laissée à l’auteur, voir la note).
+# Ce qui sort du shell au sens strict, et où il se range.
 hors-shell:
-  - {sujet: "droits, propriétaires, umask", module: droits, proposition: "garder dans ce cours : le droit x conditionne les scripts, et ls -l est lu dès les premiers modules"}
-  - {sujet: "find, liens, tar", module: retrouver, proposition: "garder, comme branche latérale : seuls scripts (sauvegarde) et les cours suivants en dépendent"}
-  - {sujet: "cron", module: scripts, proposition: "annexe du module scripts, marquée hors cadre ; sa vraie place est un cours d’administration système (services, journaux, planification)"}
-  - {sujet: "signaux, tâches de fond (&, kill, ps)", module: null, proposition: "absent du cours ; demandé par conteneurisation (PID 1, forme exec, --init) : à ajouter à portee ou à un module de plus"}
+  - {sujet: "droits, propriétaires, umask", module: droits, decision: "gardé dans ce cours : le droit x conditionne les scripts, et ls -l est lu dès les premiers modules"}
+  - {sujet: "find, liens, tar", module: retrouver, decision: "gardé, comme branche latérale : seuls scripts (sauvegarde) et les cours suivants en dépendent"}
+  - {sujet: "cron", module: scripts, decision: "annexe du module scripts, marquée hors cadre ; sa vraie place est un cours d’administration système"}
+  - {sujet: "processus et signaux", module: processus, decision: "nouveau nœud : demandé par conteneurisation (PID 1, forme exec, --init), il ne tient dans aucun autre"}
+  - {sujet: "éditeur de texte", module: fichiers, decision: "le minimum de nano dans fichiers ; Vim reste au cours edition-formats"}
 
 # Modules d’autres cours du dépôt qui dépendront de nœuds de celui-ci (sans construire leur index).
 liens-externes:
   - {cours: edition-formats, module: "Vim · éditer sans interface graphique", requiert: [arbo, fichiers]}
   - {cours: edition-formats, module: "Vim : rechercher et remplacer `:s`", requiert: [regex]}
   - {cours: edition-formats, module: "YAML et JSON : convertir, interroger (jq, yq)", requiert: [flux]}
-  - {cours: shell, module: scripts, requiert-externe: "edition-formats · Vim (ou nano) : écrire un script suppose un éditeur"}
   - {cours: git, module: "Introduction, Concepts (git init, le cycle, diff, log)", requiert: [arbo, fichiers]}
   - {cours: git, module: "À vous : versionner un script de sauvegarde", requiert: [scripts]}
   - {cours: git, module: ".gitignore", requiert: [fichiers]}   # jokers
   - {cours: acces-distants, module: "SSH : clés, ~/.ssh/config", requiert: [arbo, droits]}   # StrictModes : 600, 700
   - {cours: acces-distants, module: "scp et rsync", requiert: [arbo]}
   - {cours: acces-distants, module: "Modifier sshd_config, durcir", requiert: [sed]}
-  - {cours: acces-distants, module: "tmux piloté par script", requiert: [scripts]}
+  - {cours: acces-distants, module: "tmux : une coupure, et le travail est perdu ; piloté par script", requiert: [processus, scripts]}
   - {cours: acces-distants, module: "WireGuard : clés (wg genkey | tee | wg pubkey)", requiert: [flux, droits]}
   - {cours: ansible, module: "Introduction : la boucle ssh dérive", requiert: [langage, scripts]}
   - {cours: ansible, module: "shell et command : changed à chaque passage", requiert: [robustesse]}
   - {cours: conteneurisation, module: "Chroot : copier bash et ses bibliothèques", requiert: [arbo, droits, flux, expansions]}
   - {cours: conteneurisation, module: "Persistance : montages", requiert: [arbo, droits]}
   - {cours: conteneurisation, module: "Journaux : sur la sortie standard", requiert: [flux]}
-  - {cours: conteneurisation, module: "Fork bomb ; forme exec ou shell ; --init", requiert: [portee]}   # et les signaux, absents
+  - {cours: conteneurisation, module: "Fork bomb ; forme exec ou shell ; --init, PID 1", requiert: [portee, processus]}
   - {cours: conteneurisation, module: "Dockerfile : variables, CMD et ENTRYPOINT", requiert: [expansions]}
   - {cours: virtualisation, module: "Télécharger l’ISO, puis la vérifier", requiert: [fichiers, flux]}
   - {cours: virtualisation, module: "Administrer avec libvirt (virsh, virt-install)", requiert: [intro, arbo]}

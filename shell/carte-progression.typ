@@ -1,6 +1,6 @@
 // carte-progression.typ — la carte de progression du cours Shell, dessinée d’après progression.yaml.
 // Nœuds : les modules ; flèches : les prérequis directs qui ne se déduisent pas d’un autre (réduction
-// transitive) ; trois marques par nœud : diapos (D), TP (T), artefact (A).
+// transitive) ; quatre marques par nœud : diapos (D), page de cours (P), TP (T), artefact (A).
 // Compilation, depuis la racine du dépôt :
 //   typst compile --root . --font-path commun/fonts shell/carte-progression.typ build/shell/carte.pdf
 // « Vous êtes ici » : --input ici=<id d’un module> (le nœud est mis en valeur, l’acquis listé dessous).
@@ -39,7 +39,8 @@
 #set page(width: largeur + 48pt, height: auto, margin: 24pt, fill: c.fond)
 #set text(font: "IBM Plex Sans", size: 9pt, fill: c.encre, lang: "fr")
 
-// Marque d’un support : D, T ou A selon son état. La forme double la couleur.
+// Marque d’un support : D, P, T ou A selon son état. La forme double la couleur : plein, à moitié plein,
+// tirets (à faire), pointillés et « ? » (artefact possible), lettre barrée sur gris (sans objet).
 #let marque(lettre, etat) = {
   let vert = roles.pratique.entete
   let l(col, barre: false) = text(size: 8pt, weight: 700, fill: col, if barre { strike(lettre) } else { lettre })
@@ -51,6 +52,10 @@
       box(fill: white, radius: 1pt, inset: (x: 1.5pt, y: 0.5pt), l(c.encre)))
   }
   else if etat == "a-faire" { carre(fill: white, stroke: (paint: c.ardoise, thickness: 1pt, dash: "dashed"), l(c.ardoise)) }
+  else if etat == "possible" {
+    carre(fill: white, stroke: (paint: c.gris, thickness: 1pt, dash: "dotted"),
+      text(size: 7pt, weight: 700, fill: c.gris, lettre + "?"))
+  }
   else { carre(fill: c.espace, stroke: 0.6pt + c.filet, l(c.gris, barre: true)) }
 }
 // Pastille d’ordre : carré bleu, chiffre blanc (convention des schémas de la charte).
@@ -67,7 +72,7 @@
       text(size: 9pt, weight: 600, hyphenate: false, m.titre))
     place(bottom + left, dy: -19pt, text(size: 7.5pt, fill: c.gris, raw(m.id) + [ · #m.duree min]))
     place(bottom + right, stack(dir: ltr, spacing: 3pt,
-      marque("D", m.diapos.etat), marque("T", m.tp.etat), marque("A", m.artefact.etat)))
+      marque("D", m.diapos.etat), marque("P", m.page.etat), marque("T", m.tp.etat), marque("A", m.artefact.etat)))
   })
 }
 
@@ -119,10 +124,11 @@
 #text(size: 8.5pt)[
   #legende("D", "present")[présent]
   #legende("D", "partiel")[en partie, ou à remettre en ordre]
-  #legende("D", "a-faire")[à faire]
-  #legende("D", "sans-objet")[sans objet (raison dans l’index)]
-  #h(6pt) D : diapos · T : TP · A : artefact · #pastille(0) ordre des séances proposé ·
-  flèche : prérequis direct (les autres s’en déduisent)
+  #legende("D", "a-faire")[à faire (recommandé)]
+  #legende("A", "possible")[artefact possible, non décidé]
+  #legende("D", "sans-objet")[sans objet (raison dans l’index)] \
+  D : diapos · P : page de cours (terminal à côté) · T : TP · A : artefact · chaque module a D ou P ·
+  #pastille(0) ordre des séances proposé · flèche : prérequis direct (les autres s’en déduisent)
 ]
 
 #if ici != none {
