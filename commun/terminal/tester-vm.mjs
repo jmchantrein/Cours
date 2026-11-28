@@ -112,7 +112,8 @@ async function testerImage(outils) {
   console.log(`${outils.length} outils présents, terminal 100 × 30, compte ada (1000, groupe etudiants), man, ps de procps, bats.`);
   // Fin du shell (Ctrl+D sur une ligne vide) : une nouvelle session s'ouvre dans le répertoire personnel, les fichiers restent.
   await vm.executer("cd /tmp && touch reste.txt");
-  const fin = await vm.toucher("\x04", /Session terminée ; nouvelle session\.[\s\S]*\x1b\[\?2004h[^\n]*[$#] $/, 60_000);
+  await new Promise(r => setTimeout(r, 1500));   // l'invite d'abord : Ctrl+D s'adresse à Readline
+  const fin = await vm.toucher("\x04", /Session termin[\s\S]{1,4} ; nouvelle session\.[\s\S]*\x1b\[\?2004h[^\n]*[$#] $/, 60_000);
   const apres = (await vm.executer("pwd; ls /tmp/reste.txt")).sortie;
   if (!/^\/home\/ada$/m.test(apres) || !/reste\.txt/.test(apres)) throw new Error(`fin du shell : ${fin.propre}\n${apres}`);
   console.log("Ctrl+D sur une ligne vide : « Session terminée ; nouvelle session. », nouvelle invite dans ~, fichiers gardés.");

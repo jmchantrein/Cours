@@ -211,6 +211,14 @@ ajoute la pratique ; d’autres exemples vont au TP. Exemple : `shell/pages/arbo
 - `#pastille(n)` : le carré bleu à chiffre blanc d’un pas, dans le texte comme dans le repère.
 - `#touche[Tab]` : une touche, pour les gestes que l’étudiant tape lui-même (complétion, historique) : un clic
   n’envoie qu’une ligne, il ne montre pas la complétion.
+- Geste au clavier : `#geste(tape: "who", touches: ("Tab", "Tab"), ligne: "who", ecran: "who     whoami  whois")[…]` :
+  ce qu’on tape, les touches (ou un texte à taper), puis ce qu’on doit voir, calculé : la ligne avec le curseur en
+  bloc (`point`, 0 au début), un écran, une sortie ; `voir` montre un écran sans le vérifier (recherche Ctrl+R).
+  `ecrire: "…"` amorce une ligne longue : un bouton « Écrire » seul, qui la dépose à l’invite. `tester-vm.mjs` joue
+  chaque geste touche par touche dans la VM et lit la ligne et le curseur dans Readline. Dans un `predire`, le
+  résultat d’un geste reste masqué jusqu’à « Voir la sortie ». Exemple : `shell/pages/clavier/`.
+- Le navigateur garde pour lui Ctrl+W, Ctrl+T, Ctrl+N : la page fait jouer Alt+Retour arrière à la place de Ctrl+W.
+  Tant qu’un terminal tourne, quitter la page demande confirmation (`beforeunload`).
 - Sans arborescence à montrer (module `intro`), la page ne déclare pas `contexte` : pas de repère, la colonne ne
   porte que le terminal, et s’efface quand on le réduit.
 - **Repère de contexte** (`terminal/contexte.js`, `terminal/contexte.css`) : un arbre dessiné qui dit où l’on est,
@@ -306,7 +314,8 @@ cours »).
   La page passe `depart=` et `ici=` au noyau ; `vm/init` lance le script sous le compte `ada`, puis ouvre le shell
   dans `ici` : l’état est en place avant la première invite, sans rien demander à l’étudiant. Le bouton
   « Remettre à l’état de départ » redémarre la VM : son système, en mémoire, repart de l’image, et le script se
-  relance. Les commandes qui installent l’état chez soi vont dans `terminal(compagnon: true)` : la VM ne les
+  relance. Quand le shell se termine (`exit`, Ctrl+D sur une ligne vide), la VM affiche « Session terminée ; nouvelle
+  session. » et en ouvre un autre dans le répertoire personnel ; les fichiers restent. Les commandes qui installent l’état chez soi vont dans `terminal(compagnon: true)` : la VM ne les
   exécute pas (son « Exécuter » le dit) et `tester-vm.mjs` ne les rejoue pas. Sans réseau, le `wget` et le `curl`
   de la VM (`vm/telecharger`) servent encore ces fichiers aux adresses du site et de l’archive du dépôt.
 - Mode `compagnon` : le vrai shell de l’étudiant, par l’exécutable `iadmin-terminal` (`terminal/compagnon/`, en Go),

@@ -104,6 +104,7 @@
   if (navigator.clipboard) {
     for (const pre of document.querySelectorAll("pre")) {
       const code = pre.querySelector("code");
+      if (!code) continue;   // un écran attendu (geste), pas du code
       const texte = code.dataset.commandes || code.textContent;
       if (!texte) continue;
       const bouton = document.createElement("button");
