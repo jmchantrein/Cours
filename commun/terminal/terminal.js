@@ -3,23 +3,23 @@
 // commande au terminal ouvert, où elle s’exécute. Deux modes :
 // - "vm" : une VM Linux dans le navigateur (v86), sans réseau ; l’image se télécharge au premier démarrage,
 //   puis se range dans Cache Storage sous une clé qui porte sa version ;
-// - "compagnon" : le vrai shell de l’étudiant, par l’exécutable iadmin-terminal (compagnon/, WebSocket sur 127.0.0.1, jeton).
+// - "host-shell-access" : le vrai shell de l’étudiant, par l’exécutable host-shell-access (host-shell-access/, WebSocket sur 127.0.0.1, jeton).
 // Les fichiers tiers (xterm.js, v86, image) sont dans vendor/, construit par preparer.sh, chargés à la demande.
 // Sur une page de cours (page-web(cours: true)), le terminal se place dans la colonne `.cote`, à côté du texte ; il est
 // ouvert d’emblée sur un écran large. Événements, pour le repère de contexte (contexte.js) et tp.js :
 // « terminal-commande » (une commande cliquée part dans le terminal), « terminal-session » (une session s’ouvre ou se
 // ferme), « terminal-contexte » (le shell de la VM a décrit où il est : séquence OSC 6973, voir vm/contexte.bash).
 (() => {
-  const modes = (document.body.dataset.terminal || "").split(" ").filter(m => m === "vm" || m === "compagnon");
+  const modes = (document.body.dataset.terminal || "").split(" ").filter(m => m === "vm" || m === "host-shell-access");
   const bandeau = document.querySelector(".bandeau");
   if (!modes.length || !bandeau) return;
   const racine = document.body.dataset.racine || "";
   const vendor = racine + "commun/terminal/vendor/";
-  const guide = racine + "commun/terminal/index.html";
+  const guide = racine + "commun/terminal/host-shell-access/index.html";
   const PREFIXE_CACHE = "cours-terminal-vm-";
-  const NOMS = { vm: "VM dans le navigateur", compagnon: "Mon shell (compagnon)" };
+  const NOMS = { vm: "VM dans le navigateur", "host-shell-access": "Mon shell (host-shell-access)" };
   // L’état de départ de la page (page-web(depart: …)) : un script versionné du dépôt, ce qu’il crée, le répertoire
-  // d’arrivée. La VM le lance à son démarrage ; le compagnon le propose, sans rien lancer d’office.
+  // d’arrivée. La VM le lance à son démarrage ; host-shell-access le propose, sans rien lancer d’office.
   const depart = document.body.dataset.depart || "", cree = document.body.dataset.departCree || "";
   const ici = document.body.dataset.ici || "~";
   const sur = /^[\w./-]+$/, surIci = /^[\w./~-]+$/;
@@ -264,20 +264,20 @@
     return m;
   }
 
-  // ---------- Mode compagnon : le vrai shell de l’étudiant ----------
-  function modeCompagnon() {
-    const m = { id: "compagnon", session: false };
+  // ---------- Mode host-shell-access : le vrai shell de l’étudiant ----------
+  function modeHote() {
+    const m = { id: "host-shell-access", session: false };
     const adresse = el("input", { type: "text", spellcheck: "false", autocomplete: "off", placeholder: "ws://localhost:…/?token=…",
-      "aria-label": "Adresse affichée par le compagnon" });
+      "aria-label": "Adresse affichée par host-shell-access" });
     const connecter = el("button", { type: "submit", class: "principal" }, "Connecter");
     const formulaire = el("form", { class: "terminal-appairage" }, adresse, connecter);
-    const lien = el("a", { href: guide }, "Installer le compagnon");
+    const lien = el("a", { href: guide }, "Installer host-shell-access");
     m.accueil = el("div", { class: "terminal-accueil" },
       el("aside", { class: "note", "data-role": "danger" }, el("span", { class: "role" }, "Danger"),
         "Ce mode relie la page à votre vrai shell : un clic sur « Exécuter » lance la commande sur votre machine, avec vos droits. Lisez chaque commande avant de cliquer."),
-      el("p", {}, "1. ", lien, " (une fois). 2. Dans un terminal, lancez ", code("./iadmin-terminal local"), ". 3. Collez ici l’adresse qu’il affiche :"),
+      el("p", {}, "1. ", lien, " (une fois). 2. Dans un terminal, lancez ", code("./host-shell-access local"), ". 3. Collez ici l’adresse qu’il affiche :"),
       formulaire,
-      el("p", {}, "Si le navigateur demande l’autorisation d’accéder au réseau local, acceptez : c’est ainsi que la page joint le compagnon, sur votre machine (127.0.0.1)."),
+      el("p", {}, "Si le navigateur demande l’autorisation d’accéder au réseau local, acceptez : c’est ainsi que la page joint host-shell-access, sur votre machine (127.0.0.1)."),
       commandeDepart ? el("p", {}, "État de départ : rien n’est installé d’office sur votre machine. Une fois connecté, le bouton « Installer l’état de départ » lance ",
         code(commandeDepart), ...(cree ? [" ; le script crée ", code(cree), ", un dossier à part, et refuse d’écraser un dossier qui existe déjà."] : [])) : "");
     m.ecran = el("div", { class: "terminal-ecran", hidden: true });
@@ -293,12 +293,12 @@
     formulaire.addEventListener("submit", async evenement => {
       evenement.preventDefault();
       const cible = adresse.value.trim();
-      // Le compagnon écoute sur cette machine seulement : toute autre adresse est refusée ici.
+      // host-shell-access écoute sur cette machine seulement : toute autre adresse est refusée ici.
       if (!/^wss?:\/\/(localhost|127\.0\.0\.1|\[::1\])(:\d+)?\/\?token=[\w-]+$/.test(cible)) {
-        etat.textContent = "Adresse refusée : collez la ligne ws://localhost:…/?token=… affichée par le compagnon.";
+        etat.textContent = "Adresse refusée : collez la ligne ws://localhost:…/?token=… affichée par host-shell-access.";
         return;
       }
-      connecter.disabled = true; etat.textContent = "Connexion au compagnon…";
+      connecter.disabled = true; etat.textContent = "Connexion à host-shell-access…";
       try { await chargerXterm(); } catch (erreur) { etat.textContent = erreur.message; connecter.disabled = false; return; }
       let ouverte = false;
       socket = new WebSocket(cible);
@@ -321,20 +321,20 @@
         if (xterm) { xterm.fermer(); xterm = null; }
         majBoutons(); majActions();
         etat.textContent = ouverte
-          ? "Compagnon déconnecté. Pour reprendre, relancez ./iadmin-terminal local et collez la nouvelle adresse."
-          : "Connexion impossible : le compagnon est-il lancé ? Son adresse ne sert qu’une fois : relancez-le pour en obtenir une nouvelle.";
+          ? "host-shell-access déconnecté. Pour reprendre, relancez ./host-shell-access local et collez la nouvelle adresse."
+          : "Connexion impossible : host-shell-access est-il lancé ? Son adresse ne sert qu’une fois : relancez-le pour en obtenir une nouvelle.";
       });
     });
     deconnecter.addEventListener("click", () => socket?.close());
     m.executer = commande => envoyer({ type: "input", data: commande.replace(/\n/g, "\r") + "\r" });
     m.ecrire = commande => { envoyer({ type: "input", data: commande }); xterm?.focus(); };
-    m.inviter = () => { etat.textContent = "Connectez d’abord le compagnon, puis cliquez à nouveau sur « Exécuter »."; adresse.focus(); };
+    m.inviter = () => { etat.textContent = "Connectez d’abord host-shell-access, puis cliquez à nouveau sur « Exécuter »."; adresse.focus(); };
     m.montrer = () => { if (m.session) etat.textContent = "Connecté à votre shell : les commandes cliquées s’exécutent sur votre machine."; };
     return m;
   }
 
   // ---------- Modes, boutons « Exécuter » ----------
-  const tous = modes.map(id => (id === "vm" ? modeVM() : modeCompagnon()));
+  const tous = modes.map(id => (id === "vm" ? modeVM() : modeHote()));
   for (const m of tous) corps.append(m.accueil, m.ecran);
   let courant = tous[0];
   try { courant = tous.find(m => m.id === localStorage.getItem("terminal-mode")) || courant; } catch { /* stockage indisponible */ }
@@ -379,7 +379,7 @@
     const etaitFerme = volet.hidden;
     ouvrir();
     if (!courant.session) { courant.inviter(); return; }
-    if (courant.id === "vm" && bouton.closest('[data-mode="compagnon"]')) {
+    if (courant.id === "vm" && bouton.closest('[data-mode="host-shell-access"]')) {
       etat.textContent = "Inutile dans la VM : l’état de départ de la page y est installé à son démarrage.";
       return;
     }

@@ -39,7 +39,7 @@
   date: [novembre 2026],
   illustration-couverture: "tube",
   cours: true,
-  terminal: ("vm", "compagnon"),
+  terminal: ("vm", "host-shell-access"),
   depart: (script: "shell/tp/premiers-pas/preparer.sh", cree: "~/atelier", ici: "~"),
   contexte: (compte: "ada", depart: "/home/ada", personnel: "/home/ada", arbre: arbre),
   liens: (

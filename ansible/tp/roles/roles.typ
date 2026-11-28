@@ -20,7 +20,7 @@
   auteur: [Jean-Mathieu Chantrein],
   date: [novembre 2026],
   illustration-couverture: "vm",
-  terminal: ("compagnon",),
+  terminal: ("host-shell-access",),
   liens: (
     ([Diapos du cours], pdf),
     ([Corrigés], "https://github.com/jmchantrein/Cours/tree/main/ansible/tp/roles/corrige"),

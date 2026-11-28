@@ -150,7 +150,7 @@ const normaliser = s => s.replace(/\x1b=/g, "").split("\n")
 
 // ---------------------------------------------------------------- ce que chaque TP en mode vm doit montrer
 // existe     fichiers de l'état de départ, présents dès l'invite (la VM a lancé le script déclaré par la page)
-// sauter     commandes interactives ou qui demandent le compagnon (non rejouées)
+// sauter     commandes interactives ou qui demandent host-shell-access (non rejouées)
 // fixtures   fichiers que l'étudiant écrit à la main (éditeur) : ceux du corrige/, posés dans <dossier> avant la commande
 //            qui correspond (la <fois>-ième fois ; sans « avant », avant toutes)
 // debut      commandes lancées avant le rejeu (tmux : une session sans client, que l'énoncé ouvre à la main)
@@ -215,8 +215,10 @@ async function jouerGestes(vm, gestes, echecs) {
   for (const [i, g] of gestes.entries()) {
     const nom = [g.ecrire || g.tape || "", ...g.touches].filter(Boolean).join(" ");
     let vu = "";
-    if (g.ecrire) vu += (await vm.toucher(g.ecrire)).propre;
-    if (g.tape) vu += (await vm.toucher(g.tape)).propre;
+    // Le texte d'abord, jusqu'à son écho : les touches qui suivent s'appliquent à la ligne entière, même VM chargée.
+    const echo = t => new RegExp(t.slice(-8).replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+    if (g.ecrire) vu += (await vm.toucher(g.ecrire, echo(g.ecrire))).propre;
+    if (g.tape) vu += (await vm.toucher(g.tape, echo(g.tape))).propre;
     for (const t of g.touches) {
       const entree = t === "Entrée" || (t === "Ctrl+D" && g.touches.at(-1) === "Ctrl+D");
       vu += (await vm.toucher(TOUCHES[t] ?? t, t === g.touches.at(-1) && entree ? vm.INVITE : null)).propre;

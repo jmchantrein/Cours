@@ -1,16 +1,16 @@
-// iadmin-terminal — le compagnon du terminal des pages de cours : relie la page au vrai shell de l'étudiant.
+// host-shell-access — relie une page de cours, et son terminal, au vrai shell de l'étudiant.
 //
-// Usage : iadmin-terminal local, puis coller dans la page (Terminal → Mon shell) l'adresse affichée.
+// Usage : host-shell-access local, puis coller dans la page (Terminal → Mon shell) l'adresse affichée.
 // Un clic sur « Exécuter » dans la page lance la commande dans ce shell, avec les droits de l'utilisateur.
 //
-// Réécriture en Go de iadmin-terminal.py (dépôt jmchantrein/site), même protocole et mêmes protections :
+// Réécriture en Go de l'ancien script Python du dépôt jmchantrein/site, même protocole et mêmes protections :
 //   - écoute sur 127.0.0.1 seulement, port tiré par le système ;
 //   - adresse à jeton aléatoire (32 octets), comparé en temps constant : 401 sinon ;
 //   - origine de la page dans une liste fixe (plus --origin) : 403 sinon ;
 //   - une seule connexion acceptée : le processus s'arrête avec elle, refusée ou non (jeton à usage unique).
 //
 // Protocole, en trames texte JSON : la page envoie {"type":"input","data":…} et {"type":"resize","cols","rows"} ;
-// le compagnon renvoie {"type":"output","data":…}.
+// host-shell-access renvoie {"type":"output","data":…}.
 package main
 
 import (
@@ -61,8 +61,8 @@ func usage() {
 	fmt.Fprintf(os.Stderr, `Relie la page du cours à votre shell (ou à une session SSH).
 
 Usage :
-  iadmin-terminal [options] local [--shell CHEMIN]
-  iadmin-terminal [options] ssh [options de ssh] utilisateur@hôte
+  host-shell-access [options] local [--shell CHEMIN]
+  host-shell-access [options] ssh [options de ssh] utilisateur@hôte
 
 Options :
 `)
@@ -93,7 +93,7 @@ func main() {
 	}
 	fmt.Printf("Adresse à coller dans la page :\n%s://localhost:%d/?token=%s\n", schema, ecoute.Addr().(*net.TCPAddr).Port, jeton)
 	fmt.Fprintf(os.Stderr, "Un clic sur « Exécuter » dans la page lancera la commande dans %s, avec vos droits.\n"+
-		"Adresse valable pour une connexion : fermer la page arrête le compagnon.\n", cible)
+		"Adresse valable pour une connexion : fermer la page arrête host-shell-access.\n", cible)
 
 	admises := map[string]bool{}
 	for _, o := range append(originesParDefaut, extra...) {
@@ -121,7 +121,7 @@ func main() {
 		session(r.Context(), ws, commande)
 		fmt.Fprintln(os.Stderr, "Session terminée.")
 	})}
-	// Une connexion qui se ferme sans requête complète arrête aussi le compagnon.
+	// Une connexion qui se ferme sans requête complète arrête aussi host-shell-access.
 	serveur.ReadHeaderTimeout = 10 * time.Second
 	serveur.ConnState = func(_ net.Conn, etat http.ConnState) {
 		if etat == http.StateClosed {
@@ -161,7 +161,7 @@ func commandeDe(args []string) ([]string, string) {
 	case "ssh":
 		// Clés, agent, ~/.ssh/config et vérification de l'hôte restent l'affaire du client ssh du poste.
 		if len(args) < 2 {
-			sortir("indiquez la destination SSH : iadmin-terminal ssh utilisateur@hôte")
+			sortir("indiquez la destination SSH : host-shell-access ssh utilisateur@hôte")
 		}
 		return append([]string{"ssh", "-tt"}, args[1:]...), "la session SSH"
 	}
@@ -273,7 +273,7 @@ func aleatoire() string {
 }
 
 func sortir(texte string) {
-	fmt.Fprintln(os.Stderr, "iadmin-terminal :", texte)
+	fmt.Fprintln(os.Stderr, "host-shell-access :", texte)
 	os.Exit(1)
 }
 
@@ -292,7 +292,7 @@ func (u *uneConnexion) Accept() (net.Conn, error) {
 	if u.prise {
 		u.verrou.Unlock()
 		<-u.fin
-		return nil, errors.New("compagnon arrêté")
+		return nil, errors.New("host-shell-access arrêté")
 	}
 	u.prise = true
 	u.verrou.Unlock()

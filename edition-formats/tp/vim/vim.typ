@@ -24,7 +24,7 @@
   auteur: [Jean-Mathieu Chantrein],
   date: [novembre 2026],
   illustration-couverture: "couches",
-  terminal: ("vm", "compagnon"),
+  terminal: ("vm", "host-shell-access"),
   depart: (script: "edition-formats/tp/vim/preparer.sh", cree: "~/dojo", ici: "~"),   // état de départ : la VM l’installe à son démarrage
   liens: (
     ([Diapos du cours], pdf),
@@ -50,7 +50,7 @@ modes (#d("vim-modes")[Les modes de Vim et leurs transitions]), la grammaire op�
     la commande ci-dessous les extrait de l’archive du dépôt des cours.
 ]
 
-#terminal(compagnon: true)[```console
+#terminal(host-shell-access: true)[```console
 $ cd
 $ curl -fsSL https://github.com/jmchantrein/Cours/archive/refs/heads/main.tar.gz | tar -xz --strip-components=4 Cours-main/edition-formats/tp/vim/dojo
 ```]

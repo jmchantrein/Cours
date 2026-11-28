@@ -54,7 +54,7 @@ peut avoir ses diapos, sa page de cours, ou les deux.
   `<nom>.typ` le présente, `<nom>.js` et `<nom>.css` le font vivre ; la CI en tire une page web `index.html`.
 - `commun/` : la charte partagée (rôles, palettes, thème des diapos, thème des pages web) et les polices
   IBM Plex ; voir [`commun/README.md`](commun/README.md). `commun/terminal/` : le terminal des pages web (VM dans
-  le navigateur, compagnon relié au shell de l’étudiant) et sa page [Le compagnon du terminal](https://jmchantrein.github.io/Cours/commun/terminal/).
+  le navigateur, `host-shell-access` relié au shell de l’étudiant) et sa page [`host-shell-access` : relier la page à votre shell](https://jmchantrein.github.io/Cours/commun/terminal/host-shell-access/).
 - `index.typ` : la page d’accueil du site, compilée en `index.html` ; elle range les sept cours par groupes, du plus
   fondamental au plus avancé (le tableau ci-dessus suit le même ordre).
 
@@ -75,7 +75,7 @@ la version de Typst est fixée dans la CI.
 Le terminal des pages web (bouton « Exécuter » à côté des commandes) a besoin de fichiers tiers, préparés à part :
 
     commun/terminal/preparer.sh --vm              # xterm.js, v86, image de la VM (Docker)
-    commun/terminal/compagnon/construire.sh       # exécutables du compagnon (Go)
+    commun/terminal/host-shell-access/construire.sh       # exécutables de `host-shell-access` (Go)
 
 Tout le site d’un coup (terminal, PDF des six variantes, pages web), à leur place dans l’arbre : c’est ce que lance la CI.
 
@@ -87,7 +87,7 @@ bien un arbre ancien que le courant.
 
 `--root .` autorise l’import de `commun/`. Les fichiers générés ne sont pas versionnés : git ignore `build/`,
 les PDF de `<cours>/cm/`, les `index.html` (TP, pages de cours, artefacts, accueil), `commun/terminal/vendor/` et
-`commun/terminal/compagnon/dist/`. Pour suivre les liens d’une page web à l’autre, compilez-la à sa
+`commun/terminal/host-shell-access/dist/`. Pour suivre les liens d’une page web à l’autre, compilez-la à sa
 place, à côté de sa source (`…/wordpress/index.html`).
 
 Sur GitHub, l’action `.github/workflows/compilation-cours.yml` appelle `commun/construire-site.sh` à chaque push sur `main`
@@ -143,5 +143,5 @@ par une pull request. Les propositions rédigées par une IA, ou avec son aide, 
 ## Licences
 Contenus sous CC BY-NC-SA 4.0 (voir [`LICENSE.md`](LICENSE.md)). Les polices IBM Plex de `commun/fonts/`
 restent sous SIL Open Font License 1.1 (voir `commun/fonts/OFL-IBM-Plex.txt`).
-Les composants du terminal publiés avec le site (v86, BIOS, xterm.js, image Linux de la VM, modules Go du compagnon)
+Les composants du terminal publiés avec le site (v86, BIOS, xterm.js, image Linux de la VM, modules Go de `host-shell-access`)
 restent sous leurs licences propres, GPL comprises : voir [`commun/terminal/LICENCES.md`](commun/terminal/LICENCES.md).

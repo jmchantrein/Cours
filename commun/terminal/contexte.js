@@ -2,7 +2,7 @@
 // dessiné en arbre, toujours au même endroit (en tête de la colonne `.cote`, au-dessus du terminal). Deux sources :
 // - réelle : en mode vm, le shell de la VM décrit avant chaque invite son répertoire courant et ce qui l’entoure
 //   (vm/contexte.bash, séquence OSC 6973 que terminal.js relaie par l’événement « terminal-contexte ») ;
-// - déclarée : sinon (terminal fermé, VM pas encore prête, compagnon), la page déclare l’arborescence et le répertoire
+// - déclarée : sinon (terminal fermé, VM pas encore prête, host-shell-access), la page déclare l’arborescence et le répertoire
 //   de départ ; le repère rejoue les `cd` des commandes de la page jusqu’au bloc qu’on lit, ou jusqu’à la dernière
 //   commande cliquée dans ce bloc.
 // Une commande cliquée qui lit un chemin (cd, ls, pwd, echo ~) est lue comme le shell la lit : son point de départ
@@ -280,7 +280,7 @@
     if (sessionVM && reel) { etat = reel; texteSource = "lu dans la VM, après la dernière commande"; }
     else {
       ({ etat, garde } = etatDeclare());
-      texteSource = session.mode === "compagnon" && session.ouverte
+      texteSource = session.mode === "host-shell-access" && session.ouverte
         ? "d’après la page (la VM d’ada) : votre shell peut différer" : "d’après la page, à ce point du texte";
     }
     const l = garde && derniere ? derniere.l : null;

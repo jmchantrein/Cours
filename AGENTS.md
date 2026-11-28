@@ -35,15 +35,15 @@ l’organisation et la compilation dans [`README.md`](README.md).
 - Un harnais ne tient compte d’un proxy qui réécrit TLS que par `TPTEST_CA=/chemin/ca.crt` (avec `HTTPS_PROXY`).
 - Après une modification de corrigés, lance `<cours>/tp/<tp>/tester.sh --lint`, et `--up` quand Docker a accès au réseau.
 - Écris un artefact sans dépendance externe : une page Typst, un script, un style qui emploie les variables CSS de la charte.
-- Déclare le terminal d’une page par `page-web(terminal: …)` : `("compagnon",)` pour Docker ou libvirt, `("vm", "compagnon")`
+- Déclare le terminal d’une page par `page-web(terminal: …)` : `("host-shell-access",)` pour Docker ou libvirt, `("vm", "host-shell-access")`
   pour un TP shell. Ses dépendances tierces sont fixées en version et en SHA-256 (`commun/terminal/dependances.txt`,
   `go.sum`), téléchargées par la CI et servies par le site : ni CDN, ni fichier tiers dans git.
 - Déclare l’état de départ de toute page en mode `vm` par `page-web(depart: (script: …, cree: …, ici: …))` : un
   script versionné de son dossier (hors de `corrige/`) crée dossiers, fichiers et contenus ; la VM le lance à son
   démarrage, avant la première invite, et `construire-vm.sh` l’embarque ; ne le copie jamais dans `commun/terminal/`.
 - Ne fais supposer à aucune commande d’une page un fichier que ni son état de départ ni une commande précédente ne
-  crée ; donne les commandes d’installation chez soi dans `terminal(compagnon: true)`, que la VM ne rejoue pas.
-- Après une modification du terminal, lance `commun/terminal/tester-vm.mjs`, `compagnon/tester.py` et
+  crée ; donne les commandes d’installation chez soi dans `terminal(host-shell-access: true)`, que la VM ne rejoue pas.
+- Après une modification du terminal, lance `commun/terminal/tester-vm.mjs`, `host-shell-access/tester.py` et
   `tester-navigateur.js` (voir `commun/README.md`).
 - Fais reposer un artefact sur le modèle énoncé dans le cours, et relie-le à la diapo et au TP concernés.
 - Après une modification d’artefact, déroule ses expériences dans un navigateur et vérifie les résultats annoncés dans ses réponses.

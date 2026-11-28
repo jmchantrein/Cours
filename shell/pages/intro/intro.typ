@@ -27,7 +27,7 @@
   date: [novembre 2026],
   illustration-couverture: "tube",
   cours: true,
-  terminal: ("vm", "compagnon"),
+  terminal: ("vm", "host-shell-access"),
   depart: (ici: "~"),
   liens: (
     ([Diaporama du module], diaporama),

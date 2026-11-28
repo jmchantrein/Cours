@@ -171,7 +171,7 @@
       [abandonne la ligne (ici après #touche[Ctrl+E]), ou interrompt une commande qui tourne])),
     des(k, 3, rangee(t: 30, 3, ("$ cat", "Ada", "Ada"), ([Ctrl+D],), ("$ cat", "Ada", "Ada", "$ "),
       [`cat` recopie ce qu’on tape ; #touche[Ctrl+D] : fin de saisie, `cat` s’arrête])),
-    des(k, 3, note(role: "danger", taille: z(25))[#touche[Ctrl+D] sur une ligne vide ferme le shell, et le terminal avec lui. Dans la page, la VM s’arrête : « Remettre à l’état de départ » la relance.]),
+    des(k, 3, note(role: "danger", taille: z(25))[#touche[Ctrl+D] sur une ligne vide ferme le shell, et le terminal avec lui. Dans la page, une nouvelle session s’ouvre aussitôt.]),
   )),
   note: [#versions Un clic par touche. Ce qu’est une commande qui tourne, et ce que Ctrl+C lui envoie (un signal) : #module-ref("processus"). Ctrl+D ne tue rien : il dit « fin de ce qu’on tape » au programme qui lit le clavier ; à l’invite, c’est le shell qui lit, et il se termine.],
 )

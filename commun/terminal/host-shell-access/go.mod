@@ -1,4 +1,4 @@
-module github.com/jmchantrein/Cours/commun/terminal/compagnon
+module github.com/jmchantrein/Cours/commun/terminal/host-shell-access
 
 go 1.24.7
 

@@ -22,7 +22,7 @@
   auteur: [Jean-Mathieu Chantrein],
   date: [novembre 2026],
   illustration-couverture: "couches",
-  terminal: ("vm", "compagnon"),
+  terminal: ("vm", "host-shell-access"),
   depart: (script: "shell/tp/fichiers/preparer.sh", cree: "~/fichiers", ici: "~"),   // état de départ : la VM l’installe à son démarrage
   liens: (
     ([Le cours], "../../index.html"),
@@ -67,7 +67,7 @@ sont supposés connus. Il part d’un nouveau répertoire d’exemples, `~/fichi
     propriétaire, du groupe, des autres. Qui peut lire `pionnieres.csv` ? Qui peut exécuter `scripts/bonjour.sh` ?
 ]
 
-#terminal(compagnon: true)[```console
+#terminal(host-shell-access: true)[```console
 $ cd
 $ wget https://jmchantrein.github.io/Cours/shell/tp/fichiers/preparer.sh
 $ bash preparer.sh

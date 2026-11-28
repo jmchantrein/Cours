@@ -2,7 +2,7 @@
 // à leur place et servies en local. Usage, depuis la racine du dépôt, après commun/terminal/preparer.sh --vm :
 //   node commun/terminal/tester-navigateur.js [dossier des captures]
 // Compile les pages testées, dont une page d’essai du mode VM dans build/essai-terminal/, lance deux serveurs
-// (localhost:8000, origine admise par le compagnon ; localhost:8001, origine refusée) et des compagnons.
+// (localhost:8000, origine admise par host-shell-access ; localhost:8001, origine refusée) et host-shell-access.
 const { chromium } = require("playwright");
 const { spawn, execFileSync } = require("node:child_process");
 const fs = require("node:fs");
@@ -19,7 +19,7 @@ const verifier = (condition, texte) => { if (!condition) throw new Error("échec
 // ---------- Pages ----------
 const essai = `#import "../../commun/theme-tp.typ": *
 #show: page-web.with(titre: [Essai du terminal], surtitre: [Page d’essai (build/)], racine: "../../",
-  terminal: ("vm", "compagnon"), depart: (ici: "~"))
+  terminal: ("vm", "host-shell-access"), depart: (ici: "~"))
 = Commandes <commandes>
 #terminal[\`\`\`console
 $ printf 'a;1\\nb;2\\n' > t.csv
@@ -35,7 +35,7 @@ $ echo un \\
 fs.mkdirSync(path.join(depot, "build/essai-terminal"), { recursive: true });
 fs.writeFileSync(path.join(depot, "build/essai-terminal/essai.typ"), essai);
 const pages = {
-  essai: "build/essai-terminal/essai.typ", compagnon: "commun/terminal/compagnon.typ",
+  essai: "build/essai-terminal/essai.typ", "host-shell-access": "commun/terminal/host-shell-access/host-shell-access.typ",
   wordpress: "conteneurisation/tp/wordpress/wordpress.typ", libvirt: "virtualisation/tp/libvirt/libvirt.typ",
   accueil: "index.typ", artefact: "conteneurisation/artefacts/cache-de-build/cache-de-build.typ",
   // Les TP en mode vm (le rejeu complet de leurs commandes est dans tester-vm.mjs).
@@ -54,13 +54,13 @@ for (const [nom, source] of Object.entries(pages)) {
 }
 const adresse = (nom, port = 8000) => `http://localhost:${port}/${html[nom]}`;
 
-// ---------- Serveurs et compagnon ----------
+// ---------- Serveurs et host-shell-access ----------
 const enfants = [];
 const arch = { x64: "amd64", arm64: "arm64" }[process.arch];
-const binaire = path.join(__dirname, `compagnon/dist/iadmin-terminal-linux-${arch}`);
+const binaire = path.join(__dirname, `host-shell-access/dist/host-shell-access-linux-${arch}`);
 const serveur = port => enfants.push(spawn("python3", ["-I", "-m", "http.server", String(port), "--bind", "127.0.0.1",
   "--directory", depot], { stdio: "ignore" }));
-function compagnon() {
+function lancerHote() {
   const p = spawn(binaire, ["local", "--shell", "/bin/bash"],
     { cwd: temporaire, env: { ...process.env, HOME: temporaire } });
   enfants.push(p);
@@ -105,27 +105,27 @@ async function connecter(page, url) {
     verifier(r[0] === 0 && r[1] === null, `${nom} : page sans terminal, ni « Exécuter » ni volet (${r[2]} boutons Copier)`);
   }
 
-  // 2. Compagnon : connexion, commande cliquée, sortie dans la page.
-  let { p, url } = await compagnon();
-  await page.goto(adresse("compagnon"));
-  verifier(await page.locator(".executer[aria-disabled='true']").count() > 0, "compagnon : « Exécuter » inactif tant que rien n’est connecté");
+  // 2. host-shell-access : connexion, commande cliquée, sortie dans la page.
+  let { p, url } = await lancerHote();
+  await page.goto(adresse("host-shell-access"));
+  verifier(await page.locator(".executer[aria-disabled='true']").count() > 0, "host-shell-access : « Exécuter » inactif tant que rien n’est connecté");
   await connecter(page, url);
   await etat(page).filter({ hasText: "Connecté" }).waitFor({ timeout: 10000 });
-  verifier(await page.locator(".executer[aria-disabled='true']").count() === 0, "compagnon : « Exécuter » actif une fois connecté");
+  verifier(await page.locator(".executer[aria-disabled='true']").count() === 0, "host-shell-access : « Exécuter » actif une fois connecté");
   let t0 = Date.now();
   await executer(page, "echo \"Bonjour").click();
   await attendreTexte(page, `Bonjour depuis ${os.hostname()}`, 15000);
-  ok(`compagnon : commande exécutée dans le vrai shell, sortie affichée en ${Date.now() - t0} ms`);
+  ok(`host-shell-access : commande exécutée dans le vrai shell, sortie affichée en ${Date.now() - t0} ms`);
   await page.click(".terminal-actions button");
   await p.fini;
-  ok("compagnon : « Déconnecter » arrête le compagnon");
+  ok("host-shell-access : « Déconnecter » arrête host-shell-access");
 
   // 3. TP réels : wordpress (commande sur deux lignes, suite par \), libvirt.
   for (const [nom, debut, attendu] of [
     ["wordpress", "docker container exec mon_conteneur_wordpress", /No such container|command not found|Cannot connect/],
     ["libvirt", "virsh uri", /virsh: command not found|qemu:\/\/\/|failed to connect to the hypervisor/],
   ]) {
-    ({ p, url } = await compagnon());
+    ({ p, url } = await lancerHote());
     await page.goto(adresse(nom));
     await connecter(page, url);
     await etat(page).filter({ hasText: "Connecté" }).waitFor({ timeout: 10000 });
@@ -143,7 +143,7 @@ async function connecter(page, url) {
       await attendreTexte(page, texte.slice(0, 30), 10000); await attendre(800);
       const fin = (await ecran(page).innerText()).trimEnd().split("\n").filter(l => l.trim()).at(-1);
       verifier(fin.endsWith(texte.trim()) && /écrite à l’invite/.test(await etat(page).innerText()),
-        `compagnon : « Écrire » dépose « ${texte} » à l’invite, sans l’exécuter`);
+        `host-shell-access : « Écrire » dépose « ${texte} » à l’invite, sans l’exécuter`);
       await page.keyboard.press("Control+C");
     }
     for (const [largeur, hauteur] of [[1280, 650], [1920, 950]]) {
@@ -169,19 +169,19 @@ async function connecter(page, url) {
   }
 
   // 4. Refus : mauvais jeton, origine non admise, adresse hors de la machine.
-  ({ p, url } = await compagnon());
-  await page.goto(adresse("compagnon"));
+  ({ p, url } = await lancerHote());
+  await page.goto(adresse("host-shell-access"));
   await connecter(page, url.replace(/token=.*/, "token=faux"));
   await etat(page).filter({ hasText: "Connexion impossible" }).waitFor({ timeout: 10000 });
   await p.fini;
-  verifier(/401/.test(p.erreurs), "mauvais jeton : refus 401, compagnon arrêté, la page dit « Connexion impossible »");
-  ({ p, url } = await compagnon());
-  await page.goto(adresse("compagnon", 8001));
+  verifier(/401/.test(p.erreurs), "mauvais jeton : refus 401, host-shell-access arrêté, la page dit « Connexion impossible »");
+  ({ p, url } = await lancerHote());
+  await page.goto(adresse("host-shell-access", 8001));
   await connecter(page, url);
   await etat(page).filter({ hasText: "Connexion impossible" }).waitFor({ timeout: 10000 });
   await p.fini;
-  verifier(/403/.test(p.erreurs), "origine non admise (localhost:8001) : refus 403, compagnon arrêté");
-  await page.goto(adresse("compagnon"));
+  verifier(/403/.test(p.erreurs), "origine non admise (localhost:8001) : refus 403, host-shell-access arrêté");
+  await page.goto(adresse("host-shell-access"));
   await connecter(page, "ws://192.0.2.7:1234/?token=abc");
   verifier(/Adresse refusée/.test(await etat(page).innerText()), "adresse hors de la machine : refusée par la page");
 
@@ -255,7 +255,7 @@ async function connecter(page, url) {
     await page.goto(adresse(nom));
     const r = await page.evaluate(() => [document.body.dataset.terminal, document.querySelectorAll(".terminal .executer").length,
       document.querySelector(".terminal-lanceur") !== null]);
-    verifier(r[0] === "vm compagnon" && r[1] > 0 && r[2], `${nom} : terminal « vm compagnon », ${r[1]} boutons « Exécuter »`);
+    verifier(r[0] === "vm host-shell-access" && r[1] > 0 && r[2], `${nom} : terminal « vm host-shell-access », ${r[1]} boutons « Exécuter »`);
   }
   for (const [nom, clics, attendu] of [
     ["tp-premiers-pas", ["cd ~/atelier", "ls -a"], ".reglages"],
@@ -269,7 +269,7 @@ async function connecter(page, url) {
     }
     await page.locator(".terminal-accueil button.principal", { hasText: "Démarrer" }).click();
     await attendreTexte(page, "État de départ installé", 180000);
-    const chezSoi = page.locator('.terminal[data-mode="compagnon"] .executer').first();
+    const chezSoi = page.locator('.terminal[data-mode="host-shell-access"] .executer').first();
     await chezSoi.click();
     verifier(/Inutile dans la VM/.test(await etat(page).innerText()), `${nom} : la commande d’installation chez soi n’est pas lancée dans la VM`);
     for (const debut of clics) {   // une commande peut être dans un corrigé replié : on l'ouvre, comme le lecteur

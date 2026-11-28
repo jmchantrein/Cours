@@ -19,7 +19,7 @@
   auteur: [Jean-Mathieu Chantrein],
   date: [novembre 2026],
   illustration-couverture: "tunnel",
-  terminal: ("vm", "compagnon"),
+  terminal: ("vm", "host-shell-access"),
   depart: (ici: "~"),   // état de départ : la VM l’installe à son démarrage
   liens: (
     ([Diapos du cours], pdf),

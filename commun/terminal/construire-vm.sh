@@ -24,7 +24,7 @@ image="${reference#docker.io/library/}@sha256:$condense"
 version="alpine-${reference##*:}"
 
 # Outils des cours d'initiation (shell, fichiers, édition, git, formats). Le réseau, Docker, SSH et
-# Python restent hors de l'image : l'image reste légère, et ces TP passent par le compagnon.
+# Python restent hors de l'image : l'image reste légère, et ces TP passent par host-shell-access.
 paquets=(
   linux-virt bash bash-completion coreutils findutils grep sed gawk diffutils less file tree
   nano vim git jq tmux tar ncurses-terminfo-base procps-ng ncurses bats vim-tutor

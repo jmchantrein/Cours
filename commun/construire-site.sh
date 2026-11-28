@@ -19,16 +19,16 @@ entrees=()
 [ -z "${APERCU_BRANCHE:-}" ] || entrees=(--input "apercu=$APERCU_BRANCHE")
 
 # Terminal des pages web : xterm.js, v86 et ses BIOS (sommes dans dependances.txt), l'image Alpine de la VM
-# (Docker), démarrée une fois dans Node pour vérifier ses outils ; puis les exécutables statiques du compagnon
+# (Docker), démarrée une fois dans Node pour vérifier ses outils ; puis les exécutables statiques de host-shell-access
 # (Linux, amd64 et arm64), SHA256SUMS, et le test du protocole.
 if [ -f commun/terminal/preparer.sh ]; then
   echo "::group::Terminal, VM dans le navigateur"
   commun/terminal/preparer.sh --vm
   node commun/terminal/tester-vm.mjs
   echo "::endgroup::"
-  echo "::group::Terminal, compagnon"
-  commun/terminal/compagnon/construire.sh
-  python3 -I commun/terminal/compagnon/tester.py
+  echo "::group::Terminal, host-shell-access"
+  commun/terminal/host-shell-access/construire.sh
+  python3 -I commun/terminal/host-shell-access/tester.py
   echo "::endgroup::"
 fi
 
@@ -44,7 +44,7 @@ for src in */cm/*.typ; do
   done
 done
 
-# Pages web : TP, pages de cours, artefacts, accueil, page du compagnon, chacune en index.html à côté de sa source.
+# Pages web : TP, pages de cours, artefacts, accueil, page de host-shell-access, chacune en index.html à côté de sa source.
 web() { typst compile --root . --font-path commun/fonts --features html --format html "${entrees[@]}" "${@:3}" "$1" "$2"; }
 for src in */tp/*/*.typ */pages/*/*.typ */artefacts/*/*.typ; do
   [ -f "$src" ] || continue
@@ -70,4 +70,4 @@ for src in */index.typ; do
   echo "::endgroup::"
 done
 web index.typ index.html
-if [ -f commun/terminal/compagnon.typ ]; then web commun/terminal/compagnon.typ commun/terminal/index.html; fi
+if [ -f commun/terminal/host-shell-access/host-shell-access.typ ]; then web commun/terminal/host-shell-access/host-shell-access.typ commun/terminal/host-shell-access/index.html; fi

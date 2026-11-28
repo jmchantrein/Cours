@@ -8,7 +8,7 @@ name: Compilation et publication des supports (Typst)
 # - pages web : <cours>/tp/<tp>/<tp>.typ, <cours>/artefacts/<nom>/<nom>.typ et index.typ donnent chacun
 #   un index.html à côté de leur source ; elles embarquent toutes les variantes ;
 # - terminal des pages web (commun/terminal/) : dépendances tierces à SHA-256 fixé et image de la VM dans
-#   commun/terminal/vendor/, exécutables du compagnon dans commun/terminal/compagnon/dist/, vérifiés avant publication.
+#   commun/terminal/vendor/, exécutables de host-shell-access dans commun/terminal/host-shell-access/dist/, vérifiés avant publication.
 # Deux cas :
 # - push sur main, ou lancement manuel sur main : le site est le dépôt, complété des fichiers générés ;
 # - lancement manuel sur une autre branche (aperçu) : la racine du site est la branche main, reconstruite, et
@@ -65,8 +65,8 @@ jobs:
 
       - uses: actions/setup-go@v5
         with:
-          go-version-file: commun/terminal/compagnon/go.mod
-          cache-dependency-path: commun/terminal/compagnon/go.sum
+          go-version-file: commun/terminal/host-shell-access/go.mod
+          cache-dependency-path: commun/terminal/host-shell-access/go.sum
 
       - name: Construction du site
         if: github.ref == 'refs/heads/main'

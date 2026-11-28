@@ -22,7 +22,7 @@
   auteur: [Jean-Mathieu Chantrein],
   date: [novembre 2026],
   illustration-couverture: "couches",
-  terminal: ("vm", "compagnon"),
+  terminal: ("vm", "host-shell-access"),
   depart: (script: "shell/tp/premiers-pas/preparer.sh", cree: "~/atelier", ici: "~"),   // état de départ : la VM l’installe à son démarrage
   liens: (
     ([Le cours], "../../index.html"),
@@ -72,7 +72,7 @@ répertoire existant.
     l’écran : les espaces en trop restent-elles ?
 ]
 
-#terminal(compagnon: true)[```console
+#terminal(host-shell-access: true)[```console
 $ cd
 $ wget https://jmchantrein.github.io/Cours/shell/tp/premiers-pas/preparer.sh
 $ bash preparer.sh

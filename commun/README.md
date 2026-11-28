@@ -179,7 +179,7 @@ par son navigateur. Le nom du rôle et son pictogramme sont écrits dans chaque 
 - L’étudiant tape : la consigne dit ce qu’il faut obtenir et comment le vérifier, sans montrer la commande. Les
   commandes vont dans des indices gradués (un qui oriente, puis `#indice(titre: [Dernier indice : les commandes…])`
   avec un `terminal[…]` de commandes seules) et au corrigé. Une commande d’une ligne repliée dans un indice ou un
-  corrigé reçoit, à côté d’« Exécuter », un bouton « Écrire » qui la dépose à l’invite sans Entrée (VM et compagnon ;
+  corrigé reçoit, à côté d’« Exécuter », un bouton « Écrire » qui la dépose à l’invite sans Entrée (VM et `host-shell-access` ;
   terminal fermé, il invite à le démarrer). `tester-vm.mjs` rejoue l’énoncé sans les indices (les corrigés
   comprises), puis, à la fin, les commandes d’indices absentes des corrigés. Exemple : `shell/tp/premiers-pas/`.
 - Fichier de corrigé : `#fichier("corrige/…/Dockerfile", read("corrige/…/Dockerfile"))` ; la page montre le
@@ -199,7 +199,7 @@ ouverture, pas de notion avant celles qui la composent, un fichier montré avant
 ses diapos et sa page : la page reprend les exemples des diapos, dans le même ordre (les diapos font foi), et y
 ajoute la pratique ; d’autres exemples vont au TP. Exemple : `shell/pages/arbo/`.
 
-- Page : `#show: page-web.with(cours: true, terminal: ("vm", "compagnon"), depart: (…), contexte: (…), …)`. Sur un écran large
+- Page : `#show: page-web.with(cours: true, terminal: ("vm", "host-shell-access"), depart: (…), contexte: (…), …)`. Sur un écran large
   (64 rem et plus), le texte défile à gauche et une colonne reste en vue à droite : le repère de contexte en haut,
   le terminal dessous, ouvert d’emblée ; terminal réduit, le repère prend la colonne. Sur un écran étroit, le repère
   se réduit à une ligne sous le bandeau (bouton « Arbre » pour le dessin) et le terminal redevient un volet en bas.
@@ -230,13 +230,13 @@ ajoute la pratique ; d’autres exemples vont au TP. Exemple : `shell/pages/arbo
   - En mode `vm`, le repère est **réel** : avant chaque invite, le Bash de la VM décrit son répertoire courant,
     `HOME`, `OLDPWD` et le contenu des répertoires voisins dans une séquence OSC invisible (`terminal/vm/contexte.bash`,
     sans lancer de processus, environ 0,2 s par invite) que `terminal.js` relaie (événement `terminal-contexte`).
-  - Sinon (terminal fermé, VM qui démarre, compagnon), il est **déclaré** par la page : `contexte: (compte: "ada",
+  - Sinon (terminal fermé, VM qui démarre, `host-shell-access`), il est **déclaré** par la page : `contexte: (compte: "ada",
     depart: "/home/ada", personnel: "/home/ada", arbre: (…), creations: (…))`. `arbre` liste les chemins absolus connus
     (un répertoire finit par `/` ; `rep/.` le déclare vide, un répertoire sans entrée déclarée a un contenu inconnu) ;
     `creations` dit ce qu’une commande crée (`("bash preparer.sh", ("/home/ada/atelier/",))`). Le repère rejoue les
     `cd` de la page jusqu’au bloc qu’on lit, ou jusqu’à la dernière commande cliquée de ce bloc. `tester-vm.mjs`
     compare ce contexte déclaré au contexte réel après chaque commande : il dit vrai pour la page suivie dans l’ordre.
-  - Le compagnon (le vrai shell de l’étudiant) ne décrit rien : le repère y reste déclaré, et le dit.
+  - `host-shell-access` (le vrai shell de l’étudiant) ne décrit rien : le repère y reste déclaré, et le dit.
 
 ## Pages web : la page d’un cours
 `<cours>/index.typ` (compilée en `<cours>/index.html`) présente le cours module par module : titre, numéro, ce qu’on
@@ -289,8 +289,8 @@ modifié quelque chose à la fin d’une recette : ces phrases l’expliquent), 
 dans le temps attend par `moteur.attendre`, jamais par `setTimeout` seul.
 
 ## Pages web : terminal
-Une page déclare son terminal : `page-web(…, terminal: ("compagnon",))` pour un TP Docker ou libvirt, qui ne
-tourne pas dans une VM de navigateur ; `terminal: ("vm", "compagnon")` pour un TP shell (le premier mode est
+Une page déclare son terminal : `page-web(…, terminal: ("host-shell-access",))` pour un TP Docker ou libvirt, qui ne
+tourne pas dans une VM de navigateur ; `terminal: ("vm", "host-shell-access")` pour un TP shell (le premier mode est
 proposé d’abord). Une page qui ne déclare rien reste telle quelle. Les sources des TP ne changent pas : `tp.js`
 pose un bouton « Exécuter » après chaque commande `$ ` (suites `\` comprises) des blocs `terminal[…]`, actif
 quand un terminal est ouvert ; un bouton « Terminal » du bandeau ouvre un volet en bas de la fenêtre, dont la page
@@ -303,8 +303,8 @@ cours »).
   corrigés Debian des TP), pas celui de root. L’image a Bash, coreutils, findutils, grep, sed, gawk, git, vim et
   vimtutor, nano, tmux, jq, tree, `procps-ng` (le `ps` complet), `bats`, et `man` (mandoc, avec les pages de
   coreutils, Bash, less, grep et tmux : 0,4 Mo compressés). Elle n’a ni `shellcheck` (introuvable pour Alpine x86),
-  ni Python, `yq`, Docker, SSH : un TP qui en demande déclare `("compagnon",)`, ou dit à l’endroit voulu que
-  l’étape demande le compagnon. Ses fichiers sont en mémoire : la taille d’un dossier dans `ls -l` n’est pas celle d’un disque.
+  ni Python, `yq`, Docker, SSH : un TP qui en demande déclare `("host-shell-access",)`, ou dit à l’endroit voulu que
+  l’étape demande `host-shell-access`. Ses fichiers sont en mémoire : la taille d’un dossier dans `ls -l` n’est pas celle d’un disque.
 - **État de départ.** Une page (TP ou page de cours) qui déclare le mode `vm` déclare aussi l’état que ses
   commandes supposent : `page-web(depart: (script: "shell/tp/premiers-pas/preparer.sh", cree: "~/atelier", ici: "~"))`.
   `script` (chemin depuis la racine du dépôt) est un script versionné, dans le dossier d’une page, hors de `corrige/`,
@@ -315,15 +315,15 @@ cours »).
   dans `ici` : l’état est en place avant la première invite, sans rien demander à l’étudiant. Le bouton
   « Remettre à l’état de départ » redémarre la VM : son système, en mémoire, repart de l’image, et le script se
   relance. Quand le shell se termine (`exit`, Ctrl+D sur une ligne vide), la VM affiche « Session terminée ; nouvelle
-  session. » et en ouvre un autre dans le répertoire personnel ; les fichiers restent. Les commandes qui installent l’état chez soi vont dans `terminal(compagnon: true)` : la VM ne les
+  session. » et en ouvre un autre dans le répertoire personnel ; les fichiers restent. Les commandes qui installent l’état chez soi vont dans `terminal(host-shell-access: true)` : la VM ne les
   exécute pas (son « Exécuter » le dit) et `tester-vm.mjs` ne les rejoue pas. Sans réseau, le `wget` et le `curl`
   de la VM (`vm/telecharger`) servent encore ces fichiers aux adresses du site et de l’archive du dépôt.
-- Mode `compagnon` : le vrai shell de l’étudiant, par l’exécutable `iadmin-terminal` (`terminal/compagnon/`, en Go),
+- Mode `host-shell-access` : le vrai shell de l’étudiant, par l’exécutable `host-shell-access` (`terminal/host-shell-access/`, en Go),
   qui écoute sur `127.0.0.1` avec un jeton à usage unique, une liste d’origines et un seul client ; il est construit
   pour Linux seulement (amd64, arm64 ; WSL sous Windows). Rien n’y est installé d’office : le volet propose la
   commande qui installe l’état de départ de la page (`cd && curl -fsSLO … && bash …`, qui crée un dossier à part,
   `cree`), et le bouton « Installer l’état de départ » la lance après confirmation. La page
-  [`terminal/compagnon.typ`](terminal/compagnon.typ) (publiée en `commun/terminal/`) explique son téléchargement.
+  [`terminal/host-shell-access/host-shell-access.typ`](terminal/host-shell-access/host-shell-access.typ) (publiée en `commun/terminal/`) explique son téléchargement.
 
 Fichiers de `terminal/` :
 - `terminal.js`, `terminal.css` : le volet, ajoutés par `theme-tp.typ` aux seules pages qui le déclarent ; le
@@ -335,28 +335,28 @@ Fichiers de `terminal/` :
 - `dependances.txt` : version, SHA-256 et adresse de chaque fichier tiers ; `preparer.sh [--vm]` les télécharge
   dans `vendor/` et, avec `--vm`, construit l’image (`construire-vm.sh`, Docker ; `vm/init`, `vm/profil.sh`) et son
   manifeste `vendor/vm/manifeste.json`.
-- `compagnon/` : le code Go (`go.mod`, `go.sum`), `construire.sh` (exécutables statiques Linux, amd64 et
-  arm64, et `SHA256SUMS`, dans `compagnon/dist/`), `tester.py` (protocole et refus).
+- `host-shell-access/` : le code Go (`go.mod`, `go.sum`), `construire.sh` (exécutables statiques Linux, amd64 et
+  arm64, et `SHA256SUMS`, dans `host-shell-access/dist/`), `tester.py` (protocole et refus).
 - `LICENCES.md` : licences et sources des composants publiés.
 
-`vendor/` et `compagnon/dist/` ne sont pas versionnés : la CI les construit et les publie avec le site.
-`construire-site.sh` (à la racine de `commun/`) enchaîne `preparer.sh --vm`, `tester-vm.mjs`, `compagnon/construire.sh` et
-`compagnon/tester.py`, puis compile les PDF et les pages web : c’est la construction de la CI. Sous `apercu/` (aperçu
-d’une branche, voir `README.md`), la page vient du même site `https://jmchantrein.github.io` : le compagnon l’admet,
+`vendor/` et `host-shell-access/dist/` ne sont pas versionnés : la CI les construit et les publie avec le site.
+`construire-site.sh` (à la racine de `commun/`) enchaîne `preparer.sh --vm`, `tester-vm.mjs`, `host-shell-access/construire.sh` et
+`host-shell-access/tester.py`, puis compile les PDF et les pages web : c’est la construction de la CI. Sous `apercu/` (aperçu
+d’une branche, voir `README.md`), la page vient du même site `https://jmchantrein.github.io` : `host-shell-access` l’admet,
 et `racine` suffit pour retrouver `commun/terminal/vendor/`. `APERCU_BRANCHE` ajoute au bandeau des pages web
 « Aperçu de la branche … » (entrée Typst `apercu`, lue par `page-web`).
-Tester, depuis la racine du dépôt, après `preparer.sh --vm` et `compagnon/construire.sh` :
+Tester, depuis la racine du dépôt, après `preparer.sh --vm` et `host-shell-access/construire.sh` :
 
     node commun/terminal/tester-vm.mjs               # démarre la VM dans Node, vérifie ses outils, puis rejoue
                                                      # chaque TP et page de cours en mode vm, dans une VM neuve démarrée
                                                      # sur son état de départ (fichiers attendus, commandes de l’énoncé) ;
                                                      # une page de cours : chaque sortie, le repère déclaré contre le
                                                      # réel, et seule chaque section qui part de l’état de départ
-    python3 -I commun/terminal/compagnon/tester.py   # protocole, jeton, origine, un seul client
+    python3 -I commun/terminal/host-shell-access/tester.py   # protocole, jeton, origine, un seul client
     node commun/terminal/tester-navigateur.js        # Chromium : clics, deux modes, cache, refus, captures
 
 `tester-navigateur.js` compile les pages testées, dont une page d’essai du mode VM (`build/essai-terminal/`), et
-les sert sur `localhost:8000`, origine que le compagnon admet pour les essais.
+les sert sur `localhost:8000`, origine que `host-shell-access` admet pour les essais.
 
 Limite connue : l’export HTML de Typst est expérimental. La CI fixe la version de Typst ; à chaque montée de
 version, recompiler les pages et les relire dans un navigateur.

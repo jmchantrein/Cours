@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""Vérifie l'exécutable du compagnon de bout en bout, sans navigateur, après construire.sh :
-    python3 -I commun/terminal/compagnon/tester.py [exécutable]   (par défaut : dist/iadmin-terminal-linux-<arch>)
+"""Vérifie l'exécutable de host-shell-access de bout en bout, sans navigateur, après construire.sh :
+    python3 -I commun/terminal/host-shell-access/tester.py [exécutable]   (par défaut : dist/host-shell-access-linux-<arch>)
 
 Porté de site/scripts/test-terminal-companion.py. Contrôle le protocole (poignée de main WebSocket,
 redimensionnement, entrée, sortie du PTY) et les protections : écoute sur 127.0.0.1 seulement, jeton,
-origine, un seul client, compagnon arrêté après un refus (jeton à usage unique).
+origine, un seul client, host-shell-access arrêté après un refus (jeton à usage unique).
 """
 
 import base64
@@ -19,14 +19,14 @@ import time
 from pathlib import Path
 
 ARCH = {"x86_64": "amd64", "aarch64": "arm64"}.get(os.uname().machine, os.uname().machine)
-COMPAGNON = Path(sys.argv[1]) if len(sys.argv) > 1 else Path(__file__).parent / f"dist/iadmin-terminal-linux-{ARCH}"
+EXECUTABLE = Path(sys.argv[1]) if len(sys.argv) > 1 else Path(__file__).parent / f"dist/host-shell-access-linux-{ARCH}"
 ORIGINE = "https://jmchantrein.github.io"
 reussis = []
 
 
 def lancer():
-    """Démarre un compagnon en mode local ; rend le processus, le port et le jeton."""
-    processus = subprocess.Popen([str(COMPAGNON), "local", "--shell", "/bin/sh"],
+    """Démarre host-shell-access en mode local ; rend le processus, le port et le jeton."""
+    processus = subprocess.Popen([str(EXECUTABLE), "local", "--shell", "/bin/sh"],
                                  stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
     assert processus.stdout.readline().strip() == "Adresse à coller dans la page :"
     adresse = processus.stdout.readline().strip()
@@ -82,11 +82,11 @@ processus, port, jeton = lancer()
 client, reponse = poignee(port, jeton)
 assert reponse.startswith(b"HTTP/1.1 101 Switching Protocols"), reponse
 client.sendall(trame({"type": "resize", "cols": 90, "rows": 24}))
-client.sendall(trame({"type": "input", "data": "stty size; printf 'COMPAGNON_%s\\n' OK\r"}))
+client.sendall(trame({"type": "input", "data": "stty size; printf 'HSA_%s\\n' OK\r"}))
 sortie, limite = "", time.monotonic() + 5
-while "COMPAGNON_OK" not in sortie and time.monotonic() < limite:
+while "HSA_OK" not in sortie and time.monotonic() < limite:
     sortie += recevoir(client).get("data", "")
-assert "COMPAGNON_OK" in sortie and "24 90" in sortie, sortie
+assert "HSA_OK" in sortie and "24 90" in sortie, sortie
 reussis.append("session : commande exécutée, sortie reçue, terminal 90 × 24")
 
 # 2. Un seul client : pendant la session, une deuxième connexion n'obtient pas de réponse.
@@ -104,14 +104,14 @@ ip = ip_hors_bouclage()
 if ip and not ip.startswith("127."):
     try:
         socket.create_connection((ip, port), timeout=2).close()
-        raise AssertionError(f"le compagnon répond sur {ip}")
+        raise AssertionError(f"host-shell-access répond sur {ip}")
     except (ConnectionRefusedError, socket.timeout):
         reussis.append(f"écoute sur 127.0.0.1 seulement : {ip}:{port} refusé")
 client.close()
 processus.wait(timeout=5)
-reussis.append("fin de session : le compagnon s'arrête avec la page")
+reussis.append("fin de session : host-shell-access s'arrête avec la page")
 
-# 4. Mauvais jeton, puis mauvaise origine : refus, et le compagnon s'arrête (pas de deuxième essai).
+# 4. Mauvais jeton, puis mauvaise origine : refus, et host-shell-access s'arrête (pas de deuxième essai).
 for cas, jeton_essai, origine, statut in (
     ("mauvais jeton", "faux", ORIGINE, b"401"),
     ("mauvaise origine", None, "https://exemple.org", b"403"),
@@ -123,11 +123,11 @@ for cas, jeton_essai, origine, statut in (
     processus.wait(timeout=5)
     try:
         socket.create_connection(("127.0.0.1", port), timeout=2).close()
-        raise AssertionError(f"{cas} : le compagnon écoute encore")
+        raise AssertionError(f"{cas} : host-shell-access écoute encore")
     except ConnectionRefusedError:
         pass
-    reussis.append(f"{cas} : {statut.decode()}, puis compagnon arrêté")
+    reussis.append(f"{cas} : {statut.decode()}, puis host-shell-access arrêté")
 
-print("Compagnon :", len(reussis), "vérifications réussies")
+print("host-shell-access :", len(reussis), "vérifications réussies")
 for r in reussis:
     print(" -", r)

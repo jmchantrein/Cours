@@ -22,7 +22,7 @@
   auteur: [Jean-Mathieu Chantrein],
   date: [novembre 2026],
   illustration-couverture: "tube",
-  terminal: ("vm", "compagnon"),
+  terminal: ("vm", "host-shell-access"),
   depart: (ici: "~"),   // état de départ : la VM l’installe à son démarrage
   liens: (
     ([Le cours], "../../index.html"),
@@ -44,7 +44,7 @@ même chose.
 #bloc(role: "pratique")[Prérequis][
   - Un terminal Bash : celui de la page, ou le vôtre (Debian, Ubuntu, WSL). Les étapes 6 à 8 demandent les paquets
     `shellcheck` et `bats` : `sudo apt install shellcheck bats` sous Debian ou Ubuntu. Dans le terminal de cette
-    page, `bats` est installé ; `shellcheck` n’existe pas pour la VM (Alpine x86) : il demande le compagnon.
+    page, `bats` est installé ; `shellcheck` n’existe pas pour la VM (Alpine x86) : il demande `host-shell-access`.
   - Un éditeur de texte pour écrire les scripts : `nano`, `vim`, ou celui de votre choix.
 ]
 
@@ -335,7 +335,7 @@ $ shellcheck a-relire.sh
 ```]
 
 #note(role: "precaution")[Les commandes `shellcheck` de cette étape et des deux suivantes demandent le terminal
-  en mode compagnon (ou le vôtre) : la VM de la page n’a pas ShellCheck. Le reste du TP, `bats` compris, s’y
+  en mode `host-shell-access` (ou le vôtre) : la VM de la page n’a pas ShellCheck. Le reste du TP, `bats` compris, s’y
   exécute.]
 
 #indice(titre: [Indice : lire le rapport])[

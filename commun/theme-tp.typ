@@ -75,8 +75,8 @@
 // sommaire : affiche le sommaire des titres `=` (en colonne à gauche sur un écran large).
 // atelier : page d’artefact, compacte, qui tient sur un écran de portable sans défilement.
 // terminal : les modes du terminal de la page (commun/terminal/), par ordre de préférence : "vm" (VM Linux dans
-// le navigateur), "compagnon" (le vrai shell de l’étudiant). Par exemple ("compagnon",) pour un TP Docker,
-// ("vm", "compagnon") pour un TP shell. none : pas de terminal, la page reste telle quelle.
+// le navigateur), "host-shell-access" (le vrai shell de l’étudiant). Par exemple ("host-shell-access",) pour un TP Docker,
+// ("vm", "host-shell-access") pour un TP shell. none : pas de terminal, la page reste telle quelle.
 // cours : page de cours (<cours>/pages/<module>/) : le texte à gauche et, sur un écran large, une colonne à droite qui
 // reste en vue, avec le repère de contexte puis le terminal ; sur un écran étroit, le repère se réduit à une ligne sous
 // le bandeau et le terminal redevient un volet en bas. Le sommaire est une boîte en tête du texte.
@@ -89,7 +89,7 @@
 // depart : l'état de départ que la page suppose, obligatoire avec le mode "vm" : (script: "shell/tp/premiers-pas/preparer.sh",
 // cree: "~/atelier", ici: "~"). script : le script versionné (chemin depuis la racine du dépôt) qui crée dossiers,
 // fichiers et contenus ; cree : ce qu'il crée, dit à l'étudiant ; ici : le répertoire où l'on arrive. La VM le lance au
-// démarrage, avant la première invite ; avec le compagnon, la page propose la commande, sans rien lancer d'office.
+// démarrage, avant la première invite ; avec `host-shell-access`, la page propose la commande, sans rien lancer d'office.
 // (ici: "~") seul : la page part d'un répertoire personnel vide.
 // compacte : couverture réduite à une bande (page d’un cours : le premier module se voit sans défiler).
 // Aperçu d’une branche (commun/construire-site.sh, `--input apercu=<branche>`) : le bandeau le dit.
@@ -100,7 +100,7 @@
   contexte: none, depart: none, compacte: false, corps) = {
   let modes = if terminal == none { () } else if type(terminal) == str { (terminal,) } else { terminal }
   assert(modes.len() > 0 or terminal == none, message: "terminal : au moins un mode, ou none")
-  assert(modes.all(m => m in ("vm", "compagnon")), message: "terminal : les modes sont \"vm\" et \"compagnon\"")
+  assert(modes.all(m => m in ("vm", "host-shell-access")), message: "terminal : les modes sont \"vm\" et \"host-shell-access\"")
   assert(depart != none or "vm" not in modes, message: "terminal \"vm\" : déclarez l'état de départ, depart: (script: …, cree: …, ici: …)")
   let donnees-depart = if depart == none { (:) } else {
     (ici: depart.at("ici", default: "~")) + if depart.at("script", default: none) != none {
@@ -210,9 +210,9 @@
 
 // ---------- Code ----------
 // Terminal : `$ ` ouvre une commande, `# ` un commentaire ; le bouton « Copier » ne copie que les commandes.
-// compagnon: true : des commandes pour le seul shell de l'étudiant (installer l'état de départ chez soi) ; dans la VM,
+// host-shell-access: true : des commandes pour le seul shell de l'étudiant (installer l'état de départ chez soi) ; dans la VM,
 // l'état de départ est déjà là, et tester-vm.mjs ne les rejoue pas.
-#let terminal(compagnon: false, corps) = if compagnon { _el("div", class: "terminal", data: (mode: "compagnon"), corps) } else { _el("div", class: "terminal", corps) }
+#let terminal(host-shell-access: false, corps) = if host-shell-access { _el("div", class: "terminal", data: (mode: "host-shell-access"), corps) } else { _el("div", class: "terminal", corps) }
 // Fichier réel du dépôt, affiché tel quel : `fichier("corrige/…/Dockerfile", read("corrige/…/Dockerfile"))`.
 // Le corrigé montré est ainsi le fichier testé par la CI.
 #let fichier(chemin, contenu, lang: auto) = {
