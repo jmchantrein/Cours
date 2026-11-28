@@ -57,9 +57,14 @@ done
 # Page d'un cours (<cours>/index.typ, lue dans son progression.yaml) : la liste des supports présents, pour ne
 # poser aucun lien mort.
 for src in */index.typ; do
-  [ -f "$src" ] || continue
   cours=${src%%/*}
-  existants=$(cd "$cours" && ls -d cm/*.typ pages/*/ tp/*/ artefacts/*/ 2>/dev/null | tr '\n' ' ')
+  # Un cours a son index de progression : un autre <dossier>/index.typ (l'accueil d'un aperçu copié dans
+  # apercu/) n'est pas une page de cours.
+  [ -f "$cours/progression.yaml" ] || continue
+  existants=""
+  for support in "$cours"/cm/*.typ "$cours"/pages/*/ "$cours"/tp/*/ "$cours"/artefacts/*/; do
+    [ -e "$support" ] && existants+="${support#"$cours"/} "
+  done
   echo "::group::$cours/index.html"
   web "$src" "$cours/index.html" --input existants="$existants"
   echo "::endgroup::"
