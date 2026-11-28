@@ -59,12 +59,20 @@ async function demarrerVM(etat = {}) {
   await attendre(INVITE, 60_000, sortie.indexOf("cours-terminal-pret\x07"));
   const secondes = ((Date.now() - debut) / 1000).toFixed(1);
   const utf8 = s => Buffer.from(s, "latin1").toString("utf8");
+  const taper = texte => { let octets = ""; for (const o of new TextEncoder().encode(texte)) octets += String.fromCharCode(o); vm.serial0_send(octets); };
   return {
+    // Envoie des touches telles quelles (sans Entrée ajoutée) ; attend le motif, ou une pause. Rend l'écran nettoyé.
+    async toucher(texte, motif = null, delai = 20_000) {
+      const depuis = sortie.length;
+      taper(texte);
+      if (motif) await attendre(motif, delai, depuis); else await new Promise(r => setTimeout(r, 350));
+      return { propre: bruit(utf8(sortie.slice(depuis))), brut: utf8(sortie.slice(depuis)) };
+    },
+    INVITE,
     secondes, version: manifeste.version,
     // Envoie le texte tel que la page le fait (octets UTF-8), attend l'invite suivante, rend la sortie sans l'écho.
     async executer(commande, delai = 60_000, avant = null) {
       const depuis = sortie.length;
-      const taper = texte => { let octets = ""; for (const o of new TextEncoder().encode(texte)) octets += String.fromCharCode(o); vm.serial0_send(octets); };
       // Fin de commande : sans touches à envoyer, une seconde commande (echo FIN_n) en donne le signal sans ambiguïté ;
       // avec des touches (Vim), on attend que Vim rende l'écran (\x1b[?1049l), puis l'invite de bash.
       const marque = avant ? null : `FIN_${++compte}`;
@@ -102,6 +110,12 @@ async function testerImage(outils) {
   for (const motif of [/uid=1000\(ada\) gid=1000\(ada\) groups=1000\(ada\),1001\(etudiants\)/, /^\/home\/ada$/m, /^0002$/m, /^man-ok$/m, /^Bats \d/m])
     if (!motif.test(compte)) throw new Error(`compte ou outil inattendu (${motif}) :\n${compte}`);
   console.log(`${outils.length} outils présents, terminal 100 × 30, compte ada (1000, groupe etudiants), man, ps de procps, bats.`);
+  // Fin du shell (Ctrl+D sur une ligne vide) : une nouvelle session s'ouvre dans le répertoire personnel, les fichiers restent.
+  await vm.executer("cd /tmp && touch reste.txt");
+  const fin = await vm.toucher("\x04", /Session terminée ; nouvelle session\.[\s\S]*\x1b\[\?2004h[^\n]*[$#] $/, 60_000);
+  const apres = (await vm.executer("pwd; ls /tmp/reste.txt")).sortie;
+  if (!/^\/home\/ada$/m.test(apres) || !/reste\.txt/.test(apres)) throw new Error(`fin du shell : ${fin.propre}\n${apres}`);
+  console.log("Ctrl+D sur une ligne vide : « Session terminée ; nouvelle session. », nouvelle invite dans ~, fichiers gardés.");
   vm.fermer();
 }
 
@@ -179,6 +193,49 @@ const modele = new Function(contextejs.slice(contextejs.indexOf("// <modele>"), 
   + "; return { lireRapport, etatsDeclares, lecture };")();
 const motsLs = s => normaliser(s).split(/\s+/).filter(Boolean).sort().join(" ");
 
+// Gestes au clavier (page de cours, geste(…) de theme-tp.typ) : les touches, en octets du terminal (xterm).
+const TOUCHES = { "Tab": "\t", "Entrée": "\r", "↑": "\x1b[A", "↓": "\x1b[B", "Retour arrière": "\x7f", "Ctrl+A": "\x01",
+  "Ctrl+E": "\x05", "Ctrl+←": "\x1b[1;5D", "Ctrl+→": "\x1b[1;5C", "Ctrl+K": "\x0b", "Ctrl+U": "\x15", "Ctrl+Y": "\x19",
+  "Ctrl+W": "\x17", "Alt+Retour arrière": "\x1b\x7f", "Ctrl+L": "\x0c", "Ctrl+R": "\x12", "Ctrl+C": "\x03", "Ctrl+D": "\x04" };
+function lireGestes(html) {
+  return [...html.matchAll(/<div class="geste"([^>]*)>/g)].map(([, a]) => {
+    const g = {};
+    for (const [, k, v] of a.matchAll(/data-([\w-]+)="([^"]*)"/g)) g[k] = entites(v);
+    g.touches = g.touches ? g.touches.split("|") : [];
+    return g;
+  });
+}
+// La ligne en cours et le curseur, lus dans Readline par une touche liée à une fonction (Ctrl+X Ctrl+P).
+const LIRE_LIGNE = "__cours_ligne() { printf '\\nLIGNE[%s] POINT[%s]\\n' \"$READLINE_LINE\" \"$READLINE_POINT\"; }; bind -x '\"\\C-x\\C-p\": __cours_ligne'";
+async function jouerGestes(vm, gestes, echecs) {
+  const preparer = async () => { await vm.executer(LIRE_LIGNE); await vm.toucher("history -c\r", vm.INVITE); };
+  await preparer();
+  const espaces = t => t.replace(/[\b\x07]/g, "").replace(/\s+/g, " ").trim();
+  for (const [i, g] of gestes.entries()) {
+    const nom = [g.ecrire || g.tape || "", ...g.touches].filter(Boolean).join(" ");
+    let vu = "";
+    if (g.ecrire) vu += (await vm.toucher(g.ecrire)).propre;
+    if (g.tape) vu += (await vm.toucher(g.tape)).propre;
+    for (const t of g.touches) {
+      const entree = t === "Entrée" || (t === "Ctrl+D" && g.touches.at(-1) === "Ctrl+D");
+      vu += (await vm.toucher(TOUCHES[t] ?? t, t === g.touches.at(-1) && entree ? vm.INVITE : null)).propre;
+    }
+    if (g.ecran && !espaces(vu).includes(espaces(g.ecran))) echecs.push(`geste « ${nom} » : l'écran ne montre pas « ${g.ecran} »\n    vu : ${JSON.stringify(espaces(vu).slice(-300))}`);
+    if (g.sortie && !espaces(vu).includes(espaces(g.sortie))) echecs.push(`geste « ${nom} » : sortie sans « ${g.sortie} »\n    vu : ${JSON.stringify(espaces(vu).slice(-300))}`);
+    if (/nouvelle session/.test(vu)) await preparer();
+    // Lire la ligne entre deux Tab romprait la paire « Tab Tab » que le geste suivant achève : on la lit après lui.
+    const tabTab = g.touches.at(-1) === "Tab" && gestes[i + 1]?.touches[0] === "Tab";
+    if (g.ligne !== undefined && !tabTab) {
+      // Une recherche Ctrl+R en cours se termine par Échap (la ligne trouvée reste), avant de lire la ligne.
+      if (g.touches.includes("Ctrl+R")) { await vm.toucher("\x1b"); await new Promise(r => setTimeout(r, 700)); }
+      const r = (await vm.toucher("\x18\x10", /LIGNE\[[\s\S]*?\] POINT\[\d+\]/)).propre;
+      const [, ligne, point] = r.match(/LIGNE\[([\s\S]*?)\] POINT\[(\d+)\]/);
+      if (ligne !== g.ligne || point !== g.point) echecs.push(`geste « ${nom} » : ligne « ${ligne} », curseur ${point} ; la page annonce « ${g.ligne} », ${g.point}`);
+    }
+  }
+  return gestes.length;
+}
+
 const MOTIFS_ECHEC = /command not found|No such file or directory|not found$|Permission denied$/m;
 
 // Pose des fichiers dans la VM : base64 par morceaux (une ligne de terminal tient 4096 caractères). Les noms
@@ -213,7 +270,8 @@ async function rejouerTP(tp) {
     const INDICE = /<details class="indice">[\s\S]*?<\/details>/g;
     const etapes = lireEnonce(source.replace(INDICE, ""));
     const indices = [...source.matchAll(INDICE)].flatMap(m => lireEnonce(m[0]).map(e => e.commande));
-    if (!etapes.length) throw new Error("aucune commande trouvée dans l'énoncé");
+    const gestes = lireGestes(source);
+    if (!etapes.length && !gestes.length) throw new Error("aucune commande ni geste trouvé dans l'énoncé");
     const declare = page && source.match(/<script type="application\/json" id="contexte-declare">([\s\S]*?)<\/script>/);
     const etatsPage = declare ? modele.etatsDeclares(JSON.parse(entites(declare[1])), etapes.map(e => e.commande)) : null;
     let rang = 0, contextesVerifies = 0;
@@ -286,6 +344,7 @@ async function rejouerTP(tp) {
       const reussis = sorties.filter(e => /^diff -u attendu/.test(e.commande) && /^réussi$/m.test(e.sortie)).length;
       if (reussis !== 6) echecs.push(`katas réussis : ${reussis} sur 6`);
     }
+    const gestesJoues = gestes.length ? await jouerGestes(vm, gestes, echecs) : 0;
     const rejouees = new Set(etapes.map(e => e.commande));
     let indicesSeuls = 0;
     for (const commande of [...new Set(indices)].filter(c => !rejouees.has(c))) {
@@ -316,7 +375,7 @@ async function rejouerTP(tp) {
         vm2.fermer(); sectionsSeules++;
       }
     }
-    const lignes = page ? `${sorties.length} commandes rejouées, chaque sortie comparée à la page, contexte comparé après ${contextesVerifies} commandes, ${sectionsSeules} sections rejouées seules dans une VM neuve`
+    const lignes = page ? `${sorties.length} commandes rejouées, chaque sortie comparée à la page, contexte comparé après ${contextesVerifies} commandes, ${sectionsSeules} sections rejouées seules dans une VM neuve` + (gestesJoues ? `, ${gestesJoues} gestes joués touche par touche (ligne, curseur, écran, sortie)` : "")
       : `${sorties.length} commandes rejouées, 1re et dernière comparées à l'énoncé` + (indices.length ? `, ${indices.length} commandes d'indices (${indicesSeuls} hors corrigé, rejouées à la fin)` : "");
     return { tp, secondes: vm.secondes, resume: lignes, echecs, comparables: comparables.length };
   } finally { rmSync(tmp, { recursive: true, force: true }); }

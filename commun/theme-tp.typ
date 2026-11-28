@@ -91,12 +91,13 @@
 // fichiers et contenus ; cree : ce qu'il crée, dit à l'étudiant ; ici : le répertoire où l'on arrive. La VM le lance au
 // démarrage, avant la première invite ; avec le compagnon, la page propose la commande, sans rien lancer d'office.
 // (ici: "~") seul : la page part d'un répertoire personnel vide.
+// compacte : couverture réduite à une bande (page d’un cours : le premier module se voit sans défiler).
 // Aperçu d’une branche (commun/construire-site.sh, `--input apercu=<branche>`) : le bandeau le dit.
 #let _apercu = sys.inputs.at("apercu", default: none)
 #let depot = "https://github.com/jmchantrein/Cours"
 #let page-web(titre: none, surtitre: none, sous-titre: none, auteur: none, date: none, racine: "../../../",
   liens: (), sommaire: true, illustration-couverture: none, atelier: false, terminal: none, cours: false,
-  contexte: none, depart: none, corps) = {
+  contexte: none, depart: none, compacte: false, corps) = {
   let modes = if terminal == none { () } else if type(terminal) == str { (terminal,) } else { terminal }
   assert(modes.len() > 0 or terminal == none, message: "terminal : au moins un mode, ou none")
   assert(modes.all(m => m in ("vm", "compagnon")), message: "terminal : les modes sont \"vm\" et \"compagnon\"")
@@ -143,7 +144,7 @@
       ]
       #let texte = [
         // En-tête : la couverture des diapos (fond nuit, surtitre, titre, illustration du cours).
-        #_el("div", class: "couverture")[
+        #_el("div", class: if compacte { "couverture compacte" } else { "couverture" })[
           #_el("div", class: "couverture-texte")[
             #if surtitre != none { _el("p", class: "surtitre", surtitre) }
             #_el("h1", titre)
@@ -234,6 +235,49 @@
   #corps
   #if explication.pos().len() > 0 { _el("div", class: "predire-explication", explication.pos().first()) }
 ]
+// Un geste au clavier (page de cours) : ce qu’on tape, les touches, ce qu’on doit voir. L’étudiant le joue lui-même :
+// rien ne s’exécute au clic, sauf « Écrire », qui dépose une ligne longue (`ecrire`) à l’invite.
+//   #geste(tape: "who", touches: ("Tab", "Tab"), ligne: "who", ecran: "who     whoami  whois")[ce qu’il faut regarder]
+// touches : des noms de touche (« Tab », « Entrée », « Ctrl+A », « Ctrl+← », « Alt+Retour arrière », « ↑ »…) ou un
+// texte à taper (« Ada ») ; ligne et point : la ligne en cours et la position du curseur (0 : début) après les
+// touches ; ecran : un texte qui doit paraître ; sortie : ce qu’affiche la commande validée. tester-vm.mjs rejoue
+// chaque geste dans la VM et compare la ligne, le curseur, l’écran et la sortie. voir : un écran montré, non vérifié
+// (une recherche Ctrl+R, que le terminal redessine par morceaux), à la place de la ligne.
+#let _touches-connues = ("Tab", "Entrée", "↑", "↓", "Retour arrière", "Ctrl+A", "Ctrl+E", "Ctrl+←", "Ctrl+→", "Ctrl+K",
+  "Ctrl+U", "Ctrl+Y", "Ctrl+W", "Alt+Retour arrière", "Ctrl+L", "Ctrl+R", "Ctrl+C", "Ctrl+D")
+#let _invite = "ada@cours:~$ "
+#let geste(ecrire: none, tape: none, touches: (), ligne: none, point: none, ecran: none, voir: none, sortie: none, corps) = {
+  let donnees = (touches: touches.join("|"))
+  if ecrire != none { donnees.insert("ecrire", ecrire) }
+  if tape != none { donnees.insert("tape", tape) }
+  let p = if point == none and ligne != none { ligne.len() } else { point }
+  if ligne != none { donnees.insert("ligne", ligne); donnees.insert("point", str(p)) }
+  if ecran != none { donnees.insert("ecran", ecran) }
+  if sortie != none { donnees.insert("sortie", sortie) }
+  let touche-ou-texte(t) = if t in _touches-connues { _el("kbd", t) } else { [tapez #raw(t)] }
+  let suite = if touches.len() > 0 { [, puis : ] + touches.map(touche-ou-texte).join([ · ]) }
+  let faire = if ecrire != none { [Écrivez la ligne (bouton « Écrire »)] + suite }
+    else if tape != none { [Tapez #raw(tape)] + suite }
+    else { [Appuyez sur : ] + touches.map(touche-ou-texte).join([ · ]) }
+  let ecran-attendu = if voir != none { _el("pre", class: "ecran", voir) } else if ligne != none or ecran != none or sortie != none {
+    _el("pre", class: "ecran", {
+      if ecran != none { ecran; if ligne != none or sortie != none { "\n" } }
+      if ligne != none {
+        _invite + ligne.slice(0, p)
+        _el("span", class: "curseur", if p < ligne.len() { ligne.slice(p, p + 1) } else { " " })
+        if p + 1 < ligne.len() { ligne.slice(p + 1) }
+        if sortie != none { "\n" }
+      }
+      if sortie != none { sortie }
+    })
+  }
+  _el("div", class: "geste", data: donnees, {
+    if ecrire != none { _el("div", class: "terminal", data: (ecrire: "seul"), raw("$ " + ecrire, block: true, lang: "console")) }
+    _el("p", class: "geste-faire", faire)
+    _el("div", class: "geste-resultat", { ecran-attendu; corps })
+  })
+}
+
 // Pastille d’un pas (carré bleu à chiffre blanc), celle du repère de contexte et des diapos : `#pastille(2)`.
 #let pastille(n) = _el("span", class: "pastille", str(n))
 // Une touche du clavier, dans le texte : `#touche[Tab]`, `#touche[Ctrl+R]`.

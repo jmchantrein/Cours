@@ -45,8 +45,11 @@
     let texte = m.at(support, default: (:)).at("existant", default: "")
     let trouves = noms(dossier).filter(n => texte.split(regex("[^a-z0-9-]+")).contains(n))
     for n in trouves {
+      // Libellé court : le nom du dossier en clair, puis les étapes que l’index cite, sans leur détail entre parenthèses.
       let morceau = texte.split(" ; ").find(x => x.starts-with(n))
-      liens.push(bouton([#nom : #if morceau != none { morceau } else { n }], dossier + "/" + n + "/"))
+      let etapes = if morceau == none { none } else { morceau.slice(n.len()).replace(regex(" \([^)]*\)"), "").trim(", ", at: start).trim() }
+      let clair = upper(n.first()) + n.slice(1).replace("-", " ")
+      liens.push(bouton([#nom : #clair#if etapes not in (none, "") [, #etapes]], dossier + "/" + n + "/"))
     }
     if trouves.len() == 0 and etat(m, support) == "a-faire" { liens.push(a-venir(nom)) }
   }
@@ -56,11 +59,11 @@
 #show: page-web.with(
   titre: [#index.titre],
   surtitre: [Cours · module par module],
-  sous-titre: [#index.public],
+  sous-titre: [Module par module, pour qui n’a jamais ouvert de terminal],
   auteur: [Jean-Mathieu Chantrein],
   racine: "../",
   sommaire: false,
-  illustration-couverture: "tube",
+  compacte: true,
   liens: (([Tous les cours], "../index.html"),),
 )
 

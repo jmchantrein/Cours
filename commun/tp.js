@@ -31,10 +31,12 @@
     // Dans un indice ou un corrigé replié, « Écrire » dépose aussi la commande à l’invite, sans la valider :
     // l’étudiant la relit, la complète, appuie sur Entrée.
     const replie = Boolean(code.closest("details"));
+    // Une ligne à amorcer (geste d’une page de cours) : « Écrire » seul, l’étudiant joue ensuite les touches.
+    const ecrireSeul = Boolean(code.closest('[data-ecrire="seul"]'));
     code.replaceChildren(...lignes.flatMap((ligne, i) => {
       const fin = i < lignes.length - 1 ? "\n" : "";
-      const apres = executable && finDe.has(i)
-        ? [executer(finDe.get(i)), ...(replie && !finDe.get(i).includes("\n") ? [ecrire(finDe.get(i))] : []), fin] : [fin];
+      const apres = !executable || !finDe.has(i) ? [fin] : ecrireSeul ? [ecrire(finDe.get(i)), fin]
+        : [executer(finDe.get(i)), ...(replie && !finDe.get(i).includes("\n") ? [ecrire(finDe.get(i))] : []), fin];
       if (ligne.startsWith("$ ")) return [span("invite", "$ "), ligne.slice(2), ...apres];
       if (ligne.startsWith("# ")) return [span("commentaire", ligne + fin)];
       if (masquer && !deCommande.has(i)) return [span("sortie-masquee", ligne + fin)];
@@ -45,7 +47,7 @@
     const voir = document.createElement("button");
     voir.type = "button"; voir.className = "predire-voir"; voir.textContent = "Voir la sortie sans exécuter";
     voir.addEventListener("click", () => { question.dataset.revele = ""; });
-    question.querySelector(".terminal")?.after(voir);
+    (question.querySelector(".geste .geste-faire") || question.querySelector(".terminal"))?.after(voir);
   }
   // Une commande exécutée dans le terminal (terminal.js) dévoile la sortie annoncée de sa question.
   document.addEventListener("terminal-commande", e => {

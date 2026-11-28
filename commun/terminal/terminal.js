@@ -368,6 +368,11 @@
   // « Démarrer la VM »).
   if (cote && matchMedia("(min-width: 64rem)").matches) ouvrir();
 
+  // Garde-fou : tant qu’un terminal tourne, fermer l’onglet (Ctrl+W tapé par mégarde, par exemple) demande confirmation.
+  addEventListener("beforeunload", evenement => {
+    if (tous.some(m => m.session)) { evenement.preventDefault(); evenement.returnValue = ""; }
+  });
+
   document.addEventListener("click", evenement => {
     const bouton = evenement.target.closest(".terminal :is(.executer, .ecrire)");
     if (!bouton) return;

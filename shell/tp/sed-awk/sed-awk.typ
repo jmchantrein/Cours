@@ -25,6 +25,7 @@
   terminal: ("vm", "compagnon"),
   depart: (ici: "~"),   // état de départ : la VM l’installe à son démarrage
   liens: (
+    ([Le cours], "../../index.html"),
     ([Diapos du cours], pdf),
     ([Corrigés], "https://github.com/jmchantrein/Cours/tree/main/shell/tp/sed-awk/corrige"),
     ([Manuel de GNU sed], "https://www.gnu.org/software/sed/manual/sed.html"),

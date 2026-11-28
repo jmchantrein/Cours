@@ -108,8 +108,8 @@ modules:
       etat: present
       existant: "shell/cm/clavier.typ (la diapo « Le clavier du shell » du module intro y a été déplacée)"
     page:
-      etat: a-faire
-      propose: "shell/pages/clavier : les gestes du diaporama dans le même ordre (pilote-shell/clavier-commandes.md), état de départ de premiers-pas (~/atelier) pour la complétion d’un nom de fichier."
+      etat: present
+      existant: "shell/pages/clavier/clavier.typ : les gestes du diaporama, dans le même ordre, joués au clavier ; état de départ de premiers-pas (~/atelier) ; l’exercice en prédictions."
     tp:
       etat: sans-objet
       raison: "Des gestes, repris dans chaque TP suivant ; la page de cours les fait refaire un à un."

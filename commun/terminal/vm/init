@@ -47,6 +47,13 @@ fi
 printf '\033]0;cours-terminal-pret\007'
 # Le shell est celui d'un compte ordinaire, ada (les TP sur les droits n'ont pas de sens en root).
 chown ada:ada /dev/ttyS0
-# Le shell s'ouvre dans le répertoire d'arrivée de la page (~ par défaut).
+# Le shell s'ouvre dans le répertoire d'arrivée de la page (~ par défaut). Quand il se termine (exit, Ctrl+D sur une
+# ligne vide), un nouveau s'ouvre dans le répertoire personnel, comme un terminal qu'on rouvre : le premier processus
+# ne se termine jamais (sinon le noyau panique), et les fichiers restent.
 export COURS_ICI="$ici"
-exec setsid sh -c 'exec su - ada -c "cd $COURS_ICI 2>/dev/null; exec bash -l" </dev/ttyS0 >/dev/ttyS0 2>&1'
+exec setsid sh -c '
+  while :; do
+    su - ada -c "cd $COURS_ICI 2>/dev/null; exec bash -l"
+    printf "\nSession terminée ; nouvelle session.\n"
+    COURS_ICI="~"
+  done </dev/ttyS0 >/dev/ttyS0 2>&1'

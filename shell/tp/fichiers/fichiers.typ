@@ -25,6 +25,7 @@
   terminal: ("vm", "compagnon"),
   depart: (script: "shell/tp/fichiers/preparer.sh", cree: "~/fichiers", ici: "~"),   // état de départ : la VM l’installe à son démarrage
   liens: (
+    ([Le cours], "../../index.html"),
     ([Diapos du cours], pdf),
     ([Corrigés], "https://github.com/jmchantrein/Cours/tree/main/shell/tp/fichiers/corrige"),
     ([TP précédent : premiers pas], "../premiers-pas/index.html"),

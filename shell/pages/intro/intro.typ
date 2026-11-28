@@ -60,7 +60,7 @@ seance-01  seance-03  seance-05  seance-07  seance-09  seance-11
 seance-02  seance-04  seance-06  seance-08  seance-10  seance-12
 ```]
 #regardez[*Dans le terminal*, douze noms, écrits par une seule ligne. La ligne se relit, se corrige, se rejoue :
-demain, ou sur dix machines, c’est la même. Un serveur n’a ni écran ni souris : on l’administre ainsi.]
+écrite une fois, elle refait la même chose demain, ou sur dix machines. Un serveur n’a ni écran ni souris : on l’administre ainsi.]
 
 = Une fenêtre de terminal <terminal>
 
@@ -130,18 +130,8 @@ Grace     Hopper
 
 = Le clavier du shell <clavier>
 
-Ici, pas de bouton : la *complétion* et l’*historique* se font au clavier. Cliquez dans le terminal, puis :
-
-+ Tapez `whoa` (sans Entrée), puis #touche[Tab] : un seul nom de commande commence par `whoa`, la ligne devient
-  `whoami`. Validez par #touche[Entrée].
-+ Tapez `who`, puis #touche[Tab] : rien ne change, plusieurs noms commencent par `who`. Un second #touche[Tab] les
-  montre : `who`, `whoami`, `whois`. Effacez la ligne (#touche[Ctrl+C]).
-+ Appuyez sur #touche[↑] : la commande précédente revient (l’historique) ; #touche[Entrée] la relance.
-+ #touche[Ctrl+R], puis tapez `date` : la dernière ligne qui contient `date` revient ; #touche[Entrée] la relance,
-  #touche[Ctrl+C] abandonne.
-
-#regardez[*Dans le terminal*, chaque touche change la ligne en cours, avant même Entrée : c’est le shell qui écrit
-pour vous.]
+Compléter une commande avec #touche[Tab], retrouver une ligne avec #touche[↑], la corriger sans la retaper : c’est le
+#link(vers("clavier"))[#nom-module(index, "clavier")], juste après celui-ci.
 
 = Se documenter : man, `--help`, type, help <documentation>
 
@@ -223,7 +213,6 @@ echo is a shell builtin
   - Le terminal affiche l’invite ; le shell (Bash) lit la ligne, la fait exécuter, rend l’invite.
   - Une ligne : la commande, ses options (`-u`, `--date=…`), ses arguments ; une option peut prendre le sien.
   - Les espaces séparent les arguments ; entre guillemets, un texte reste un seul argument.
-  - #touche[Tab] complète, #touche[↑] et #touche[Ctrl+R] rappellent l’historique, #touche[Ctrl+C] abandonne.
   - `type` : interne (`help`) ou programme (`man`, `--help`).
 ]
 

@@ -220,6 +220,15 @@ kbd { display: inline-block; padding: 0 .4em; border: 1px solid var(--c-filet); 
   background: var(--c-fond); color: var(--c-encre); font: inherit; font-size: .82rem; cursor: pointer; }
 .predire-voir:hover { border-color: var(--c-bleu); }
 .predire[data-revele] .predire-voir { display: none; }
+.predire:not([data-revele]) .geste-resultat { display: none; }
+/* Geste au clavier : ce qu’on tape, les touches, puis l’écran attendu (le curseur en bloc). */
+.geste { margin: .9rem 0; padding: .6rem .9rem .7rem; border: 1px solid var(--c-filet); border-radius: .5rem; background: #fff; }
+.geste > .terminal pre { margin: 0 0 .4rem; }
+.geste-faire { margin: 0 0 .35rem; font-weight: 600; }
+.geste-faire kbd { margin: 0 .1rem; }
+.geste .ecran { margin: .3rem 0 .3rem; background: var(--c-nuit); color: var(--c-texte-term); }
+.ecran .curseur { background: var(--c-prompt); color: var(--c-nuit); }
+.geste-resultat > .regardez:last-child, .geste-resultat > p:last-child { margin-bottom: 0; }
 .predire-explication > :first-child { margin-top: .3rem; }
 .predire-explication > :last-child { margin-bottom: 0; }
 html.js .predire:not([data-revele]) .predire-explication { display: none; }
@@ -237,6 +246,10 @@ html.js .predire:not([data-revele]) .predire-explication { display: none; }
   .plan-cours { display: flex; flex-direction: column; }
 }
 
+.couverture.compacte { padding: 1rem 1.5rem 1.1rem; }
+.couverture.compacte h1 { font-size: clamp(1.5rem, 2.6vw, 2.1rem); }
+.couverture.compacte .sous-titre { margin-top: .3rem; font-size: 1rem; }
+.couverture.compacte .auteur { margin-top: .4rem; font-size: .8rem; }
 /* Page d’un cours : ses modules dans l’ordre de l’index, chacun avec ses supports. */
 .module { margin: 0 0 1.6rem; padding: 1rem 1.2rem; background: #fff; border: 1px solid var(--c-filet); border-radius: .6rem; }
 .module h2 { margin: 0 0 .4rem; padding: 0; border: 0; font-size: 1.25rem; }
